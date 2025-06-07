@@ -17,7 +17,14 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "tsx src/database/seed.ts"
+    "prisma:seed": "tsx src/database/seed.ts",
+    "docker:start": "./scripts/docker.sh start",
+    "docker:start-all": "./scripts/docker.sh start-all",
+    "docker:stop": "./scripts/docker.sh stop",
+    "docker:stop-all": "./scripts/docker.sh stop-all",
+    "docker:clean": "./scripts/docker.sh clean",
+    "docker:logs": "./scripts/docker.sh logs",
+    "docker:status": "./scripts/docker.sh status"
   },
   "keywords": [],
   "author": "",

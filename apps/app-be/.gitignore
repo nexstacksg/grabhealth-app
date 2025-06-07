@@ -55,3 +55,7 @@ temp/
 
 # Bun
 bun.lockb
+
+# Docker
+.docker/
+docker-volumes/
