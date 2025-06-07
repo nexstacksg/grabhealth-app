@@ -1,4 +1,4 @@
-import { internalApi, externalApi } from "./api";
+import { internalApi, api } from "./api";
 import {
   LoginRequest,
   RegisterRequest,
@@ -88,28 +88,28 @@ class AuthService {
    * Request password reset - goes directly to backend (no auth needed)
    */
   async forgotPassword(email: string): Promise<void> {
-    await externalApi.post("/auth/forgot-password", { email });
+    await api.post("/auth/forgot-password", { email });
   }
 
   /**
    * Reset password with token - goes directly to backend (no auth needed)
    */
   async resetPassword(token: string, password: string): Promise<void> {
-    await externalApi.post("/auth/reset-password", { token, password });
+    await api.post("/auth/reset-password", { token, password });
   }
 
   /**
    * Resend verification email
    */
   async resendVerificationEmail(email: string): Promise<void> {
-    await externalApi.post("/auth/resend-verification", { email });
+    await api.post("/auth/resend-verification", { email });
   }
 
   /**
    * Verify email with token
    */
   async verifyEmail(token: string): Promise<void> {
-    await externalApi.post(`/auth/verify-email?token=${token}`);
+    await api.post(`/auth/verify-email?token=${token}`);
   }
 }
 
