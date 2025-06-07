@@ -11,6 +11,7 @@ import routes from "./routes";
 import { config } from "./config/env";
 import { apiLimiter } from "./middleware/security/rateLimiter";
 import logger, { stream } from "./utils/logger";
+import cacheService from "./services/cache";
 
 const app: Application = express();
 
@@ -37,10 +38,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get("/health", (_req, res) => {
+  const cacheStats = cacheService.getStats();
   res.json({
     status: "OK",
     timestamp: new Date().toISOString(),
     environment: config.env,
+    cache: {
+      backend: cacheService.getBackend(),
+      ...cacheStats,
+    },
   });
 });
 

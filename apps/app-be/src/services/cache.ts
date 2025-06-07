@@ -1,14 +1,23 @@
 import Redis from "ioredis";
 import { config } from "../config/env";
 import logger from "../utils/logger";
+import memoryCacheService from "./memoryCache";
+
+type CacheBackend = "redis" | "memory";
 
 class CacheService {
   private client: Redis | null = null;
   private isConnected = false;
+  private backend: CacheBackend;
 
   constructor() {
-    if (config.redis.url) {
+    // Automatically choose backend based on environment and Redis availability
+    if (config.redis.url && config.env === "production") {
+      this.backend = "redis";
       this.connect();
+    } else {
+      this.backend = "memory";
+      logger.info("Using in-memory cache for development");
     }
   }
 
@@ -37,6 +46,10 @@ class CacheService {
   }
 
   async get(key: string): Promise<string | null> {
+    if (this.backend === "memory") {
+      return await memoryCacheService.get(key);
+    }
+
     if (!this.isConnected || !this.client) {
       return null;
     }
@@ -54,6 +67,10 @@ class CacheService {
     value: string,
     ttl: number = config.redis.ttl
   ): Promise<boolean> {
+    if (this.backend === "memory") {
+      return await memoryCacheService.set(key, value, ttl);
+    }
+
     if (!this.isConnected || !this.client) {
       return false;
     }
@@ -68,6 +85,10 @@ class CacheService {
   }
 
   async del(key: string): Promise<boolean> {
+    if (this.backend === "memory") {
+      return await memoryCacheService.del(key);
+    }
+
     if (!this.isConnected || !this.client) {
       return false;
     }
@@ -82,6 +103,10 @@ class CacheService {
   }
 
   async exists(key: string): Promise<boolean> {
+    if (this.backend === "memory") {
+      return await memoryCacheService.exists(key);
+    }
+
     if (!this.isConnected || !this.client) {
       return false;
     }
@@ -100,10 +125,26 @@ class CacheService {
   }
 
   async disconnect(): Promise<void> {
+    if (this.backend === "memory") {
+      memoryCacheService.disconnect();
+      return;
+    }
+
     if (this.client) {
       await this.client.quit();
       this.isConnected = false;
     }
+  }
+
+  getBackend(): CacheBackend {
+    return this.backend;
+  }
+
+  getStats() {
+    if (this.backend === "memory") {
+      return memoryCacheService.getStats();
+    }
+    return { backend: "redis", connected: this.isConnected };
   }
 }
 
