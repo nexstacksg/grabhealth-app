@@ -30,7 +30,7 @@ GrabHealth AI addresses these challenges by:
 
 ### 👥 Multi-Level Marketing System
 
-- 5-level deep commission structure
+- 4-level deep commission structure
 - Real-time commission tracking and calculations
 - Network visualization showing upline/downline relationships
 - Referral link generation for easy recruitment

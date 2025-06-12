@@ -109,7 +109,7 @@ export class CartService {
       (sum: number, item: any) => sum + item.quantity * (item.price || 0),
       0
     );
-    cart.discount = 0; // Would calculate based on user membership
+    cart.discount = 0; // Discounts from promotions only, no membership discounts
     cart.total = cart.subtotal - cart.discount;
 
     return cart;

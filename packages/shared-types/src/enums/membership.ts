@@ -1,7 +1,6 @@
 export enum MembershipTier {
-  BASIC = 'BASIC',
-  ESSENTIAL = 'ESSENTIAL',
-  PREMIUM = 'PREMIUM'
+  FREE = 'FREE',
+  BASIC = 'BASIC'
 }
 
 export enum MembershipStatus {

@@ -99,8 +99,6 @@ model Product {
   name              String
   description       String?
   price             Float
-  discountEssential Float    @default(0.10)
-  discountPremium   Float    @default(0.25)
   categoryId        Int?
   imageUrl          String?
   inStock           Boolean  @default(true)
@@ -164,13 +162,12 @@ model OrderItem {
 
 // ==================== MEMBERSHIP MODELS ====================
 
-// MembershipTier Model
+// MembershipTier Model - Note: Membership is now free upon registration
 model MembershipTier {
   id          Int      @id @default(autoincrement())
-  name        String   @unique // BASIC, ESSENTIAL, PREMIUM
+  name        String   @unique // BASIC, FREE
   description String?
-  price       Float
-  discount    Float    @default(0)
+  price       Float    @default(0) // Free membership
   benefits    String?  // JSON data
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

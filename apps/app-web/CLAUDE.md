@@ -114,7 +114,7 @@ Main tables:
 - **Local Development**: Uses SQLite with Prisma for easier setup
 - **Production**: Still uses Neon PostgreSQL
 - All timestamps use PostgreSQL's TIMESTAMP type
-- Commission calculations support up to 5 levels deep
+- Commission calculations support up to 4 levels deep
 - Mobile-responsive design using Tailwind CSS breakpoints
 - Form validation uses React Hook Form with Zod schemas
 - **Fixed Issues**: Sales volume calculation now uses actual order data instead of random values

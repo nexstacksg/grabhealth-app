@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 GrabHealth AI is a comprehensive e-commerce platform for health and wellness products with integrated multi-level marketing (MLM) capabilities. Built as a Turborepo monorepo, it features:
 
 - **E-commerce Platform**: Product catalog, shopping cart, and order management
-- **Multi-Level Marketing**: 5-level deep commission tracking with network visualization
-- **Membership Tiers**: Essential (10% discount) and Premium (25% discount) memberships
+- **Multi-Level Marketing**: 4-level deep commission tracking with network visualization
+- **Free Membership**: Automatic membership upon registration (no discount tiers)
 - **AI Integration**: Product recommendations and chatbot support using OpenAI
 - **Role-Based Access**: Users, Managers, and Super Admins with different permissions
 
@@ -196,11 +196,11 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
    - Network visualization in admin panel for tracking relationships
    - See commission.md for current example structure (to be migrated to database)
 
-2. **Membership Benefits**:
+2. **Membership System**:
 
-   - Essential: 10% discount on all products
-   - Premium: 25% discount on all products
-   - Memberships affect commission calculations
+   - Free membership upon registration
+   - No discount tiers - pricing based on product levels
+   - System supports future paid membership tiers
 
 3. **Product Management**:
    - Admin can manage product catalog

@@ -38,8 +38,8 @@ export class CommissionService {
 
       const commissions: Commission[] = [];
 
-      // Get upline chain (up to 5 levels)
-      const uplineChain = await this.getUplineChain(order.userId, 5);
+      // Get upline chain (up to 4 levels)
+      const uplineChain = await this.getUplineChain(order.userId, 4);
 
       // Calculate commission for each upline level
       for (const [level, uplineUserId] of uplineChain.entries()) {
@@ -72,13 +72,12 @@ export class CommissionService {
   }
 
   private getCommissionRateByLevel(level: number): number {
-    // Default commission structure - should be configurable
+    // Commission structure based on commission.md
     const rates: { [key: number]: number } = {
-      1: 0.1, // 10% for direct referral
-      2: 0.07, // 7% for level 2
-      3: 0.05, // 5% for level 3
-      4: 0.03, // 3% for level 4
-      5: 0.02, // 2% for level 5
+      1: 0.30, // 30% for Level 1 (Sales)
+      2: 0.10, // 10% for Level 2 (Leader)
+      3: 0.05, // 5% for Level 3 (Manager)
+      4: 0.05, // 5% for Level 4 (Company)
     };
     return rates[level] || 0;
   }

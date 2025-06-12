@@ -41,7 +41,7 @@ router.get(
 router.get("/stats", commissionController.getCommissionStats);
 router.get(
   "/network",
-  query("levels").optional().isInt({ min: 1, max: 5 }),
+  query("levels").optional().isInt({ min: 1, max: 4 }),
   validateRequest,
   commissionController.getUserNetwork
 );

@@ -24,7 +24,6 @@ export class OrderService {
       // Validate user exists
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: { membership: { include: { tier: true } } },
       });
 
       if (!user) {
@@ -51,27 +50,20 @@ export class OrderService {
             throw new AppError(`Product ${product.name} is out of stock`, 400);
           }
 
-          // Calculate price with membership discount
-          let itemPrice = product.price;
-          let itemDiscount = 0;
-
-          if (user.membership?.tier) {
-            itemDiscount = itemPrice * user.membership.tier.discount;
-            itemPrice = itemPrice - itemDiscount;
-          }
+          // Use product price directly - no membership discounts
+          const itemPrice = product.price;
 
           subtotal += item.quantity * product.price;
-          discount += item.quantity * itemDiscount;
 
           orderItems.push({
             productId: item.productId,
             quantity: item.quantity,
             price: itemPrice,
-            discount: itemDiscount,
+            discount: 0,
           });
         }
 
-        const total = subtotal - discount;
+        const total = subtotal - discount; // discount is 0 unless from promotions
 
         // Create order
         const order = await tx.order.create({

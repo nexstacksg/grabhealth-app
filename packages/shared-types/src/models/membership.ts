@@ -4,8 +4,7 @@ export interface IMembershipTier {
   id: number;
   name: MembershipTier;
   description?: string;
-  price: number;
-  discount: number;
+  price: number; // Now 0 for free membership
   benefits?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -63,8 +62,7 @@ export interface IAccountRequest {
 export interface IMembershipCreate {
   name: MembershipTier;
   description?: string;
-  price: number;
-  discount: number;
+  price: number; // Now 0 for free membership
   benefits?: string;
 }
 

@@ -16,8 +16,7 @@ export class MembershipService {
         data: {
           name: data.name,
           description: data.description,
-          price: data.price,
-          discount: data.discount,
+          price: data.price, // Should be 0 for free membership
           benefits: data.benefits,
         },
       });
@@ -62,7 +61,6 @@ export class MembershipService {
             description: data.description,
           }),
           ...(data.price !== undefined && { price: data.price }),
-          ...(data.discount !== undefined && { discount: data.discount }),
           ...(data.benefits !== undefined && { benefits: data.benefits }),
         },
       });
@@ -331,8 +329,8 @@ export class MembershipService {
     const endDate = new Date(now);
 
     switch (tierName) {
-      case MembershipTierEnum.ESSENTIAL:
-      case MembershipTierEnum.PREMIUM:
+      case MembershipTierEnum.FREE:
+      case MembershipTierEnum.BASIC:
         endDate.setMonth(endDate.getMonth() + 1); // Monthly subscription
         break;
       default:

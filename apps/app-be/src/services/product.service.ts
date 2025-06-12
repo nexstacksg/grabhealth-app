@@ -1,4 +1,4 @@
-import { PrismaClient, Product, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import {
   IProduct,
   IProductCreate,
@@ -12,7 +12,7 @@ import { AppError } from "../middleware/error/errorHandler";
 export class ProductService {
   constructor(private prisma: PrismaClient) {}
 
-  async createProduct(data: IProductCreate): Promise<Product> {
+  async createProduct(data: IProductCreate): Promise<IProduct> {
     try {
       // Validate category exists if provided
       if (data.categoryId) {
@@ -24,13 +24,11 @@ export class ProductService {
         }
       }
 
-      return await this.prisma.product.create({
+      const product = await this.prisma.product.create({
         data: {
           name: data.name,
           description: data.description,
           price: data.price,
-          discountEssential: data.discountEssential ?? 0.1,
-          discountPremium: data.discountPremium ?? 0.25,
           categoryId: data.categoryId,
           imageUrl: data.imageUrl,
           inStock: data.inStock ?? true,
@@ -40,13 +38,14 @@ export class ProductService {
           category: true,
         },
       });
+      return product as IProduct;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to create product", 500);
     }
   }
 
-  async updateProduct(id: number, data: IProductUpdate): Promise<Product> {
+  async updateProduct(id: number, data: IProductUpdate): Promise<IProduct> {
     try {
       const product = await this.prisma.product.findUnique({
         where: { id },
@@ -74,12 +73,6 @@ export class ProductService {
             description: data.description,
           }),
           ...(data.price !== undefined && { price: data.price }),
-          ...(data.discountEssential !== undefined && {
-            discountEssential: data.discountEssential,
-          }),
-          ...(data.discountPremium !== undefined && {
-            discountPremium: data.discountPremium,
-          }),
           ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
           ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
           ...(data.inStock !== undefined && { inStock: data.inStock }),
@@ -95,7 +88,7 @@ export class ProductService {
     }
   }
 
-  async getProduct(id: number): Promise<Product | null> {
+  async getProduct(id: number): Promise<IProduct | null> {
     try {
       return await this.prisma.product.findUnique({
         where: { id },
@@ -223,7 +216,7 @@ export class ProductService {
     }
   }
 
-  async getProductsByCategory(categoryId: number): Promise<Product[]> {
+  async getProductsByCategory(categoryId: number): Promise<IProduct[]> {
     try {
       return await this.prisma.product.findMany({
         where: {
@@ -241,7 +234,7 @@ export class ProductService {
     }
   }
 
-  async getFeaturedProducts(limit: number = 8): Promise<Product[]> {
+  async getFeaturedProducts(limit: number = 8): Promise<IProduct[]> {
     try {
       return await this.prisma.product.findMany({
         where: {
@@ -256,7 +249,7 @@ export class ProductService {
     }
   }
 
-  async updateStock(id: number, inStock: boolean): Promise<Product> {
+  async updateStock(id: number, inStock: boolean): Promise<IProduct> {
     try {
       return await this.prisma.product.update({
         where: { id },

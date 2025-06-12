@@ -35,8 +35,6 @@ export interface IProduct {
   name: string;
   description?: string | null;
   price: number;
-  discountEssential: number;
-  discountPremium: number;
   categoryId?: number | null;
   category?: ICategory | null;
   imageUrl?: string | null;
@@ -50,8 +48,6 @@ export interface IProductCreate {
   name: string;
   description?: string;
   price: number;
-  discountEssential?: number;
-  discountPremium?: number;
   categoryId?: number;
   imageUrl?: string;
   inStock?: boolean;
