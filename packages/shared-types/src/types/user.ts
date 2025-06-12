@@ -1,8 +1,14 @@
 import { UserRole, UserStatus } from '../enums';
 
-export interface UpdateProfileRequest {
-  firstName?: string;
-  lastName?: string;
+// Core user fields
+interface User {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+// Profile fields
+interface UserProfile {
   phone?: string;
   dateOfBirth?: string;
   address?: string;
@@ -10,36 +16,33 @@ export interface UpdateProfileRequest {
   department?: string;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
+// Auth related fields
+interface UserAuth {
+  password: string;
 }
 
-export interface CreateUserRequest {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
+// Admin manageable fields
+interface UserAdmin {
   role?: UserRole;
   status?: UserStatus;
-  phone?: string;
-  dateOfBirth?: string;
-  address?: string;
+}
+
+// MLM fields
+interface UserMLM {
   referralCode?: string;
   sponsorId?: string;
 }
 
-export interface UpdateUserRequest {
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  role?: UserRole;
-  status?: UserStatus;
-  phone?: string;
-  dateOfBirth?: string;
-  address?: string;
-  emergencyContact?: string;
-  department?: string;
+// Composed request types
+export interface CreateUserRequest extends User, UserAuth, UserProfile, UserAdmin, UserMLM {}
+
+export interface UpdateProfileRequest extends Partial<User>, UserProfile {}
+
+export interface UpdateUserRequest extends Partial<User>, UserProfile, UserAdmin {}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface UserSearchParams {
