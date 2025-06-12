@@ -22,9 +22,28 @@ export const register = async (
   try {
     const result = await authService.register(req.body);
 
+    // Set httpOnly cookies for tokens
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Don't send tokens in response body for security
     const response: ApiResponse = {
       success: true,
-      data: result,
+      data: {
+        user: result.user,
+        expiresIn: result.expiresIn,
+      },
     };
 
     res.status(HttpStatus.CREATED).json(response);
@@ -41,9 +60,28 @@ export const login = async (
   try {
     const result = await authService.login(req.body);
 
+    // Set httpOnly cookies for tokens
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Don't send tokens in response body for security
     const response: ApiResponse = {
       success: true,
-      data: result,
+      data: {
+        user: result.user,
+        expiresIn: result.expiresIn,
+      },
     };
 
     res.json(response);
@@ -58,12 +96,41 @@ export const refreshToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { refreshToken } = req.body;
+    // Get refresh token from cookie instead of body
+    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+    
+    if (!refreshToken) {
+      throw new ApiError(
+        "Refresh token required",
+        HttpStatus.UNAUTHORIZED,
+        ErrorCode.AUTH_REQUIRED
+      );
+    }
+    
     const result = await authService.refreshToken(refreshToken);
 
+    // Set new httpOnly cookies
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Don't send tokens in response body
     const response: ApiResponse = {
       success: true,
-      data: result,
+      data: {
+        user: result.user,
+        expiresIn: result.expiresIn,
+      },
     };
 
     res.json(response);
@@ -87,6 +154,10 @@ export const logout = async (
     }
 
     await authService.logout(req.user.id);
+
+    // Clear cookies
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
 
     const response: ApiResponse = {
       success: true,

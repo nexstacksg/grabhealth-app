@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import authService from "@/services/authService";
+import authService from "@/services/auth.service";
 import { IUserPublic, RegisterRequest } from "@app/shared-types";
 
 // Create context without explicit type definition to avoid unused warnings

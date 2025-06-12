@@ -27,8 +27,13 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Extract token from Authorization header
-    const token = extractBearerToken(req.headers.authorization);
+    // Extract token from Authorization header or cookies
+    let token = extractBearerToken(req.headers.authorization);
+    
+    // If no token in header, check cookies
+    if (!token && req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
 
     if (!token) {
       throw new ApiError("No token provided", 401, "NO_TOKEN");
@@ -95,7 +100,13 @@ export const optionalAuth = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const token = extractBearerToken(req.headers.authorization);
+    // Extract token from Authorization header or cookies
+    let token = extractBearerToken(req.headers.authorization);
+    
+    // If no token in header, check cookies
+    if (!token && req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
 
     if (token) {
       const payload = verifyAccessToken(token);

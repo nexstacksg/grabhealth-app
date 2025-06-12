@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
 import { errorHandler } from "./middleware/error/errorHandler";
@@ -35,6 +36,9 @@ app.use(compression());
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Cookie parsing
+app.use(cookieParser());
 
 // Health check
 app.get("/health", (_req, res) => {

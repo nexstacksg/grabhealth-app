@@ -33,6 +33,7 @@
   "dependencies": {
     "@app/shared-types": "*",
     "@prisma/client": "^6.8.2",
+    "@types/cookie-parser": "^1.4.9",
     "@types/ioredis": "^5.0.0",
     "@types/multer": "^1.4.12",
     "@types/nodemailer": "^6.4.17",
@@ -40,6 +41,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "dotenv-safe": "^9.1.0",

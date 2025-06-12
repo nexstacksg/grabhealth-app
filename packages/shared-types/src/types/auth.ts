@@ -25,6 +25,7 @@ export interface AuthResponse {
 }
 
 export interface RefreshTokenResponse {
+  user: IUserPublic;
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
