@@ -17,7 +17,7 @@ GrabHealth AI addresses these challenges by:
 - **Direct-to-Consumer Model**: Eliminating unnecessary intermediaries to offer competitive prices
 - **MLM Integration**: Empowering users to build their own distribution networks and earn commissions
 - **AI-Powered Assistance**: Providing personalized product recommendations and 24/7 customer support
-- **Membership Benefits**: Offering tiered discounts to reward customer loyalty
+- **Free Membership**: Automatic membership upon registration with access to all features
 
 ## Key Features
 
@@ -36,11 +36,12 @@ GrabHealth AI addresses these challenges by:
 - Referral link generation for easy recruitment
 - Commission dashboard with detailed earnings breakdown
 
-### 🎯 Membership Tiers
+### 🎯 Membership System
 
-- **Essential Membership**: 10% discount on all products
-- **Premium Membership**: 25% discount on all products
-- Membership-specific benefits and exclusive offers
+- **Free Membership**: All users receive membership benefits upon registration
+- No discount tiers - pricing based on product commission levels
+- Access to full MLM network features
+- Ability to earn commissions through referrals
 
 ### 🤖 AI Integration
 
@@ -122,7 +123,7 @@ grabHealth-AI/
 ### Customer
 
 - Browse and purchase products
-- Join membership programs
+- Automatic free membership upon registration
 - Participate in MLM network
 - Track orders and commissions
 - Access AI-powered recommendations
@@ -152,10 +153,6 @@ The MLM system uses a sophisticated 4-tier hierarchical structure with both mone
 
 Different products have specific commission structures based on user roles:
 
-#### User Roles
-- **Distributor**: Base level with standard commission rates (1.0x multiplier)
-- **Trader**: Mid-level with enhanced commission rates (1.2x multiplier)
-
 #### Sample Product Pricing & Commission Tiers
 
 | Product | Retail Price | Trader Price | Distributor Price | Trader Commission | Distributor Commission |
@@ -164,17 +161,6 @@ Different products have specific commission structures based on user roles:
 | Honey Wild GinSeng | $997.00 | $747.00 | $587.00 | 12-18% | 10-15% |
 | RealMan (Men's Health) | $3,697.00 | $2,678.00 | $2,097.00 | 15-20% | 12-17% |
 
-### Volume-Based Bonus System
-
-Sales volume achievements unlock additional commission bonuses:
-
-| Sales Volume Range | Bonus Percentage | Effective Commission Increase |
-|-------------------|------------------|-------------------------------|
-| $0 - $1,000 | 0% | Base commission rate |
-| $1,000 - $5,000 | 2% | +2% on base rate |
-| $5,000 - $10,000 | 3.5% | +3.5% on base rate |
-| $10,000+ | 5% | +5% on base rate |
-
 ### Commission Calculation Process
 
 1. **Upline Chain Identification**: System traces up to 4 levels of uplines
@@ -182,8 +168,6 @@ Sales volume achievements unlock additional commission bonuses:
    - Level 1 (Direct upline): Receives monetary commission
    - Level 2: Receives reduced monetary commission
    - Levels 3-4: Earn points instead of direct commission
-3. **Volume Bonus Application**: Commission rates increase based on seller's total sales volume
-4. **Role Multiplier**: Traders receive 1.2x commission compared to Distributors
 
 ### Referral System
 

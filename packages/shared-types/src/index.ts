@@ -5,6 +5,7 @@ export * from './enums';
 export * from './types/common';
 export * from './types/auth';
 export * from './types/ecommerce';
+export * from './types/user';
 
 // Export all models
 export * from './models';
