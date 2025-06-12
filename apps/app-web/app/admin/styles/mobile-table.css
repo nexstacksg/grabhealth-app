@@ -1,0 +1,57 @@
+/* Force horizontal scrollbars on mobile tables */
+.mobile-table-container {
+  width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  display: block !important;
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+/* Set minimum width to force horizontal scrolling */
+.mobile-table {
+  min-width: 800px !important;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Custom scrollbar styling */
+.mobile-table-container::-webkit-scrollbar {
+  height: 8px !important;
+  display: block !important;
+}
+
+.mobile-table-container::-webkit-scrollbar-thumb {
+  background-color: #0C99B4 !important;
+  border-radius: 4px !important;
+}
+
+.mobile-table-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1 !important;
+}
+
+/* Table header styling */
+.mobile-table th {
+  background-color: #f9fafb;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Table cell styling */
+.mobile-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .mobile-table-container {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    border-radius: 0;
+  }
+}
