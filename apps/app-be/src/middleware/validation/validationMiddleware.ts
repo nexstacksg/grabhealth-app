@@ -29,3 +29,6 @@ export const validate = (
 
   next();
 };
+
+// Alias for consistency with route files
+export const validateRequest = validate;

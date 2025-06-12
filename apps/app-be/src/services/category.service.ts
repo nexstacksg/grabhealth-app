@@ -292,4 +292,22 @@ export class CategoryService {
 
     return finalSlug;
   }
+
+  async reorderCategories(
+    categoryOrders: Array<{ id: number; sortOrder: number }>
+  ): Promise<void> {
+    try {
+      // Update all categories in a transaction
+      await this.prisma.$transaction(
+        categoryOrders.map(({ id, sortOrder }) =>
+          this.prisma.category.update({
+            where: { id },
+            data: { sortOrder },
+          })
+        )
+      );
+    } catch (_error) {
+      throw new AppError("Failed to reorder categories", 500);
+    }
+  }
 }

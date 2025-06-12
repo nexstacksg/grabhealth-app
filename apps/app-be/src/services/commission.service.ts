@@ -333,4 +333,165 @@ export class CommissionService {
       throw new AppError("Failed to update commission status", 500);
     }
   }
+
+  async getCommissionDetails(commissionId: number): Promise<Commission | null> {
+    try {
+      return await this.prisma.commission.findUnique({
+        where: { id: commissionId },
+        include: {
+          recipient: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          order: {
+            select: {
+              id: true,
+              total: true,
+              createdAt: true,
+            },
+          },
+        },
+      });
+    } catch (_error) {
+      throw new AppError("Failed to get commission details", 500);
+    }
+  }
+
+  async getNetworkStats(userId: string): Promise<any> {
+    try {
+      const network = await this.getUserNetwork(userId);
+
+      let totalMembers = 0;
+      let totalSales = 0;
+      const levelStats: any[] = [];
+
+      // Calculate stats for network
+      const allMembers = new Set<string>();
+
+      // Collect all members from downlines recursively
+      const collectMembers = (node: INetworkNode, level: number) => {
+        allMembers.add(node.userId);
+        if (node.downlines && node.downlines.length > 0) {
+          for (const downline of node.downlines) {
+            collectMembers(downline, level + 1);
+          }
+        }
+      };
+
+      collectMembers(network, 1);
+      totalMembers = allMembers.size;
+
+      // Get total sales
+      const salesData = await this.prisma.order.aggregate({
+        where: {
+          userId: { in: Array.from(allMembers) },
+          status: "COMPLETED",
+        },
+        _sum: { total: true },
+      });
+
+      totalSales = salesData._sum.total || 0;
+
+      return {
+        totalMembers,
+        totalSales,
+        levels: levelStats,
+      };
+    } catch (_error) {
+      throw new AppError("Failed to get network stats", 500);
+    }
+  }
+
+  async processPendingCommissions(
+    commissionIds: number[]
+  ): Promise<Commission[]> {
+    try {
+      const results = [];
+
+      for (const id of commissionIds) {
+        const commission = await this.prisma.commission.update({
+          where: { id },
+          data: {
+            status: CommissionStatus.PAID,
+          },
+        });
+        results.push(commission);
+      }
+
+      return results;
+    } catch (_error) {
+      throw new AppError("Failed to process commissions", 500);
+    }
+  }
+
+  async getCommissionSummary(filters: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<any> {
+    try {
+      const where: any = {};
+
+      if (filters.startDate && filters.endDate) {
+        where.createdAt = {
+          gte: filters.startDate,
+          lte: filters.endDate,
+        };
+      }
+
+      const [totalPaid, totalPending, totalCommissions, topEarners] =
+        await Promise.all([
+          this.prisma.commission.aggregate({
+            where: { ...where, status: CommissionStatus.PAID },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: { ...where, status: CommissionStatus.PENDING },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.count({ where }),
+          this.prisma.commission.groupBy({
+            by: ["recipientId"],
+            where,
+            _sum: { amount: true },
+            orderBy: { _sum: { amount: "desc" } },
+            take: 10,
+          }),
+        ]);
+
+      // Get user details for top earners
+      const topEarnersWithDetails = await Promise.all(
+        topEarners.map(async (earner) => {
+          const user = await this.prisma.user.findUnique({
+            where: { id: earner.recipientId },
+            select: { id: true, email: true, firstName: true, lastName: true },
+          });
+          return {
+            user,
+            totalEarned: earner._sum?.amount || 0,
+          };
+        })
+      );
+
+      return {
+        totalPaid: totalPaid._sum.amount || 0,
+        totalPending: totalPending._sum.amount || 0,
+        totalCommissions,
+        topEarners: topEarnersWithDetails,
+      };
+    } catch (_error) {
+      throw new AppError("Failed to get commission summary", 500);
+    }
+  }
 }

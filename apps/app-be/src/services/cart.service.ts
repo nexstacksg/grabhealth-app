@@ -77,6 +77,31 @@ export class CartService {
     delete CartService.carts[userId];
   }
 
+  async syncCart(userId: string, items: any[]): Promise<ICart> {
+    const cart = await this.getCart(userId);
+
+    // Merge items from client with existing cart
+    for (const newItem of items) {
+      const existingIndex = cart.items.findIndex(
+        (item) => item.productId === newItem.productId
+      );
+
+      if (existingIndex >= 0) {
+        // Update quantity if item exists
+        cart.items[existingIndex].quantity += newItem.quantity;
+      } else {
+        // Add new item
+        cart.items.push({
+          productId: newItem.productId,
+          quantity: newItem.quantity,
+          price: newItem.price || 0,
+        });
+      }
+    }
+
+    return this.updateCartTotals(cart);
+  }
+
   private updateCartTotals(cart: ICart): ICart {
     // In a real implementation, this would fetch product prices from database
     // For now, we'll just update the structure
