@@ -207,6 +207,90 @@ npm run dev
 
 The API will be available at `http://localhost:4000`
 
+## Quick Start - Testing the API
+
+### 1. Login as Admin
+
+```bash
+# Login as Super Admin
+curl -X POST http://localhost:4000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "super.admin@grabhealth.com",
+    "password": "TestPass@123"
+  }'
+```
+
+Save the `accessToken` from the response for authenticated requests.
+
+### 2. Test Product Search
+
+```bash
+# Get all products (no auth required)
+curl -X GET "http://localhost:4000/api/v1/products/search?limit=10"
+
+# Get product by ID
+curl -X GET http://localhost:4000/api/v1/products/1
+```
+
+### 3. Test Order Creation
+
+```bash
+# Create an order (requires auth)
+curl -X POST http://localhost:4000/api/v1/orders \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"productId": 1, "quantity": 2},
+      {"productId": 5, "quantity": 1}
+    ],
+    "paymentMethod": "CREDIT_CARD",
+    "shippingAddress": "123 Test St, City, State 12345"
+  }'
+```
+
+### 4. Check MLM Commissions
+
+```bash
+# Get commission stats (requires auth)
+curl -X GET http://localhost:4000/api/v1/commissions/stats \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Seeded Data
+
+After running `bun run prisma:seed`, the following test data is available:
+
+### Categories (4)
+- Vitamins & Supplements
+- Personal Care
+- Fitness & Sports
+- Herbal Products
+
+### Products (10)
+1. Vitamin C 1000mg - $29.99
+2. Multivitamin Complex - $39.99
+3. Omega-3 Fish Oil - $34.99
+4. Organic Shampoo - $19.99
+5. Hand Sanitizer Pack - $14.99
+6. Protein Powder - Vanilla - $49.99
+7. Pre-Workout Energy - $39.99
+8. Herbal Tea Collection - $24.99
+9. Turmeric Capsules - $29.99
+10. Ginseng Extract - $44.99
+
+### Sample Orders
+- Order #1: User1's completed order with commissions distributed
+- Order #2: User2's processing order
+- Order #3: Sales1's pending order
+
+### Commission Structure
+- Level 1 (Direct Sales): 10% commission
+- Level 2: 5% commission
+- Level 3: 3% commission
+- Level 4: 2% commission
+
 ## Quick Start - E-Commerce Setup
 
 After completing the installation steps above:
@@ -560,15 +644,51 @@ src/
 
 ## Test Credentials
 
-After running the seed script, you can use these credentials:
+After running the seed script (`bun run prisma:seed`), you can use these credentials:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | super.admin@example.com | NewPass@123 |
-| Manager | manager@example.com | NewPass@123 |
-| User | user1@example.com | NewPass@123 |
-| User | user2@example.com | NewPass@123 |
-| User (Unverified) | user3@example.com | NewPass@123 |
+### Admin & Management Accounts
+
+| Role | Email | Password | Description |
+|------|-------|----------|-------------|
+| Super Admin | super.admin@grabhealth.com | TestPass@123 | Full system access |
+| Company | company@grabhealth.com | TestPass@123 | Top-level MLM account |
+| Manager 1 | manager1@grabhealth.com | TestPass@123 | Manager with downline network |
+| Manager 2 | manager2@grabhealth.com | TestPass@123 | Manager with downline network |
+
+### Sales & Leader Accounts
+
+| Role | Email | Password | Description |
+|------|-------|----------|-------------|
+| Leader 1 | leader1@grabhealth.com | TestPass@123 | Under Manager 1 |
+| Leader 2 | leader2@grabhealth.com | TestPass@123 | Under Manager 1 |
+| Leader 3 | leader3@grabhealth.com | TestPass@123 | Under Manager 2 |
+| Sales 1 | sales1@grabhealth.com | TestPass@123 | Under Leader 1 |
+| Sales 2 | sales2@grabhealth.com | TestPass@123 | Under Leader 1 |
+| Sales 3 | sales3@grabhealth.com | TestPass@123 | Under Leader 2 |
+
+### Regular User Accounts
+
+| Role | Email | Password | Description |
+|------|-------|----------|-------------|
+| User 1 | user1@example.com | TestPass@123 | Has existing order |
+| User 2 | user2@example.com | TestPass@123 | Regular user |
+| User 3 | user3@example.com | TestPass@123 | Regular user |
+
+### MLM Network Structure
+```
+Company (company@grabhealth.com)
+├── Manager 1 (manager1@grabhealth.com)
+│   ├── Leader 1 (leader1@grabhealth.com)
+│   │   ├── Sales 1 (sales1@grabhealth.com)
+│   │   │   ├── User 1 (user1@example.com)
+│   │   │   └── User 2 (user2@example.com)
+│   │   └── Sales 2 (sales2@grabhealth.com)
+│   │       └── User 3 (user3@example.com)
+│   └── Leader 2 (leader2@grabhealth.com)
+│       └── Sales 3 (sales3@grabhealth.com)
+└── Manager 2 (manager2@grabhealth.com)
+    └── Leader 3 (leader3@grabhealth.com)
+```
 
 ## Environment Variables
 

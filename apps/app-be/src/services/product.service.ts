@@ -65,7 +65,7 @@ export class ProductService {
         }
       }
 
-      return await this.prisma.product.update({
+      const updatedProduct = await this.prisma.product.update({
         where: { id },
         data: {
           ...(data.name && { name: data.name }),
@@ -82,6 +82,7 @@ export class ProductService {
           category: true,
         },
       });
+      return updatedProduct as any as IProduct;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to update product", 500);
@@ -90,13 +91,14 @@ export class ProductService {
 
   async getProduct(id: number): Promise<IProduct | null> {
     try {
-      return await this.prisma.product.findUnique({
+      const result = await this.prisma.product.findUnique({
         where: { id },
         include: {
           category: true,
           productCommissions: true,
         },
       });
+      return result as any as IProduct | null;
     } catch (_error) {
       throw new AppError("Failed to get product", 500);
     }
@@ -218,7 +220,7 @@ export class ProductService {
 
   async getProductsByCategory(categoryId: number): Promise<IProduct[]> {
     try {
-      return await this.prisma.product.findMany({
+      const products = await this.prisma.product.findMany({
         where: {
           categoryId,
           status: ProductStatus.ACTIVE,
@@ -229,6 +231,7 @@ export class ProductService {
         },
         orderBy: { createdAt: "desc" },
       });
+      return products as any as IProduct[];
     } catch (_error) {
       throw new AppError("Failed to get products by category", 500);
     }
@@ -236,7 +239,7 @@ export class ProductService {
 
   async getFeaturedProducts(limit: number = 8): Promise<IProduct[]> {
     try {
-      return await this.prisma.product.findMany({
+      const products = await this.prisma.product.findMany({
         where: {
           status: ProductStatus.ACTIVE,
           inStock: true,
@@ -244,6 +247,7 @@ export class ProductService {
         orderBy: { createdAt: "desc" },
         take: limit,
       });
+      return products as any as IProduct[];
     } catch (_error) {
       throw new AppError("Failed to get featured products", 500);
     }
@@ -251,13 +255,14 @@ export class ProductService {
 
   async updateStock(id: number, inStock: boolean): Promise<IProduct> {
     try {
-      return await this.prisma.product.update({
+      const updatedProduct = await this.prisma.product.update({
         where: { id },
         data: {
           inStock,
           status: inStock ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK,
         },
       });
+      return updatedProduct as any as IProduct;
     } catch (_error) {
       throw new AppError("Failed to update stock", 500);
     }
