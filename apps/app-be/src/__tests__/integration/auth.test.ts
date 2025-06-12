@@ -118,9 +118,7 @@ describe("Auth API Integration Tests", () => {
 
       // Make 5 failed attempts
       for (let i = 0; i < 5; i++) {
-        await request(app)
-          .post("/api/v1/auth/login")
-          .send(loginData);
+        await request(app).post("/api/v1/auth/login").send(loginData);
       }
 
       // 6th attempt should be rate limited

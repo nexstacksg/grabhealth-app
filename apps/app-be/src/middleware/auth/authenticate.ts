@@ -40,7 +40,7 @@ export const authenticate = async (
     // Try to get user from cache first
     const cacheKey = cacheService.generateKey("user", payload.userId);
     const cachedUser = await cacheService.get(cacheKey);
-    
+
     let user;
     if (cachedUser) {
       user = JSON.parse(cachedUser);

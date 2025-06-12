@@ -1,4 +1,34 @@
-import { ProductStatus, ProductCategory } from '../enums/product';
+import { ProductStatus } from '../enums/product';
+
+export interface ICategory {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  parentId?: number;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+  parent?: ICategory;
+  children?: ICategory[];
+  products?: IProduct[];
+}
+
+export interface ICategoryCreate {
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  parentId?: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface ICategoryUpdate extends Partial<ICategoryCreate> {
+  id: number;
+}
 
 export interface IProduct {
   id: number;
@@ -7,7 +37,8 @@ export interface IProduct {
   price: number;
   discountEssential: number;
   discountPremium: number;
-  category?: string;
+  categoryId?: number;
+  category?: ICategory;
   imageUrl?: string;
   inStock: boolean;
   status?: ProductStatus;
@@ -21,7 +52,7 @@ export interface IProductCreate {
   price: number;
   discountEssential?: number;
   discountPremium?: number;
-  category?: string;
+  categoryId?: number;
   imageUrl?: string;
   inStock?: boolean;
   status?: ProductStatus;

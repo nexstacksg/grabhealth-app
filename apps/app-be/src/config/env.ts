@@ -43,7 +43,9 @@ const envSchema = Joi.object({
   MAX_FILE_SIZE: Joi.number().default(10 * 1024 * 1024), // 10MB
 
   // Redis (optional for caching - falls back to in-memory)
-  REDIS_URL: Joi.string().optional().description("Redis URL for caching (optional)"),
+  REDIS_URL: Joi.string()
+    .optional()
+    .description("Redis URL for caching (optional)"),
   REDIS_TTL: Joi.number().default(300), // 5 minutes
 }).unknown();
 

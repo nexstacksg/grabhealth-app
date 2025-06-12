@@ -71,6 +71,28 @@ model AuditLog {
 
 // ==================== E-COMMERCE MODELS ====================
 
+// Category Model
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  parentId    Int?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([slug])
+  @@index([parentId])
+}
+
 // Product Model
 model Product {
   id                Int      @id @default(autoincrement())
@@ -79,7 +101,7 @@ model Product {
   price             Float
   discountEssential Float    @default(0.10)
   discountPremium   Float    @default(0.25)
-  category          String?
+  categoryId        Int?
   imageUrl          String?
   inStock           Boolean  @default(true)
   status            String   @default("ACTIVE") // ACTIVE, INACTIVE, OUT_OF_STOCK, DISCONTINUED
@@ -87,10 +109,11 @@ model Product {
   updatedAt         DateTime @updatedAt
 
   // Relations
+  category           Category? @relation(fields: [categoryId], references: [id])
   orderItems         OrderItem[]
   productCommissions ProductCommissionTier[]
 
-  @@index([category])
+  @@index([categoryId])
   @@index([status])
 }
 

@@ -55,7 +55,13 @@ const router = Router();
  *       409:
  *         description: User already exists
  */
-router.post("/register", createAccountLimiter, registerSchema, validate, authController.register);
+router.post(
+  "/register",
+  createAccountLimiter,
+  registerSchema,
+  validate,
+  authController.register
+);
 
 /**
  * @swagger
@@ -175,7 +181,13 @@ router.get("/profile", authenticate, authController.getProfile);
  *       400:
  *         description: Invalid token
  */
-router.post("/verify-email", emailVerificationLimiter, emailVerificationSchema, validate, authController.verifyEmail);
+router.post(
+  "/verify-email",
+  emailVerificationLimiter,
+  emailVerificationSchema,
+  validate,
+  authController.verifyEmail
+);
 
 /**
  * @swagger
@@ -200,7 +212,13 @@ router.post("/verify-email", emailVerificationLimiter, emailVerificationSchema, 
  *       200:
  *         description: Password reset email sent if email exists
  */
-router.post("/request-password-reset", passwordResetLimiter, passwordResetRequestSchema, validate, authController.requestPasswordReset);
+router.post(
+  "/request-password-reset",
+  passwordResetLimiter,
+  passwordResetRequestSchema,
+  validate,
+  authController.requestPasswordReset
+);
 
 /**
  * @swagger
@@ -231,6 +249,12 @@ router.post("/request-password-reset", passwordResetLimiter, passwordResetReques
  *       400:
  *         description: Invalid or expired token
  */
-router.post("/reset-password", passwordResetLimiter, passwordResetSchema, validate, authController.resetPassword);
+router.post(
+  "/reset-password",
+  passwordResetLimiter,
+  passwordResetSchema,
+  validate,
+  authController.resetPassword
+);
 
 export default router;

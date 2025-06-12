@@ -1,8 +1,14 @@
-import { PrismaClient, Order, OrderItem, Prisma } from '@prisma/client';
-import { IOrderCreate, IOrderUpdate, OrderStatus, PaymentStatus, ICart } from '@app/shared-types';
-import { AppError } from '../middlewares/error';
-import { CartService } from './cart.service';
-import { CommissionService } from './commission.service';
+import { PrismaClient, Order, OrderItem, Prisma } from "@prisma/client";
+import {
+  IOrderCreate,
+  IOrderUpdate,
+  OrderStatus,
+  PaymentStatus,
+  ICart,
+} from "@app/shared-types";
+import { AppError } from "../middlewares/error";
+import { CartService } from "./cart.service";
+import { CommissionService } from "./commission.service";
 
 export class OrderService {
   private cartService: CartService;
@@ -18,11 +24,11 @@ export class OrderService {
       // Validate user exists
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: { membership: { include: { tier: true } } }
+        include: { membership: { include: { tier: true } } },
       });
 
       if (!user) {
-        throw new AppError('User not found', 404);
+        throw new AppError("User not found", 404);
       }
 
       // Start transaction
@@ -34,7 +40,7 @@ export class OrderService {
 
         for (const item of data.items) {
           const product = await tx.product.findUnique({
-            where: { id: item.productId }
+            where: { id: item.productId },
           });
 
           if (!product) {
@@ -61,7 +67,7 @@ export class OrderService {
             productId: item.productId,
             quantity: item.quantity,
             price: itemPrice,
-            discount: itemDiscount
+            discount: itemDiscount,
           });
         }
 
@@ -82,21 +88,24 @@ export class OrderService {
             notes: data.notes,
             items: {
               createMany: {
-                data: orderItems
-              }
-            }
+                data: orderItems,
+              },
+            },
           },
           include: {
             items: {
               include: {
-                product: true
-              }
-            }
-          }
+                product: true,
+              },
+            },
+          },
         });
 
         // Process commission asynchronously
-        if (order.status === OrderStatus.COMPLETED || order.paymentStatus === PaymentStatus.PAID) {
+        if (
+          order.status === OrderStatus.COMPLETED ||
+          order.paymentStatus === PaymentStatus.PAID
+        ) {
           await this.commissionService.processOrderCommission(order.id);
         }
 
@@ -104,18 +113,18 @@ export class OrderService {
       });
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to create order', 500);
+      throw new AppError("Failed to create order", 500);
     }
   }
 
   async updateOrder(id: number, data: IOrderUpdate): Promise<Order> {
     try {
       const order = await this.prisma.order.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!order) {
-        throw new AppError('Order not found', 404);
+        throw new AppError("Order not found", 404);
       }
 
       const updatedOrder = await this.prisma.order.update({
@@ -123,35 +132,40 @@ export class OrderService {
         data: {
           ...(data.status && { status: data.status }),
           ...(data.paymentStatus && { paymentStatus: data.paymentStatus }),
-          ...(data.shippingAddress && { shippingAddress: data.shippingAddress }),
+          ...(data.shippingAddress && {
+            shippingAddress: data.shippingAddress,
+          }),
           ...(data.billingAddress && { billingAddress: data.billingAddress }),
-          ...(data.notes !== undefined && { notes: data.notes })
+          ...(data.notes !== undefined && { notes: data.notes }),
         },
         include: {
           items: {
             include: {
-              product: true
-            }
-          }
-        }
+              product: true,
+            },
+          },
+        },
       });
 
       // Process commission if order is completed
-      if (data.status === OrderStatus.COMPLETED || data.paymentStatus === PaymentStatus.PAID) {
+      if (
+        data.status === OrderStatus.COMPLETED ||
+        data.paymentStatus === PaymentStatus.PAID
+      ) {
         await this.commissionService.processOrderCommission(id);
       }
 
       return updatedOrder;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to update order', 500);
+      throw new AppError("Failed to update order", 500);
     }
   }
 
   async getOrder(id: number, userId?: string): Promise<Order | null> {
     try {
       const where: Prisma.OrderWhereUniqueInput = { id };
-      
+
       const order = await this.prisma.order.findUnique({
         where,
         include: {
@@ -160,31 +174,35 @@ export class OrderService {
               id: true,
               email: true,
               firstName: true,
-              lastName: true
-            }
+              lastName: true,
+            },
           },
           items: {
             include: {
-              product: true
-            }
+              product: true,
+            },
           },
-          commissions: true
-        }
+          commissions: true,
+        },
       });
 
       // If userId is provided, ensure the order belongs to the user
       if (userId && order && order.userId !== userId) {
-        throw new AppError('Unauthorized access to order', 403);
+        throw new AppError("Unauthorized access to order", 403);
       }
 
       return order;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to get order', 500);
+      throw new AppError("Failed to get order", 500);
     }
   }
 
-  async getUserOrders(userId: string, page: number = 1, limit: number = 10): Promise<{
+  async getUserOrders(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
     orders: Order[];
     total: number;
     page: number;
@@ -199,25 +217,25 @@ export class OrderService {
           include: {
             items: {
               include: {
-                product: true
-              }
-            }
+                product: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           skip,
-          take: limit
+          take: limit,
         }),
-        this.prisma.order.count({ where: { userId } })
+        this.prisma.order.count({ where: { userId } }),
       ]);
 
       return {
         orders,
         total,
         page,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      throw new AppError('Failed to get user orders', 500);
+      throw new AppError("Failed to get user orders", 500);
     }
   }
 
@@ -235,18 +253,26 @@ export class OrderService {
     totalPages: number;
   }> {
     try {
-      const { status, paymentStatus, startDate, endDate, page = 1, limit = 10 } = filters;
+      const {
+        status,
+        paymentStatus,
+        startDate,
+        endDate,
+        page = 1,
+        limit = 10,
+      } = filters;
       const skip = (page - 1) * limit;
 
       const where: Prisma.OrderWhereInput = {
         ...(status && { status }),
         ...(paymentStatus && { paymentStatus }),
-        ...(startDate && endDate && {
-          createdAt: {
-            gte: startDate,
-            lte: endDate
-          }
-        })
+        ...(startDate &&
+          endDate && {
+            createdAt: {
+              gte: startDate,
+              lte: endDate,
+            },
+          }),
       };
 
       const [orders, total] = await Promise.all([
@@ -258,26 +284,26 @@ export class OrderService {
                 id: true,
                 email: true,
                 firstName: true,
-                lastName: true
-              }
+                lastName: true,
+              },
             },
-            items: true
+            items: true,
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           skip,
-          take: limit
+          take: limit,
         }),
-        this.prisma.order.count({ where })
+        this.prisma.order.count({ where }),
       ]);
 
       return {
         orders,
         total,
         page,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      throw new AppError('Failed to get orders', 500);
+      throw new AppError("Failed to get orders", 500);
     }
   }
 
@@ -286,23 +312,23 @@ export class OrderService {
       const order = await this.getOrder(id, userId);
 
       if (!order) {
-        throw new AppError('Order not found', 404);
+        throw new AppError("Order not found", 404);
       }
 
       if (order.status !== OrderStatus.PENDING) {
-        throw new AppError('Only pending orders can be cancelled', 400);
+        throw new AppError("Only pending orders can be cancelled", 400);
       }
 
       return await this.prisma.order.update({
         where: { id },
         data: {
           status: OrderStatus.CANCELLED,
-          paymentStatus: PaymentStatus.REFUNDED
-        }
+          paymentStatus: PaymentStatus.REFUNDED,
+        },
       });
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to cancel order', 500);
+      throw new AppError("Failed to cancel order", 500);
     }
   }
 
@@ -315,54 +341,58 @@ export class OrderService {
     try {
       const where = userId ? { userId } : {};
 
-      const [totalOrders, totalSpent, pendingOrders, completedOrders] = await Promise.all([
-        this.prisma.order.count({ where }),
-        this.prisma.order.aggregate({
-          where: { ...where, status: OrderStatus.COMPLETED },
-          _sum: { total: true }
-        }),
-        this.prisma.order.count({ 
-          where: { ...where, status: OrderStatus.PENDING } 
-        }),
-        this.prisma.order.count({ 
-          where: { ...where, status: OrderStatus.COMPLETED } 
-        })
-      ]);
+      const [totalOrders, totalSpent, pendingOrders, completedOrders] =
+        await Promise.all([
+          this.prisma.order.count({ where }),
+          this.prisma.order.aggregate({
+            where: { ...where, status: OrderStatus.COMPLETED },
+            _sum: { total: true },
+          }),
+          this.prisma.order.count({
+            where: { ...where, status: OrderStatus.PENDING },
+          }),
+          this.prisma.order.count({
+            where: { ...where, status: OrderStatus.COMPLETED },
+          }),
+        ]);
 
       return {
         totalOrders,
         totalSpent: totalSpent._sum.total || 0,
         pendingOrders,
-        completedOrders
+        completedOrders,
       };
     } catch (error) {
-      throw new AppError('Failed to get order stats', 500);
+      throw new AppError("Failed to get order stats", 500);
     }
   }
 
-  async checkoutFromCart(userId: string, checkoutData: {
-    paymentMethod: string;
-    shippingAddress?: string;
-    billingAddress?: string;
-    notes?: string;
-  }): Promise<Order> {
+  async checkoutFromCart(
+    userId: string,
+    checkoutData: {
+      paymentMethod: string;
+      shippingAddress?: string;
+      billingAddress?: string;
+      notes?: string;
+    }
+  ): Promise<Order> {
     try {
       // Get cart items
       const cart = await this.cartService.getCart(userId);
-      
+
       if (!cart.items || cart.items.length === 0) {
-        throw new AppError('Cart is empty', 400);
+        throw new AppError("Cart is empty", 400);
       }
 
       // Create order from cart
       const orderData: IOrderCreate = {
         userId,
-        items: cart.items.map(item => ({
+        items: cart.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          price: item.price || 0
+          price: item.price || 0,
         })),
-        ...checkoutData
+        ...checkoutData,
       };
 
       const order = await this.createOrder(userId, orderData);
@@ -373,7 +403,7 @@ export class OrderService {
       return order;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to checkout', 500);
+      throw new AppError("Failed to checkout", 500);
     }
   }
 }

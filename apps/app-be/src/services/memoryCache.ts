@@ -11,14 +11,17 @@ class MemoryCacheService {
 
   constructor() {
     // Clean up expired items every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   async get<T>(key: string): Promise<T | null> {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       return null;
     }
@@ -33,7 +36,7 @@ class MemoryCacheService {
 
   async set<T>(key: string, value: T, ttl: number = 300): Promise<boolean> {
     try {
-      const expiresAt = Date.now() + (ttl * 1000);
+      const expiresAt = Date.now() + ttl * 1000;
       this.cache.set(key, { value, expiresAt });
       return true;
     } catch (error) {
@@ -49,12 +52,12 @@ class MemoryCacheService {
   async exists(key: string): Promise<boolean> {
     const item = this.cache.get(key);
     if (!item) return false;
-    
+
     if (Date.now() > item.expiresAt) {
       this.cache.delete(key);
       return false;
     }
-    
+
     return true;
   }
 
@@ -65,14 +68,14 @@ class MemoryCacheService {
   private cleanup(): void {
     const now = Date.now();
     let cleaned = 0;
-    
+
     for (const [key, item] of this.cache.entries()) {
       if (now > item.expiresAt) {
         this.cache.delete(key);
         cleaned++;
       }
     }
-    
+
     if (cleaned > 0) {
       logger.debug(`Memory cache cleanup: removed ${cleaned} expired items`);
     }
@@ -81,7 +84,7 @@ class MemoryCacheService {
   getStats() {
     return {
       size: this.cache.size,
-      memory: process.memoryUsage()
+      memory: process.memoryUsage(),
     };
   }
 

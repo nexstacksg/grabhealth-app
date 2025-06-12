@@ -37,7 +37,9 @@ describe("Validation Middleware", () => {
       isEmpty: jest.fn().mockReturnValue(true),
       array: jest.fn().mockReturnValue([]),
     };
-    (validationResult as unknown as jest.Mock).mockReturnValue(mockValidationResult);
+    (validationResult as unknown as jest.Mock).mockReturnValue(
+      mockValidationResult
+    );
 
     validate(mockReq as Request, mockRes as Response, mockNext);
 
@@ -65,7 +67,9 @@ describe("Validation Middleware", () => {
       isEmpty: jest.fn().mockReturnValue(false),
       array: jest.fn().mockReturnValue(errors),
     };
-    (validationResult as unknown as jest.Mock).mockReturnValue(mockValidationResult);
+    (validationResult as unknown as jest.Mock).mockReturnValue(
+      mockValidationResult
+    );
 
     expect(() => {
       validate(mockReq as Request, mockRes as Response, mockNext);

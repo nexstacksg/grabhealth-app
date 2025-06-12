@@ -29,6 +29,7 @@ export interface CheckoutResponse {
 export interface ProductSearchParams {
   query?: string;
   category?: string;
+  categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;

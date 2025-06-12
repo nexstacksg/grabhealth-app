@@ -210,7 +210,10 @@ export class AuthService {
       }
 
       // Verify the refresh token hash
-      const isValidToken = await verifyPassword(refreshToken, user.refreshToken || "");
+      const isValidToken = await verifyPassword(
+        refreshToken,
+        user.refreshToken || ""
+      );
       if (!isValidToken) {
         throw new ApiError(
           "Invalid refresh token",

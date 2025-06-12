@@ -1,6 +1,11 @@
-import { PrismaClient, Commission, UserRelationship } from '@prisma/client';
-import { ICommissionCreate, CommissionStatus, CommissionType, INetworkNode } from '@app/shared-types';
-import { AppError } from '../middlewares/error';
+import { PrismaClient, Commission, UserRelationship } from "@prisma/client";
+import {
+  ICommissionCreate,
+  CommissionStatus,
+  CommissionType,
+  INetworkNode,
+} from "@app/shared-types";
+import { AppError } from "../middlewares/error";
 
 export class CommissionService {
   constructor(private prisma: PrismaClient) {}
@@ -15,21 +20,21 @@ export class CommissionService {
             include: {
               relationships: {
                 include: {
-                  upline: true
-                }
-              }
-            }
+                  upline: true,
+                },
+              },
+            },
           },
           items: {
             include: {
-              product: true
-            }
-          }
-        }
+              product: true,
+            },
+          },
+        },
       });
 
       if (!order) {
-        throw new AppError('Order not found', 404);
+        throw new AppError("Order not found", 404);
       }
 
       const commissions: Commission[] = [];
@@ -51,9 +56,10 @@ export class CommissionService {
               amount: commissionAmount,
               commissionRate,
               relationshipLevel: level + 1,
-              type: level === 0 ? CommissionType.DIRECT : CommissionType.INDIRECT,
-              status: CommissionStatus.PENDING
-            }
+              type:
+                level === 0 ? CommissionType.DIRECT : CommissionType.INDIRECT,
+              status: CommissionStatus.PENDING,
+            },
           });
           commissions.push(commission);
         }
@@ -62,18 +68,18 @@ export class CommissionService {
       return commissions;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to process commission', 500);
+      throw new AppError("Failed to process commission", 500);
     }
   }
 
   private getCommissionRateByLevel(level: number): number {
     // Default commission structure - should be configurable
     const rates: { [key: number]: number } = {
-      1: 0.10, // 10% for direct referral
+      1: 0.1, // 10% for direct referral
       2: 0.07, // 7% for level 2
       3: 0.05, // 5% for level 3
       4: 0.03, // 3% for level 4
-      5: 0.02  // 2% for level 5
+      5: 0.02, // 2% for level 5
     };
     return rates[level] || 0;
   }
@@ -85,7 +91,7 @@ export class CommissionService {
     for (let i = 0; i < maxLevels; i++) {
       const relationship = await this.prisma.userRelationship.findFirst({
         where: { userId: currentUserId },
-        include: { upline: true }
+        include: { upline: true },
       });
 
       if (!relationship || !relationship.uplineId) {
@@ -99,11 +105,12 @@ export class CommissionService {
     return uplineChain;
   }
 
-  async getUserCommissions(userId: string, type: 'earned' | 'generated' = 'earned'): Promise<Commission[]> {
+  async getUserCommissions(
+    userId: string,
+    type: "earned" | "generated" = "earned"
+  ): Promise<Commission[]> {
     try {
-      const where = type === 'earned' 
-        ? { recipientId: userId }
-        : { userId };
+      const where = type === "earned" ? { recipientId: userId } : { userId };
 
       return await this.prisma.commission.findMany({
         where,
@@ -114,22 +121,22 @@ export class CommissionService {
               id: true,
               email: true,
               firstName: true,
-              lastName: true
-            }
+              lastName: true,
+            },
           },
           recipient: {
             select: {
               id: true,
               email: true,
               firstName: true,
-              lastName: true
-            }
-          }
+              lastName: true,
+            },
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
       });
     } catch (error) {
-      throw new AppError('Failed to get user commissions', 500);
+      throw new AppError("Failed to get user commissions", 500);
     }
   }
 
@@ -146,47 +153,48 @@ export class CommissionService {
       const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-      const [totalEarned, totalPending, totalPaid, thisMonth, lastMonth] = await Promise.all([
-        this.prisma.commission.aggregate({
-          where: { recipientId: userId },
-          _sum: { amount: true }
-        }),
-        this.prisma.commission.aggregate({
-          where: { recipientId: userId, status: CommissionStatus.PENDING },
-          _sum: { amount: true }
-        }),
-        this.prisma.commission.aggregate({
-          where: { recipientId: userId, status: CommissionStatus.PAID },
-          _sum: { amount: true }
-        }),
-        this.prisma.commission.aggregate({
-          where: {
-            recipientId: userId,
-            createdAt: { gte: thisMonthStart }
-          },
-          _sum: { amount: true }
-        }),
-        this.prisma.commission.aggregate({
-          where: {
-            recipientId: userId,
-            createdAt: {
-              gte: lastMonthStart,
-              lte: lastMonthEnd
-            }
-          },
-          _sum: { amount: true }
-        })
-      ]);
+      const [totalEarned, totalPending, totalPaid, thisMonth, lastMonth] =
+        await Promise.all([
+          this.prisma.commission.aggregate({
+            where: { recipientId: userId },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: { recipientId: userId, status: CommissionStatus.PENDING },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: { recipientId: userId, status: CommissionStatus.PAID },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: {
+              recipientId: userId,
+              createdAt: { gte: thisMonthStart },
+            },
+            _sum: { amount: true },
+          }),
+          this.prisma.commission.aggregate({
+            where: {
+              recipientId: userId,
+              createdAt: {
+                gte: lastMonthStart,
+                lte: lastMonthEnd,
+              },
+            },
+            _sum: { amount: true },
+          }),
+        ]);
 
       return {
         totalEarned: totalEarned._sum.amount || 0,
         totalPending: totalPending._sum.amount || 0,
         totalPaid: totalPaid._sum.amount || 0,
         thisMonth: thisMonth._sum.amount || 0,
-        lastMonth: lastMonth._sum.amount || 0
+        lastMonth: lastMonth._sum.amount || 0,
       };
     } catch (error) {
-      throw new AppError('Failed to get commission stats', 500);
+      throw new AppError("Failed to get commission stats", 500);
     }
   }
 
@@ -196,12 +204,12 @@ export class CommissionService {
         where: { id: userId },
         include: {
           orders: true,
-          commissionsReceived: true
-        }
+          commissionsReceived: true,
+        },
       });
 
       if (!user) {
-        throw new AppError('User not found', 404);
+        throw new AppError("User not found", 404);
       }
 
       const network = await this.buildNetworkTree(userId, 1, 5);
@@ -212,16 +220,23 @@ export class CommissionService {
         userEmail: user.email,
         level: 0,
         totalSales: user.orders.reduce((sum, order) => sum + order.total, 0),
-        totalCommissions: user.commissionsReceived.reduce((sum, c) => sum + c.amount, 0),
-        downlines: network
+        totalCommissions: user.commissionsReceived.reduce(
+          (sum, c) => sum + c.amount,
+          0
+        ),
+        downlines: network,
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to get user network', 500);
+      throw new AppError("Failed to get user network", 500);
     }
   }
 
-  private async buildNetworkTree(uplineId: string, currentLevel: number, maxLevel: number): Promise<INetworkNode[]> {
+  private async buildNetworkTree(
+    uplineId: string,
+    currentLevel: number,
+    maxLevel: number
+  ): Promise<INetworkNode[]> {
     if (currentLevel > maxLevel) {
       return [];
     }
@@ -232,75 +247,91 @@ export class CommissionService {
         user: {
           include: {
             orders: true,
-            commissionsReceived: true
-          }
-        }
-      }
+            commissionsReceived: true,
+          },
+        },
+      },
     });
 
     const nodes: INetworkNode[] = [];
 
     for (const rel of relationships) {
-      const downlines = await this.buildNetworkTree(rel.userId, currentLevel + 1, maxLevel);
-      
+      const downlines = await this.buildNetworkTree(
+        rel.userId,
+        currentLevel + 1,
+        maxLevel
+      );
+
       nodes.push({
         userId: rel.user.id,
         userName: `${rel.user.firstName} ${rel.user.lastName}`,
         userEmail: rel.user.email,
         uplineId,
         level: currentLevel,
-        totalSales: rel.user.orders.reduce((sum, order) => sum + order.total, 0),
-        totalCommissions: rel.user.commissionsReceived.reduce((sum, c) => sum + c.amount, 0),
-        downlines
+        totalSales: rel.user.orders.reduce(
+          (sum, order) => sum + order.total,
+          0
+        ),
+        totalCommissions: rel.user.commissionsReceived.reduce(
+          (sum, c) => sum + c.amount,
+          0
+        ),
+        downlines,
       });
     }
 
     return nodes;
   }
 
-  async createUserRelationship(userId: string, uplineId: string): Promise<UserRelationship> {
+  async createUserRelationship(
+    userId: string,
+    uplineId: string
+  ): Promise<UserRelationship> {
     try {
       // Check if relationship already exists
       const existing = await this.prisma.userRelationship.findUnique({
         where: {
           userId_uplineId: {
             userId,
-            uplineId
-          }
-        }
+            uplineId,
+          },
+        },
       });
 
       if (existing) {
-        throw new AppError('Relationship already exists', 400);
+        throw new AppError("Relationship already exists", 400);
       }
 
       // Check for circular reference
       const uplineChain = await this.getUplineChain(uplineId, 10);
       if (uplineChain.includes(userId)) {
-        throw new AppError('Circular reference detected', 400);
+        throw new AppError("Circular reference detected", 400);
       }
 
       return await this.prisma.userRelationship.create({
         data: {
           userId,
           uplineId,
-          relationshipLevel: 1
-        }
+          relationshipLevel: 1,
+        },
       });
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to create relationship', 500);
+      throw new AppError("Failed to create relationship", 500);
     }
   }
 
-  async updateCommissionStatus(commissionId: number, status: CommissionStatus): Promise<Commission> {
+  async updateCommissionStatus(
+    commissionId: number,
+    status: CommissionStatus
+  ): Promise<Commission> {
     try {
       return await this.prisma.commission.update({
         where: { id: commissionId },
-        data: { status }
+        data: { status },
       });
     } catch (error) {
-      throw new AppError('Failed to update commission status', 500);
+      throw new AppError("Failed to update commission status", 500);
     }
   }
 }

@@ -12,7 +12,9 @@ const passwordValidation = () =>
     .matches(/\d/)
     .withMessage("Password must contain at least one number")
     .matches(/[@$!%*?&]/)
-    .withMessage("Password must contain at least one special character (@$!%*?&)")
+    .withMessage(
+      "Password must contain at least one special character (@$!%*?&)"
+    )
     .not()
     .isIn(["password", "12345678", "password123", "admin123"])
     .withMessage("Password is too common");
@@ -51,7 +53,9 @@ export const changePasswordSchema: ValidationChain[] = [
     .matches(/\d/)
     .withMessage("New password must contain at least one number")
     .matches(/[@$!%*?&]/)
-    .withMessage("New password must contain at least one special character (@$!%*?&)")
+    .withMessage(
+      "New password must contain at least one special character (@$!%*?&)"
+    )
     .not()
     .isIn(["password", "12345678", "password123", "admin123"])
     .withMessage("Password is too common")
@@ -82,7 +86,9 @@ export const passwordResetSchema: ValidationChain[] = [
     .matches(/\d/)
     .withMessage("Password must contain at least one number")
     .matches(/[@$!%*?&]/)
-    .withMessage("Password must contain at least one special character (@$!%*?&)")
+    .withMessage(
+      "Password must contain at least one special character (@$!%*?&)"
+    )
     .not()
     .isIn(["password", "12345678", "password123", "admin123"])
     .withMessage("Password is too common"),
