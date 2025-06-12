@@ -1,6 +1,6 @@
 import { PrismaClient, Category, Prisma } from "@prisma/client";
 import { ICategoryCreate, ICategoryUpdate } from "@app/shared-types";
-import { AppError } from "../middlewares/error";
+import { AppError } from "../middleware/error/errorHandler";
 
 export class CategoryService {
   constructor(private prisma: PrismaClient) {}
@@ -37,8 +37,8 @@ export class CategoryService {
           sortOrder: data.sortOrder ?? 0,
         },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to create category", 500);
     }
   }
@@ -102,8 +102,8 @@ export class CategoryService {
           children: true,
         },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to update category", 500);
     }
   }
@@ -130,7 +130,7 @@ export class CategoryService {
           },
         },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get category", 500);
     }
   }
@@ -150,7 +150,7 @@ export class CategoryService {
           },
         },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get category", 500);
     }
   }
@@ -177,7 +177,7 @@ export class CategoryService {
           },
         },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get categories", 500);
     }
   }
@@ -209,7 +209,7 @@ export class CategoryService {
       });
 
       return rootCategories;
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get category tree", 500);
     }
   }
@@ -241,8 +241,8 @@ export class CategoryService {
       await this.prisma.category.delete({
         where: { id },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to delete category", 500);
     }
   }

@@ -2,7 +2,7 @@ import { OrderStatus, PaymentStatus, PaymentMethod } from '../enums/order';
 
 export interface IOrder {
   id: number;
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   total: number;
   status: OrderStatus;
   paymentStatus?: PaymentStatus;
@@ -25,7 +25,7 @@ export interface IOrderItem {
 }
 
 export interface IOrderCreate {
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   items: IOrderItemCreate[];
   paymentMethod?: PaymentMethod;
   shippingAddress?: string;
@@ -57,7 +57,7 @@ export interface ICartItem {
 }
 
 export interface ICart {
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   items: ICartItem[];
   total: number;
   subtotal: number;

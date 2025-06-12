@@ -1,11 +1,10 @@
 import { PrismaClient, Commission, UserRelationship } from "@prisma/client";
 import {
-  ICommissionCreate,
   CommissionStatus,
   CommissionType,
   INetworkNode,
 } from "@app/shared-types";
-import { AppError } from "../middlewares/error";
+import { AppError } from "../middleware/error/errorHandler";
 
 export class CommissionService {
   constructor(private prisma: PrismaClient) {}
@@ -66,8 +65,8 @@ export class CommissionService {
       }
 
       return commissions;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to process commission", 500);
     }
   }
@@ -135,7 +134,7 @@ export class CommissionService {
         },
         orderBy: { createdAt: "desc" },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get user commissions", 500);
     }
   }
@@ -193,7 +192,7 @@ export class CommissionService {
         thisMonth: thisMonth._sum.amount || 0,
         lastMonth: lastMonth._sum.amount || 0,
       };
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get commission stats", 500);
     }
   }
@@ -226,8 +225,8 @@ export class CommissionService {
         ),
         downlines: network,
       };
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to get user network", 500);
     }
   }
@@ -315,8 +314,8 @@ export class CommissionService {
           relationshipLevel: 1,
         },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to create relationship", 500);
     }
   }
@@ -330,7 +329,7 @@ export class CommissionService {
         where: { id: commissionId },
         data: { status },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to update commission status", 500);
     }
   }

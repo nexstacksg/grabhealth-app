@@ -1,5 +1,5 @@
-import { ICart, ICartItem } from "@app/shared-types";
-import { AppError } from "../middlewares/error";
+import { ICart } from "@app/shared-types";
+import { AppError } from "../middleware/error/errorHandler";
 
 interface CartStore {
   [userId: string]: ICart;
@@ -29,7 +29,7 @@ export class CartService {
     const cart = await this.getCart(userId);
 
     const existingItemIndex = cart.items.findIndex(
-      (item) => item.productId === productId
+      (item: any) => item.productId === productId
     );
 
     if (existingItemIndex > -1) {
@@ -49,7 +49,7 @@ export class CartService {
     const cart = await this.getCart(userId);
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId === productId
+      (item: any) => item.productId === productId
     );
 
     if (itemIndex === -1) {
@@ -81,7 +81,7 @@ export class CartService {
     // In a real implementation, this would fetch product prices from database
     // For now, we'll just update the structure
     cart.subtotal = cart.items.reduce(
-      (sum, item) => sum + item.quantity * (item.price || 0),
+      (sum: number, item: any) => sum + item.quantity * (item.price || 0),
       0
     );
     cart.discount = 0; // Would calculate based on user membership

@@ -22,6 +22,22 @@ const eslintConfig = [
         exports: "writable",
         module: "writable",
         require: "readonly",
+        // Node.js globals
+        NodeJS: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        // Jest globals
+        jest: "readonly",
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
       },
     },
     plugins: {
@@ -29,10 +45,18 @@ const eslintConfig = [
     },
     rules: {
       "quotes": ["error", "double", { "avoidEscape": true }],
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "args": "after-used"
+      }],
       "@typescript-eslint/explicit-function-return-type": "off",
       "no-undef": "error",
-      "no-unused-vars": "warn",
+      "no-unused-vars": ["warn", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "args": "after-used"
+      }],
       "no-redeclare": "off",
       "@typescript-eslint/no-redeclare": "off",
     }

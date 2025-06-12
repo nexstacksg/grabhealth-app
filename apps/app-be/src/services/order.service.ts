@@ -1,12 +1,12 @@
-import { PrismaClient, Order, OrderItem, Prisma } from "@prisma/client";
+import { PrismaClient, Order, Prisma } from "@prisma/client";
 import {
   IOrderCreate,
   IOrderUpdate,
   OrderStatus,
   PaymentStatus,
-  ICart,
+  PaymentMethod,
 } from "@app/shared-types";
-import { AppError } from "../middlewares/error";
+import { AppError } from "../middleware/error/errorHandler";
 import { CartService } from "./cart.service";
 import { CommissionService } from "./commission.service";
 
@@ -111,8 +111,8 @@ export class OrderService {
 
         return order;
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to create order", 500);
     }
   }
@@ -156,8 +156,8 @@ export class OrderService {
       }
 
       return updatedOrder;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to update order", 500);
     }
   }
@@ -192,8 +192,8 @@ export class OrderService {
       }
 
       return order;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to get order", 500);
     }
   }
@@ -234,7 +234,7 @@ export class OrderService {
         page,
         totalPages: Math.ceil(total / limit),
       };
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get user orders", 500);
     }
   }
@@ -302,7 +302,7 @@ export class OrderService {
         page,
         totalPages: Math.ceil(total / limit),
       };
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get orders", 500);
     }
   }
@@ -326,8 +326,8 @@ export class OrderService {
           paymentStatus: PaymentStatus.REFUNDED,
         },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to cancel order", 500);
     }
   }
@@ -362,7 +362,7 @@ export class OrderService {
         pendingOrders,
         completedOrders,
       };
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get order stats", 500);
     }
   }
@@ -392,7 +392,10 @@ export class OrderService {
           quantity: item.quantity,
           price: item.price || 0,
         })),
-        ...checkoutData,
+        paymentMethod: checkoutData.paymentMethod as PaymentMethod,
+        shippingAddress: checkoutData.shippingAddress,
+        billingAddress: checkoutData.billingAddress,
+        notes: checkoutData.notes,
       };
 
       const order = await this.createOrder(userId, orderData);
@@ -401,8 +404,8 @@ export class OrderService {
       await this.cartService.clearCart(userId);
 
       return order;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to checkout", 500);
     }
   }

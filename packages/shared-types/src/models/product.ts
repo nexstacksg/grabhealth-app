@@ -4,14 +4,14 @@ export interface ICategory {
   id: number;
   name: string;
   slug: string;
-  description?: string;
-  imageUrl?: string;
-  parentId?: number;
+  description?: string | null;
+  imageUrl?: string | null;
+  parentId?: number | null;
   isActive: boolean;
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
-  parent?: ICategory;
+  parent?: ICategory | null;
   children?: ICategory[];
   products?: IProduct[];
 }
@@ -33,13 +33,13 @@ export interface ICategoryUpdate extends Partial<ICategoryCreate> {
 export interface IProduct {
   id: number;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
   discountEssential: number;
   discountPremium: number;
-  categoryId?: number;
-  category?: ICategory;
-  imageUrl?: string;
+  categoryId?: number | null;
+  category?: ICategory | null;
+  imageUrl?: string | null;
   inStock: boolean;
   status?: ProductStatus;
   createdAt: Date;

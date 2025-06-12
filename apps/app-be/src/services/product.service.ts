@@ -1,12 +1,13 @@
 import { PrismaClient, Product, Prisma } from "@prisma/client";
 import {
+  IProduct,
   IProductCreate,
   IProductUpdate,
   ProductSearchParams,
   ProductSearchResponse,
   ProductStatus,
 } from "@app/shared-types";
-import { AppError } from "../middlewares/error";
+import { AppError } from "../middleware/error/errorHandler";
 
 export class ProductService {
   constructor(private prisma: PrismaClient) {}
@@ -39,8 +40,8 @@ export class ProductService {
           category: true,
         },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to create product", 500);
     }
   }
@@ -88,8 +89,8 @@ export class ProductService {
           category: true,
         },
       });
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to update product", 500);
     }
   }
@@ -103,7 +104,7 @@ export class ProductService {
           productCommissions: true,
         },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get product", 500);
     }
   }
@@ -128,13 +129,13 @@ export class ProductService {
       const where: Prisma.ProductWhereInput = {
         ...(query && {
           OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { description: { contains: query, mode: "insensitive" } },
+            { name: { contains: query } },
+            { description: { contains: query } },
           ],
         }),
         ...(category && {
           category: {
-            name: { contains: category, mode: "insensitive" },
+            name: { contains: category },
           },
         }),
         ...(categoryId && { categoryId }),
@@ -167,12 +168,12 @@ export class ProductService {
       ]);
 
       return {
-        products,
+        products: products as unknown as IProduct[],
         total,
         page,
         totalPages: Math.ceil(total / limit),
       };
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to search products", 500);
     }
   }
@@ -200,8 +201,8 @@ export class ProductService {
           where: { id },
         });
       }
-    } catch (error) {
-      if (error instanceof AppError) throw error;
+    } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError("Failed to delete product", 500);
     }
   }
@@ -217,7 +218,7 @@ export class ProductService {
           },
         },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get categories", 500);
     }
   }
@@ -235,7 +236,7 @@ export class ProductService {
         },
         orderBy: { createdAt: "desc" },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get products by category", 500);
     }
   }
@@ -250,7 +251,7 @@ export class ProductService {
         orderBy: { createdAt: "desc" },
         take: limit,
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to get featured products", 500);
     }
   }
@@ -264,7 +265,7 @@ export class ProductService {
           status: inStock ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK,
         },
       });
-    } catch (error) {
+    } catch (_error) {
       throw new AppError("Failed to update stock", 500);
     }
   }

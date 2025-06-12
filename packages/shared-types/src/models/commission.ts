@@ -3,8 +3,8 @@ import { CommissionStatus, CommissionType, RoleType } from '../enums/commission'
 export interface ICommission {
   id: number;
   orderId: number;
-  userId: number;
-  recipientId: number;
+  userId: string; // Changed to string to match backend User model
+  recipientId: string; // Changed to string to match backend User model
   amount: number;
   commissionRate: number;
   relationshipLevel: number;
@@ -16,8 +16,8 @@ export interface ICommission {
 
 export interface IUserRelationship {
   id: number;
-  userId: number;
-  uplineId?: number;
+  userId: string; // Changed to string to match backend User model
+  uplineId?: string; // Changed to string to match backend User model
   relationshipLevel: number;
   createdAt: Date;
   updatedAt: Date;
@@ -36,7 +36,7 @@ export interface ICommissionTier {
 
 export interface IUserPoints {
   id: number;
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   points: number;
   createdAt: Date;
   updatedAt: Date;
@@ -53,8 +53,8 @@ export interface IUserRoleType {
 
 export interface ICommissionCreate {
   orderId: number;
-  userId: number;
-  recipientId: number;
+  userId: string; // Changed to string to match backend User model
+  recipientId: string; // Changed to string to match backend User model
   amount: number;
   commissionRate: number;
   relationshipLevel: number;
@@ -70,10 +70,10 @@ export interface ICommissionStructure {
 }
 
 export interface INetworkNode {
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   userName: string;
   userEmail: string;
-  uplineId?: number;
+  uplineId?: string; // Changed to string to match backend User model
   level: number;
   totalSales: number;
   totalCommissions: number;

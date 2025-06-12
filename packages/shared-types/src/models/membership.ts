@@ -13,7 +13,7 @@ export interface IMembershipTier {
 
 export interface IUserMembership {
   id: number;
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   tierId: number;
   status: MembershipStatus;
   startDate: Date;
@@ -49,13 +49,13 @@ export interface IPromotion {
 
 export interface IAccountRequest {
   id: number;
-  userId: number;
+  userId: string; // Changed to string to match backend User model
   requestType: AccountRequestType;
   requestDetails?: string;
   status: AccountRequestStatus;
   adminNotes?: string;
   processedAt?: Date;
-  processedBy?: number;
+  processedBy?: string; // Changed to string to match backend User model
   createdAt: Date;
   updatedAt: Date;
 }

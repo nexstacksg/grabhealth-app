@@ -20,6 +20,9 @@ export class ApiError extends Error {
   }
 }
 
+// Alias for compatibility
+export const AppError = ApiError;
+
 export const errorHandler = (
   error: ApiError,
   req: Request,
