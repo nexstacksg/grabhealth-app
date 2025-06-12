@@ -21,6 +21,9 @@ model User {
   lastName               String
   role                   String    @default("USER") // SUPER_ADMIN, MANAGER, USER
   status                 String    @default("PENDING_VERIFICATION") // ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION
+  profileImage           String?
+  referralCode           String?   @unique
+  uplineId               String?
   refreshToken           String?
   lastLoginAt            DateTime?
   emailVerificationToken String?
@@ -31,9 +34,22 @@ model User {
   updatedAt              DateTime  @updatedAt
 
   // Relations
-  auditLogs AuditLog[]
+  auditLogs            AuditLog[]
+  orders               Order[]
+  commissionsReceived  Commission[]      @relation("RecipientCommissions")
+  commissionsGenerated Commission[]      @relation("UserCommissions")
+  relationships        UserRelationship[] @relation("UserRelationships")
+  uplineFor           UserRelationship[] @relation("UplineRelationships")
+  points              UserPoints?
+  userRoles           UserRole[]
+  accountRequests     AccountRequest[]
+  verificationCodes   EmailVerification[]
+  membership          UserMembership?
+  upline              User?             @relation("UplineDownline", fields: [uplineId], references: [id])
+  downlines           User[]            @relation("UplineDownline")
 
   @@index([email])
+  @@index([referralCode])
 }
 
 // Audit Log Model
@@ -51,4 +67,309 @@ model AuditLog {
 
   @@index([userId])
   @@index([entity, entityId])
+}
+
+// ==================== E-COMMERCE MODELS ====================
+
+// Product Model
+model Product {
+  id                Int      @id @default(autoincrement())
+  name              String
+  description       String?
+  price             Float
+  discountEssential Float    @default(0.10)
+  discountPremium   Float    @default(0.25)
+  category          String?
+  imageUrl          String?
+  inStock           Boolean  @default(true)
+  status            String   @default("ACTIVE") // ACTIVE, INACTIVE, OUT_OF_STOCK, DISCONTINUED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  orderItems         OrderItem[]
+  productCommissions ProductCommissionTier[]
+
+  @@index([category])
+  @@index([status])
+}
+
+// Order Model
+model Order {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  total           Float    @default(0)
+  subtotal        Float    @default(0)
+  discount        Float    @default(0)
+  tax             Float    @default(0)
+  status          String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED, REFUNDED
+  paymentStatus   String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  paymentMethod   String?  // CREDIT_CARD, DEBIT_CARD, PAYPAL, BANK_TRANSFER, CASH_ON_DELIVERY
+  shippingAddress String?
+  billingAddress  String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       OrderItem[]
+  commissions Commission[]
+
+  @@index([userId, status])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+// OrderItem Model
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int      @default(1)
+  price     Float
+  discount  Float    @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ==================== MEMBERSHIP MODELS ====================
+
+// MembershipTier Model
+model MembershipTier {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // BASIC, ESSENTIAL, PREMIUM
+  description String?
+  price       Float
+  discount    Float    @default(0)
+  benefits    String?  // JSON data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userMemberships UserMembership[]
+}
+
+// UserMembership Model
+model UserMembership {
+  id        Int       @id @default(autoincrement())
+  userId    String    @unique
+  tierId    Int
+  status    String    @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED, SUSPENDED
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  autoRenew Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier MembershipTier @relation(fields: [tierId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ==================== COMMISSION MODELS ====================
+
+// UserRelationship Model - tracks upline/downline connections
+model UserRelationship {
+  id               Int      @id @default(autoincrement())
+  userId           String
+  uplineId         String?
+  relationshipLevel Int     @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user   User  @relation("UserRelationships", fields: [userId], references: [id], onDelete: Cascade)
+  upline User? @relation("UplineRelationships", fields: [uplineId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, uplineId])
+  @@index([userId])
+  @@index([uplineId])
+}
+
+// CommissionTier Model - defines commission rates by level
+model CommissionTier {
+  id                     Int      @id @default(autoincrement())
+  tierLevel              Int      @unique
+  tierName               String
+  directCommissionRate   Float
+  indirectCommissionRate Float
+  pointsRate             Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// Commission Model - tracks earned commissions
+model Commission {
+  id                Int      @id @default(autoincrement())
+  orderId           Int
+  userId            String
+  recipientId       String
+  amount            Float
+  commissionRate    Float
+  relationshipLevel Int
+  type              String   @default("DIRECT") // DIRECT, INDIRECT, BONUS, OVERRIDE
+  status            String   @default("PENDING") // PENDING, APPROVED, PAID, REJECTED, CANCELLED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user      User  @relation("UserCommissions", fields: [userId], references: [id], onDelete: Cascade)
+  recipient User  @relation("RecipientCommissions", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([recipientId])
+  @@index([status])
+}
+
+// UserPoints Model - tracks points earned from commissions
+model UserPoints {
+  id        Int      @id @default(autoincrement())
+  userId    String   @unique
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ProductCommissionTier Model
+model ProductCommissionTier {
+  id                      Int      @id @default(autoincrement())
+  productId               Int      @unique
+  productName             String
+  retailPrice             Float
+  traderPrice             Float
+  distributorPrice        Float
+  traderCommissionMin     Float
+  traderCommissionMax     Float
+  distributorCommissionMin Float
+  distributorCommissionMax Float
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// UserRoleType Model
+model UserRoleType {
+  id                   Int      @id @default(autoincrement())
+  roleName             String   @unique // CUSTOMER, SALES, LEADER, MANAGER, COMPANY
+  description          String?
+  commissionMultiplier Float    @default(1.0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  userRoles UserRole[]
+}
+
+// UserRole Model
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  roleId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role UserRoleType @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+// VolumeBonusTier Model
+model VolumeBonusTier {
+  id              Int      @id @default(autoincrement())
+  minVolume       Float
+  maxVolume       Float?
+  bonusPercentage Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([minVolume])
+}
+
+// ==================== ADDITIONAL MODELS ====================
+
+// GiftItem Model
+model GiftItem {
+  id                Int      @id @default(autoincrement())
+  name              String
+  description       String?
+  requiredPurchases Int
+  imageUrl          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Promotion Model
+model Promotion {
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  discountType  String    // PERCENTAGE, FIXED_AMOUNT
+  discountValue Float
+  minPurchase   Float?
+  startDate     DateTime
+  endDate       DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([startDate, endDate])
+}
+
+// AccountRequest Model
+model AccountRequest {
+  id             Int       @id @default(autoincrement())
+  userId         String
+  requestType    String    // UPGRADE_MEMBERSHIP, DOWNGRADE_MEMBERSHIP, CANCEL_MEMBERSHIP, ROLE_CHANGE, OTHER
+  requestDetails String?
+  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
+  adminNotes     String?
+  processedAt    DateTime?
+  processedBy    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+// EmailVerification Model for login verification
+model EmailVerification {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  email      String
+  code       String
+  type       String   @default("login") // login, registration, password_reset
+  expiresAt  DateTime
+  verified   Boolean  @default(false)
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([email, code])
+  @@index([userId, type])
 }

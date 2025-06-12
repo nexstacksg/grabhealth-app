@@ -7,6 +7,7 @@ export interface IUser {
   firstName?: string | null;
   lastName?: string | null;
   profilePhoto?: string | null;
+  profileImage?: string | null; // Additional field from e-commerce
   role: UserRole;
   status: UserStatus;
   emailVerified: boolean;
@@ -15,6 +16,9 @@ export interface IUser {
   resetPasswordToken?: string | null;
   resetPasswordExpiry?: Date | null;
   lastLogin?: Date | null;
+  membershipTierId?: number | null;
+  referralCode?: string | null;
+  uplineId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
