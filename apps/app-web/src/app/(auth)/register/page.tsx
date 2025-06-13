@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,7 +23,7 @@ export default function RegisterPage() {
     });
     // Clear field-specific error when user starts typing
     if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: "" });
+      setErrors({ ...errors, [e.target.name]: '' });
     }
   };
 
@@ -33,7 +33,7 @@ export default function RegisterPage() {
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setErrors({ confirmPassword: "Passwords do not match" });
+      setErrors({ confirmPassword: 'Passwords do not match' });
       return;
     }
 
@@ -47,7 +47,9 @@ export default function RegisterPage() {
       if (error.details && typeof error.details === 'object') {
         setErrors(error.details);
       } else {
-        setErrors({ general: error.message || "Registration failed. Please try again." });
+        setErrors({
+          general: error.message || 'Registration failed. Please try again.',
+        });
       }
     } finally {
       setLoading(false);
@@ -91,7 +93,9 @@ export default function RegisterPage() {
                   placeholder="John"
                 />
                 {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.firstName}
+                  </p>
                 )}
               </div>
               <div>
@@ -173,24 +177,44 @@ export default function RegisterPage() {
                     Password requirements:
                   </div>
                   <div className="space-y-1 text-xs">
-                    <div className={`flex items-center ${formData.password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className="mr-1">{formData.password.length >= 8 ? '✓' : '○'}</span>
+                    <div
+                      className={`flex items-center ${formData.password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}
+                    >
+                      <span className="mr-1">
+                        {formData.password.length >= 8 ? '✓' : '○'}
+                      </span>
                       At least 8 characters
                     </div>
-                    <div className={`flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className="mr-1">{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
+                    <div
+                      className={`flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}
+                    >
+                      <span className="mr-1">
+                        {/[a-z]/.test(formData.password) ? '✓' : '○'}
+                      </span>
                       Lowercase letter
                     </div>
-                    <div className={`flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className="mr-1">{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
+                    <div
+                      className={`flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}
+                    >
+                      <span className="mr-1">
+                        {/[A-Z]/.test(formData.password) ? '✓' : '○'}
+                      </span>
                       Uppercase letter
                     </div>
-                    <div className={`flex items-center ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className="mr-1">{/\d/.test(formData.password) ? '✓' : '○'}</span>
+                    <div
+                      className={`flex items-center ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}
+                    >
+                      <span className="mr-1">
+                        {/\d/.test(formData.password) ? '✓' : '○'}
+                      </span>
                       Number
                     </div>
-                    <div className={`flex items-center ${/[@$!%*?&]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className="mr-1">{/[@$!%*?&]/.test(formData.password) ? '✓' : '○'}</span>
+                    <div
+                      className={`flex items-center ${/[@$!%*?&]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}
+                    >
+                      <span className="mr-1">
+                        {/[@$!%*?&]/.test(formData.password) ? '✓' : '○'}
+                      </span>
                       Special character (@$!%*?&)
                     </div>
                   </div>
@@ -219,7 +243,9 @@ export default function RegisterPage() {
                 placeholder="••••••••"
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
           </div>
@@ -230,13 +256,13 @@ export default function RegisterPage() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? 'Creating account...' : 'Create account'}
             </button>
           </div>
 
           <div className="text-center">
             <span className="text-sm text-gray-600">
-              Already have an account?{" "}
+              Already have an account?{' '}
               <Link
                 href="/login"
                 className="font-medium text-blue-600 hover:text-blue-500"

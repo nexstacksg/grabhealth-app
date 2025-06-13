@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import React, { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { CommissionProvider } from "@/components/commission/commission-provider"
-import CommissionDashboard from "@/components/commission/commission-dashboard"
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { CommissionProvider } from '@/components/commission/commission-provider';
+import CommissionDashboard from '@/components/commission/commission-dashboard';
 
 type User = {
   id: number;
@@ -16,7 +16,7 @@ export default function CommissionPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     // Simple direct API call to check authentication
     const checkAuth = async () => {
@@ -28,16 +28,16 @@ export default function CommissionPage() {
           },
           credentials: 'include',
         });
-        
+
         if (!response.ok) {
           console.log('Not authenticated, redirecting to login');
           router.push('/auth/login');
           return;
         }
-        
+
         const userData = await response.json();
         console.log('User data from direct API call:', userData);
-        
+
         if (userData && userData.id) {
           setUser(userData);
           setIsLoading(false);
@@ -50,7 +50,7 @@ export default function CommissionPage() {
         router.push('/auth/login');
       }
     };
-    
+
     checkAuth();
   }, [router]);
 

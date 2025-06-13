@@ -1,24 +1,24 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, User, Upload } from "lucide-react"
-import { useMembership } from "@/hooks/use-membership"
-import { toast } from "sonner"
-import { MembershipProfile } from "@/components/membership-profile"
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, User, Upload } from 'lucide-react';
+import { useMembership } from '@/hooks/use-membership';
+import { toast } from 'sonner';
+import { MembershipProfile } from '@/components/membership-profile';
 
 interface UserProfile {
   id: number;
@@ -32,142 +32,151 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const [user, setUser] = useState<UserProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isUploading, setIsUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const router = useRouter();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  })
+    name: '',
+    email: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   useEffect(() => {
     async function fetchUserProfile() {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
         // Use the existing auth/user API endpoint
         const response = await fetch('/api/auth/user', {
-          credentials: 'include' // Include cookies in the request
-        })
-        
+          credentials: 'include', // Include cookies in the request
+        });
+
         if (!response.ok) {
           if (response.status === 401) {
             // Redirect to login if not authenticated
-            router.push('/auth/login')
-            return
+            router.push('/auth/login');
+            return;
           }
-          throw new Error("Failed to fetch profile")
+          throw new Error('Failed to fetch profile');
         }
-        
-        const data = await response.json()
-        setUser(data.user)
-        setFormData(prev => ({
+
+        const data = await response.json();
+        setUser(data.user);
+        setFormData((prev) => ({
           ...prev,
           name: data.user.name,
-          email: data.user.email
-        }))
-        
+          email: data.user.email,
+        }));
+
         // Fetch membership data separately
-        const membershipResponse = await fetch('/api/membership/current')
+        const membershipResponse = await fetch('/api/membership/current');
         if (membershipResponse.ok) {
-          const membershipData = await membershipResponse.json()
-          setUser(prev => prev ? {
-            ...prev,
-            membership: membershipData
-          } : null)
+          const membershipData = await membershipResponse.json();
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  membership: membershipData,
+                }
+              : null
+          );
         }
       } catch (error) {
-        console.error("Error fetching profile:", error)
-        setError("Failed to load profile. Please try again later.")
+        console.error('Error fetching profile:', error);
+        setError('Failed to load profile. Please try again later.');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    fetchUserProfile()
-  }, [router])
+    fetchUserProfile();
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     try {
-      setIsUploading(true)
-      setError(null)
-      
+      setIsUploading(true);
+      setError(null);
+
       console.log('Starting file upload...', {
         name: file.name,
         type: file.type,
-        size: file.size
-      })
-      
-      const formData = new FormData()
-      formData.append('file', file)
+        size: file.size,
+      });
 
-      console.log('Sending request to /api/profile/upload')
+      const formData = new FormData();
+      formData.append('file', file);
+
+      console.log('Sending request to /api/profile/upload');
       const response = await fetch('/api/profile/upload', {
         method: 'POST',
         body: formData,
-        credentials: 'include'
-      })
+        credentials: 'include',
+      });
 
-      console.log('Response status:', response.status)
-      
-      const responseData = await response.json().catch(() => ({}))
-      console.log('Response data:', responseData)
-      
+      console.log('Response status:', response.status);
+
+      const responseData = await response.json().catch(() => ({}));
+      console.log('Response data:', responseData);
+
       if (!response.ok) {
-        const errorMessage = responseData.error || 
-                           responseData.message || 
-                           `Server responded with status ${response.status}`
-        throw new Error(errorMessage)
+        const errorMessage =
+          responseData.error ||
+          responseData.message ||
+          `Server responded with status ${response.status}`;
+        throw new Error(errorMessage);
       }
 
       // Update the user's image URL in the local state
-      setUser(prev => prev ? {
-        ...prev,
-        image_url: responseData.imageUrl || responseData.image_url
-      } : null)
-      
-      toast.success('Profile picture updated successfully!')
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              image_url: responseData.imageUrl || responseData.image_url,
+            }
+          : null
+      );
+
+      toast.success('Profile picture updated successfully!');
     } catch (error) {
-      console.error('Error uploading profile picture:', error)
-      
-      let errorMessage = 'Failed to upload profile picture'
+      console.error('Error uploading profile picture:', error);
+
+      let errorMessage = 'Failed to upload profile picture';
       if (error instanceof Error) {
-        errorMessage = error.message
+        errorMessage = error.message;
       } else if (typeof error === 'string') {
-        errorMessage = error
+        errorMessage = error;
       }
-      
-      toast.error(errorMessage)
-      setError(errorMessage)
+
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setSuccessMessage(null)
-    
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
     try {
-      setIsLoading(true)
-      
+      setIsLoading(true);
+
       // Send update to the user update API endpoint
       const response = await fetch('/api/auth/update', {
         method: 'PATCH',
@@ -176,54 +185,62 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email
-        })
-      })
-      
+          email: formData.email,
+        }),
+      });
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update profile')
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
       }
-      
-      const data = await response.json()
-      
+
+      const data = await response.json();
+
       // Update local state with the returned user data
-      setUser(prev => prev ? {
-        ...prev,
-        ...data.user
-      } : null)
-      
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...data.user,
+            }
+          : null
+      );
+
       // Show success message
-      toast.success("Profile updated successfully!")
-      setSuccessMessage("Profile updated successfully!")
+      toast.success('Profile updated successfully!');
+      setSuccessMessage('Profile updated successfully!');
     } catch (error) {
-      console.error("Error updating profile:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to update profile. Please try again.")
-      setError("Failed to update profile. Please try again.")
+      console.error('Error updating profile:', error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update profile. Please try again.'
+      );
+      setError('Failed to update profile. Please try again.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setSuccessMessage(null)
-    
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
     // Validate passwords
     if (formData.newPassword !== formData.confirmPassword) {
-      setError("New passwords do not match")
-      return
+      setError('New passwords do not match');
+      return;
     }
-    
+
     if (formData.newPassword.length < 8) {
-      setError("Password must be at least 8 characters")
-      return
+      setError('Password must be at least 8 characters');
+      return;
     }
-    
+
     try {
-      setIsLoading(true)
-      
+      setIsLoading(true);
+
       // Send password update to the auth API endpoint
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
@@ -233,43 +250,47 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
-        })
-      })
-      
+          newPassword: formData.newPassword,
+        }),
+      });
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update password')
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update password');
       }
-      
+
       // Clear password fields
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: ""
-      }))
-      
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      }));
+
       // Show success message
-      toast.success("Password updated successfully!")
+      toast.success('Password updated successfully!');
     } catch (error) {
-      console.error("Error updating password:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to update password. Please try again.")
-      setError("Failed to update password. Please try again.")
+      console.error('Error updating password:', error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update password. Please try again.'
+      );
+      setError('Failed to update password. Please try again.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Client-side only rendering to prevent hydration mismatch
-  const [isClient, setIsClient] = useState(false)
-  
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
-    setIsClient(true)
-  }, [])
+    setIsClient(true);
+  }, []);
 
   if (!isClient) {
-    return null
+    return null;
   }
 
   if (isLoading && !user) {
@@ -277,38 +298,40 @@ export default function ProfilePage() {
       <div className="container max-w-4xl py-16 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="container max-w-4xl py-6 md:py-16">
-      <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">My Profile</h1>
-      
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">
+        My Profile
+      </h1>
+
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      
+
       {successMessage && (
         <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
           <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       )}
-      
+
       {user?.membership && (
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Your Membership</h3>
           <MembershipProfile showTitle={false} />
         </div>
       )}
-      
+
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="profile">
           <Card>
             <CardHeader>
@@ -323,9 +346,9 @@ export default function ProfilePage() {
                   <div className="flex flex-col items-center">
                     <div className="relative h-32 w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-4">
                       {user?.image_url ? (
-                        <img 
-                          src={user.image_url} 
-                          alt="Profile" 
+                        <img
+                          src={user.image_url}
+                          alt="Profile"
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -337,9 +360,9 @@ export default function ProfilePage() {
                     </div>
                     <label className="relative cursor-pointer text-sm text-emerald-600 hover:text-emerald-700 font-medium">
                       Change Photo
-                      <input 
-                        type="file" 
-                        className="sr-only" 
+                      <input
+                        type="file"
+                        className="sr-only"
                         accept="image/jpeg,image/png,image/webp"
                         onChange={handleFileUpload}
                         disabled={isUploading}
@@ -351,11 +374,11 @@ export default function ProfilePage() {
                       )}
                     </label>
                   </div>
-                  
+
                   <div className="flex-1 space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name</Label>
-                      <Input 
+                      <Input
                         id="name"
                         name="name"
                         value={formData.name}
@@ -363,10 +386,10 @@ export default function ProfilePage() {
                         required
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input 
+                      <Input
                         id="email"
                         name="email"
                         type="email"
@@ -379,8 +402,8 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-emerald-500 hover:bg-emerald-600"
                   disabled={isLoading}
                 >
@@ -389,13 +412,15 @@ export default function ProfilePage() {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
                     </>
-                  ) : "Save Changes"}
+                  ) : (
+                    'Save Changes'
+                  )}
                 </Button>
               </CardFooter>
             </form>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="security">
           <Card>
             <CardHeader>
@@ -408,7 +433,7 @@ export default function ProfilePage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input 
+                  <Input
                     id="currentPassword"
                     name="currentPassword"
                     type="password"
@@ -417,10 +442,10 @@ export default function ProfilePage() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="newPassword">New Password</Label>
-                  <Input 
+                  <Input
                     id="newPassword"
                     name="newPassword"
                     type="password"
@@ -429,10 +454,10 @@ export default function ProfilePage() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input 
+                  <Input
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
@@ -443,8 +468,8 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-emerald-500 hover:bg-emerald-600"
                   disabled={isLoading}
                 >
@@ -453,7 +478,9 @@ export default function ProfilePage() {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Updating...
                     </>
-                  ) : "Update Password"}
+                  ) : (
+                    'Update Password'
+                  )}
                 </Button>
               </CardFooter>
             </form>
@@ -461,5 +488,5 @@ export default function ProfilePage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

@@ -1,31 +1,41 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import { neon } from "@neondatabase/serverless"
-import { CalendarIcon } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+import { neon } from '@neondatabase/serverless';
+import { CalendarIcon } from 'lucide-react';
 
 // Initialize database connection
-const sql = neon(process.env.DATABASE_URL!)
+const sql = neon(process.env.DATABASE_URL!);
 
 // Fetch promotions from database
 async function getPromotions() {
   const promotions = await sql`
     SELECT * FROM promotions
     ORDER BY start_date DESC
-  `
-  return promotions
+  `;
+  return promotions;
 }
 
 export default async function PromotionsPage() {
-  const promotions = await getPromotions()
+  const promotions = await getPromotions();
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-16 md:px-6">
       <div className="text-center mb-8 md:mb-12">
-        <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">Current Promotions</h1>
+        <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">
+          Current Promotions
+        </h1>
         <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
-          Take advantage of our limited-time offers and exclusive deals on health products and services.
+          Take advantage of our limited-time offers and exclusive deals on
+          health products and services.
         </p>
       </div>
 
@@ -35,19 +45,19 @@ export default async function PromotionsPage() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function PromotionCard({ promotion }: { promotion: any }) {
-  const startDate = new Date(promotion.start_date)
-  const endDate = new Date(promotion.end_date)
-  const isActive = new Date() >= startDate && new Date() <= endDate
+  const startDate = new Date(promotion.start_date);
+  const endDate = new Date(promotion.end_date);
+  const isActive = new Date() >= startDate && new Date() <= endDate;
 
   return (
     <Card className="overflow-hidden">
       <div className="relative h-48 md:h-64">
         <Image
-          src={promotion.image_url || "/placeholder.svg?height=300&width=600"}
+          src={promotion.image_url || '/placeholder.svg?height=300&width=600'}
           alt={promotion.title}
           fill
           className="object-cover"
@@ -61,7 +71,11 @@ function PromotionCard({ promotion }: { promotion: any }) {
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-xl">{promotion.title}</CardTitle>
-          {isActive ? <Badge className="bg-emerald-500">Active</Badge> : <Badge variant="outline">Upcoming</Badge>}
+          {isActive ? (
+            <Badge className="bg-emerald-500">Active</Badge>
+          ) : (
+            <Badge variant="outline">Upcoming</Badge>
+          )}
         </div>
         <CardDescription className="flex items-center mt-2">
           <CalendarIcon className="h-4 w-4 mr-1" />
@@ -77,8 +91,10 @@ function PromotionCard({ promotion }: { promotion: any }) {
         )}
       </CardContent>
       <CardFooter>
-        <Button className="w-full bg-emerald-500 hover:bg-emerald-600">View Details</Button>
+        <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+          View Details
+        </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }

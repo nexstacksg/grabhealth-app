@@ -1,30 +1,25 @@
-import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const userId = parseInt(params.id);
-    
+    const { id } = await params;
+    const userId = parseInt(id);
+
     if (isNaN(userId)) {
-      return NextResponse.json(
-        { error: "Invalid user ID" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
     }
 
     // Check if the user is authenticated and is an admin
     const currentUser = await getCurrentUser();
-    
+
     if (!currentUser || currentUser.role !== 'admin') {
       return NextResponse.json(
-        { error: "Unauthorized access" },
+        { error: 'Unauthorized access' },
         { status: 403 }
       );
     }
@@ -63,12 +58,12 @@ export async function GET(request: Request, { params }: Params) {
     `;
 
     return NextResponse.json({
-      downline
+      downline,
     });
   } catch (error) {
-    console.error("Error fetching user downline:", error);
+    console.error('Error fetching user downline:', error);
     return NextResponse.json(
-      { error: "Failed to fetch user downline" },
+      { error: 'Failed to fetch user downline' },
       { status: 500 }
     );
   }

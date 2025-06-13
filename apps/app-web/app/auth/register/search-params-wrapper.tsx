@@ -1,20 +1,20 @@
-"use client"
+'use client';
 
-import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
-import RegisterForm from "./register-form"
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import RegisterForm from './register-form';
 
 export default function SearchParamsWrapper() {
-  const searchParams = useSearchParams()
-  const [referrerId, setReferrerId] = useState<string | null>(null)
-  
+  const searchParams = useSearchParams();
+  const [referrerId, setReferrerId] = useState<string | null>(null);
+
   // Extract referrer ID from URL parameters
   useEffect(() => {
-    const referrer = searchParams.get('referrer')
+    const referrer = searchParams.get('referrer');
     if (referrer) {
-      setReferrerId(referrer)
+      setReferrerId(referrer);
     }
-  }, [searchParams])
+  }, [searchParams]);
 
-  return <RegisterForm referrerId={referrerId} />
+  return <RegisterForm referrerId={referrerId} />;
 }

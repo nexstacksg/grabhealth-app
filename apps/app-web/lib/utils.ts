@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -14,7 +14,7 @@ export function formatPrice(price: number): string {
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(price)
+  }).format(price);
 }
 
 /**
@@ -22,14 +22,14 @@ export function formatPrice(price: number): string {
  */
 export function getApiUrl(path: string): string {
   // Remove leading slash if present
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path
-  
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+
   // In browser environment
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/api/${cleanPath}`
+    return `${window.location.origin}/api/${cleanPath}`;
   }
-  
+
   // In server environment
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-  return `${baseUrl}/api/${cleanPath}`
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  return `${baseUrl}/api/${cleanPath}`;
 }

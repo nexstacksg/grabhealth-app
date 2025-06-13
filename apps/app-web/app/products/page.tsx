@@ -1,258 +1,274 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
-import Link from "next/link"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AddToCartButton } from "@/components/add-to-cart-button"
-import { formatPrice } from "@/lib/utils"
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AddToCartButton } from '@/components/add-to-cart-button';
+import { formatPrice } from '@/lib/utils';
 
 // Client-side data fetching with pagination
 function useProducts() {
-  const [products, setProducts] = useState<any[]>([])
-  const [prevProducts, setPrevProducts] = useState<any[]>([])
-  const [loading, setIsLoading] = useState(true)
-  const [pageTransitioning, setPageTransitioning] = useState(false)
+  const [products, setProducts] = useState<any[]>([]);
+  const [prevProducts, setPrevProducts] = useState<any[]>([]);
+  const [loading, setIsLoading] = useState(true);
+  const [pageTransitioning, setPageTransitioning] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 8,
     total: 0,
-    totalPages: 0
-  })
+    totalPages: 0,
+  });
   const [filters, setFilters] = useState({
     category: '',
     search: '',
     inStock: false,
     onSale: false,
-    priceRange: ''
-  })
-  
+    priceRange: '',
+  });
+
   const fetchProducts = async (page = 1, category = '', options = {}) => {
     // For page changes, use a transitioning state instead of full loading
     if (page !== pagination.page && products.length > 0) {
-      setPageTransitioning(true)
+      setPageTransitioning(true);
       // Keep previous products visible during transition
-      setPrevProducts(products)
+      setPrevProducts(products);
     } else {
-      setIsLoading(true)
+      setIsLoading(true);
     }
     try {
       // Update filters if category is provided
       if (category) {
-        setFilters(prev => ({
+        setFilters((prev) => ({
           ...prev,
-          category: category !== 'all' ? category : ''
-        }))
+          category: category !== 'all' ? category : '',
+        }));
       }
-      
+
       // Merge any additional filter options
-      const updatedFilters = { ...filters, ...options }
+      const updatedFilters = { ...filters, ...options };
       if (Object.keys(options).length > 0) {
-        setFilters(updatedFilters)
+        setFilters(updatedFilters);
       }
-      
+
       // Build query parameters
-      const params = new URLSearchParams()
-      params.append('page', page.toString())
-      params.append('limit', pagination.limit.toString())
-      
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', pagination.limit.toString());
+
       if (updatedFilters.category && updatedFilters.category !== 'all') {
-        params.append('category', updatedFilters.category)
+        params.append('category', updatedFilters.category);
       }
-      
+
       if (updatedFilters.search) {
-        params.append('search', updatedFilters.search)
+        params.append('search', updatedFilters.search);
       }
-      
+
       if (updatedFilters.inStock) {
-        params.append('inStock', 'true')
+        params.append('inStock', 'true');
       }
-      
+
       if (updatedFilters.onSale) {
-        params.append('onSale', 'true')
+        params.append('onSale', 'true');
       }
-      
+
       if (updatedFilters.priceRange) {
-        const [min, max] = getPriceRangeValues(updatedFilters.priceRange)
-        if (min !== null) params.append('minPrice', min.toString())
-        if (max !== null) params.append('maxPrice', max.toString())
+        const [min, max] = getPriceRangeValues(updatedFilters.priceRange);
+        if (min !== null) params.append('minPrice', min.toString());
+        if (max !== null) params.append('maxPrice', max.toString());
       }
-      
-      const response = await fetch(`/api/products?${params.toString()}`)
+
+      const response = await fetch(`/api/products?${params.toString()}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch products")
+        throw new Error('Failed to fetch products');
       }
-      
-      const data = await response.json()
+
+      const data = await response.json();
       // Ensure products is always an array
-      const productsArray = Array.isArray(data.products) ? data.products : []
-      setProducts(productsArray)
+      const productsArray = Array.isArray(data.products) ? data.products : [];
+      setProducts(productsArray);
       setPagination({
         ...pagination,
         page,
         total: data.pagination?.total || 0,
-        totalPages: data.pagination?.totalPages || 0
-      })
+        totalPages: data.pagination?.totalPages || 0,
+      });
       // Clear transitioning state if it was set
     } catch (error) {
-      console.error("Error fetching products:", error)
+      console.error('Error fetching products:', error);
     } finally {
-      setIsLoading(false)
-      setPageTransitioning(false)
+      setIsLoading(false);
+      setPageTransitioning(false);
     }
-  }
-  
+  };
+
   // Helper function to convert price range string to min/max values
-  const getPriceRangeValues = (range: string): [number | null, number | null] => {
+  const getPriceRangeValues = (
+    range: string
+  ): [number | null, number | null] => {
     switch (range) {
       case 'under25':
-        return [0, 25]
+        return [0, 25];
       case '25to50':
-        return [25, 50]
+        return [25, 50];
       case '50to100':
-        return [50, 100]
+        return [50, 100];
       case 'over100':
-        return [100, null]
+        return [100, null];
       default:
-        return [null, null]
+        return [null, null];
     }
-  }
+  };
 
   // Update filters and refetch products
   const updateFilters = (newFilters: Partial<typeof filters>) => {
-    const updatedFilters = { ...filters, ...newFilters }
-    setFilters(updatedFilters)
-    fetchProducts(1, updatedFilters.category !== 'all' ? updatedFilters.category : '', newFilters)
-  }
-  
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    fetchProducts(
+      1,
+      updatedFilters.category !== 'all' ? updatedFilters.category : '',
+      newFilters
+    );
+  };
+
   // Initial fetch
   useEffect(() => {
-    fetchProducts()
-  }, [])
-  
-  return { 
-    products, 
+    fetchProducts();
+  }, []);
+
+  return {
+    products,
     prevProducts,
-    loading, 
+    loading,
     pageTransitioning,
-    pagination, 
+    pagination,
     fetchProducts,
     setFilters,
     filters,
-    updateFilters
-  }
+    updateFilters,
+  };
 }
 
 function useCategories() {
-  const [categories, setCategories] = useState<any[]>([])
-  
+  const [categories, setCategories] = useState<any[]>([]);
+
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await fetch('/api/product-categories')
+        const response = await fetch('/api/product-categories');
         if (!response.ok) {
-          throw new Error("Failed to fetch categories")
+          throw new Error('Failed to fetch categories');
         }
-        const data = await response.json()
-        setCategories(data)
+        const data = await response.json();
+        setCategories(data);
       } catch (error) {
-        console.error("Error fetching categories:", error)
+        console.error('Error fetching categories:', error);
       }
     }
-    
-    fetchCategories()
-  }, [])
-  
-  return categories
+
+    fetchCategories();
+  }, []);
+
+  return categories;
 }
 
 // Pagination component
-function Pagination({ pagination, onPageChange }: { 
-  pagination: { page: number; totalPages: number; total: number; limit: number }; 
-  onPageChange: (page: number) => void 
+function Pagination({
+  pagination,
+  onPageChange,
+}: {
+  pagination: {
+    page: number;
+    totalPages: number;
+    total: number;
+    limit: number;
+  };
+  onPageChange: (page: number) => void;
 }) {
-  const { page, totalPages } = pagination
-  
+  const { page, totalPages } = pagination;
+
   // Generate page numbers to display
   const getPageNumbers = () => {
-    const pages = []
-    const maxPagesToShow = 5
-    
+    const pages = [];
+    const maxPagesToShow = 5;
+
     if (totalPages <= maxPagesToShow) {
       // Show all pages if there are fewer than maxPagesToShow
       for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
+        pages.push(i);
       }
     } else {
       // Always show first page
-      pages.push(1)
-      
+      pages.push(1);
+
       // Calculate start and end of the middle section
-      let start = Math.max(2, page - 1)
-      let end = Math.min(totalPages - 1, page + 1)
-      
+      let start = Math.max(2, page - 1);
+      let end = Math.min(totalPages - 1, page + 1);
+
       // Adjust if we're near the beginning or end
       if (page <= 3) {
-        end = Math.min(totalPages - 1, 4)
+        end = Math.min(totalPages - 1, 4);
       } else if (page >= totalPages - 2) {
-        start = Math.max(2, totalPages - 3)
+        start = Math.max(2, totalPages - 3);
       }
-      
+
       // Add ellipsis if needed
       if (start > 2) {
-        pages.push('...')
+        pages.push('...');
       }
-      
+
       // Add middle pages
       for (let i = start; i <= end; i++) {
-        pages.push(i)
+        pages.push(i);
       }
-      
+
       // Add ellipsis if needed
       if (end < totalPages - 1) {
-        pages.push('...')
+        pages.push('...');
       }
-      
+
       // Always show last page
       if (totalPages > 1) {
-        pages.push(totalPages)
+        pages.push(totalPages);
       }
     }
-    
-    return pages
-  }
-  
-  if (totalPages <= 1) return null
-  
+
+    return pages;
+  };
+
+  if (totalPages <= 1) return null;
+
   return (
     <div className="flex items-center justify-center space-x-2 mt-8">
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         size="sm"
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
       >
         Previous
       </Button>
-      
+
       {getPageNumbers().map((pageNum, index) => (
         <Button
           key={index}
-          variant={pageNum === page ? "default" : "outline"}
+          variant={pageNum === page ? 'default' : 'outline'}
           size="sm"
-          onClick={() => typeof pageNum === 'number' ? onPageChange(pageNum) : null}
+          onClick={() =>
+            typeof pageNum === 'number' ? onPageChange(pageNum) : null
+          }
           disabled={typeof pageNum !== 'number'}
           className={typeof pageNum !== 'number' ? 'cursor-default' : ''}
         >
           {pageNum}
         </Button>
       ))}
-      
-      <Button 
-        variant="outline" 
+
+      <Button
+        variant="outline"
         size="sm"
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages}
@@ -260,69 +276,85 @@ function Pagination({ pagination, onPageChange }: {
         Next
       </Button>
     </div>
-  )
+  );
 }
 
 export default function ProductsPage() {
-  const { products, prevProducts, loading, pageTransitioning, pagination, fetchProducts, filters, updateFilters } = useProducts()
-  const categories = useCategories()
-  const [activeCategory, setActiveCategory] = useState("all")
-  const [showAllCategories, setShowAllCategories] = useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
+  const {
+    products,
+    prevProducts,
+    loading,
+    pageTransitioning,
+    pagination,
+    fetchProducts,
+    filters,
+    updateFilters,
+  } = useProducts();
+  const categories = useCategories();
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
-    availability: true
-  })
+    availability: true,
+  });
 
   // Handle category change
   const handleCategoryChange = (value: string) => {
-    setActiveCategory(value)
-    fetchProducts(1, value)
-  }
-  
+    setActiveCategory(value);
+    fetchProducts(1, value);
+  };
+
   // Handle page change
   const handlePageChange = (newPage: number) => {
     // Save current scroll position before fetching new products
-    const scrollPosition = window.scrollY
-    
+    const scrollPosition = window.scrollY;
+
     // Fetch products for the new page
-    fetchProducts(newPage, activeCategory)
-    
+    fetchProducts(newPage, activeCategory);
+
     // No automatic scrolling to top - maintain user's position
-  }
-  
+  };
+
   // Handle price range change
   const handlePriceRangeChange = (range: string) => {
-    updateFilters({ priceRange: range })
-  }
-  
+    updateFilters({ priceRange: range });
+  };
+
   // Handle availability filter changes
-  const handleAvailabilityChange = (filter: 'inStock' | 'onSale', checked: boolean) => {
-    updateFilters({ [filter]: checked })
-  }
+  const handleAvailabilityChange = (
+    filter: 'inStock' | 'onSale',
+    checked: boolean
+  ) => {
+    updateFilters({ [filter]: checked });
+  };
 
   // Toggle section expansion
   const toggleSection = (section: 'categories' | 'price' | 'availability') => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
-    }))
-  }
+      [section]: !prev[section],
+    }));
+  };
 
   // Filter categories based on search
-  const filteredCategories = categories.filter((category: any) => 
+  const filteredCategories = categories.filter((category: any) =>
     category.name.toLowerCase().includes(categorySearch.toLowerCase())
-  )
+  );
 
   // Display limited categories unless showAll is true
-  const displayedCategories = showAllCategories ? filteredCategories : filteredCategories.slice(0, 5)
+  const displayedCategories = showAllCategories
+    ? filteredCategories
+    : filteredCategories.slice(0, 5);
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Health Products</h1>
-        <p className="text-gray-600 mt-1">Browse our selection of premium health and wellness products</p>
+        <p className="text-gray-600 mt-1">
+          Browse our selection of premium health and wellness products
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -330,65 +362,89 @@ export default function ProductsPage() {
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="bg-white p-4 rounded-lg border border-gray-200 sticky top-4">
             <h2 className="text-lg font-semibold mb-4">Filters</h2>
-            
+
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium">Categories</h3>
-                <button 
-                  onClick={() => toggleSection('categories')} 
+                <button
+                  onClick={() => toggleSection('categories')}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   {expandedSections.categories ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 15l-6-6-6 6"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 15l-6-6-6 6" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9l6 6 6-6"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 9l6 6 6-6" />
                     </svg>
                   )}
                 </button>
               </div>
-              
+
               {expandedSections.categories && (
                 <>
                   <div className="mb-2">
-                    <input 
-                      type="text" 
-                      placeholder="Search categories..." 
+                    <input
+                      type="text"
+                      placeholder="Search categories..."
                       className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
-                    <div 
-                      className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-emerald-100 text-emerald-800" : "hover:bg-gray-100"}`}
-                      onClick={() => handleCategoryChange("all")}
+                    <div
+                      className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === 'all' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
+                      onClick={() => handleCategoryChange('all')}
                     >
                       All Products
                     </div>
                     {displayedCategories.map((category: any) => (
-                      <div 
+                      <div
                         key={category.id}
-                        className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === category.name ? "bg-emerald-100 text-emerald-800" : "hover:bg-gray-100"}`}
+                        className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === category.name ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                         onClick={() => handleCategoryChange(category.name)}
                       >
                         {category.name}
                       </div>
                     ))}
-                    
+
                     {filteredCategories.length > 5 && (
-                      <button 
+                      <button
                         className="text-emerald-600 hover:text-emerald-700 text-sm font-medium mt-1 w-full text-left px-3 py-1"
                         onClick={() => setShowAllCategories(!showAllCategories)}
                       >
-                        {showAllCategories ? "Show less" : `Show all (${filteredCategories.length})`}
+                        {showAllCategories
+                          ? 'Show less'
+                          : `Show all (${filteredCategories.length})`}
                       </button>
                     )}
-                    
+
                     {filteredCategories.length === 0 && categorySearch && (
-                      <div className="text-sm text-gray-500 px-3 py-1.5">No matching categories</div>
+                      <div className="text-sm text-gray-500 px-3 py-1.5">
+                        No matching categories
+                      </div>
                     )}
                   </div>
                 </>
@@ -398,55 +454,86 @@ export default function ProductsPage() {
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium">Price Range</h3>
-                <button 
-                  onClick={() => toggleSection('price')} 
+                <button
+                  onClick={() => toggleSection('price')}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   {expandedSections.price ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 15l-6-6-6 6"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 15l-6-6-6 6" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9l6 6 6-6"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 9l6 6 6-6" />
                     </svg>
                   )}
                 </button>
               </div>
-              
+
               {expandedSections.price && (
                 <div className="space-y-1">
-                  <div 
+                  <div
                     className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === 'under25' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('under25')}
                   >
                     Under $25
                   </div>
-                  <div 
+                  <div
                     className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === '25to50' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('25to50')}
                   >
                     $25 - $50
                   </div>
-                  <div 
+                  <div
                     className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === '50to100' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('50to100')}
                   >
                     $50 - $100
                   </div>
-                  <div 
+                  <div
                     className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === 'over100' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('over100')}
                   >
                     Over $100
                   </div>
                   {filters.priceRange && (
-                    <div 
+                    <div
                       className="cursor-pointer rounded px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 flex items-center"
                       onClick={() => handlePriceRangeChange('')}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                        <path d="M18 6L6 18M6 6l12 12"/>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-1"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" />
                       </svg>
                       Clear
                     </div>
@@ -458,43 +545,71 @@ export default function ProductsPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium">Availability</h3>
-                <button 
-                  onClick={() => toggleSection('availability')} 
+                <button
+                  onClick={() => toggleSection('availability')}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   {expandedSections.availability ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 15l-6-6-6 6"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 15l-6-6-6 6" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9l6 6 6-6"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 9l6 6 6-6" />
                     </svg>
                   )}
                 </button>
               </div>
-              
+
               {expandedSections.availability && (
                 <div className="space-y-2">
                   <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      id="inStock" 
-                      className="mr-2" 
+                    <input
+                      type="checkbox"
+                      id="inStock"
+                      className="mr-2"
                       checked={filters.inStock}
-                      onChange={(e) => handleAvailabilityChange('inStock', e.target.checked)}
+                      onChange={(e) =>
+                        handleAvailabilityChange('inStock', e.target.checked)
+                      }
                     />
-                    <label htmlFor="inStock" className="text-sm">In Stock</label>
+                    <label htmlFor="inStock" className="text-sm">
+                      In Stock
+                    </label>
                   </div>
                   <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      id="onSale" 
-                      className="mr-2" 
+                    <input
+                      type="checkbox"
+                      id="onSale"
+                      className="mr-2"
                       checked={filters.onSale}
-                      onChange={(e) => handleAvailabilityChange('onSale', e.target.checked)}
+                      onChange={(e) =>
+                        handleAvailabilityChange('onSale', e.target.checked)
+                      }
                     />
-                    <label htmlFor="onSale" className="text-sm">On Sale</label>
+                    <label htmlFor="onSale" className="text-sm">
+                      On Sale
+                    </label>
                   </div>
                 </div>
               )}
@@ -547,7 +662,10 @@ export default function ProductsPage() {
                     <Card className="overflow-hidden transition-all hover:shadow-md">
                       <div className="relative">
                         <Image
-                          src={product.image_url || "/placeholder.svg?height=200&width=200"}
+                          src={
+                            product.image_url ||
+                            '/placeholder.svg?height=200&width=200'
+                          }
                           alt={product.name}
                           width={300}
                           height={300}
@@ -555,7 +673,11 @@ export default function ProductsPage() {
                         />
                         {product.discounted_price && (
                           <Badge className="absolute top-2 right-2 bg-emerald-500">
-                            {Math.round((1 - product.discounted_price / product.price) * 100)}% OFF
+                            {Math.round(
+                              (1 - product.discounted_price / product.price) *
+                                100
+                            )}
+                            % OFF
                           </Badge>
                         )}
                         <Badge className="absolute top-2 left-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
@@ -563,27 +685,47 @@ export default function ProductsPage() {
                         </Badge>
                       </div>
                       <CardContent className="p-4">
-                        <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+                        <h3 className="font-semibold text-lg mb-1">
+                          {product.name}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {product.description}
+                        </p>
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <span className="text-lg font-bold">{formatPrice(product.discounted_price || product.price)}</span>
+                            <span className="text-lg font-bold">
+                              {formatPrice(
+                                product.discounted_price || product.price
+                              )}
+                            </span>
                             {product.discounted_price && (
-                              <span className="text-gray-400 line-through ml-2 text-sm">{formatPrice(product.price)}</span>
+                              <span className="text-gray-400 line-through ml-2 text-sm">
+                                {formatPrice(product.price)}
+                              </span>
                             )}
                           </div>
                           {product.in_stock ? (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">In Stock</Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                            >
+                              In Stock
+                            </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">Out of Stock</Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-gray-50 text-gray-500 border-gray-200"
+                            >
+                              Out of Stock
+                            </Badge>
                           )}
                         </div>
-                        <AddToCartButton 
+                        <AddToCartButton
                           product={{
                             id: product.id,
                             name: product.name,
                             price: product.discounted_price || product.price,
-                            image_url: product.image_url
+                            image_url: product.image_url,
                           }}
                           className="w-full"
                           disabled={!product.in_stock}
@@ -593,11 +735,14 @@ export default function ProductsPage() {
                   </Link>
                 ))}
               </div>
-              <Pagination pagination={pagination} onPageChange={handlePageChange} />
+              <Pagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+              />
             </>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

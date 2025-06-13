@@ -6,9 +6,12 @@ interface ResponsiveTableProps {
   className?: string;
 }
 
-export function ResponsiveTable({ children, className = '' }: ResponsiveTableProps) {
+export function ResponsiveTable({
+  children,
+  className = '',
+}: ResponsiveTableProps) {
   return (
-    <div 
+    <div
       style={{
         width: '100%',
         overflowX: 'scroll',
@@ -26,18 +29,26 @@ export function ResponsiveTable({ children, className = '' }: ResponsiveTablePro
             height: 8px !important;
             display: block !important;
           }
-          
+
           .responsive-table-wrapper::-webkit-scrollbar-thumb {
-            background-color: #0C99B4 !important;
+            background-color: #0c99b4 !important;
             border-radius: 4px !important;
           }
-          
+
           .responsive-table-wrapper::-webkit-scrollbar-track {
             background-color: #f1f1f1 !important;
           }
         }
       `}</style>
-      <div className="responsive-table-wrapper" style={{ overflowX: 'auto', width: '100%', display: 'block', paddingBottom: '10px' }}>
+      <div
+        className="responsive-table-wrapper"
+        style={{
+          overflowX: 'auto',
+          width: '100%',
+          display: 'block',
+          paddingBottom: '10px',
+        }}
+      >
         <Table className={`${className}`} style={{ minWidth: '800px' }}>
           {children}
         </Table>

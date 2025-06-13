@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
   const { user, isLoading, logout } = useAuth();
@@ -26,7 +26,7 @@ export default function Home() {
               {user ? (
                 <>
                   <span className="text-gray-700">
-                    Hello, {user.firstName || "User"}!
+                    Hello, {user.firstName || 'User'}!
                   </span>
                   <button
                     onClick={logout}

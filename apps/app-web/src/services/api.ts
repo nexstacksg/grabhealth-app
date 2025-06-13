@@ -1,7 +1,7 @@
 class ApiService {
   private baseURL: string;
 
-  constructor(baseURL: string = "") {
+  constructor(baseURL: string = '') {
     this.baseURL = baseURL;
   }
 
@@ -14,11 +14,11 @@ class ApiService {
     const config: RequestInit = {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         ...options.headers,
       },
       // Important: include cookies in requests
-      credentials: "include",
+      credentials: 'include',
     };
 
     try {
@@ -28,7 +28,7 @@ class ApiService {
       if (!response.ok) {
         throw {
           status: response.status,
-          message: data.error?.message || "An error occurred",
+          message: data.error?.message || 'An error occurred',
           error: data.error,
         };
       }
@@ -47,39 +47,39 @@ class ApiService {
   }
 
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: "GET" });
+    return this.request<T>(endpoint, { method: 'GET' });
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: "POST",
+      method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: "PUT",
+      method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: "DELETE" });
+    return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: "PATCH",
+      method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 }
 
 // Create instances for different API endpoints
-export const internalApi = new ApiService("/api");
+export const internalApi = new ApiService('/api');
 export const api = new ApiService(
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1"
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
 );
 
 export default ApiService;

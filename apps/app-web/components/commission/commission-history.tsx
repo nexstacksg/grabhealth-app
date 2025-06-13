@@ -1,56 +1,71 @@
-"use client"
+'use client';
 
-import React from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { formatPrice } from "@/lib/utils"
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { formatPrice } from '@/lib/utils';
 
 type Commission = {
-  id: number
-  order_id: number
-  user_id: number
-  recipient_id: number
-  amount: number
-  commission_rate: number
-  relationship_level: number
-  status: string
-  created_at: string
-  updated_at: string
-  order_total?: number
-  buyer_name?: string
-}
+  id: number;
+  order_id: number;
+  user_id: number;
+  recipient_id: number;
+  amount: number;
+  commission_rate: number;
+  relationship_level: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  order_total?: number;
+  buyer_name?: string;
+};
 
 type CommissionHistoryProps = {
-  commissions: Commission[]
-}
+  commissions: Commission[];
+};
 
-export default function CommissionHistory({ commissions }: CommissionHistoryProps) {
+export default function CommissionHistory({
+  commissions,
+}: CommissionHistoryProps) {
   // Format date for display
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    }).format(date)
-  }
+      minute: '2-digit',
+    }).format(date);
+  };
 
   // Get status badge color
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'paid':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800';
       case 'cancelled':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800';
     }
-  }
+  };
 
   return (
     <Card>
@@ -81,9 +96,13 @@ export default function CommissionHistory({ commissions }: CommissionHistoryProp
                     {formatDate(commission.created_at)}
                   </TableCell>
                   <TableCell>#{commission.order_id}</TableCell>
-                  <TableCell>{commission.buyer_name || `User #${commission.user_id}`}</TableCell>
+                  <TableCell>
+                    {commission.buyer_name || `User #${commission.user_id}`}
+                  </TableCell>
                   <TableCell>Tier {commission.relationship_level}</TableCell>
-                  <TableCell>{(commission.commission_rate * 100).toFixed(0)}%</TableCell>
+                  <TableCell>
+                    {(commission.commission_rate * 100).toFixed(0)}%
+                  </TableCell>
                   <TableCell className="font-medium">
                     {formatPrice(commission.amount)}
                   </TableCell>
@@ -106,5 +125,5 @@ export default function CommissionHistory({ commissions }: CommissionHistoryProp
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // Add paths that require authentication
-const protectedPaths = ["/dashboard", "/profile", "/settings"];
+const protectedPaths = ['/dashboard', '/profile', '/settings'];
 
 // Add paths that should redirect to dashboard if already authenticated
-const authPaths = ["/login", "/register", "/forgot-password"];
+const authPaths = ['/login', '/register', '/forgot-password'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get("accessToken");
+  const accessToken = request.cookies.get('accessToken');
 
   // Check if the path requires authentication
   const isProtectedPath = protectedPaths.some((path) =>
@@ -19,14 +19,14 @@ export function middleware(request: NextRequest) {
 
   // Redirect to login if accessing protected path without token
   if (isProtectedPath && !accessToken) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect to dashboard if accessing auth pages while authenticated
   if (isAuthPath && accessToken) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();
@@ -41,6 +41,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

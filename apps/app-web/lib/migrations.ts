@@ -1,10 +1,10 @@
-import { sql } from "./db";
-import { hashPassword, generateSalt } from "./auth";
+import { sql } from './db';
+import { hashPassword, generateSalt } from './auth';
 
 export async function runMigrations() {
   try {
-    console.log("Running database migrations...");
-    
+    console.log('Running database migrations...');
+
     // Add role column to users table if it doesn't exist
     await sql`
       DO $$
@@ -15,7 +15,7 @@ export async function runMigrations() {
         END IF;
       END $$;
     `;
-    
+
     // Check if admin user exists
     const adminExists = await sql`
       SELECT * FROM users WHERE email = 'kyits485@gmail.com'
@@ -24,13 +24,13 @@ export async function runMigrations() {
     if (adminExists.length === 0) {
       // Create admin user
       const salt = generateSalt();
-      const passwordHash = hashPassword("password", salt);
+      const passwordHash = hashPassword('password', salt);
 
       await sql`
         INSERT INTO users (name, email, password_hash, password_salt, role)
         VALUES ('Admin User', 'kyits485@gmail.com', ${passwordHash}, ${salt}, 'admin')
       `;
-      console.log("Created admin user with email: kyits485@gmail.com");
+      console.log('Created admin user with email: kyits485@gmail.com');
     } else {
       // Update existing user to admin role
       await sql`
@@ -38,7 +38,7 @@ export async function runMigrations() {
         SET role = 'admin' 
         WHERE email = 'kyits485@gmail.com'
       `;
-      console.log("Updated existing user to admin role");
+      console.log('Updated existing user to admin role');
     }
 
     // Create account_requests table if it doesn't exist
@@ -64,10 +64,10 @@ export async function runMigrations() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    
-    console.log("Migrations completed successfully");
+
+    console.log('Migrations completed successfully');
   } catch (error) {
-    console.error("Error running migrations:", error);
+    console.error('Error running migrations:', error);
     throw error;
   }
 }

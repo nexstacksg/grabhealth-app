@@ -1,12 +1,12 @@
-import { apiClient } from "./api-client";
-import { 
-  ICommission, 
-  ICommissionStats, 
-  INetworkStats
-} from "@app/shared-types";
+import { apiClient } from './api-client';
+import {
+  ICommission,
+  ICommissionStats,
+  INetworkStats,
+} from '@app/shared-types';
 
 class CommissionService {
-  private baseUrl = "/commissions";
+  private baseUrl = '/commissions';
 
   /**
    * Get user's commissions
@@ -17,7 +17,7 @@ class CommissionService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get commissions");
+      throw new Error(response.error?.message || 'Failed to get commissions');
     }
 
     return response.data;
@@ -32,7 +32,9 @@ class CommissionService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get commission stats");
+      throw new Error(
+        response.error?.message || 'Failed to get commission stats'
+      );
     }
 
     return response.data;
@@ -42,12 +44,10 @@ class CommissionService {
    * Get MLM network
    */
   async getNetwork(): Promise<any> {
-    const response = await apiClient.get<any>(
-      `${this.baseUrl}/network`
-    );
+    const response = await apiClient.get<any>(`${this.baseUrl}/network`);
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get network");
+      throw new Error(response.error?.message || 'Failed to get network');
     }
 
     return response.data;
@@ -62,7 +62,7 @@ class CommissionService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get network stats");
+      throw new Error(response.error?.message || 'Failed to get network stats');
     }
 
     return response.data;
@@ -72,12 +72,10 @@ class CommissionService {
    * Get commission by ID
    */
   async getCommission(id: number): Promise<ICommission> {
-    const response = await apiClient.get<ICommission>(
-      `${this.baseUrl}/${id}`
-    );
+    const response = await apiClient.get<ICommission>(`${this.baseUrl}/${id}`);
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Commission not found");
+      throw new Error(response.error?.message || 'Commission not found');
     }
 
     return response.data;

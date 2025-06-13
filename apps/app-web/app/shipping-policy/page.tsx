@@ -11,7 +11,9 @@ export default function ShippingPolicy() {
       <div className="mb-12">
         <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-8 md:p-10 text-white shadow-lg mb-6 border border-emerald-700">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Shipping Policy</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              Shipping Policy
+            </h1>
             <p className="text-emerald-100 text-lg md:text-xl max-w-2xl mx-auto">
               Fast and reliable shipping options
             </p>
@@ -23,7 +25,8 @@ export default function ShippingPolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">1. Processing Time</h2>
           <p className="mb-4">
-            Orders are typically processed within 1-2 business days. Processing time may be longer during peak seasons or promotional periods.
+            Orders are typically processed within 1-2 business days. Processing
+            time may be longer during peak seasons or promotional periods.
           </p>
         </section>
 
@@ -47,30 +50,41 @@ export default function ShippingPolicy() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">3. International Shipping</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            3. International Shipping
+          </h2>
           <p className="mb-4">
-            We currently ship to select countries. International orders may be subject to customs fees and import duties which are the responsibility of the customer.
+            We currently ship to select countries. International orders may be
+            subject to customs fees and import duties which are the
+            responsibility of the customer.
           </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">4. Order Tracking</h2>
           <p className="mb-4">
-            You will receive a shipping confirmation email with tracking information once your order has been shipped. Please allow up to 24 hours for tracking information to update.
+            You will receive a shipping confirmation email with tracking
+            information once your order has been shipped. Please allow up to 24
+            hours for tracking information to update.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">5. Shipping Restrictions</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            5. Shipping Restrictions
+          </h2>
           <p className="mb-4">
-            Some items may have shipping restrictions based on your location. We'll notify you if any items in your order cannot be shipped to your address.
+            Some items may have shipping restrictions based on your location.
+            We'll notify you if any items in your order cannot be shipped to
+            your address.
           </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">6. Contact Us</h2>
           <p>
-            If you have any questions about our shipping policy, please contact us at support@grabhealth.com.
+            If you have any questions about our shipping policy, please contact
+            us at support@grabhealth.com.
           </p>
         </section>
       </div>

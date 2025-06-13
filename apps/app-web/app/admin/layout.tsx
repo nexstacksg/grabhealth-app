@@ -1,62 +1,62 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { User } from "@/types/user"
-import { Sidebar } from "@/components/admin/sidebar"
-import { Menu, X } from "lucide-react"
-import "./styles/admin-styles.css"
-import "./styles/mobile-table.css"
-import "./styles/force-table.css"
-import "./styles/direct-fix.css"
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { User } from '@/lib/auth';
+import { Sidebar } from '@/components/admin/sidebar';
+import { Menu, X } from 'lucide-react';
+import './styles/admin-styles.css';
+import './styles/mobile-table.css';
+import './styles/force-table.css';
+import './styles/direct-fix.css';
 
 export default function AdminLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Handle mobile menu toggle
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
-  }
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   useEffect(() => {
     async function checkAdmin() {
       try {
-        const response = await fetch("/api/auth/me")
-        const data = await response.json()
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Failed to fetch user data")
-        }
-        
-        // Check if we have a user and if they have admin role
-        const userData = data.user || data;
-        
-        if (!userData || userData.role !== "admin") {
-          console.log("Not an admin user:", userData)
-          // Not an admin, redirect to home
-          router.push("/")
-          return
+          throw new Error(data.error || 'Failed to fetch user data');
         }
 
-        setUser(userData)
+        // Check if we have a user and if they have admin role
+        const userData = data.user || data;
+
+        if (!userData || userData.role !== 'admin') {
+          console.log('Not an admin user:', userData);
+          // Not an admin, redirect to home
+          router.push('/');
+          return;
+        }
+
+        setUser(userData);
       } catch (error) {
-        console.error("Error checking admin status:", error)
-        router.push("/auth/login")
+        console.error('Error checking admin status:', error);
+        router.push('/auth/login');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    checkAdmin()
-  }, [router])
+    checkAdmin();
+  }, [router]);
 
   if (loading) {
     return (
@@ -66,30 +66,37 @@ export default function AdminLayout({
           <p className="mt-4 text-lg">Loading admin dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="admin-layout bg-gray-50">
       {/* Sidebar component with fixed positioning */}
-      <div className={`admin-sidebar bg-[#0C99B4] ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-        <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+      <div
+        className={`admin-sidebar bg-[#0C99B4] ${isMobileMenuOpen ? 'mobile-open' : ''}`}
+      >
+        <Sidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
       </div>
-      
+
       {/* Mobile menu toggle button */}
-      <button 
+      <button
         onClick={toggleMobileMenu}
         className="md:hidden fixed top-3 left-3 z-[101] bg-[#0A87A0] text-white p-2 rounded-md shadow-md"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
-      
+
       {/* Main content area - separate from sidebar for mobile */}
       <div className="admin-content">
         {/* Header - visible on all screen sizes */}
         <header className="admin-header">
-          <h1 className="text-lg font-medium text-gray-800 ml-10 md:ml-0">Admin Dashboard</h1>
+          <h1 className="text-lg font-medium text-gray-800 ml-10 md:ml-0">
+            Admin Dashboard
+          </h1>
           {user && (
             <div className="flex items-center gap-3">
               <div className="hidden md:flex items-center gap-2">
@@ -100,16 +107,16 @@ export default function AdminLayout({
                   {user.name}
                 </span>
               </div>
-              <button 
+              <button
                 onClick={async () => {
                   try {
                     const response = await fetch('/api/auth/logout', {
                       method: 'POST',
                       headers: {
-                        'Content-Type': 'application/json'
-                      }
+                        'Content-Type': 'application/json',
+                      },
                     });
-                    
+
                     if (response.ok) {
                       // Redirect to homepage after successful logout
                       window.location.href = '/';
@@ -127,14 +134,12 @@ export default function AdminLayout({
             </div>
           )}
         </header>
-        
+
         {/* Main content with proper padding and scrolling */}
         <main className="admin-main">
-          <div className="max-w-7xl mx-auto p-4 md:p-6">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto p-4 md:p-6">{children}</div>
         </main>
       </div>
     </div>
-  )
+  );
 }

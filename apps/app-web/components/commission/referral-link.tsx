@@ -1,47 +1,56 @@
-"use client"
+'use client';
 
-import React, { useState, useRef } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { CopyIcon, Download, Share2 } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import QRCode from "react-qr-code"
+import React, { useState, useRef } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { CopyIcon, Download, Share2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import QRCode from 'react-qr-code';
 
 type ReferralLinkProps = {
-  referralLink: string
-}
+  referralLink: string;
+};
 
 function ReferralLink({ referralLink }: ReferralLinkProps) {
-  const [copied, setCopied] = useState(false)
-  const [shared, setShared] = useState(false)
-  const qrCodeRef = useRef<HTMLDivElement>(null)
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+  const qrCodeRef = useRef<HTMLDivElement>(null);
 
   // Copy referral link to clipboard
   const copyToClipboard = async () => {
     try {
       // Only run on client side
       if (typeof navigator === 'undefined') return;
-      
+
       const displayUrl = getDisplayUrl();
-      await navigator.clipboard.writeText(displayUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(displayUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy: ", err)
+      console.error('Failed to copy: ', err);
     }
-  }
-  
+  };
+
   // Get the display URL for the referral link
   const getDisplayUrl = () => {
     if (referralLink && referralLink.startsWith('http')) {
       return referralLink;
     }
     // Use window check to avoid hydration errors
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://grab-health-ai.vercel.app';
+    const baseUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : 'https://grab-health-ai.vercel.app';
     return `${baseUrl}/auth/register?referrer=${referralLink || 'user1'}`;
-  }
-  
+  };
+
   // Get just the referral code for the QR code
   const getReferralCode = () => {
     // If it's already a URL, extract the code from the query parameter
@@ -55,85 +64,88 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
     }
     // Otherwise just return the code itself
     return referralLink || 'user1';
-  }
-  
+  };
+
   // Share referral link
   const shareLink = async () => {
     // Only run on client side
     if (typeof navigator === 'undefined') return;
-    
+
     const displayUrl = getDisplayUrl();
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Join my GrabHealth network',
           text: 'Sign up using my referral link to join my network!',
           url: displayUrl,
-        })
-        setShared(true)
-        setTimeout(() => setShared(false), 2000)
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
       } catch (err) {
-        console.error('Error sharing:', err)
+        console.error('Error sharing:', err);
       }
     } else {
       // Fallback for browsers that don't support Web Share API
       try {
-        await navigator.clipboard.writeText(displayUrl)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        await navigator.clipboard.writeText(displayUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (err) {
-        console.error("Failed to copy: ", err)
+        console.error('Failed to copy: ', err);
       }
     }
-  }
-  
+  };
+
   // Download QR code as image
   const downloadQRCode = () => {
     // Only run on client side
-    if (typeof document === 'undefined' || typeof window === 'undefined') return;
-    
-    if (!qrCodeRef.current) return
-    
-    const svg = qrCodeRef.current.querySelector('svg')
-    if (!svg) return
-    
+    if (typeof document === 'undefined' || typeof window === 'undefined')
+      return;
+
+    if (!qrCodeRef.current) return;
+
+    const svg = qrCodeRef.current.querySelector('svg');
+    if (!svg) return;
+
     // Create a canvas element
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     // Set canvas dimensions
-    canvas.width = 200
-    canvas.height = 200
-    
+    canvas.width = 200;
+    canvas.height = 200;
+
     // Create an image from the SVG
-    const img = new Image()
-    const svgData = new XMLSerializer().serializeToString(svg)
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-    const svgUrl = URL.createObjectURL(svgBlob)
-    
+    const img = new Image();
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], {
+      type: 'image/svg+xml;charset=utf-8',
+    });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
     img.onload = () => {
       // Draw white background
-      ctx.fillStyle = 'white'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       // Draw the image
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
       // Convert to data URL and trigger download
-      const dataUrl = canvas.toDataURL('image/png')
-      const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = 'grabhealth-referral-qr.png'
-      a.click()
-      
+      const dataUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'grabhealth-referral-qr.png';
+      a.click();
+
       // Clean up
-      URL.revokeObjectURL(svgUrl)
-    }
-    
-    img.src = svgUrl
-  }
+      URL.revokeObjectURL(svgUrl);
+    };
+
+    img.src = svgUrl;
+  };
 
   return (
     <Card>
@@ -146,28 +158,28 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <Input
-              value={getDisplayUrl()}
-              readOnly
-              className="flex-1"
-            />
-            <Button 
-              size="sm" 
+            <Input value={getDisplayUrl()} readOnly className="flex-1" />
+            <Button
+              size="sm"
               onClick={copyToClipboard}
-              variant={copied ? "outline" : "default"}
+              variant={copied ? 'outline' : 'default'}
             >
-              {copied ? "Copied!" : <CopyIcon className="h-4 w-4 mr-2" />}
-              {copied ? "" : "Copy"}
+              {copied ? 'Copied!' : <CopyIcon className="h-4 w-4 mr-2" />}
+              {copied ? '' : 'Copy'}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            When someone registers using your link, they'll be added to your network
+            When someone registers using your link, they'll be added to your
+            network
           </p>
         </div>
 
         <div className="flex justify-center py-4">
           <div className="bg-white p-4 rounded-lg border">
-            <div className="h-48 w-48 flex items-center justify-center" ref={qrCodeRef}>
+            <div
+              className="h-48 w-48 flex items-center justify-center"
+              ref={qrCodeRef}
+            >
               <QRCode
                 size={180}
                 value={getDisplayUrl()}
@@ -185,11 +197,25 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
           <AlertTitle>How the Commission System Works</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
-              <li>When someone joins using your link, you become their Tier 1 upline</li>
-              <li>You earn 30% commission on direct sales to your Tier 1 downlines</li>
-              <li>You earn 10% commission when your Tier 1 downlines make sales to their downlines (Tier 2)</li>
-              <li>For deeper levels (Tier 3+), you earn points that can be redeemed for benefits</li>
-              <li>The more people in your network, the more earning potential you have</li>
+              <li>
+                When someone joins using your link, you become their Tier 1
+                upline
+              </li>
+              <li>
+                You earn 30% commission on direct sales to your Tier 1 downlines
+              </li>
+              <li>
+                You earn 10% commission when your Tier 1 downlines make sales to
+                their downlines (Tier 2)
+              </li>
+              <li>
+                For deeper levels (Tier 3+), you earn points that can be
+                redeemed for benefits
+              </li>
+              <li>
+                The more people in your network, the more earning potential you
+                have
+              </li>
             </ul>
           </AlertDescription>
         </Alert>
@@ -206,8 +232,8 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // Export the component directly without authentication protection
-export default ReferralLink
+export default ReferralLink;

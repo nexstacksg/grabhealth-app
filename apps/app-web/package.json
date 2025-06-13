@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "app-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "prettier": "prettier --write .",
+    "lint:check": "next lint && prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
+    "lint:fix": "next lint --fix && prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "db:seed": "tsx prisma/seed.ts",

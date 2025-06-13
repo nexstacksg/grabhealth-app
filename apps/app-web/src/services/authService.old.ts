@@ -1,10 +1,10 @@
-import { internalApi, api } from "./api";
+import { internalApi, api } from './api';
 import {
   LoginRequest,
   RegisterRequest,
   IUserPublic,
   ApiResponse,
-} from "@app/shared-types";
+} from '@app/shared-types';
 
 export interface AuthResponse {
   user: IUserPublic;
@@ -21,14 +21,14 @@ class AuthService {
    */
   async login(data: LoginRequest): Promise<AuthResponse> {
     const response = await internalApi.post<ApiResponse<AuthResponse>>(
-      "/auth/login",
+      '/auth/login',
       data
     );
-    
+
     if (!response.data) {
-      throw new Error("Invalid login response");
+      throw new Error('Invalid login response');
     }
-    
+
     return response.data;
   }
 
@@ -37,14 +37,14 @@ class AuthService {
    */
   async register(data: RegisterRequest): Promise<AuthResponse> {
     const response = await internalApi.post<ApiResponse<AuthResponse>>(
-      "/auth/register",
+      '/auth/register',
       data
     );
-    
+
     if (!response.data) {
-      throw new Error("Invalid registration response");
+      throw new Error('Invalid registration response');
     }
-    
+
     return response.data;
   }
 
@@ -52,19 +52,20 @@ class AuthService {
    * Logout user - uses internal API route that clears cookies
    */
   async logout(): Promise<void> {
-    await internalApi.post("/auth/logout");
+    await internalApi.post('/auth/logout');
   }
 
   /**
    * Get current user profile - uses internal API route that reads cookies
    */
   async getProfile(): Promise<IUserPublic> {
-    const response = await internalApi.get<ApiResponse<{ user: IUserPublic }>>(
-      "/auth/profile"
-    );
+    const response =
+      await internalApi.get<ApiResponse<{ user: IUserPublic }>>(
+        '/auth/profile'
+      );
 
     if (!response.data) {
-      throw new Error("Invalid profile response");
+      throw new Error('Invalid profile response');
     }
 
     const profileData = response.data;
@@ -74,13 +75,13 @@ class AuthService {
       return profileData.user;
     } else if (
       profileData &&
-      typeof profileData === "object" &&
-      "id" in profileData
+      typeof profileData === 'object' &&
+      'id' in profileData
     ) {
       // If the user data is directly in the data field
       return profileData as unknown as IUserPublic;
     } else {
-      throw new Error("Invalid user data structure");
+      throw new Error('Invalid user data structure');
     }
   }
 
@@ -88,21 +89,21 @@ class AuthService {
    * Request password reset - goes directly to backend (no auth needed)
    */
   async forgotPassword(email: string): Promise<void> {
-    await api.post("/auth/forgot-password", { email });
+    await api.post('/auth/forgot-password', { email });
   }
 
   /**
    * Reset password with token - goes directly to backend (no auth needed)
    */
   async resetPassword(token: string, password: string): Promise<void> {
-    await api.post("/auth/reset-password", { token, password });
+    await api.post('/auth/reset-password', { token, password });
   }
 
   /**
    * Resend verification email
    */
   async resendVerificationEmail(email: string): Promise<void> {
-    await api.post("/auth/resend-verification", { email });
+    await api.post('/auth/resend-verification', { email });
   }
 
   /**

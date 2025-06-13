@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
 
     // Forward request to backend
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
     });
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.error || { message: "Login failed" } },
+        { error: data.error || { message: 'Login failed' } },
         { status: response.status }
       );
     }
@@ -30,21 +30,21 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
 
     // Access token - shorter expiry
-    cookieStore.set("accessToken", data.data.accessToken, {
+    cookieStore.set('accessToken', data.data.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 24 hours
-      path: "/",
+      path: '/',
     });
 
     // Refresh token - longer expiry
-    cookieStore.set("refreshToken", data.data.refreshToken, {
+    cookieStore.set('refreshToken', data.data.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
+      path: '/',
     });
 
     // Return user data without tokens
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: { message: "Internal server error" } },
+      { error: { message: 'Internal server error' } },
       { status: 500 }
     );
   }

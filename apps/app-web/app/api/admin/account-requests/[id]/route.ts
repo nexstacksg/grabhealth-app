@@ -1,43 +1,38 @@
-import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { createUser } from "@/lib/auth";
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { createUser } from '@/lib/auth';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   try {
-    const requestId = parseInt(params.id);
-    
+    const requestId = parseInt(id);
+
     if (isNaN(requestId)) {
       return NextResponse.json(
-        { error: "Invalid request ID" },
+        { error: 'Invalid request ID' },
         { status: 400 }
       );
     }
 
     // Check if the user is authenticated and is an admin
     const currentUser = await getCurrentUser();
-    
+
     if (!currentUser || currentUser.role !== 'admin') {
       return NextResponse.json(
-        { error: "Unauthorized access" },
+        { error: 'Unauthorized access' },
         { status: 403 }
       );
     }
 
     // Get the request body
     const { status } = await request.json();
-    
+
     if (!status || !['approved', 'rejected'].includes(status)) {
-      return NextResponse.json(
-        { error: "Invalid status" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
 
     // Get the account request
@@ -47,7 +42,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
     if (!Array.isArray(accountRequests) || accountRequests.length === 0) {
       return NextResponse.json(
-        { error: "Account request not found" },
+        { error: 'Account request not found' },
         { status: 404 }
       );
     }
@@ -66,14 +61,14 @@ export async function PATCH(request: Request, { params }: Params) {
       try {
         // Generate a temporary password (in a real app, you would email this to the user)
         const tempPassword = Math.random().toString(36).slice(-8);
-        
+
         // Create the user
         await createUser(
           accountRequest.name,
           accountRequest.email,
           tempPassword
         );
-        
+
         // Update the user's role
         await sql`
           UPDATE users 
@@ -81,17 +76,17 @@ export async function PATCH(request: Request, { params }: Params) {
           WHERE email = ${accountRequest.email}
         `;
       } catch (error) {
-        console.error("Error creating user from account request:", error);
-        
+        console.error('Error creating user from account request:', error);
+
         // If user creation fails, revert the account request status
         await sql`
           UPDATE account_requests 
           SET status = 'pending', updated_at = CURRENT_TIMESTAMP
           WHERE id = ${requestId}
         `;
-        
+
         return NextResponse.json(
-          { error: "Failed to create user account" },
+          { error: 'Failed to create user account' },
           { status: 500 }
         );
       }
@@ -102,9 +97,9 @@ export async function PATCH(request: Request, { params }: Params) {
       message: `Account request ${status} successfully`,
     });
   } catch (error) {
-    console.error("Error updating account request:", error);
+    console.error('Error updating account request:', error);
     return NextResponse.json(
-      { error: "Failed to update account request" },
+      { error: 'Failed to update account request' },
       { status: 500 }
     );
   }

@@ -1,28 +1,28 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { 
-  ArrowLeft, 
-  CreditCard, 
-  MapPin, 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  CreditCard,
+  MapPin,
   ShoppingBag,
   CheckCircle,
   Loader2,
   Award,
-  BadgePercent
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card"
+  BadgePercent,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -31,133 +31,138 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Badge } from "@/components/ui/badge"
-import { useCart } from "@/hooks/use-cart"
-import { useMembership } from "@/hooks/use-membership"
-import { formatPrice } from "@/lib/utils"
-import { toast } from "sonner"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/use-cart';
+import { useMembership } from '@/hooks/use-membership';
+import { formatPrice } from '@/lib/utils';
+import { toast } from 'sonner';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 // Form validation schema
 const checkoutFormSchema = z.object({
   // Shipping details
-  fullName: z.string().min(2, { message: "Full name is required" }),
-  email: z.string().email({ message: "Invalid email address" }),
-  phone: z.string().min(10, { message: "Valid phone number is required" }),
-  address: z.string().min(5, { message: "Address is required" }),
-  city: z.string().min(2, { message: "City is required" }),
-  state: z.string().min(2, { message: "State is required" }),
-  zipCode: z.string().min(5, { message: "Valid zip code is required" }),
-  
-  // Payment details
-  paymentMethod: z.enum(["credit", "debit", "paypal"]),
-  cardName: z.string().min(2, { message: "Name on card is required" }),
-  cardNumber: z.string()
-    .min(16, { message: "Card number must be 16 digits" })
-    .max(16, { message: "Card number must be 16 digits" })
-    .regex(/^\d+$/, { message: "Card number must contain only digits" }),
-  expiryDate: z.string()
-    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: "Expiry date must be in MM/YY format" }),
-  cvv: z.string()
-    .min(3, { message: "CVV must be 3 or 4 digits" })
-    .max(4, { message: "CVV must be 3 or 4 digits" })
-    .regex(/^\d+$/, { message: "CVV must contain only digits" }),
-})
+  fullName: z.string().min(2, { message: 'Full name is required' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  phone: z.string().min(10, { message: 'Valid phone number is required' }),
+  address: z.string().min(5, { message: 'Address is required' }),
+  city: z.string().min(2, { message: 'City is required' }),
+  state: z.string().min(2, { message: 'State is required' }),
+  zipCode: z.string().min(5, { message: 'Valid zip code is required' }),
 
-type CheckoutFormValues = z.infer<typeof checkoutFormSchema>
+  // Payment details
+  paymentMethod: z.enum(['credit', 'debit', 'paypal']),
+  cardName: z.string().min(2, { message: 'Name on card is required' }),
+  cardNumber: z
+    .string()
+    .min(16, { message: 'Card number must be 16 digits' })
+    .max(16, { message: 'Card number must be 16 digits' })
+    .regex(/^\d+$/, { message: 'Card number must contain only digits' }),
+  expiryDate: z
+    .string()
+    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, {
+      message: 'Expiry date must be in MM/YY format',
+    }),
+  cvv: z
+    .string()
+    .min(3, { message: 'CVV must be 3 or 4 digits' })
+    .max(4, { message: 'CVV must be 3 or 4 digits' })
+    .regex(/^\d+$/, { message: 'CVV must contain only digits' }),
+});
+
+type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
 export default function CheckoutPage() {
-  const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { 
-    cartItems, 
-    cartCount, 
-    cartTotal, 
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    cartItems,
+    cartCount,
+    cartTotal,
     isLoading: cartLoading,
-    checkout 
-  } = useCart()
-  
+    checkout,
+  } = useCart();
+
   const {
     membership,
     isLoading: membershipLoading,
     tierDiscount,
-    addPoints
-  } = useMembership()
-  
-  const isLoading = cartLoading || membershipLoading
-  
+    addPoints,
+  } = useMembership();
+
+  const isLoading = cartLoading || membershipLoading;
+
   // Initialize form with react-hook-form
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      paymentMethod: "credit",
-      cardName: "",
-      cardNumber: "",
-      expiryDate: "",
-      cvv: "",
+      fullName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      paymentMethod: 'credit',
+      cardName: '',
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
     },
-  })
-  
+  });
+
   // Handle form submission
   const onSubmit = async (data: CheckoutFormValues) => {
     if (cartItems.length === 0) {
-      toast.error("Your cart is empty")
-      return
+      toast.error('Your cart is empty');
+      return;
     }
-    
+
     try {
-      setIsSubmitting(true)
-      
+      setIsSubmitting(true);
+
       // Process the order
-      const orderId = await checkout()
-      
+      const orderId = await checkout();
+
       if (!orderId) {
-        toast.error("Failed to create order")
-        return
+        toast.error('Failed to create order');
+        return;
       }
-      
+
       // Add membership points for the purchase (10 points per $100 spent)
       if (membership) {
-        const pointsToAdd = Math.floor(discountedSubtotal / 100) * 10
+        const pointsToAdd = Math.floor(discountedSubtotal / 100) * 10;
         if (pointsToAdd > 0) {
-          await addPoints(pointsToAdd)
-          toast.success(`Added ${pointsToAdd} membership points!`)
+          await addPoints(pointsToAdd);
+          toast.success(`Added ${pointsToAdd} membership points!`);
         }
       }
-      
+
       // Show success message
-      toast.success("Order placed successfully!")
-      
+      toast.success('Order placed successfully!');
+
       // Redirect to order details page
-      router.push(`/orders/${orderId}`)
+      router.push(`/orders/${orderId}`);
     } catch (error) {
-      console.error("Error during checkout:", error)
-      toast.error("Failed to complete checkout")
+      console.error('Error during checkout:', error);
+      toast.error('Failed to complete checkout');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
-  
+  };
+
   // Calculate totals with membership discount
-  const subtotal = cartTotal
-  const discount = membership ? subtotal * tierDiscount : 0
-  const discountedSubtotal = subtotal - discount
-  const tax = discountedSubtotal * 0.07
-  const total = discountedSubtotal + tax
-  
+  const subtotal = cartTotal;
+  const discount = membership ? subtotal * tierDiscount : 0;
+  const discountedSubtotal = subtotal - discount;
+  const tax = discountedSubtotal * 0.07;
+  const total = discountedSubtotal + tax;
+
   // If cart is empty, redirect to cart page
   if (!isLoading && cartItems.length === 0) {
     return (
@@ -168,7 +173,7 @@ export default function CheckoutPage() {
           <p className="text-muted-foreground mb-6">
             You need to add items to your cart before proceeding to checkout.
           </p>
-          <Button 
+          <Button
             className="min-w-[200px]"
             onClick={() => router.push('/products')}
           >
@@ -176,14 +181,14 @@ export default function CheckoutPage() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-2 md:py-12 md:px-6">
       <div className="mb-8">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="mb-4"
           onClick={() => router.push('/cart')}
         >
@@ -192,7 +197,7 @@ export default function CheckoutPage() {
         </Button>
         <h1 className="text-2xl md:text-3xl font-bold">Checkout</h1>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Form {...form}>
@@ -237,7 +242,7 @@ export default function CheckoutPage() {
                       )}
                     />
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="phone"
@@ -251,7 +256,7 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="address"
@@ -259,13 +264,16 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormLabel>Address</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="123 Main St, Apt 4B" {...field} />
+                          <Textarea
+                            placeholder="123 Main St, Apt 4B"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
@@ -309,7 +317,7 @@ export default function CheckoutPage() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Payment Information */}
               <Card>
                 <CardHeader>
@@ -364,7 +372,7 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="cardName"
@@ -378,7 +386,7 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="cardNumber"
@@ -392,7 +400,7 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -423,10 +431,10 @@ export default function CheckoutPage() {
                   </div>
                 </CardContent>
               </Card>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
+
+              <Button
+                type="submit"
+                className="w-full"
                 size="lg"
                 disabled={isSubmitting}
               >
@@ -445,7 +453,7 @@ export default function CheckoutPage() {
             </form>
           </Form>
         </div>
-        
+
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
@@ -457,10 +465,13 @@ export default function CheckoutPage() {
             <CardContent className="space-y-4">
               <div className="max-h-[300px] overflow-auto space-y-4 pr-2">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex gap-3 pb-3 border-b last:border-0 last:pb-0">
+                  <div
+                    key={item.id}
+                    className="flex gap-3 pb-3 border-b last:border-0 last:pb-0"
+                  >
                     <div className="h-16 w-16 rounded-md bg-secondary flex-shrink-0 flex items-center justify-center">
                       {item.image_url ? (
-                        <img 
+                        <img
                           src={item.image_url}
                           alt={item.product_name}
                           className="h-full w-full object-cover rounded-md"
@@ -470,7 +481,9 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium line-clamp-1">{item.product_name}</h4>
+                      <h4 className="font-medium line-clamp-1">
+                        {item.product_name}
+                      </h4>
                       <div className="text-sm text-muted-foreground">
                         {item.quantity} x {formatPrice(item.price)}
                       </div>
@@ -481,53 +494,65 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                
+
                 {membership && discount > 0 && (
                   <div className="flex justify-between items-center text-sm text-emerald-600">
                     <div className="flex items-center">
                       <BadgePercent className="h-3 w-3 mr-1" />
-                      <span>{membership.tier.charAt(0).toUpperCase() + membership.tier.slice(1)} Discount</span>
+                      <span>
+                        {membership.tier.charAt(0).toUpperCase() +
+                          membership.tier.slice(1)}{' '}
+                        Discount
+                      </span>
                     </div>
                     <span>-{formatPrice(discount)}</span>
                   </div>
                 )}
-                
+
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax (7%)</span>
                   <span>{formatPrice(tax)}</span>
                 </div>
-                
+
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>Free</span>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
-                
+
                 {membership && (
                   <div className="mt-2 p-2 bg-emerald-50 rounded-md text-xs">
                     <div className="flex items-start">
                       <Award className="h-4 w-4 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="font-medium text-emerald-700">Membership Benefits</p>
-                        <p className="text-emerald-600 mt-0.5">
-                          {membership.tier === "level7" || membership.tier === "level6" ? "Premium" : "Essential"} tier: {tierDiscount * 100}% discount
+                        <p className="font-medium text-emerald-700">
+                          Membership Benefits
                         </p>
                         <p className="text-emerald-600 mt-0.5">
-                          You'll earn {Math.floor(discountedSubtotal / 100) * 10} points with this order
+                          {membership.tier === 'level7' ||
+                          membership.tier === 'level6'
+                            ? 'Premium'
+                            : 'Essential'}{' '}
+                          tier: {tierDiscount * 100}% discount
+                        </p>
+                        <p className="text-emerald-600 mt-0.5">
+                          You'll earn{' '}
+                          {Math.floor(discountedSubtotal / 100) * 10} points
+                          with this order
                         </p>
                       </div>
                     </div>
@@ -536,7 +561,10 @@ export default function CheckoutPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Link href="/cart" className="text-emerald-600 hover:text-emerald-700 text-sm w-full text-center">
+              <Link
+                href="/cart"
+                className="text-emerald-600 hover:text-emerald-700 text-sm w-full text-center"
+              >
                 Edit Cart
               </Link>
             </CardFooter>
@@ -544,5 +572,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -24,7 +24,7 @@
 }
 
 .force-scroll-table-container::-webkit-scrollbar-thumb {
-  background-color: #0C99B4 !important;
+  background-color: #0c99b4 !important;
   border-radius: 4px !important;
 }
 
@@ -60,10 +60,10 @@
     border-left: none;
     border-right: none;
   }
-  
+
   /* Add visual indicator for scrolling */
   .force-scroll-table-container::after {
-    content: "→";
+    content: '→';
     position: absolute;
     right: 10px;
     top: 50%;
@@ -76,10 +76,16 @@
     pointer-events: none;
     z-index: 100;
   }
-  
+
   @keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
   }
 }

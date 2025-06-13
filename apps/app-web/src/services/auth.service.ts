@@ -1,10 +1,10 @@
-import { apiClient } from "./api-client";
+import { apiClient } from './api-client';
 import {
   LoginRequest,
   RegisterRequest,
   IUserPublic,
   ApiResponse,
-} from "@app/shared-types";
+} from '@app/shared-types';
 
 export interface AuthResponse {
   user: IUserPublic;
@@ -12,7 +12,7 @@ export interface AuthResponse {
 }
 
 class AuthService {
-  private baseUrl = "/auth";
+  private baseUrl = '/auth';
 
   /**
    * Login user - sets httpOnly cookies
@@ -22,11 +22,11 @@ class AuthService {
       `${this.baseUrl}/login`,
       data
     );
-    
+
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Login failed");
+      throw new Error(response.error?.message || 'Login failed');
     }
-    
+
     return response.data;
   }
 
@@ -38,11 +38,11 @@ class AuthService {
       `${this.baseUrl}/register`,
       data
     );
-    
+
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Registration failed");
+      throw new Error(response.error?.message || 'Registration failed');
     }
-    
+
     return response.data;
   }
 
@@ -62,7 +62,7 @@ class AuthService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get profile");
+      throw new Error(response.error?.message || 'Failed to get profile');
     }
 
     return response.data;
@@ -77,7 +77,7 @@ class AuthService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to refresh token");
+      throw new Error(response.error?.message || 'Failed to refresh token');
     }
 
     return response.data;
@@ -93,7 +93,9 @@ class AuthService {
     );
 
     if (!response.success) {
-      throw new Error(response.error?.message || "Failed to request password reset");
+      throw new Error(
+        response.error?.message || 'Failed to request password reset'
+      );
     }
   }
 
@@ -107,7 +109,7 @@ class AuthService {
     );
 
     if (!response.success) {
-      throw new Error(response.error?.message || "Failed to reset password");
+      throw new Error(response.error?.message || 'Failed to reset password');
     }
   }
 
@@ -121,7 +123,7 @@ class AuthService {
     );
 
     if (!response.success) {
-      throw new Error(response.error?.message || "Failed to verify email");
+      throw new Error(response.error?.message || 'Failed to verify email');
     }
   }
 }

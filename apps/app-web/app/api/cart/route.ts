@@ -1,37 +1,37 @@
-import { NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/auth"
-import { 
-  initializeCartTable, 
-  getCartItems, 
-  addToCart, 
-  updateCartItemQuantity, 
-  removeFromCart, 
-  clearCart 
-} from "@/lib/cart"
+import { NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
+import {
+  initializeCartTable,
+  getCartItems,
+  addToCart,
+  updateCartItemQuantity,
+  removeFromCart,
+  clearCart,
+} from '@/lib/cart';
 
 // GET /api/cart - Get cart items for current user
 export async function GET() {
   try {
     // Initialize cart table
-    await initializeCartTable()
-    
+    await initializeCartTable();
+
     // Get current user
-    const user = await getCurrentUser()
-    
+    const user = await getCurrentUser();
+
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Get cart items
-    const cartItems = await getCartItems(user.id)
-    
-    return NextResponse.json({ cartItems })
+    const cartItems = await getCartItems(user.id);
+
+    return NextResponse.json({ cartItems });
   } catch (error) {
-    console.error("Error fetching cart items:", error)
+    console.error('Error fetching cart items:', error);
     return NextResponse.json(
-      { error: "Failed to fetch cart items" }, 
+      { error: 'Failed to fetch cart items' },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -39,26 +39,27 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     // Initialize cart table
-    await initializeCartTable()
-    
+    await initializeCartTable();
+
     // Get current user
-    const user = await getCurrentUser()
-    
+    const user = await getCurrentUser();
+
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Get request body
-    const { productId, productName, quantity, price, imageUrl } = await request.json()
-    
+    const { productId, productName, quantity, price, imageUrl } =
+      await request.json();
+
     // Validate required fields
     if (!productId || !productName || !quantity || !price) {
       return NextResponse.json(
-        { error: "Missing required fields" }, 
+        { error: 'Missing required fields' },
         { status: 400 }
-      )
+      );
     }
-    
+
     // Add item to cart
     const cartItem = await addToCart(
       user.id,
@@ -67,15 +68,15 @@ export async function POST(request: Request) {
       quantity,
       price,
       imageUrl
-    )
-    
-    return NextResponse.json({ cartItem })
+    );
+
+    return NextResponse.json({ cartItem });
   } catch (error) {
-    console.error("Error adding item to cart:", error)
+    console.error('Error adding item to cart:', error);
     return NextResponse.json(
-      { error: "Failed to add item to cart" }, 
+      { error: 'Failed to add item to cart' },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -83,37 +84,37 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     // Get current user
-    const user = await getCurrentUser()
-    
+    const user = await getCurrentUser();
+
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Get request body
-    const { cartItemId, quantity } = await request.json()
-    
+    const { cartItemId, quantity } = await request.json();
+
     // Validate required fields
     if (!cartItemId || quantity === undefined) {
       return NextResponse.json(
-        { error: "Missing required fields" }, 
+        { error: 'Missing required fields' },
         { status: 400 }
-      )
+      );
     }
-    
+
     // Update cart item quantity
     const cartItem = await updateCartItemQuantity(
       user.id,
       cartItemId,
       quantity
-    )
-    
-    return NextResponse.json({ cartItem })
+    );
+
+    return NextResponse.json({ cartItem });
   } catch (error) {
-    console.error("Error updating cart item:", error)
+    console.error('Error updating cart item:', error);
     return NextResponse.json(
-      { error: "Failed to update cart item" }, 
+      { error: 'Failed to update cart item' },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -121,35 +122,35 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     // Get current user
-    const user = await getCurrentUser()
-    
+    const user = await getCurrentUser();
+
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const { searchParams } = new URL(request.url)
-    const cartItemId = searchParams.get("itemId")
-    const clearAll = searchParams.get("clearAll")
-    
-    if (clearAll === "true") {
+
+    const { searchParams } = new URL(request.url);
+    const cartItemId = searchParams.get('itemId');
+    const clearAll = searchParams.get('clearAll');
+
+    if (clearAll === 'true') {
       // Clear entire cart
-      await clearCart(user.id)
-      return NextResponse.json({ success: true })
+      await clearCart(user.id);
+      return NextResponse.json({ success: true });
     } else if (cartItemId) {
       // Remove specific item
-      await removeFromCart(user.id, parseInt(cartItemId))
-      return NextResponse.json({ success: true })
+      await removeFromCart(user.id, parseInt(cartItemId));
+      return NextResponse.json({ success: true });
     } else {
       return NextResponse.json(
-        { error: "Missing itemId or clearAll parameter" }, 
+        { error: 'Missing itemId or clearAll parameter' },
         { status: 400 }
-      )
+      );
     }
   } catch (error) {
-    console.error("Error removing cart item:", error)
+    console.error('Error removing cart item:', error);
     return NextResponse.json(
-      { error: "Failed to remove cart item" }, 
+      { error: 'Failed to remove cart item' },
       { status: 500 }
-    )
+    );
   }
 }

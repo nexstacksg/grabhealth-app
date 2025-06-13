@@ -1,163 +1,176 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Label } from "@/components/ui/label"
-import { Loader2, Save, RefreshCw } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Loader2, Save, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function AdminSettingsPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   // Form state
-  const [siteName, setSiteName] = useState("GrabHealth")
-  const [contactEmail, setContactEmail] = useState("admin@grabhealth.com")
-  const [adminName, setAdminName] = useState("Admin User")
-  const [adminEmail, setAdminEmail] = useState("kyits485@gmail.com")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  
+  const [siteName, setSiteName] = useState('GrabHealth');
+  const [contactEmail, setContactEmail] = useState('admin@grabhealth.com');
+  const [adminName, setAdminName] = useState('Admin User');
+  const [adminEmail, setAdminEmail] = useState('kyits485@gmail.com');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   // Load settings on mount
   useEffect(() => {
-    fetchSettings()
-  }, [])
-  
+    fetchSettings();
+  }, []);
+
   async function fetchSettings() {
     try {
-      const response = await fetch("/api/admin/settings", {
-        method: "GET",
+      const response = await fetch('/api/admin/settings', {
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-      })
-      
+      });
+
       if (!response.ok) {
-        throw new Error("Failed to fetch settings")
+        throw new Error('Failed to fetch settings');
       }
-      
-      const data = await response.json()
-      setSiteName(data.siteName)
-      setContactEmail(data.contactEmail)
-      setAdminName(data.adminName)
-      setAdminEmail(data.adminEmail)
+
+      const data = await response.json();
+      setSiteName(data.siteName);
+      setContactEmail(data.contactEmail);
+      setAdminName(data.adminName);
+      setAdminEmail(data.adminEmail);
     } catch (err) {
-      console.error("Error fetching settings:", err)
+      console.error('Error fetching settings:', err);
     }
   }
 
   async function runDatabaseMigrations() {
-    setIsLoading(true)
-    setSuccess(null)
-    setError(null)
-    
+    setIsLoading(true);
+    setSuccess(null);
+    setError(null);
+
     try {
-      const response = await fetch("/api/admin/init", {
-        method: "GET",
-      })
-      
-      const data = await response.json()
-      
+      const response = await fetch('/api/admin/init', {
+        method: 'GET',
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.error || "Failed to run migrations")
+        throw new Error(data.error || 'Failed to run migrations');
       }
-      
-      setSuccess("Database migrations completed successfully")
+
+      setSuccess('Database migrations completed successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      setError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
-  
+
   async function saveGeneralSettings() {
-    setIsLoading(true)
-    setSuccess(null)
-    setError(null)
-    
+    setIsLoading(true);
+    setSuccess(null);
+    setError(null);
+
     try {
-      const response = await fetch("/api/admin/settings", {
-        method: "POST",
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           siteName,
-          contactEmail
+          contactEmail,
         }),
-      })
-      
-      const data = await response.json()
-      
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.error || "Failed to save settings")
+        throw new Error(data.error || 'Failed to save settings');
       }
-      
-      setSuccess("Settings saved successfully")
+
+      setSuccess('Settings saved successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      setError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
-  
+
   async function updateAdminProfile() {
-    setIsLoading(true)
-    setSuccess(null)
-    setError(null)
-    
+    setIsLoading(true);
+    setSuccess(null);
+    setError(null);
+
     // Validate passwords match if provided
     if (password && password !== confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
     }
-    
+
     try {
-      const response = await fetch("/api/admin/profile", {
-        method: "POST",
+      const response = await fetch('/api/admin/profile', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: adminName,
           password,
-          confirmPassword
+          confirmPassword,
         }),
-      })
-      
-      const data = await response.json()
-      
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update profile")
+        throw new Error(data.error || 'Failed to update profile');
       }
-      
-      setSuccess("Profile updated successfully")
-      
+
+      setSuccess('Profile updated successfully');
+
       // Clear password fields after successful update
-      setPassword("")
-      setConfirmPassword("")
+      setPassword('');
+      setConfirmPassword('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      setError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold">Admin Settings</h2>
-      
+
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="profile">Admin Profile</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="general" className="mt-6">
           <Card>
             <CardHeader>
@@ -169,32 +182,34 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-4">
               {success && (
                 <Alert className="bg-green-50 border-green-200 mb-4">
-                  <AlertDescription className="text-green-700">{success}</AlertDescription>
+                  <AlertDescription className="text-green-700">
+                    {success}
+                  </AlertDescription>
                 </Alert>
               )}
-              
+
               {error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="site-name">Site Name</Label>
-                <Input 
-                  id="site-name" 
-                  value={siteName} 
-                  onChange={(e) => setSiteName(e.target.value)} 
+                <Input
+                  id="site-name"
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="contact-email">Contact Email</Label>
-                <Input 
-                  id="contact-email" 
-                  type="email" 
-                  value={contactEmail} 
-                  onChange={(e) => setContactEmail(e.target.value)} 
+                <Input
+                  id="contact-email"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
                 />
               </div>
             </CardContent>
@@ -215,7 +230,7 @@ export default function AdminSettingsPage() {
             </CardFooter>
           </Card>
         </TabsContent>
-        
+
         {/* <TabsContent value="database" className="mt-6">
           <Card>
             <CardHeader>
@@ -261,7 +276,7 @@ export default function AdminSettingsPage() {
             </CardFooter>
           </Card>
         </TabsContent> */}
-        
+
         <TabsContent value="profile" className="mt-6">
           <Card>
             <CardHeader>
@@ -273,51 +288,55 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-4">
               {success && (
                 <Alert className="bg-green-50 border-green-200 mb-4">
-                  <AlertDescription className="text-green-700">{success}</AlertDescription>
+                  <AlertDescription className="text-green-700">
+                    {success}
+                  </AlertDescription>
                 </Alert>
               )}
-              
+
               {error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="admin-name">Name</Label>
-                <Input 
-                  id="admin-name" 
-                  value={adminName} 
-                  onChange={(e) => setAdminName(e.target.value)} 
+                <Input
+                  id="admin-name"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="admin-email">Email</Label>
-                <Input 
-                  id="admin-email" 
-                  type="email" 
-                  value={adminEmail} 
-                  disabled 
+                <Input
+                  id="admin-email"
+                  type="email"
+                  value={adminEmail}
+                  disabled
                 />
                 <p className="text-xs text-gray-500">Email cannot be changed</p>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="admin-password">New Password</Label>
-                <Input 
-                  id="admin-password" 
-                  type="password" 
+                <Input
+                  id="admin-password"
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="admin-password-confirm">Confirm New Password</Label>
-                <Input 
-                  id="admin-password-confirm" 
-                  type="password" 
+                <Label htmlFor="admin-password-confirm">
+                  Confirm New Password
+                </Label>
+                <Input
+                  id="admin-password-confirm"
+                  type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -342,5 +361,5 @@ export default function AdminSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

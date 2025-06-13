@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setLoading(true);
 
     try {
       await login(email, password);
       // The login function in AuthContext handles the redirect
     } catch {
-      setError("Invalid email or password");
+      setError('Invalid email or password');
     } finally {
       setLoading(false);
     }
@@ -34,7 +34,7 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
-          {process.env.NODE_ENV === "development" && (
+          {process.env.NODE_ENV === 'development' && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm text-blue-800 text-center font-medium">
                 Test Credentials
@@ -121,13 +121,13 @@ export default function LoginPage() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
 
           <div className="text-center">
             <span className="text-sm text-gray-600">
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/register"
                 className="font-medium text-blue-600 hover:text-blue-500"

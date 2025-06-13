@@ -7,25 +7,28 @@ const crypto = require('crypto');
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
 
 if (!sql) {
-  console.error("Database connection not initialized. Make sure DATABASE_URL is set in your environment.");
+  console.error(
+    'Database connection not initialized. Make sure DATABASE_URL is set in your environment.'
+  );
   process.exit(1);
 }
 
 // Helper functions
 function hashPassword(password, salt) {
-  return crypto.createHash("sha256")
+  return crypto
+    .createHash('sha256')
     .update(password + salt)
-    .digest("hex");
+    .digest('hex');
 }
 
 function generateSalt() {
-  return crypto.randomBytes(16).toString("hex");
+  return crypto.randomBytes(16).toString('hex');
 }
 
 async function runMigrations() {
   try {
-    console.log("Running database migrations...");
-    
+    console.log('Running database migrations...');
+
     // Add role column to users table if it doesn't exist
     await sql`
       DO $$
@@ -39,7 +42,7 @@ async function runMigrations() {
         END IF;
       END $$;
     `;
-    
+
     // Check if admin user exists
     const adminExists = await sql`
       SELECT * FROM users WHERE email = 'kyits485@gmail.com'
@@ -48,13 +51,13 @@ async function runMigrations() {
     if (adminExists.length === 0) {
       // Create admin user
       const salt = generateSalt();
-      const passwordHash = hashPassword("password", salt);
+      const passwordHash = hashPassword('password', salt);
 
       await sql`
         INSERT INTO users (name, email, password_hash, password_salt, role)
         VALUES ('Admin User', 'kyits485@gmail.com', ${passwordHash}, ${salt}, 'admin')
       `;
-      console.log("Created admin user with email: kyits485@gmail.com");
+      console.log('Created admin user with email: kyits485@gmail.com');
     } else {
       // Update existing user to admin role
       await sql`
@@ -62,7 +65,7 @@ async function runMigrations() {
         SET role = 'admin' 
         WHERE email = 'kyits485@gmail.com'
       `;
-      console.log("Updated existing user to admin role");
+      console.log('Updated existing user to admin role');
     }
 
     // Create account_requests table if it doesn't exist
@@ -77,7 +80,7 @@ async function runMigrations() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    console.log("Ensured account_requests table exists");
+    console.log('Ensured account_requests table exists');
 
     // Create user_networks table if it doesn't exist
     await sql`
@@ -89,12 +92,12 @@ async function runMigrations() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    console.log("Ensured user_networks table exists");
-    
-    console.log("Migrations completed successfully");
+    console.log('Ensured user_networks table exists');
+
+    console.log('Migrations completed successfully');
     process.exit(0);
   } catch (error) {
-    console.error("Error running migrations:", error);
+    console.error('Error running migrations:', error);
     process.exit(1);
   }
 }

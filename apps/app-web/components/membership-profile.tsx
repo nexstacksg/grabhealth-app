@@ -1,25 +1,25 @@
-"use client"
+'use client';
 
-import { useState, useRef } from "react"
-import Link from "next/link"
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { 
-  Award, 
-  Gift, 
-  ShoppingBag, 
-  CreditCard, 
-  Users, 
+import { useState, useRef } from 'react';
+import Link from 'next/link';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Award,
+  Gift,
+  ShoppingBag,
+  CreditCard,
+  Users,
   Clock,
   ChevronRight,
   Star,
@@ -27,109 +27,114 @@ import {
   QrCode,
   Download,
   Share2,
-  CopyIcon
-} from "lucide-react"
-import { useMembership } from "@/hooks/use-membership"
-import QRCode from "react-qr-code"
-import { toast } from "sonner"
+  CopyIcon,
+} from 'lucide-react';
+import { useMembership } from '@/hooks/use-membership';
+import QRCode from 'react-qr-code';
+import { toast } from 'sonner';
 
 interface MembershipProfileProps {
   showTitle?: boolean;
 }
 
-export function MembershipProfile({ showTitle = true }: MembershipProfileProps) {
-  const { 
-    membership, 
-    isLoading, 
-    tierDiscount, 
-    pointsToNextTier, 
-    isEligibleForUpgrade 
-  } = useMembership()
-  
-  const [upgrading, setUpgrading] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const qrCodeRef = useRef<HTMLDivElement>(null)
-  
+export function MembershipProfile({
+  showTitle = true,
+}: MembershipProfileProps) {
+  const {
+    membership,
+    isLoading,
+    tierDiscount,
+    pointsToNextTier,
+    isEligibleForUpgrade,
+  } = useMembership();
+
+  const [upgrading, setUpgrading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const qrCodeRef = useRef<HTMLDivElement>(null);
+
   // Get the referral link URL
   const getReferralUrl = () => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://grab-health-ai.vercel.app'
+    const baseUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : 'https://grab-health-ai.vercel.app';
     // Use user ID from membership if available, otherwise use a generic code or session ID if possible
-    return `${baseUrl}/auth/register?referrer=${membership?.id || 'user1'}`
-  }
-  
+    return `${baseUrl}/auth/register?referrer=${membership?.id || 'user1'}`;
+  };
+
   // Copy referral link to clipboard
   const copyToClipboard = async () => {
     try {
-      if (typeof navigator === 'undefined') return
-      
-      await navigator.clipboard.writeText(getReferralUrl())
-      setCopied(true)
-      toast.success("Referral link copied to clipboard!")
-      setTimeout(() => setCopied(false), 2000)
+      if (typeof navigator === 'undefined') return;
+
+      await navigator.clipboard.writeText(getReferralUrl());
+      setCopied(true);
+      toast.success('Referral link copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy: ", err)
-      toast.error("Failed to copy link")
+      console.error('Failed to copy: ', err);
+      toast.error('Failed to copy link');
     }
-  }
-  
+  };
+
   // Share referral link
   const shareLink = async () => {
-    if (typeof navigator === 'undefined') return
-    
+    if (typeof navigator === 'undefined') return;
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Join my GrabHealth network',
           text: 'Sign up using my referral link to join my network!',
           url: getReferralUrl(),
-        })
-        toast.success("Link shared successfully!")
+        });
+        toast.success('Link shared successfully!');
       } catch (err) {
         // Don't show error for user cancellation
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Error sharing:', err)
-          toast.error("Couldn't share link. Copying to clipboard instead.")
+          console.error('Error sharing:', err);
+          toast.error("Couldn't share link. Copying to clipboard instead.");
           // Fall back to clipboard
-          copyToClipboard()
+          copyToClipboard();
         }
       }
     } else {
       // Fallback for browsers that don't support Web Share API
-      copyToClipboard()
+      copyToClipboard();
     }
-  }
-  
+  };
+
   // Handle upgrade request
   const handleUpgrade = async () => {
-    if (!membership || !isEligibleForUpgrade) return
-    
+    if (!membership || !isEligibleForUpgrade) return;
+
     try {
-      setUpgrading(true)
-      
-      const response = await fetch("/api/membership", {
-        method: "PATCH",
+      setUpgrading(true);
+
+      const response = await fetch('/api/membership', {
+        method: 'PATCH',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: membership.id,
-          tier: "premium",
+          tier: 'premium',
         }),
-      })
-      
+      });
+
       if (!response.ok) {
-        throw new Error("Failed to upgrade membership")
+        throw new Error('Failed to upgrade membership');
       }
-      
+
       // Refresh the page to show updated membership
-      window.location.reload()
+      window.location.reload();
     } catch (error) {
-      console.error("Error upgrading membership:", error)
+      console.error('Error upgrading membership:', error);
     } finally {
-      setUpgrading(false)
+      setUpgrading(false);
     }
-  }
-  
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -142,11 +147,14 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
               </CardDescription>
             </div>
           </div>
-          
+
           {/* QR Code Section - Available even during loading */}
           <div className="mt-6 flex justify-center">
             <div className="flex flex-col items-center">
-              <div className="bg-white p-6 rounded-lg border shadow-sm" ref={qrCodeRef}>
+              <div
+                className="bg-white p-6 rounded-lg border shadow-sm"
+                ref={qrCodeRef}
+              >
                 <div className="h-64 w-64 flex items-center justify-center">
                   <QRCode
                     size={240}
@@ -157,20 +165,22 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
                   />
                 </div>
               </div>
-              <p className="text-base font-medium text-center mt-4 text-emerald-700">Scan to join our network</p>
-              
+              <p className="text-base font-medium text-center mt-4 text-emerald-700">
+                Scan to join our network
+              </p>
+
               <div className="flex gap-2 mt-3">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
+                <Button
+                  size="sm"
+                  variant="outline"
                   className="flex items-center gap-1"
                   onClick={copyToClipboard}
                 >
                   <CopyIcon className="h-4 w-4" />
-                  {copied ? "Copied!" : "Copy Link"}
+                  {copied ? 'Copied!' : 'Copy Link'}
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700"
                   onClick={shareLink}
                 >
@@ -184,13 +194,15 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
         <CardContent className="pt-6">
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin h-6 w-6 border-2 border-emerald-500 rounded-full border-t-transparent"></div>
-            <span className="ml-2 text-sm text-muted-foreground">Loading membership details...</span>
+            <span className="ml-2 text-sm text-muted-foreground">
+              Loading membership details...
+            </span>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
-  
+
   if (!membership) {
     return (
       <Card>
@@ -200,11 +212,14 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
               <CardTitle>Your Membership</CardTitle>
             </div>
           </div>
-          
+
           {/* QR Code Section - Available for all users */}
           <div className="mt-6 flex justify-center">
             <div className="flex flex-col items-center">
-              <div className="bg-white p-6 rounded-lg border shadow-sm" ref={qrCodeRef}>
+              <div
+                className="bg-white p-6 rounded-lg border shadow-sm"
+                ref={qrCodeRef}
+              >
                 <div className="h-64 w-64 flex items-center justify-center">
                   <QRCode
                     size={240}
@@ -215,20 +230,22 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
                   />
                 </div>
               </div>
-              <p className="text-base font-medium text-center mt-4 text-emerald-700">Scan to join our network</p>
-              
+              <p className="text-base font-medium text-center mt-4 text-emerald-700">
+                Scan to join our network
+              </p>
+
               <div className="flex gap-2 mt-3">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
+                <Button
+                  size="sm"
+                  variant="outline"
                   className="flex items-center gap-1"
                   onClick={copyToClipboard}
                 >
                   <CopyIcon className="h-4 w-4" />
-                  {copied ? "Copied!" : "Copy Link"}
+                  {copied ? 'Copied!' : 'Copy Link'}
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700"
                   onClick={shareLink}
                 >
@@ -242,9 +259,12 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
         <CardContent className="pt-6">
           <div className="text-center py-4">
             <Award className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No Membership Found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              No Membership Found
+            </h3>
             <p className="text-gray-500 mb-4">
-              You need to be logged in and have a membership to view additional benefits.
+              You need to be logged in and have a membership to view additional
+              benefits.
             </p>
             <div className="flex justify-center gap-2">
               <Link href="/auth/login">
@@ -257,14 +277,17 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
-  
+
   // Calculate progress percentage
-  const progressPercentage = membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3" 
-    ? 100 
-    : Math.min(100, (membership.points / 500) * 100)
-  
+  const progressPercentage =
+    membership.tier === 'level1' ||
+    membership.tier === 'level2' ||
+    membership.tier === 'level3'
+      ? 100
+      : Math.min(100, (membership.points / 500) * 100);
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -275,21 +298,31 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
               View your benefits and membership status
             </CardDescription>
           </div>
-          <Badge 
+          <Badge
             className={`${
-              membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3" 
-                ? "bg-amber-100 text-amber-800 hover:bg-amber-100" 
-                : "bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+              membership.tier === 'level1' ||
+              membership.tier === 'level2' ||
+              membership.tier === 'level3'
+                ? 'bg-amber-100 text-amber-800 hover:bg-amber-100'
+                : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100'
             } px-3 py-1 text-xs font-medium rounded-full`}
           >
-            {membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3" ? "Premium" : "Essential"} Tier
+            {membership.tier === 'level1' ||
+            membership.tier === 'level2' ||
+            membership.tier === 'level3'
+              ? 'Premium'
+              : 'Essential'}{' '}
+            Tier
           </Badge>
         </div>
-        
+
         {/* QR Code Section */}
         <div className="mt-6 flex justify-center">
           <div className="flex flex-col items-center">
-            <div className="bg-white p-6 rounded-lg border shadow-sm" ref={qrCodeRef}>
+            <div
+              className="bg-white p-6 rounded-lg border shadow-sm"
+              ref={qrCodeRef}
+            >
               <div className="h-64 w-64 flex items-center justify-center">
                 <QRCode
                   size={240}
@@ -300,19 +333,19 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-2 mt-3">
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 className="flex items-center gap-1"
                 onClick={copyToClipboard}
               >
                 <CopyIcon className="h-4 w-4" />
-                {copied ? "Copied!" : "Copy Link"}
+                {copied ? 'Copied!' : 'Copy Link'}
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700"
                 onClick={shareLink}
               >
@@ -328,29 +361,32 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
           {/* Points Progress */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <div className="text-sm font-medium">
-                Membership Points
-              </div>
+              <div className="text-sm font-medium">Membership Points</div>
               <div className="text-sm font-medium">
                 {membership.points} points
               </div>
             </div>
             <Progress value={progressPercentage} className="h-2" />
-            {(membership.tier === "level4" || membership.tier === "level5" || membership.tier === "level6" || membership.tier === "level7") && (
+            {(membership.tier === 'level4' ||
+              membership.tier === 'level5' ||
+              membership.tier === 'level6' ||
+              membership.tier === 'level7') && (
               <div className="text-xs text-muted-foreground">
                 {pointsToNextTier} more points needed to upgrade to Premium
               </div>
             )}
-            {(membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3") && (
+            {(membership.tier === 'level1' ||
+              membership.tier === 'level2' ||
+              membership.tier === 'level3') && (
               <div className="text-xs text-muted-foreground flex items-center">
                 <Star className="h-3 w-3 text-amber-500 mr-1" />
                 Premium tier unlocked
               </div>
             )}
           </div>
-          
+
           <Separator />
-          
+
           {/* Current Benefits */}
           <div>
             <h4 className="text-sm font-medium mb-3">Your Benefits</h4>
@@ -364,78 +400,103 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <CreditCard className="h-5 w-5 text-emerald-500 mr-3" />
                 <div>
                   <div className="text-sm font-medium">Lab Test Discount</div>
                   <div className="text-xs text-muted-foreground">
-                    {(membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3") ? "15-20%" : "5%"} off on partner lab tests
+                    {membership.tier === 'level1' ||
+                    membership.tier === 'level2' ||
+                    membership.tier === 'level3'
+                      ? '15-20%'
+                      : '5%'}{' '}
+                    off on partner lab tests
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <Gift className="h-5 w-5 text-emerald-500 mr-3" />
                 <div>
                   <div className="text-sm font-medium">Monthly Gift</div>
                   <div className="text-xs text-muted-foreground">
-                    {(membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3") ? "Premium" : "Basic"} monthly gift
+                    {membership.tier === 'level1' ||
+                    membership.tier === 'level2' ||
+                    membership.tier === 'level3'
+                      ? 'Premium'
+                      : 'Basic'}{' '}
+                    monthly gift
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <Users className="h-5 w-5 text-emerald-500 mr-3" />
                 <div>
                   <div className="text-sm font-medium">Family Sharing</div>
                   <div className="text-xs text-muted-foreground">
-                    {(membership.tier === "level1" || membership.tier === "level2" || membership.tier === "level3") ? "Up to 4 members" : "Not available"}
+                    {membership.tier === 'level1' ||
+                    membership.tier === 'level2' ||
+                    membership.tier === 'level3'
+                      ? 'Up to 4 members'
+                      : 'Not available'}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <Separator className="my-6" />
-          
+
           {/* Referral Program Section - Highlighted */}
           <div>
             <h4 className="text-base font-semibold mb-3 flex items-center">
               <Users className="h-5 w-5 text-amber-500 mr-2" />
               Referral Program
             </h4>
-            
+
             <div className="bg-gradient-to-r from-emerald-50 to-blue-50 p-5 rounded-lg border-2 border-emerald-200 shadow-sm">
               <div className="flex flex-col space-y-4">
                 <div>
-                  <h5 className="text-lg font-medium text-emerald-800">Invite Friends & Earn Rewards!</h5>
+                  <h5 className="text-lg font-medium text-emerald-800">
+                    Invite Friends & Earn Rewards!
+                  </h5>
                   <p className="text-sm text-emerald-700 mt-1">
-                    Share your personal QR code above and earn up to <span className="font-bold">30%</span> commission on purchases!
+                    Share your personal QR code above and earn up to{' '}
+                    <span className="font-bold">30%</span> commission on
+                    purchases!
                   </p>
                 </div>
-                
+
                 <Link href="/commission" className="block w-full">
-                  <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium">
+                  <Button
+                    size="lg"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                  >
                     View Full Commission Dashboard
                   </Button>
                 </Link>
               </div>
             </div>
           </div>
-          
+
           {/* Upgrade Section */}
-          {(membership.tier === "level4" || membership.tier === "level5" || membership.tier === "level6" || membership.tier === "level7") && (
+          {(membership.tier === 'level4' ||
+            membership.tier === 'level5' ||
+            membership.tier === 'level6' ||
+            membership.tier === 'level7') && (
             <>
               <Separator />
-              
+
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="text-sm font-medium mb-2">Upgrade to Premium</h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Earn points by making purchases, inviting friends, or participating in health surveys.
+                  Earn points by making purchases, inviting friends, or
+                  participating in health surveys.
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="w-full"
                   disabled={!isEligibleForUpgrade || upgrading}
                   onClick={handleUpgrade}
@@ -446,9 +507,9 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
                       Upgrading...
                     </>
                   ) : isEligibleForUpgrade ? (
-                    "Upgrade Now"
+                    'Upgrade Now'
                   ) : (
-                    "Earn More Points to Upgrade"
+                    'Earn More Points to Upgrade'
                   )}
                 </Button>
               </div>
@@ -457,11 +518,14 @@ export function MembershipProfile({ showTitle = true }: MembershipProfileProps) 
         </div>
       </CardContent>
       <CardFooter className="pt-1 pb-4 px-6">
-        <Link href="/membership" className="text-sm text-emerald-600 hover:text-emerald-700 flex items-center w-full justify-center">
+        <Link
+          href="/membership"
+          className="text-sm text-emerald-600 hover:text-emerald-700 flex items-center w-full justify-center"
+        >
           View All Membership Benefits
           <ChevronRight className="ml-1 h-4 w-4" />
         </Link>
       </CardFooter>
     </Card>
-  )
+  );
 }

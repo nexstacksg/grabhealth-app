@@ -33,9 +33,10 @@ bun run db:studio    # Open Prisma Studio for database exploration
 ## Architecture Overview
 
 ### Technology Stack
+
 - **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Next.js API Routes
-- **Database**: 
+- **Database**:
   - Production: Neon PostgreSQL (serverless)
   - Development: SQLite with Prisma ORM (migration in progress)
 - **ORM**: Prisma (migrating from raw SQL queries)
@@ -72,6 +73,7 @@ db/               # Database schema and migration files
 ### Database Schema
 
 Main tables:
+
 - `users` - User accounts with role-based access (customer/admin)
 - `products` - Product catalog with tiered discounts
 - `orders` - Order management with status tracking
@@ -82,6 +84,7 @@ Main tables:
 ### Important Configuration
 
 1. **Environment Variables** (required in `.env`):
+
    - `DATABASE_URL` - Neon PostgreSQL connection string
    - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` - Cloudinary configuration
    - `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET`

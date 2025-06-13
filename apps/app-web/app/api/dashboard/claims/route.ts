@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
 
-const sql = neon(process.env.DATABASE_URL!)
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET() {
   try {
@@ -23,11 +23,14 @@ export async function GET() {
       JOIN membership_tiers mt ON gi.tier_id = mt.id
       ORDER BY gc.claimed_at DESC
       LIMIT 20
-    `
+    `;
 
-    return NextResponse.json(claims)
+    return NextResponse.json(claims);
   } catch (error) {
-    console.error("Error fetching claims:", error)
-    return NextResponse.json({ error: "Failed to fetch claims" }, { status: 500 })
+    console.error('Error fetching claims:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch claims' },
+      { status: 500 }
+    );
   }
 }

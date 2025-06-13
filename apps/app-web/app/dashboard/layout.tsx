@@ -1,15 +1,15 @@
-import type React from "react"
-import type { Metadata } from "next"
+import type React from 'react';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "GrabHealth AI - Admin Dashboard",
-  description: "Admin dashboard for GrabHealth AI platform",
-}
+  title: 'GrabHealth AI - Admin Dashboard',
+  description: 'Admin dashboard for GrabHealth AI platform',
+};
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -20,5 +20,5 @@ export default function DashboardLayout({
       </div>
       {children}
     </div>
-  )
+  );
 }

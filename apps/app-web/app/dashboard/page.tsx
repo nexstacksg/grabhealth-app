@@ -1,19 +1,25 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { neon } from "@neondatabase/serverless"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { neon } from '@neondatabase/serverless';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 
 // Initialize database connection
-const sql = neon(process.env.DATABASE_URL!)
+const sql = neon(process.env.DATABASE_URL!);
 
 // Dashboard page component
 export default async function DashboardPage() {
   // Fetch data from database
-  const membershipStats = await getMembershipStats()
-  const products = await getProducts()
-  const partners = await getPartners()
-  const recentClaims = await getRecentClaims()
+  const membershipStats = await getMembershipStats();
+  const products = await getProducts();
+  const partners = await getPartners();
+  const recentClaims = await getRecentClaims();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -26,28 +32,40 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{membershipStats.totalUsers}</div>
+            <div className="text-2xl font-bold">
+              {membershipStats.totalUsers}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Essential Members</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Essential Members
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{membershipStats.essentialUsers}</div>
+            <div className="text-2xl font-bold">
+              {membershipStats.essentialUsers}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Premium Members</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Premium Members
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{membershipStats.premiumUsers}</div>
+            <div className="text-2xl font-bold">
+              {membershipStats.premiumUsers}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Products
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{products.length}</div>
@@ -71,7 +89,10 @@ export default async function DashboardPage() {
               <Card key={product.id} className="overflow-hidden">
                 <div className="aspect-video relative bg-gray-100">
                   <Image
-                    src={product.image_url || "/placeholder.svg?height=200&width=300"}
+                    src={
+                      product.image_url ||
+                      '/placeholder.svg?height=200&width=300'
+                    }
                     alt={product.name}
                     fill
                     className="object-cover"
@@ -86,18 +107,23 @@ export default async function DashboardPage() {
                       <CardTitle className="text-lg">{product.name}</CardTitle>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold">${Number.parseFloat(product.price).toFixed(2)}</div>
+                      <div className="text-lg font-bold">
+                        ${Number.parseFloat(product.price).toFixed(2)}
+                      </div>
                       <div className="text-sm text-emerald-600">
                         Premium: $
-                        {(Number.parseFloat(product.price) * (1 - Number.parseFloat(product.discount_premium))).toFixed(
-                          2,
-                        )}
+                        {(
+                          Number.parseFloat(product.price) *
+                          (1 - Number.parseFloat(product.discount_premium))
+                        ).toFixed(2)}
                       </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
-                  <CardDescription className="line-clamp-2">{product.description}</CardDescription>
+                  <CardDescription className="line-clamp-2">
+                    {product.description}
+                  </CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -146,10 +172,10 @@ export default async function DashboardPage() {
                     <td className="p-3 border">{claim.gift_name}</td>
                     <td className="p-3 border">{claim.partner_name}</td>
                     <td className="p-3 border">
-                      {new Date(claim.claimed_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
+                      {new Date(claim.claimed_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
                       })}
                     </td>
                   </tr>
@@ -160,30 +186,30 @@ export default async function DashboardPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 // Data fetching functions
 async function getMembershipStats() {
-  const totalUsers = await sql`SELECT COUNT(*) as count FROM users`
+  const totalUsers = await sql`SELECT COUNT(*) as count FROM users`;
   const essentialUsers = await sql`
     SELECT COUNT(*) as count 
     FROM user_memberships um 
     JOIN membership_tiers mt ON um.tier_id = mt.id 
     WHERE mt.name = 'Essential'
-  `
+  `;
   const premiumUsers = await sql`
     SELECT COUNT(*) as count 
     FROM user_memberships um 
     JOIN membership_tiers mt ON um.tier_id = mt.id 
     WHERE mt.name = 'Premium'
-  `
+  `;
 
   return {
     totalUsers: Number.parseInt(totalUsers[0].count),
     essentialUsers: Number.parseInt(essentialUsers[0].count),
     premiumUsers: Number.parseInt(premiumUsers[0].count),
-  }
+  };
 }
 
 async function getProducts() {
@@ -192,16 +218,16 @@ async function getProducts() {
     FROM products p
     JOIN product_categories pc ON p.category_id = pc.id
     ORDER BY p.name
-  `
-  return products
+  `;
+  return products;
 }
 
 async function getPartners() {
   const partners = await sql`
     SELECT * FROM partners
     ORDER BY name
-  `
-  return partners
+  `;
+  return partners;
 }
 
 async function getRecentClaims() {
@@ -218,6 +244,6 @@ async function getRecentClaims() {
     JOIN partners p ON gc.partner_id = p.id
     ORDER BY gc.claimed_at DESC
     LIMIT 10
-  `
-  return claims
+  `;
+  return claims;
 }

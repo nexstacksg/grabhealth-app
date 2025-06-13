@@ -1,44 +1,44 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useCart } from "@/hooks/use-cart"
-import { toast } from "sonner"
-import Image from "next/image"
+import { useEffect, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/use-cart';
+import { toast } from 'sonner';
+import Image from 'next/image';
 
 export default function FeaturedProducts() {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProducts() {
       try {
-        setLoading(true)
+        setLoading(true);
         // Use a consistent approach for fetching that works in both environments
-        const response = await fetch('/api/products?featured=true')
+        const response = await fetch('/api/products?featured=true');
 
         if (!response.ok) {
-          throw new Error("Failed to fetch products")
+          throw new Error('Failed to fetch products');
         }
 
-        const data = await response.json()
+        const data = await response.json();
         // The API now returns data in a different structure with products inside a 'products' property
-        const productsArray = Array.isArray(data.products) ? data.products : []
-        setProducts(productsArray.slice(0, 4)) // Get first 4 products
-        setError(null)
+        const productsArray = Array.isArray(data.products) ? data.products : [];
+        setProducts(productsArray.slice(0, 4)); // Get first 4 products
+        setError(null);
       } catch (err) {
-        setError("Error loading products. Please try again later.")
-        console.error(err)
+        setError('Error loading products. Please try again later.');
+        console.error(err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchProducts()
-  }, [])
+    fetchProducts();
+  }, []);
 
   if (loading) {
     return (
@@ -55,11 +55,11 @@ export default function FeaturedProducts() {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   if (error) {
-    return <div className="text-center text-red-500">{error}</div>
+    return <div className="text-center text-red-500">{error}</div>;
   }
 
   return (
@@ -68,59 +68,76 @@ export default function FeaturedProducts() {
         <ProductCard key={product.id} product={product} />
       ))}
     </div>
-  )
+  );
 }
 
 function ProductCard({ product }: { product: any }) {
-  const { addToCart } = useCart()
-  const [isAdding, setIsAdding] = useState(false)
-  const regularPrice = Number.parseFloat(product.price)
-  const discountedPrice = product.discounted_price ? Number.parseFloat(product.discounted_price) : regularPrice
-  const discount = Math.round((1 - discountedPrice / regularPrice) * 100)
+  const { addToCart } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+  const regularPrice = Number.parseFloat(product.price);
+  const discountedPrice = product.discounted_price
+    ? Number.parseFloat(product.discounted_price)
+    : regularPrice;
+  const discount = Math.round((1 - discountedPrice / regularPrice) * 100);
 
   const handleAddToCart = async () => {
     try {
-      setIsAdding(true)
-      await addToCart({
-        id: product.id,
-        name: product.name,
-        price: discountedPrice,
-        image_url: product.image_url
-      }, 1)
-      toast.success(`${product.name} added to cart`)
+      setIsAdding(true);
+      await addToCart(
+        {
+          id: product.id,
+          name: product.name,
+          price: discountedPrice,
+          image_url: product.image_url,
+        },
+        1
+      );
+      toast.success(`${product.name} added to cart`);
     } catch (error) {
-      console.error('Error adding to cart:', error)
-      toast.error('Failed to add item to cart')
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart');
     } finally {
-      setIsAdding(false)
+      setIsAdding(false);
     }
-  }
+  };
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="relative">
         <Image
-          src={product.image_url || "/placeholder.svg?height=200&width=200"}
+          src={product.image_url || '/placeholder.svg?height=200&width=200'}
           alt={product.name}
           width={300}
           height={300}
           className="w-full h-48 object-cover"
         />
-        {discount > 0 && <Badge className="absolute top-2 right-2 bg-emerald-500">{discount}% OFF</Badge>}
+        {discount > 0 && (
+          <Badge className="absolute top-2 right-2 bg-emerald-500">
+            {discount}% OFF
+          </Badge>
+        )}
       </div>
       <CardContent className="p-4">
-        <div className="text-sm text-emerald-600 font-medium mb-1">{product.category_name}</div>
+        <div className="text-sm text-emerald-600 font-medium mb-1">
+          {product.category_name}
+        </div>
         <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          {product.description}
+        </p>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <span className="text-lg font-bold">${discountedPrice.toFixed(2)}</span>
+            <span className="text-lg font-bold">
+              ${discountedPrice.toFixed(2)}
+            </span>
             {discount > 0 && (
-              <span className="text-gray-400 line-through ml-2 text-sm">${regularPrice.toFixed(2)}</span>
+              <span className="text-gray-400 line-through ml-2 text-sm">
+                ${regularPrice.toFixed(2)}
+              </span>
             )}
           </div>
         </div>
-        <Button 
+        <Button
           className="w-full bg-emerald-500 hover:bg-emerald-600"
           onClick={handleAddToCart}
           disabled={isAdding}
@@ -129,5 +146,5 @@ function ProductCard({ product }: { product: any }) {
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

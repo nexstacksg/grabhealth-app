@@ -11,22 +11,29 @@ export default function ShippingPage() {
       <div className="mb-12">
         <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-8 md:p-10 text-white shadow-lg mb-6 border border-emerald-700">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Shipping & Delivery</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              Shipping & Delivery
+            </h1>
             <p className="text-emerald-100 text-lg md:text-xl max-w-2xl mx-auto">
-              Fast, reliable delivery options to get your health products when you need them
+              Fast, reliable delivery options to get your health products when
+              you need them
             </p>
           </div>
         </div>
       </div>
-      
+
       <div className="prose max-w-4xl mx-auto">
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4">Shipping Information</h2>
           <p className="mb-4">
-            We strive to process and ship all orders within 1-2 business days. Once your order has been shipped, you will receive a confirmation email with tracking information.
+            We strive to process and ship all orders within 1-2 business days.
+            Once your order has been shipped, you will receive a confirmation
+            email with tracking information.
           </p>
           <p className="mb-4">
-            Please ensure your shipping address is correct at the time of placing your order, as we cannot modify the shipping address once the order has been processed.
+            Please ensure your shipping address is correct at the time of
+            placing your order, as we cannot modify the shipping address once
+            the order has been processed.
           </p>
         </section>
 
@@ -38,7 +45,8 @@ export default function ShippingPage() {
             <li>Same-day Delivery: Available in select areas</li>
           </ul>
           <p>
-            Delivery times are estimates and may be affected by factors outside our control, such as weather conditions or carrier delays.
+            Delivery times are estimates and may be affected by factors outside
+            our control, such as weather conditions or carrier delays.
           </p>
         </section>
 
@@ -75,12 +83,17 @@ export default function ShippingPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">International Shipping</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            International Shipping
+          </h2>
           <p className="mb-4">
-            We currently ship to select international destinations. Additional customs fees, taxes, and duties may apply upon delivery and are the responsibility of the recipient.
+            We currently ship to select international destinations. Additional
+            customs fees, taxes, and duties may apply upon delivery and are the
+            responsibility of the recipient.
           </p>
           <p>
-            For more information about our international shipping policies, please contact our customer service team.
+            For more information about our international shipping policies,
+            please contact our customer service team.
           </p>
         </section>
       </div>

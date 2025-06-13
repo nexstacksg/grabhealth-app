@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
-import { getCurrentUser, hashPassword, generateSalt } from "@/lib/auth";
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getCurrentUser, hashPassword, generateSalt } from '@/lib/auth';
 
 // Update admin profile
 export async function POST(request: Request) {
   try {
     // Check if the user is authenticated and is an admin
     const user = await getCurrentUser();
-    
+
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
-        { error: "Unauthorized access" },
+        { error: 'Unauthorized access' },
         { status: 403 }
       );
     }
@@ -20,10 +20,7 @@ export async function POST(request: Request) {
 
     // Validate input
     if (!name || name.trim() === '') {
-      return NextResponse.json(
-        { error: "Name is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
     // Update user name
@@ -37,14 +34,14 @@ export async function POST(request: Request) {
     if (password) {
       if (password !== confirmPassword) {
         return NextResponse.json(
-          { error: "Passwords do not match" },
+          { error: 'Passwords do not match' },
           { status: 400 }
         );
       }
 
       if (password.length < 8) {
         return NextResponse.json(
-          { error: "Password must be at least 8 characters" },
+          { error: 'Password must be at least 8 characters' },
           { status: 400 }
         );
       }
@@ -61,12 +58,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Profile updated successfully"
+      message: 'Profile updated successfully',
     });
   } catch (error) {
-    console.error("Profile update error:", error);
+    console.error('Profile update error:', error);
     return NextResponse.json(
-      { error: "Failed to update profile" },
+      { error: 'Failed to update profile' },
       { status: 500 }
     );
   }

@@ -30,12 +30,12 @@ export function useRequireAuth() {
 
   return async () => {
     const user = await checkAuthStatus();
-    
+
     if (!user) {
       router.push('/auth/login');
       return null;
     }
-    
+
     return user;
   };
 }

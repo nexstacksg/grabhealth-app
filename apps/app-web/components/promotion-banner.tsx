@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 export default function PromotionBanner() {
   return (
@@ -12,10 +12,12 @@ export default function PromotionBanner() {
                 Supercharge Your Health with BNR Probiotics
               </h2>
               <p className="text-teal-50 mb-6">
-                Clinically proven, family-friendly formula designed to improve digestion, metabolism, and support gut
-                health.
+                Clinically proven, family-friendly formula designed to improve
+                digestion, metabolism, and support gut health.
               </p>
-              <Button className="bg-white text-emerald-600 hover:bg-teal-50">SHOP NOW</Button>
+              <Button className="bg-white text-emerald-600 hover:bg-teal-50">
+                SHOP NOW
+              </Button>
             </div>
             <div className="relative h-64 md:h-auto">
               <Image
@@ -30,5 +32,5 @@ export default function PromotionBanner() {
         </div>
       </div>
     </section>
-  )
+  );
 }

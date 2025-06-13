@@ -1,18 +1,18 @@
-import { NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
 
 // Initialize database connection with proper error handling
 let sql: ReturnType<typeof neon>;
 
 try {
   if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable is not defined")
+    throw new Error('DATABASE_URL environment variable is not defined');
   }
-  sql = neon(process.env.DATABASE_URL)
+  sql = neon(process.env.DATABASE_URL);
 } catch (error) {
-  console.error("Failed to initialize database connection:", error)
+  console.error('Failed to initialize database connection:', error);
   // Provide a fallback that will still allow the code to run but will properly error when used
-  sql = neon("postgresql://placeholder:placeholder@localhost:5432/placeholder")
+  sql = neon('postgresql://placeholder:placeholder@localhost:5432/placeholder');
 }
 
 export async function GET() {
@@ -25,22 +25,30 @@ export async function GET() {
         AND table_name = 'product_categories'
       )
     `;
-    
+
     // If table doesn't exist, create it with sample data
-    const exists = Array.isArray(tableExists) && tableExists.length > 0 && tableExists[0] && 'exists' in tableExists[0] && tableExists[0].exists;
+    const exists =
+      Array.isArray(tableExists) &&
+      tableExists.length > 0 &&
+      tableExists[0] &&
+      'exists' in tableExists[0] &&
+      tableExists[0].exists;
     if (!exists) {
       await createProductCategoriesTable();
     }
-    
+
     const categories = await sql`
       SELECT * FROM product_categories
       ORDER BY name
     `;
-    
+
     return NextResponse.json(categories);
   } catch (error) {
-    console.error("Error fetching product categories:", error);
-    return NextResponse.json({ error: "Failed to fetch product categories" }, { status: 500 });
+    console.error('Error fetching product categories:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch product categories' },
+      { status: 500 }
+    );
   }
 }
 
@@ -57,7 +65,7 @@ async function createProductCategoriesTable() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    
+
     // Insert sample data
     await sql`
       INSERT INTO product_categories (name, description, icon) VALUES
@@ -71,7 +79,7 @@ async function createProductCategoriesTable() {
       ('Medical Devices', 'Health monitoring devices', 'Stethoscope')
       ON CONFLICT (name) DO NOTHING
     `;
-    
+
     console.log('Product categories table created with sample data');
   } catch (error) {
     console.error('Error creating product categories table:', error);
@@ -81,27 +89,33 @@ async function createProductCategoriesTable() {
 
 export async function POST(request: Request) {
   try {
-    const { name, description, icon } = await request.json()
+    const { name, description, icon } = await request.json();
 
     // Validate required fields
     if (!name) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 })
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
     const result = await sql`
       INSERT INTO product_categories (name, description, icon)
       VALUES (${name}, ${description}, ${icon})
       RETURNING *
-    `
+    `;
 
     // Safely handle the result with proper type checking
     if (Array.isArray(result) && result.length > 0) {
-      return NextResponse.json(result[0], { status: 201 })
+      return NextResponse.json(result[0], { status: 201 });
     } else {
-      return NextResponse.json({ error: "Failed to create product category" }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to create product category' },
+        { status: 500 }
+      );
     }
   } catch (error) {
-    console.error("Error creating product category:", error)
-    return NextResponse.json({ error: "Failed to create product category" }, { status: 500 })
+    console.error('Error creating product category:', error);
+    return NextResponse.json(
+      { error: 'Failed to create product category' },
+      { status: 500 }
+    );
   }
 }

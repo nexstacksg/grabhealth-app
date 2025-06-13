@@ -1,5 +1,10 @@
-import { internalApi } from "./api";
-import { IUserPublic, ApiResponse, PaginationParams, PaginatedResponse } from "@app/shared-types";
+import { internalApi } from './api';
+import {
+  IUserPublic,
+  ApiResponse,
+  PaginationParams,
+  PaginatedResponse,
+} from '@app/shared-types';
 
 interface UpdateProfileData {
   firstName?: string;
@@ -17,12 +22,12 @@ class UserService {
    */
   async getMyProfile(): Promise<IUserPublic> {
     const response =
-      await internalApi.get<ApiResponse<IUserPublic>>("/users/my-profile");
-    
+      await internalApi.get<ApiResponse<IUserPublic>>('/users/my-profile');
+
     if (!response.data) {
-      throw new Error("Invalid profile response");
+      throw new Error('Invalid profile response');
     }
-    
+
     return response.data;
   }
 
@@ -31,14 +36,14 @@ class UserService {
    */
   async updateMyProfile(data: UpdateProfileData): Promise<IUserPublic> {
     const response = await internalApi.put<ApiResponse<IUserPublic>>(
-      "/users/my-profile",
+      '/users/my-profile',
       data
     );
-    
+
     if (!response.data) {
-      throw new Error("Invalid update response");
+      throw new Error('Invalid update response');
     }
-    
+
     return response.data;
   }
 
@@ -47,18 +52,18 @@ class UserService {
    */
   async uploadProfilePhoto(file: File): Promise<{ url: string }> {
     const formData = new FormData();
-    formData.append("photo", file);
+    formData.append('photo', file);
 
     // For file uploads, we need to override the content-type
-    const response = await fetch("/api/users/my-profile/photo", {
-      method: "POST",
+    const response = await fetch('/api/users/my-profile/photo', {
+      method: 'POST',
       body: formData,
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error?.message || "Failed to upload photo");
+      throw new Error(error.error?.message || 'Failed to upload photo');
     }
 
     const data = await response.json();
@@ -72,7 +77,7 @@ class UserService {
     currentPassword: string,
     newPassword: string
   ): Promise<void> {
-    await internalApi.post("/users/change-password", {
+    await internalApi.post('/users/change-password', {
       currentPassword,
       newPassword,
     });
@@ -85,22 +90,24 @@ class UserService {
     const response = await internalApi.get<ApiResponse<IUserPublic>>(
       `/users/${userId}`
     );
-    
+
     if (!response.data) {
-      throw new Error("Invalid user response");
+      throw new Error('Invalid user response');
     }
-    
+
     return response.data;
   }
 
   /**
    * List users (admin only)
    */
-  async listUsers(params?: PaginationParams & {
-    search?: string;
-    role?: string;
-    status?: string;
-  }): Promise<PaginatedResponse<IUserPublic>> {
+  async listUsers(
+    params?: PaginationParams & {
+      search?: string;
+      role?: string;
+      status?: string;
+    }
+  ): Promise<PaginatedResponse<IUserPublic>> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -110,12 +117,12 @@ class UserService {
       });
     }
 
-    const response = await internalApi.get<ApiResponse<PaginatedResponse<IUserPublic>>>(
-      `/users?${queryParams.toString()}`
-    );
+    const response = await internalApi.get<
+      ApiResponse<PaginatedResponse<IUserPublic>>
+    >(`/users?${queryParams.toString()}`);
 
     if (!response.data) {
-      throw new Error("Invalid users list response");
+      throw new Error('Invalid users list response');
     }
 
     return response.data;

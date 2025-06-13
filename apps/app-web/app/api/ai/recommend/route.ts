@@ -1,20 +1,28 @@
-import { NextResponse } from "next/server"
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
-import { neon } from "@neondatabase/serverless"
+import { NextResponse } from 'next/server';
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { neon } from '@neondatabase/serverless';
 
-const sql = neon(process.env.DATABASE_URL!)
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(request: Request) {
   try {
-    const { userId, membershipTier = "none", healthProfile, preferences } = await request.json()
+    const {
+      userId,
+      membershipTier = 'none',
+      healthProfile,
+      preferences,
+    } = await request.json();
 
     if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 })
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
     }
 
     // Get products from database
-    let products
+    let products;
     try {
       // Create products table if it doesn't exist
       await sql`
@@ -30,7 +38,7 @@ export async function POST(request: Request) {
           in_stock BOOLEAN DEFAULT TRUE,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
-      `
+      `;
 
       products = await sql`
         SELECT 
@@ -44,65 +52,65 @@ export async function POST(request: Request) {
         FROM products
         WHERE in_stock = true
         LIMIT 20
-      `
+      `;
     } catch (error) {
-      console.error("Error fetching products:", error)
+      console.error('Error fetching products:', error);
       // Fallback to sample products if database query fails
       products = [
         {
           id: 1,
-          name: "Advanced Cold Relief",
-          description: "Fast-acting relief for cold symptoms",
+          name: 'Advanced Cold Relief',
+          description: 'Fast-acting relief for cold symptoms',
           price: 12.99,
           discount_essential: 0.1,
           discount_premium: 0.25,
-          image_url: "/placeholder.svg?height=200&width=200",
+          image_url: '/placeholder.svg?height=200&width=200',
         },
         {
           id: 2,
-          name: "Allergy Defense Plus",
-          description: "24-hour relief from seasonal allergies",
+          name: 'Allergy Defense Plus',
+          description: '24-hour relief from seasonal allergies',
           price: 18.99,
           discount_essential: 0.1,
           discount_premium: 0.25,
-          image_url: "/placeholder.svg?height=200&width=200",
+          image_url: '/placeholder.svg?height=200&width=200',
         },
         {
           id: 3,
-          name: "Daily Multivitamin Complex",
-          description: "Complete daily nutrition in one tablet",
+          name: 'Daily Multivitamin Complex',
+          description: 'Complete daily nutrition in one tablet',
           price: 24.99,
           discount_essential: 0.1,
           discount_premium: 0.25,
-          image_url: "/placeholder.svg?height=200&width=200",
+          image_url: '/placeholder.svg?height=200&width=200',
         },
         {
           id: 4,
-          name: "Probiotic Digestive Support",
-          description: "Daily probiotic for gut health",
+          name: 'Probiotic Digestive Support',
+          description: 'Daily probiotic for gut health',
           price: 29.99,
           discount_essential: 0.1,
           discount_premium: 0.25,
-          image_url: "/placeholder.svg?height=200&width=200",
+          image_url: '/placeholder.svg?height=200&width=200',
         },
         {
           id: 5,
-          name: "Stress Relief Formula",
-          description: "Natural supplement for stress management",
+          name: 'Stress Relief Formula',
+          description: 'Natural supplement for stress management',
           price: 22.99,
           discount_essential: 0.1,
           discount_premium: 0.25,
-          image_url: "/placeholder.svg?height=200&width=200",
+          image_url: '/placeholder.svg?height=200&width=200',
         },
-      ]
+      ];
     }
 
     // Create prompt for AI recommendation
     const userProfile = {
       membershipTier,
-      healthProfile: healthProfile || "No health profile provided",
-      preferences: preferences || "No preferences provided",
-    }
+      healthProfile: healthProfile || 'No health profile provided',
+      preferences: preferences || 'No preferences provided',
+    };
 
     const prompt = `
       Based on the following user profile, recommend 3 products from the list below.
@@ -114,7 +122,7 @@ export async function POST(request: Request) {
       - Preferences: ${userProfile.preferences}
       
       Available Products:
-      ${products.map((p: any) => `- ${p.name}: ${p.description} ($${p.price})`).join("\n")}
+      ${products.map((p: any) => `- ${p.name}: ${p.description} ($${p.price})`).join('\n')}
       
       Format your response as a JSON array with the following structure:
       [
@@ -124,34 +132,37 @@ export async function POST(request: Request) {
         },
         ...
       ]
-    `
+    `;
 
     // Generate AI recommendations
     const { text } = await generateText({
-      model: openai("gpt-4o"),
+      model: openai('gpt-4o'),
       prompt,
-    })
+    });
 
     // Parse AI response
-    let recommendations
+    let recommendations;
     try {
-      recommendations = JSON.parse(text)
+      recommendations = JSON.parse(text);
     } catch (error) {
-      console.error("Error parsing AI response:", error)
-      return NextResponse.json({ error: "Failed to parse AI recommendations" }, { status: 500 })
+      console.error('Error parsing AI response:', error);
+      return NextResponse.json(
+        { error: 'Failed to parse AI recommendations' },
+        { status: 500 }
+      );
     }
 
     // Enhance recommendations with product details
     const enhancedRecommendations = recommendations.map((rec: any) => {
-      const product = products.find((p: any) => p.id === rec.productId)
-      if (!product) return rec
+      const product = products.find((p: any) => p.id === rec.productId);
+      if (!product) return rec;
 
       // Calculate discounted price based on membership tier
-      let discountedPrice = product.price
-      if (membershipTier === "essential" && product.discount_essential) {
-        discountedPrice = product.price * (1 - product.discount_essential)
-      } else if (membershipTier === "premium" && product.discount_premium) {
-        discountedPrice = product.price * (1 - product.discount_premium)
+      let discountedPrice = product.price;
+      if (membershipTier === 'essential' && product.discount_essential) {
+        discountedPrice = product.price * (1 - product.discount_essential);
+      } else if (membershipTier === 'premium' && product.discount_premium) {
+        discountedPrice = product.price * (1 - product.discount_premium);
       }
 
       return {
@@ -164,12 +175,15 @@ export async function POST(request: Request) {
           discountedPrice,
           imageUrl: product.image_url,
         },
-      }
-    })
+      };
+    });
 
-    return NextResponse.json({ recommendations: enhancedRecommendations })
+    return NextResponse.json({ recommendations: enhancedRecommendations });
   } catch (error) {
-    console.error("Error generating recommendations:", error)
-    return NextResponse.json({ error: "Failed to generate recommendations" }, { status: 500 })
+    console.error('Error generating recommendations:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate recommendations' },
+      { status: 500 }
+    );
   }
 }

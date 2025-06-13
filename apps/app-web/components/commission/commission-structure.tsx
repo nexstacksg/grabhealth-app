@@ -1,84 +1,97 @@
-"use client"
+'use client';
 
-import React, { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { formatPrice } from "@/lib/utils"
-import { Loader2 } from "lucide-react"
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { formatPrice } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 // Authentication is now handled at the page level
 
 // Types for commission structure data
 type ProductCommissionTier = {
-  id: number
-  product_id: number
-  product_name: string
-  retail_price: number
-  trader_price: number
-  distributor_price: number
-  trader_commission_min: number
-  trader_commission_max: number
-  distributor_commission_min: number
-  distributor_commission_max: number
-  created_at: string
-  updated_at: string
-}
+  id: number;
+  product_id: number;
+  product_name: string;
+  retail_price: number;
+  trader_price: number;
+  distributor_price: number;
+  trader_commission_min: number;
+  trader_commission_max: number;
+  distributor_commission_min: number;
+  distributor_commission_max: number;
+  created_at: string;
+  updated_at: string;
+};
 
 type UserRoleType = {
-  id: number
-  role_name: string
-  description: string
-  commission_multiplier: number
-  created_at: string
-  updated_at: string
-}
+  id: number;
+  role_name: string;
+  description: string;
+  commission_multiplier: number;
+  created_at: string;
+  updated_at: string;
+};
 
 type VolumeBonus = {
-  id: number
-  min_volume: number
-  max_volume: number | null
-  bonus_percentage: number
-  created_at: string
-  updated_at: string
-}
+  id: number;
+  min_volume: number;
+  max_volume: number | null;
+  bonus_percentage: number;
+  created_at: string;
+  updated_at: string;
+};
 
 // Define incentive structure
 const incentiveStructure = [
   {
-    name: "Volume-based bonuses",
-    description: "Higher sales volumes unlock higher commission percentages"
+    name: 'Volume-based bonuses',
+    description: 'Higher sales volumes unlock higher commission percentages',
   },
   {
-    name: "Referral incentives",
-    description: "Additional rewards for bringing new customers/distributors"
+    name: 'Referral incentives',
+    description: 'Additional rewards for bringing new customers/distributors',
   },
   {
-    name: "Certification tier bonuses",
-    description: "Enhanced commissions for certified partners"
-  }
-]
+    name: 'Certification tier bonuses',
+    description: 'Enhanced commissions for certified partners',
+  },
+];
 
 // Format volume range for display
 function formatVolumeRange(min: number, max: number | null): string {
   if (max === null) {
-    return `$${min.toLocaleString()}+`
+    return `$${min.toLocaleString()}+`;
   }
-  return `$${min.toLocaleString()} - $${max.toLocaleString()}`
+  return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
 }
 
 function CommissionStructure() {
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-  const [productTiers, setProductTiers] = useState<ProductCommissionTier[]>([])
-  const [roleTypes, setRoleTypes] = useState<UserRoleType[]>([])
-  const [volumeBonusTiers, setVolumeBonusTiers] = useState<VolumeBonus[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [productTiers, setProductTiers] = useState<ProductCommissionTier[]>([]);
+  const [roleTypes, setRoleTypes] = useState<UserRoleType[]>([]);
+  const [volumeBonusTiers, setVolumeBonusTiers] = useState<VolumeBonus[]>([]);
 
   // Sample default data to use if API fails
   const defaultProductTiers: ProductCommissionTier[] = [
     {
       id: 1,
       product_id: 1,
-      product_name: "Health Supplement A",
+      product_name: 'Health Supplement A',
       retail_price: 49.99,
       trader_price: 39.99,
       distributor_price: 29.99,
@@ -87,12 +100,12 @@ function CommissionStructure() {
       distributor_commission_min: 20,
       distributor_commission_max: 30,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
       id: 2,
       product_id: 2,
-      product_name: "Wellness Package B",
+      product_name: 'Wellness Package B',
       retail_price: 99.99,
       trader_price: 79.99,
       distributor_price: 59.99,
@@ -101,8 +114,8 @@ function CommissionStructure() {
       distributor_commission_min: 22,
       distributor_commission_max: 35,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+      updated_at: new Date().toISOString(),
+    },
   ];
 
   const defaultVolumeBonusTiers: VolumeBonus[] = [
@@ -112,7 +125,7 @@ function CommissionStructure() {
       max_volume: 1000,
       bonus_percentage: 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
       id: 2,
@@ -120,7 +133,7 @@ function CommissionStructure() {
       max_volume: 5000,
       bonus_percentage: 5,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
       id: 3,
@@ -128,59 +141,62 @@ function CommissionStructure() {
       max_volume: null,
       bonus_percentage: 10,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+      updated_at: new Date().toISOString(),
+    },
   ];
 
   // Fetch commission structure data
   useEffect(() => {
     const fetchCommissionStructure = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
-        
-        const response = await fetch('/api/commission/structure')
-        
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch('/api/commission/structure');
+
         if (!response.ok) {
-          console.warn('Commission structure API returned non-OK status:', response.status)
+          console.warn(
+            'Commission structure API returned non-OK status:',
+            response.status
+          );
           // Use default data instead of throwing error
-          setProductTiers(defaultProductTiers)
-          setRoleTypes([])
-          setVolumeBonusTiers(defaultVolumeBonusTiers)
-          setError('Using default commission structure data')
-          return
+          setProductTiers(defaultProductTiers);
+          setRoleTypes([]);
+          setVolumeBonusTiers(defaultVolumeBonusTiers);
+          setError('Using default commission structure data');
+          return;
         }
-        
-        const data = await response.json()
-        
+
+        const data = await response.json();
+
         // If we got empty data from the API, use defaults
         if (!data.productTiers || data.productTiers.length === 0) {
-          setProductTiers(defaultProductTiers)
+          setProductTiers(defaultProductTiers);
         } else {
-          setProductTiers(data.productTiers)
+          setProductTiers(data.productTiers);
         }
-        
-        setRoleTypes(data.roleTypes || [])
-        
+
+        setRoleTypes(data.roleTypes || []);
+
         if (!data.volumeBonusTiers || data.volumeBonusTiers.length === 0) {
-          setVolumeBonusTiers(defaultVolumeBonusTiers)
+          setVolumeBonusTiers(defaultVolumeBonusTiers);
         } else {
-          setVolumeBonusTiers(data.volumeBonusTiers)
+          setVolumeBonusTiers(data.volumeBonusTiers);
         }
       } catch (err) {
-        console.error('Error fetching commission structure:', err)
+        console.error('Error fetching commission structure:', err);
         // Use default data on error
-        setProductTiers(defaultProductTiers)
-        setRoleTypes([])
-        setVolumeBonusTiers(defaultVolumeBonusTiers)
-        setError('Using default commission structure data due to error')
+        setProductTiers(defaultProductTiers);
+        setRoleTypes([]);
+        setVolumeBonusTiers(defaultVolumeBonusTiers);
+        setError('Using default commission structure data due to error');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    
-    fetchCommissionStructure()
-  }, [])
+    };
+
+    fetchCommissionStructure();
+  }, []);
 
   if (isLoading) {
     return (
@@ -188,7 +204,7 @@ function CommissionStructure() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Loading commission structure...</span>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -197,7 +213,7 @@ function CommissionStructure() {
         <p className="text-red-500 mb-4">{error}</p>
         <p>Using default commission structure data</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -225,18 +241,24 @@ function CommissionStructure() {
               {productTiers.length > 0 ? (
                 productTiers.map((product) => (
                   <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.product_name}</TableCell>
+                    <TableCell className="font-medium">
+                      {product.product_name}
+                    </TableCell>
                     <TableCell>{formatPrice(product.retail_price)}</TableCell>
                     <TableCell>{formatPrice(product.trader_price)}</TableCell>
-                    <TableCell>{formatPrice(product.distributor_price)}</TableCell>
+                    <TableCell>
+                      {formatPrice(product.distributor_price)}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-blue-50">
-                        {product.trader_commission_min}% - {product.trader_commission_max}%
+                        {product.trader_commission_min}% -{' '}
+                        {product.trader_commission_max}%
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-green-50">
-                        {product.distributor_commission_min}% - {product.distributor_commission_max}%
+                        {product.distributor_commission_min}% -{' '}
+                        {product.distributor_commission_max}%
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -272,9 +294,16 @@ function CommissionStructure() {
               {volumeBonusTiers.length > 0 ? (
                 volumeBonusTiers.map((tier) => (
                   <TableRow key={tier.id}>
-                    <TableCell>{formatVolumeRange(tier.min_volume, tier.max_volume)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={tier.bonus_percentage > 0 ? "bg-blue-50" : ""}>
+                      {formatVolumeRange(tier.min_volume, tier.max_volume)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          tier.bonus_percentage > 0 ? 'bg-blue-50' : ''
+                        }
+                      >
                         {tier.bonus_percentage}%
                       </Badge>
                     </TableCell>
@@ -317,7 +346,7 @@ function CommissionStructure() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
-export default CommissionStructure
+export default CommissionStructure;

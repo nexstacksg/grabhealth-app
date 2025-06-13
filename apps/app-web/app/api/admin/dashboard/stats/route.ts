@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function GET() {
   try {
     // Check if the user is authenticated and is an admin
     const user = await getCurrentUser();
-    
+
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
-        { error: "Unauthorized access" },
+        { error: 'Unauthorized access' },
         { status: 403 }
       );
     }
@@ -36,7 +36,7 @@ export async function GET() {
     if (Array.isArray(usersByRoleResult)) {
       usersByRoleResult.forEach((row) => {
         if (row && typeof row === 'object' && 'role' in row && 'count' in row) {
-          const role = row.role as string || 'customer';
+          const role = (row.role as string) || 'customer';
           usersByRole[role] = Number(row.count) || 0;
         }
       });
@@ -45,12 +45,12 @@ export async function GET() {
     return NextResponse.json({
       totalUsers,
       pendingRequests,
-      usersByRole
+      usersByRole,
     });
   } catch (error) {
-    console.error("Error fetching admin dashboard stats:", error);
+    console.error('Error fetching admin dashboard stats:', error);
     return NextResponse.json(
-      { error: "Failed to fetch dashboard statistics" },
+      { error: 'Failed to fetch dashboard statistics' },
       { status: 500 }
     );
   }

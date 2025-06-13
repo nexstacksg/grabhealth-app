@@ -1,14 +1,14 @@
-import { apiClient } from "./api-client";
-import { 
-  IUserPublic, 
+import { apiClient } from './api-client';
+import {
+  IUserPublic,
   PaginatedResponse,
   UpdateProfileRequest,
   ChangePasswordRequest,
-  UserSearchParams
-} from "@app/shared-types";
+  UserSearchParams,
+} from '@app/shared-types';
 
 class UserService {
-  private baseUrl = "/users";
+  private baseUrl = '/users';
 
   /**
    * Get current user profile
@@ -19,7 +19,7 @@ class UserService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get profile");
+      throw new Error(response.error?.message || 'Failed to get profile');
     }
 
     return response.data;
@@ -35,7 +35,7 @@ class UserService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to update profile");
+      throw new Error(response.error?.message || 'Failed to update profile');
     }
 
     return response.data;
@@ -46,21 +46,21 @@ class UserService {
    */
   async uploadProfilePhoto(file: File): Promise<{ url: string }> {
     const formData = new FormData();
-    formData.append("photo", file);
+    formData.append('photo', file);
 
     // For file uploads, we need to use fetch directly
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/v1${this.baseUrl}/my-profile/photo`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1${this.baseUrl}/my-profile/photo`,
       {
-        method: "POST",
+        method: 'POST',
         body: formData,
-        credentials: "include", // Include cookies
+        credentials: 'include', // Include cookies
       }
     );
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error?.message || "Failed to upload photo");
+      throw new Error(error.error?.message || 'Failed to upload photo');
     }
 
     const data = await response.json();
@@ -77,7 +77,7 @@ class UserService {
     );
 
     if (!response.success) {
-      throw new Error(response.error?.message || "Failed to change password");
+      throw new Error(response.error?.message || 'Failed to change password');
     }
   }
 
@@ -90,7 +90,7 @@ class UserService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "User not found");
+      throw new Error(response.error?.message || 'User not found');
     }
 
     return response.data;
@@ -99,7 +99,9 @@ class UserService {
   /**
    * List users (admin only)
    */
-  async listUsers(params?: UserSearchParams): Promise<PaginatedResponse<IUserPublic>> {
+  async listUsers(
+    params?: UserSearchParams
+  ): Promise<PaginatedResponse<IUserPublic>> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -114,7 +116,7 @@ class UserService {
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to get users");
+      throw new Error(response.error?.message || 'Failed to get users');
     }
 
     return response.data;
@@ -123,14 +125,17 @@ class UserService {
   /**
    * Update user by ID (admin only)
    */
-  async updateUser(userId: string, data: Partial<IUserPublic>): Promise<IUserPublic> {
+  async updateUser(
+    userId: string,
+    data: Partial<IUserPublic>
+  ): Promise<IUserPublic> {
     const response = await apiClient.put<IUserPublic>(
       `${this.baseUrl}/${userId}`,
       data
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || "Failed to update user");
+      throw new Error(response.error?.message || 'Failed to update user');
     }
 
     return response.data;
@@ -140,12 +145,10 @@ class UserService {
    * Delete user by ID (admin only)
    */
   async deleteUser(userId: string): Promise<void> {
-    const response = await apiClient.delete<void>(
-      `${this.baseUrl}/${userId}`
-    );
+    const response = await apiClient.delete<void>(`${this.baseUrl}/${userId}`);
 
     if (!response.success) {
-      throw new Error(response.error?.message || "Failed to delete user");
+      throw new Error(response.error?.message || 'Failed to delete user');
     }
   }
 }

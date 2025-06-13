@@ -142,12 +142,12 @@ grabHealth-AI/
 
 The MLM system uses a sophisticated 4-tier hierarchical structure with both monetary commissions and point rewards:
 
-| Level | Tier Name | Direct Commission | Indirect Commission | Points Rate | Description |
-|-------|-----------|-------------------|---------------------|-------------|-------------|
-| 1 | Direct Sales | 30% | 0% | 0 | Direct upline receives 30% of order value |
-| 2 | Indirect Sales | 30% | 10% | 0 | Seller gets 30%, their upline gets 10% |
-| 3 | Points Tier | 30% | 0% | 10 pts/$100 | Seller gets 30%, upline earns points |
-| 4+ | Legacy Tier | 30% | 0% | 5 pts/$100 | Seller gets 30%, higher uplines earn points |
+| Level | Tier Name      | Direct Commission | Indirect Commission | Points Rate | Description                                 |
+| ----- | -------------- | ----------------- | ------------------- | ----------- | ------------------------------------------- |
+| 1     | Direct Sales   | 30%               | 0%                  | 0           | Direct upline receives 30% of order value   |
+| 2     | Indirect Sales | 30%               | 10%                 | 0           | Seller gets 30%, their upline gets 10%      |
+| 3     | Points Tier    | 30%               | 0%                  | 10 pts/$100 | Seller gets 30%, upline earns points        |
+| 4+    | Legacy Tier    | 30%               | 0%                  | 5 pts/$100  | Seller gets 30%, higher uplines earn points |
 
 ### Product-Based Commission Rates
 
@@ -155,11 +155,11 @@ Different products have specific commission structures based on user roles:
 
 #### Sample Product Pricing & Commission Tiers
 
-| Product | Retail Price | Trader Price | Distributor Price | Trader Commission | Distributor Commission |
-|---------|--------------|--------------|-------------------|-------------------|------------------------|
-| Golden GinSeng Water (480ml) | $18.70 | $14.00 | $11.00 | 10-15% | 8-12% |
-| Honey Wild GinSeng | $997.00 | $747.00 | $587.00 | 12-18% | 10-15% |
-| RealMan (Men's Health) | $3,697.00 | $2,678.00 | $2,097.00 | 15-20% | 12-17% |
+| Product                      | Retail Price | Trader Price | Distributor Price | Trader Commission | Distributor Commission |
+| ---------------------------- | ------------ | ------------ | ----------------- | ----------------- | ---------------------- |
+| Golden GinSeng Water (480ml) | $18.70       | $14.00       | $11.00            | 10-15%            | 8-12%                  |
+| Honey Wild GinSeng           | $997.00      | $747.00      | $587.00           | 12-18%            | 10-15%                 |
+| RealMan (Men's Health)       | $3,697.00    | $2,678.00    | $2,097.00         | 15-20%            | 12-17%                 |
 
 ### Commission Calculation Process
 

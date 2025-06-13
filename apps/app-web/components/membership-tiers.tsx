@@ -1,25 +1,32 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Check } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Check } from 'lucide-react';
 
 export default function MembershipTiers() {
   const essentialBenefits = [
-    "10% off on select health products",
-    "5% off on partner lab tests",
-    "Free shipping over minimum order value",
-    "Member-only offers",
-    "Monthly free gift claim at partner outlets",
-  ]
+    '10% off on select health products',
+    '5% off on partner lab tests',
+    'Free shipping over minimum order value',
+    'Member-only offers',
+    'Monthly free gift claim at partner outlets',
+  ];
 
   const premiumBenefits = [
-    "25% off all health products",
-    "15-20% off lab tests",
-    "Free shipping on all orders",
-    "Priority clinic bookings",
-    "Family sharing (up to 4 members)",
-    "Early access to promotions & bundles",
-    "Monthly premium-tier gift claim at outlets",
-  ]
+    '25% off all health products',
+    '15-20% off lab tests',
+    'Free shipping on all orders',
+    'Priority clinic bookings',
+    'Family sharing (up to 4 members)',
+    'Early access to promotions & bundles',
+    'Monthly premium-tier gift claim at outlets',
+  ];
 
   return (
     <section className="py-16 bg-white">
@@ -27,7 +34,8 @@ export default function MembershipTiers() {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Membership Tiers</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Join our membership program to unlock exclusive health benefits and discounts on products and services.
+            Join our membership program to unlock exclusive health benefits and
+            discounts on products and services.
           </p>
         </div>
 
@@ -53,7 +61,9 @@ export default function MembershipTiers() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full bg-emerald-500 hover:bg-emerald-600">Join Now</Button>
+              <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+                Join Now
+              </Button>
             </CardFooter>
           </Card>
 
@@ -81,11 +91,13 @@ export default function MembershipTiers() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full bg-emerald-500 hover:bg-emerald-600">Learn How to Upgrade</Button>
+              <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+                Learn How to Upgrade
+              </Button>
             </CardFooter>
           </Card>
         </div>
       </div>
     </section>
-  )
+  );
 }
