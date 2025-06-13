@@ -32,26 +32,15 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react';
+import { orderService } from '@/services/order.service';
+import { useAuth } from '@/contexts/AuthContext';
+import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
+import { formatPrice } from '@/lib/utils';
 
-// Order data types
-interface OrderItem {
-  id: number;
-  order_id: number;
-  product_id: number;
-  product_name: string;
-  quantity: number;
-  price: number;
-  created_at?: string;
+interface IOrderWithItems extends IOrder {
+  items?: (IOrderItem & { product?: { name: string } })[];
 }
 
-interface Order {
-  id: number;
-  user_id: number;
-  status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  total: number;
-  created_at: string;
-  items?: OrderItem[];
-}
 
 interface OrderDetailsProps {
   params: Promise<{
@@ -61,7 +50,8 @@ interface OrderDetailsProps {
 
 export default function OrderDetailsPage({ params }: OrderDetailsProps) {
   const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
+  const { user } = useAuth();
+  const [order, setOrder] = useState<IOrderWithItems | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,32 +60,21 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
 
   useEffect(() => {
     async function fetchOrderDetails() {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
       try {
         setIsLoading(true);
-
-        // Check if user is authenticated
-        const userResponse = await fetch('/api/auth/user');
-        if (!userResponse.ok) {
-          if (userResponse.status === 401) {
-            router.push('/auth/login');
-            return;
-          }
-          throw new Error('Failed to authenticate');
+        const orderId = Number(unwrappedParams.id);
+        
+        if (isNaN(orderId)) {
+          throw new Error('Invalid order ID');
         }
 
-        // Fetch order details
-        const orderId = unwrappedParams.id;
-        const response = await fetch(`/api/orders/${orderId}`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Order not found');
-          }
-          throw new Error('Failed to fetch order details');
-        }
-
-        const data = await response.json();
-        setOrder(data.order);
+        const orderData = await orderService.getOrder(orderId);
+        setOrder(orderData as IOrderWithItems);
       } catch (error) {
         console.error('Error fetching order details:', error);
         setError(
@@ -109,47 +88,47 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
     }
 
     fetchOrderDetails();
-  }, [unwrappedParams.id, router]);
+  }, [unwrappedParams.id, router, user]);
 
-  const getStatusIcon = (status: Order['status']) => {
+  const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
-      case 'processing':
+      case 'PROCESSING':
         return <Clock className="h-6 w-6 text-blue-500" />;
-      case 'shipped':
-        return <Truck className="h-6 w-6 text-amber-500" />;
-      case 'delivered':
+      case 'COMPLETED':
         return <CheckCircle className="h-6 w-6 text-green-500" />;
-      case 'cancelled':
+      case 'CANCELLED':
         return <XCircle className="h-6 w-6 text-red-500" />;
+      case 'REFUNDED':
+        return <XCircle className="h-6 w-6 text-gray-500" />;
       default:
         return <Package className="h-6 w-6 text-gray-500" />;
     }
   };
 
-  const getStatusBadgeColor = (status: Order['status']) => {
+  const getStatusBadgeColor = (status: OrderStatus) => {
     switch (status) {
-      case 'processing':
+      case 'PROCESSING':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-      case 'shipped':
-        return 'bg-amber-100 text-amber-800 hover:bg-amber-100';
-      case 'delivered':
+      case 'COMPLETED':
         return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'cancelled':
+      case 'CANCELLED':
         return 'bg-red-100 text-red-800 hover:bg-red-100';
+      case 'REFUNDED':
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
       default:
         return '';
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(dateObj);
   };
 
   if (isLoading) {
@@ -224,7 +203,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Order #{order.id}</h1>
           <p className="text-gray-500">
-            Placed on {formatDate(order.created_at)}
+            Placed on {formatDate(order.createdAt)}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center">
@@ -232,7 +211,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
           <Badge
             className={`ml-2 text-sm ${getStatusBadgeColor(order.status)}`}
           >
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            {order.status.replace('_', ' ')}
           </Badge>
         </div>
       </div>
@@ -257,16 +236,16 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
                 {order.items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
-                      {item.product_name}
+                      {item.product?.name || 'Unknown Product'}
                     </TableCell>
                     <TableCell className="text-right">
-                      ${item.price.toFixed(2)}
+                      {formatPrice(item.price)}
                     </TableCell>
                     <TableCell className="text-right">
                       {item.quantity}
                     </TableCell>
                     <TableCell className="text-right">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatPrice(item.price * item.quantity)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -284,7 +263,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
           <div className="space-y-1 text-right">
             <div className="flex justify-between w-full md:w-1/3">
               <span className="font-medium">Total:</span>
-              <span className="font-bold">${order.total.toFixed(2)}</span>
+              <span className="font-bold">{formatPrice(order.total)}</span>
             </div>
           </div>
         </CardFooter>
@@ -307,28 +286,27 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               <div>
                 <p className="font-medium">Order Placed</p>
                 <p className="text-sm text-gray-500">
-                  {formatDate(order.created_at)}
+                  {formatDate(order.createdAt)}
                 </p>
               </div>
             </div>
 
-            {order.status === 'processing' ||
-            order.status === 'shipped' ||
-            order.status === 'delivered' ? (
+            {order.status === 'PROCESSING' ||
+            order.status === 'COMPLETED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div
-                    className={`${order.status !== 'processing' ? 'bg-emerald-100' : 'bg-blue-100'} rounded-full p-2`}
+                    className={`${order.status === 'COMPLETED' ? 'bg-emerald-100' : 'bg-blue-100'} rounded-full p-2`}
                   >
                     <Clock
-                      className={`h-5 w-5 ${order.status !== 'processing' ? 'text-emerald-600' : 'text-blue-600'}`}
+                      className={`h-5 w-5 ${order.status === 'COMPLETED' ? 'text-emerald-600' : 'text-blue-600'}`}
                     />
                   </div>
                 </div>
                 <div>
                   <p className="font-medium">Processing</p>
                   <p className="text-sm text-gray-500">
-                    {order.status === 'processing'
+                    {order.status === 'PROCESSING'
                       ? 'Your order is being processed'
                       : 'Completed'}
                   </p>
@@ -336,29 +314,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               </div>
             ) : null}
 
-            {order.status === 'shipped' || order.status === 'delivered' ? (
-              <div className="flex">
-                <div className="mr-4">
-                  <div
-                    className={`${order.status !== 'shipped' ? 'bg-emerald-100' : 'bg-amber-100'} rounded-full p-2`}
-                  >
-                    <Truck
-                      className={`h-5 w-5 ${order.status !== 'shipped' ? 'text-emerald-600' : 'text-amber-600'}`}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <p className="font-medium">Shipped</p>
-                  <p className="text-sm text-gray-500">
-                    {order.status === 'shipped'
-                      ? 'Your order is on the way'
-                      : 'Completed'}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-
-            {order.status === 'delivered' ? (
+            {order.status === 'COMPLETED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div className="bg-emerald-100 rounded-full p-2">
@@ -366,15 +322,31 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
                   </div>
                 </div>
                 <div>
-                  <p className="font-medium">Delivered</p>
+                  <p className="font-medium">Completed</p>
                   <p className="text-sm text-gray-500">
-                    Your order has been delivered
+                    Your order has been completed
                   </p>
                 </div>
               </div>
             ) : null}
 
-            {order.status === 'cancelled' ? (
+            {order.status === 'REFUNDED' ? (
+              <div className="flex">
+                <div className="mr-4">
+                  <div className="bg-gray-100 rounded-full p-2">
+                    <XCircle className="h-5 w-5 text-gray-600" />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-medium">Refunded</p>
+                  <p className="text-sm text-gray-500">
+                    Your order has been refunded
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {order.status === 'CANCELLED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div className="bg-red-100 rounded-full p-2">

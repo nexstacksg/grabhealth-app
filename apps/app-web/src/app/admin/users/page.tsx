@@ -61,7 +61,7 @@ export default function UsersPage() {
     }
   }
 
-  async function updateUserRole(userId: number, newRole: string) {
+  async function updateUserRole(userId: string, newRole: string) {
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
@@ -89,8 +89,9 @@ export default function UsersPage() {
 
   // Filter users based on search term and role filter
   const filteredUsers = users.filter((user) => {
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fullName.includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
@@ -259,8 +260,8 @@ export default function UsersPage() {
                       </Select>
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
-                      {user.created_at
-                        ? new Date(user.created_at).toLocaleDateString()
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
                         : 'N/A'}
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">

@@ -9,11 +9,13 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { formatPrice } from '@/lib/utils';
+import { productService } from '@/services/product.service';
+import { IProduct, ProductSearchParams } from '@app/shared-types';
 
 // Client-side data fetching with pagination
 function useProducts() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [prevProducts, setPrevProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [prevProducts, setPrevProducts] = useState<IProduct[]>([]);
   const [loading, setIsLoading] = useState(true);
   const [pageTransitioning, setPageTransitioning] = useState(false);
   const [pagination, setPagination] = useState({
@@ -22,15 +24,19 @@ function useProducts() {
     total: 0,
     totalPages: 0,
   });
-  const [filters, setFilters] = useState({
-    category: '',
-    search: '',
-    inStock: false,
-    onSale: false,
-    priceRange: '',
+  const [filters, setFilters] = useState<ProductSearchParams>({
+    category: undefined,
+    query: undefined,
+    inStock: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
   });
 
-  const fetchProducts = async (page = 1, category = '', options = {}) => {
+  const fetchProducts = async (
+    page = 1,
+    category?: string,
+    priceRange?: string
+  ) => {
     // For page changes, use a transitioning state instead of full loading
     if (page !== pagination.page && products.length > 0) {
       setPageTransitioning(true);
@@ -40,65 +46,50 @@ function useProducts() {
       setIsLoading(true);
     }
     try {
-      // Update filters if category is provided
-      if (category) {
-        setFilters((prev) => ({
-          ...prev,
-          category: category !== 'all' ? category : '',
-        }));
-      }
-
-      // Merge any additional filter options
-      const updatedFilters = { ...filters, ...options };
-      if (Object.keys(options).length > 0) {
-        setFilters(updatedFilters);
-      }
-
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.append('page', page.toString());
-      params.append('limit', pagination.limit.toString());
-
-      if (updatedFilters.category && updatedFilters.category !== 'all') {
-        params.append('category', updatedFilters.category);
-      }
-
-      if (updatedFilters.search) {
-        params.append('search', updatedFilters.search);
-      }
-
-      if (updatedFilters.inStock) {
-        params.append('inStock', 'true');
-      }
-
-      if (updatedFilters.onSale) {
-        params.append('onSale', 'true');
-      }
-
-      if (updatedFilters.priceRange) {
-        const [min, max] = getPriceRangeValues(updatedFilters.priceRange);
-        if (min !== null) params.append('minPrice', min.toString());
-        if (max !== null) params.append('maxPrice', max.toString());
-      }
-
-      const response = await fetch(`/api/products?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-
-      const data = await response.json();
-      // Ensure products is always an array
-      const productsArray = Array.isArray(data.products) ? data.products : [];
-      setProducts(productsArray);
-      setPagination({
-        ...pagination,
+      // Build filters for API call
+      const searchParams: ProductSearchParams = {
         page,
-        total: data.pagination?.total || 0,
-        totalPages: data.pagination?.totalPages || 0,
+        limit: pagination.limit,
+      };
+
+      // Add category filter
+      if (category && category !== 'all') {
+        searchParams.category = category;
+      }
+
+      // Add price range filter
+      if (priceRange) {
+        const [min, max] = getPriceRangeValues(priceRange);
+        if (min !== null) searchParams.minPrice = min;
+        if (max !== null) searchParams.maxPrice = max;
+      }
+
+      // Add other filters from state
+      if (filters.query) searchParams.query = filters.query;
+      if (filters.inStock) searchParams.inStock = filters.inStock;
+
+      const response = await productService.searchProducts(searchParams);
+
+      // Update state with response
+      setProducts(response.products || []);
+      setPagination({
+        page: response.page || page,
+        limit: pagination.limit,
+        total: response.total || 0,
+        totalPages: response.totalPages || 0,
       });
-      // Clear transitioning state if it was set
+
+      // Update filters state
+      setFilters({
+        category: category && category !== 'all' ? category : undefined,
+        query: filters.query,
+        inStock: filters.inStock,
+        minPrice: searchParams.minPrice,
+        maxPrice: searchParams.maxPrice,
+      });
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts([]);
     } finally {
       setIsLoading(false);
       setPageTransitioning(false);
@@ -124,14 +115,27 @@ function useProducts() {
   };
 
   // Update filters and refetch products
-  const updateFilters = (newFilters: Partial<typeof filters>) => {
+  const updateFilters = (newFilters: Partial<ProductSearchParams>) => {
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
-    fetchProducts(
-      1,
-      updatedFilters.category !== 'all' ? updatedFilters.category : '',
-      newFilters
-    );
+
+    // Determine price range from min/max values
+    let priceRange: string | undefined;
+    if (
+      newFilters.minPrice !== undefined ||
+      newFilters.maxPrice !== undefined
+    ) {
+      if (newFilters.minPrice === 0 && newFilters.maxPrice === 25)
+        priceRange = 'under25';
+      else if (newFilters.minPrice === 25 && newFilters.maxPrice === 50)
+        priceRange = '25to50';
+      else if (newFilters.minPrice === 50 && newFilters.maxPrice === 100)
+        priceRange = '50to100';
+      else if (newFilters.minPrice === 100 && newFilters.maxPrice === undefined)
+        priceRange = 'over100';
+    }
+
+    fetchProducts(1, updatedFilters.category, priceRange);
   };
 
   // Initial fetch
@@ -158,11 +162,7 @@ function useCategories() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await fetch('/api/product-categories');
-        if (!response.ok) {
-          throw new Error('Failed to fetch categories');
-        }
-        const data = await response.json();
+        const data = await productService.getCategories();
         setCategories(data);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -279,6 +279,22 @@ function Pagination({
   );
 }
 
+// Helper function to convert price range string to min/max values
+const getPriceRangeValues = (range: string): [number | null, number | null] => {
+  switch (range) {
+    case 'under25':
+      return [0, 25];
+    case '25to50':
+      return [25, 50];
+    case '50to100':
+      return [50, 100];
+    case 'over100':
+      return [100, null];
+    default:
+      return [null, null];
+  }
+};
+
 export default function ProductsPage() {
   const {
     products,
@@ -294,6 +310,7 @@ export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
+  const [priceRange, setPriceRange] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
@@ -319,15 +336,17 @@ export default function ProductsPage() {
 
   // Handle price range change
   const handlePriceRangeChange = (range: string) => {
-    updateFilters({ priceRange: range });
+    setPriceRange(range);
+    const [min, max] = getPriceRangeValues(range);
+    updateFilters({
+      minPrice: min || undefined,
+      maxPrice: max || undefined,
+    });
   };
 
   // Handle availability filter changes
-  const handleAvailabilityChange = (
-    filter: 'inStock' | 'onSale',
-    checked: boolean
-  ) => {
-    updateFilters({ [filter]: checked });
+  const handleAvailabilityChange = (filter: 'inStock', checked: boolean) => {
+    updateFilters({ [filter]: checked || undefined });
   };
 
   // Toggle section expansion
@@ -493,33 +512,39 @@ export default function ProductsPage() {
               {expandedSections.price && (
                 <div className="space-y-1">
                   <div
-                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === 'under25' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${priceRange === 'under25' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('under25')}
                   >
                     Under $25
                   </div>
                   <div
-                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === '25to50' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${priceRange === '25to50' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('25to50')}
                   >
                     $25 - $50
                   </div>
                   <div
-                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === '50to100' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${priceRange === '50to100' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('50to100')}
                   >
                     $50 - $100
                   </div>
                   <div
-                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${filters.priceRange === 'over100' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${priceRange === 'over100' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                     onClick={() => handlePriceRangeChange('over100')}
                   >
                     Over $100
                   </div>
-                  {filters.priceRange && (
+                  {priceRange && (
                     <div
                       className="cursor-pointer rounded px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 flex items-center"
-                      onClick={() => handlePriceRangeChange('')}
+                      onClick={() => {
+                        setPriceRange('');
+                        updateFilters({
+                          minPrice: undefined,
+                          maxPrice: undefined,
+                        });
+                      }}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -597,20 +622,6 @@ export default function ProductsPage() {
                       In Stock
                     </label>
                   </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="onSale"
-                      className="mr-2"
-                      checked={filters.onSale}
-                      onChange={(e) =>
-                        handleAvailabilityChange('onSale', e.target.checked)
-                      }
-                    />
-                    <label htmlFor="onSale" className="text-sm">
-                      On Sale
-                    </label>
-                  </div>
                 </div>
               )}
             </div>
@@ -626,7 +637,7 @@ export default function ProductsPage() {
           ) : pageTransitioning ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 opacity-40 transition-opacity duration-300">
-                {prevProducts.map((product: any) => (
+                {prevProducts.map((product) => (
                   <div key={product.id} className="relative">
                     <Card className="overflow-hidden transition-all">
                       <div className="relative">
@@ -657,13 +668,13 @@ export default function ProductsPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product: any) => (
+                {products.map((product) => (
                   <Link href={`/products/${product.id}`} key={product.id}>
                     <Card className="overflow-hidden transition-all hover:shadow-md">
                       <div className="relative">
                         <Image
                           src={
-                            product.image_url ||
+                            product.imageUrl ||
                             '/placeholder.svg?height=200&width=200'
                           }
                           alt={product.name}
@@ -671,18 +682,11 @@ export default function ProductsPage() {
                           height={300}
                           className="w-full h-48 object-cover"
                         />
-                        {product.discounted_price && (
-                          <Badge className="absolute top-2 right-2 bg-emerald-500">
-                            {Math.round(
-                              (1 - product.discounted_price / product.price) *
-                                100
-                            )}
-                            % OFF
+                        {product.category && (
+                          <Badge className="absolute top-2 left-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
+                            {product.category.name}
                           </Badge>
                         )}
-                        <Badge className="absolute top-2 left-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
-                          {product.category_name}
-                        </Badge>
                       </div>
                       <CardContent className="p-4">
                         <h3 className="font-semibold text-lg mb-1">
@@ -694,17 +698,10 @@ export default function ProductsPage() {
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <span className="text-lg font-bold">
-                              {formatPrice(
-                                product.discounted_price || product.price
-                              )}
+                              {formatPrice(product.price)}
                             </span>
-                            {product.discounted_price && (
-                              <span className="text-gray-400 line-through ml-2 text-sm">
-                                {formatPrice(product.price)}
-                              </span>
-                            )}
                           </div>
-                          {product.in_stock ? (
+                          {product.inStock ? (
                             <Badge
                               variant="outline"
                               className="bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -724,11 +721,11 @@ export default function ProductsPage() {
                           product={{
                             id: product.id,
                             name: product.name,
-                            price: product.discounted_price || product.price,
-                            image_url: product.image_url,
+                            price: product.price,
+                            image_url: product.imageUrl,
                           }}
                           className="w-full"
-                          disabled={!product.in_stock}
+                          disabled={!product.inStock}
                         />
                       </CardContent>
                     </Card>

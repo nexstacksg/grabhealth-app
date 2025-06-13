@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (result.success && result.userId) {
       // Get user details
-      const user = await db.getUserById(result.userId);
+      const user = await db.getUserById(Number(result.userId));
 
       if (!user) {
         return NextResponse.json(
@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
           created_at: Date.now(),
         });
 
-        cookies().set('user_session', sessionData, {
+        const cookieStore = await cookies();
+        cookieStore.set('user_session', sessionData, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: `${user.firstName} ${user.lastName}`,
           role: user.role,
         },
       });

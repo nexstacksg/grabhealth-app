@@ -21,6 +21,7 @@ import {
   Shield,
   RefreshCw,
   X,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { IUserPublic } from '@app/shared-types';
@@ -437,8 +438,8 @@ export default function UserDetailPage() {
                       Account Created
                     </p>
                     <p>
-                      {user.created_at
-                        ? new Date(user.created_at).toLocaleDateString()
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
                         : 'Unknown'}
                     </p>
                   </div>

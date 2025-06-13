@@ -38,11 +38,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 import { useMembership } from '@/hooks/use-membership';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice } from '@/lib/utils';
 import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { orderService } from '@/services/order.service';
 
 // Form validation schema
 const checkoutFormSchema = z.object({
@@ -80,12 +82,13 @@ type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 export default function CheckoutPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   const {
     cartItems,
     cartCount,
     cartTotal,
     isLoading: cartLoading,
-    checkout,
+    clearCart,
   } = useCart();
 
   const {
@@ -101,8 +104,8 @@ export default function CheckoutPage() {
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
-      fullName: '',
-      email: '',
+      fullName: user ? `${user.firstName} ${user.lastName}` : '',
+      email: user?.email || '',
       phone: '',
       address: '',
       city: '',
@@ -123,16 +126,28 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!user) {
+      toast.error('Please login to place an order');
+      router.push('/login');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
-      // Process the order
-      const orderId = await checkout();
+      // Format shipping address
+      const shippingAddress = `${data.address}, ${data.city}, ${data.state} ${data.zipCode}`;
+      const billingAddress = shippingAddress; // Using same as shipping for now
 
-      if (!orderId) {
-        toast.error('Failed to create order');
-        return;
-      }
+      // Process the order through backend
+      const order = await orderService.checkoutFromCart(
+        data.paymentMethod,
+        shippingAddress,
+        billingAddress
+      );
+
+      // Clear the cart after successful order
+      await clearCart();
 
       // Add membership points for the purchase (10 points per $100 spent)
       if (membership) {
@@ -147,7 +162,7 @@ export default function CheckoutPage() {
       toast.success('Order placed successfully!');
 
       // Redirect to order details page
-      router.push(`/orders/${orderId}`);
+      router.push(`/orders/${order.id}`);
     } catch (error) {
       console.error('Error during checkout:', error);
       toast.error('Failed to complete checkout');
@@ -464,16 +479,16 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="max-h-[300px] overflow-auto space-y-4 pr-2">
-                {cartItems.map((item) => (
+                {cartItems.map((item, index) => (
                   <div
-                    key={item.id}
+                    key={`${item.productId}-${index}`}
                     className="flex gap-3 pb-3 border-b last:border-0 last:pb-0"
                   >
                     <div className="h-16 w-16 rounded-md bg-secondary flex-shrink-0 flex items-center justify-center">
-                      {item.image_url ? (
+                      {item.product?.imageUrl ? (
                         <img
-                          src={item.image_url}
-                          alt={item.product_name}
+                          src={item.product.imageUrl}
+                          alt={item.product.name}
                           className="h-full w-full object-cover rounded-md"
                         />
                       ) : (
@@ -482,13 +497,13 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium line-clamp-1">
-                        {item.product_name}
+                        {item.product?.name || 'Unknown Product'}
                       </h4>
                       <div className="text-sm text-muted-foreground">
-                        {item.quantity} x {formatPrice(item.price)}
+                        {item.quantity} x {formatPrice(item.price || 0)}
                       </div>
                       <div className="text-sm font-medium">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice((item.price || 0) * item.quantity)}
                       </div>
                     </div>
                   </div>

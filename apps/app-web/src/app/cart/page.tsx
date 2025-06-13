@@ -98,16 +98,16 @@ export default function CartPage() {
               <Separator className="mb-6" />
 
               <div className="space-y-6">
-                {cartItems.map((item) => (
+                {cartItems.map((item, index) => (
                   <div
-                    key={item.id}
+                    key={`${item.productId}-${index}`}
                     className="flex gap-4 pb-6 border-b last:border-0 last:pb-0"
                   >
                     <div className="h-24 w-24 rounded-md overflow-hidden relative bg-secondary flex-shrink-0">
-                      {item.image_url ? (
+                      {item.product?.imageUrl ? (
                         <Image
-                          src={item.image_url}
-                          alt={item.product_name}
+                          src={item.product.imageUrl}
+                          alt={item.product.name}
                           fill
                           className="object-cover"
                         />
@@ -121,20 +121,20 @@ export default function CartPage() {
                     <div className="flex-1 flex flex-col">
                       <div className="flex justify-between">
                         <h3 className="font-medium text-lg">
-                          {item.product_name}
+                          {item.product?.name || 'Unknown Product'}
                         </h3>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.productId)}
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>
 
                       <div className="text-sm text-muted-foreground">
-                        Unit Price: {formatPrice(item.price)}
+                        Unit Price: {formatPrice(item.price || 0)}
                       </div>
 
                       <div className="flex items-center justify-between mt-auto">
@@ -144,7 +144,7 @@ export default function CartPage() {
                             size="icon"
                             className="h-8 w-8 rounded-none"
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
+                              updateQuantity(item.productId, item.quantity - 1)
                             }
                             disabled={item.quantity <= 1}
                           >
@@ -158,7 +158,7 @@ export default function CartPage() {
                             size="icon"
                             className="h-8 w-8 rounded-none"
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
+                              updateQuantity(item.productId, item.quantity + 1)
                             }
                           >
                             <Plus className="h-3 w-3" />
@@ -166,7 +166,7 @@ export default function CartPage() {
                         </div>
 
                         <div className="font-medium">
-                          {formatPrice(item.price * item.quantity)}
+                          {formatPrice((item.price || 0) * item.quantity)}
                         </div>
                       </div>
                     </div>

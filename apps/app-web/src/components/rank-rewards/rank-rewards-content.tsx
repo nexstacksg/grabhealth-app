@@ -28,7 +28,7 @@ import {
   Zap,
   ChevronRight,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import RankVisualization from './rank-visualization';
 import { cn } from '@/lib/utils';
 

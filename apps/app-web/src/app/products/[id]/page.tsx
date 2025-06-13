@@ -12,17 +12,10 @@ import { AddToCartButton } from '@/components/add-to-cart-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMembership } from '@/hooks/use-membership';
 import { formatPrice } from '@/lib/utils';
+import { productService } from '@/services/product.service';
+import { IProduct } from '@app/shared-types';
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  discount_essential: number;
-  discount_premium: number;
-  category: string;
-  image_url: string;
-  in_stock: boolean;
+interface ProductWithExtras extends IProduct {
   features?: string[];
   usage?: string;
   ingredients?: string;
@@ -31,79 +24,58 @@ interface Product {
 export default function ProductDetailPage() {
   const params = useParams();
   const { membership } = useMembership();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [product, setProduct] = useState<ProductWithExtras | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Calculate tier discount percentage
   const tierDiscount = useMemo(() => {
-    if (!product) return 0;
-    if (
-      membership?.tier &&
-      ['level4', 'level5', 'level6', 'level7'].includes(membership.tier)
-    ) {
-      return Math.round(
-        (typeof product.discount_premium === 'string'
-          ? parseFloat(product.discount_premium)
-          : product.discount_premium) * 100
-      );
-    } else if (
-      membership?.tier &&
-      ['level1', 'level2', 'level3'].includes(membership.tier)
-    ) {
-      return Math.round(
-        (typeof product.discount_essential === 'string'
-          ? parseFloat(product.discount_essential)
-          : product.discount_essential) * 100
-      );
-    }
-    return 0;
+    // Backend doesn't provide discount tiers, so we'll use a fixed discount
+    if (!product || !membership?.tier) return 0;
+
+    // For now, we'll give a fixed 10% discount for all tiers except level1
+    // This should be updated when backend provides tier-based pricing
+    if (membership.tier === 'level1') return 0;
+
+    return 10;
   }, [product, membership]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        console.log(`Fetching product with ID: ${params.id}`);
+        const productId = Number(params.id);
 
-        // Add cache-busting query parameter
-        const response = await fetch(
-          `/api/products/${params.id}?t=${Date.now()}`
-        );
-
-        // Log the response status
-        console.log(`Response status: ${response.status}`);
-
-        // Try to get the response text regardless of status
-        const responseText = await response.text();
-        console.log(`Response body: ${responseText}`);
-
-        // If response is not ok, throw error with more details
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch product: ${response.status} ${responseText}`
-          );
+        if (isNaN(productId)) {
+          throw new Error('Invalid product ID');
         }
 
-        // Parse the JSON response
-        const data = JSON.parse(responseText);
-        console.log('Product data:', data);
+        const productData = await productService.getProduct(productId);
 
-        if (data.product) {
-          // Add demo data for features, usage, and ingredients
-          const enhancedProduct = addDemoData(data.product);
+        // Add demo data for features, usage, and ingredients
+        const enhancedProduct = addDemoData(productData);
+        setProduct(enhancedProduct);
 
-          setProduct(enhancedProduct);
-          setRelatedProducts(data.relatedProducts || []);
-        } else {
-          throw new Error('Invalid response format: missing product data');
+        // Fetch related products from the same category
+        if (productData.categoryId) {
+          try {
+            const categoryProducts = await productService.getProductsByCategory(
+              productData.categoryId
+            );
+            setRelatedProducts(
+              categoryProducts
+                .filter((p) => p.id !== productData.id)
+                .slice(0, 4)
+            );
+          } catch (err) {
+            console.error('Error fetching related products:', err);
+            // Continue without related products
+          }
         }
       } catch (err: any) {
         console.error('Error fetching product:', err);
-        setError(
-          `Failed to load product details: ${err?.message || 'Unknown error'}`
-        );
+        setError(err?.message || 'Failed to load product details');
       } finally {
         setLoading(false);
       }
@@ -115,11 +87,13 @@ export default function ProductDetailPage() {
   }, [params.id]);
 
   // Add demo data for features, usage, and ingredients
-  const addDemoData = (product: Product): Product => {
-    if (!product) return product;
+  const addDemoData = (product: IProduct): ProductWithExtras => {
+    if (!product) return product as ProductWithExtras;
+
+    const extendedProduct = product as ProductWithExtras;
 
     // Add demo features if not present
-    if (!product.features || product.features.length === 0) {
+    if (!extendedProduct.features || extendedProduct.features.length === 0) {
       const demoFeatures: Record<string, string[]> = {
         'Pain Relief': [
           'Fast-acting formula provides relief within 30 minutes',
@@ -148,8 +122,9 @@ export default function ProductDetailPage() {
       };
 
       // Select features based on product category
-      product.features = demoFeatures[
-        product.category as keyof typeof demoFeatures
+      const categoryName = product.category?.name || 'General';
+      extendedProduct.features = demoFeatures[
+        categoryName as keyof typeof demoFeatures
       ] || [
         'Clinically tested for effectiveness and safety',
         'Made with pharmaceutical-grade ingredients',
@@ -159,7 +134,7 @@ export default function ProductDetailPage() {
     }
 
     // Add demo usage if not present
-    if (!product.usage) {
+    if (!extendedProduct.usage) {
       const demoUsage: Record<string, string> = {
         'Pain Relief':
           'Adults and children 12 years and over: Take 1-2 tablets every 4-6 hours as needed, not exceeding 6 tablets in 24 hours. Take with food or milk if stomach upset occurs. Consult a doctor for use in children under 12 years of age.',
@@ -171,13 +146,14 @@ export default function ProductDetailPage() {
           'Clean the affected area thoroughly with mild soap and water before application. Apply a thin layer to the affected area 1-3 times daily as needed. Cover with a sterile bandage if necessary. Consult a healthcare professional for deep or puncture wounds.',
       };
 
-      product.usage =
-        demoUsage[product.category as keyof typeof demoUsage] ||
+      const categoryName = product.category?.name || 'General';
+      extendedProduct.usage =
+        demoUsage[categoryName as keyof typeof demoUsage] ||
         'Take as directed on the package or as advised by your healthcare professional. Store in a cool, dry place away from direct sunlight and out of reach of children. Do not use if safety seal is broken or missing.';
     }
 
     // Add demo ingredients if not present
-    if (!product.ingredients) {
+    if (!extendedProduct.ingredients) {
       const demoIngredients: Record<string, string> = {
         'Pain Relief':
           'Active Ingredients: Acetaminophen 500mg, Ibuprofen 200mg. Inactive Ingredients: Microcrystalline cellulose, corn starch, sodium starch glycolate, colloidal silicon dioxide, magnesium stearate, hypromellose, polyethylene glycol.',
@@ -189,45 +165,24 @@ export default function ProductDetailPage() {
           'Active Ingredient: Benzalkonium Chloride 0.13%. Inactive Ingredients: Purified water, glycerin, hydroxypropyl methylcellulose, propylene glycol, aloe vera extract, lavender oil, tea tree oil, vitamin E acetate.',
       };
 
-      product.ingredients =
-        demoIngredients[product.category as keyof typeof demoIngredients] ||
+      const categoryName = product.category?.name || 'General';
+      extendedProduct.ingredients =
+        demoIngredients[categoryName as keyof typeof demoIngredients] ||
         'Active and inactive ingredients listed on packaging. Please refer to the product label for complete ingredient information. Contains no artificial colors, flavors, or preservatives unless otherwise stated.';
     }
 
-    return product;
+    return extendedProduct;
   };
 
   // Calculate discounted price based on membership tier
   const calculateDiscountedPrice = () => {
     if (!product) return 0;
 
-    // Ensure we have numeric values for calculations
-    const regularPrice =
-      typeof product.price === 'string'
-        ? parseFloat(product.price)
-        : product.price;
-    const discountPremium =
-      typeof product.discount_premium === 'string'
-        ? parseFloat(product.discount_premium)
-        : product.discount_premium;
-    const discountEssential =
-      typeof product.discount_essential === 'string'
-        ? parseFloat(product.discount_essential)
-        : product.discount_essential;
+    const regularPrice = product.price;
 
-    // Check if membership tier matches premium levels (25% discount)
-    if (
-      membership?.tier &&
-      ['level4', 'level5', 'level6', 'level7'].includes(membership.tier)
-    ) {
-      return regularPrice * (1 - discountPremium);
-    }
-    // Check if membership tier matches essential levels (10% discount)
-    else if (
-      membership?.tier &&
-      ['level1', 'level2', 'level3'].includes(membership.tier)
-    ) {
-      return regularPrice * (1 - discountEssential);
+    // Apply tier discount if available
+    if (tierDiscount > 0) {
+      return regularPrice * (1 - tierDiscount / 100);
     }
 
     return regularPrice;
@@ -289,7 +244,7 @@ export default function ProductDetailPage() {
         <div className="relative rounded-xl overflow-hidden bg-white border border-gray-100 h-[350px] md:h-[450px] group">
           <div className="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <Image
-            src={product.image_url || '/placeholder.svg'}
+            src={product.imageUrl || '/placeholder.svg'}
             alt={product.name}
             fill
             className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
@@ -297,12 +252,14 @@ export default function ProductDetailPage() {
           />
 
           {/* Category Badge */}
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 border border-gray-100">
-            {product.category}
-          </div>
+          {product.category && (
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 border border-gray-100">
+              {product.category.name}
+            </div>
+          )}
 
           {/* Status Badge */}
-          {product.in_stock ? (
+          {product.inStock ? (
             <Badge className="absolute top-4 right-4 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 px-3">
               <div className="flex items-center">
                 <div className="h-2 w-2 rounded-full bg-white mr-1.5 animate-pulse"></div>
@@ -316,38 +273,14 @@ export default function ProductDetailPage() {
           )}
 
           {/* Discount Badge */}
-          {membership?.tier &&
-            ['level4', 'level5', 'level6', 'level7'].includes(
-              membership.tier
-            ) &&
-            product.discount_premium > 0 && (
-              <Badge className="absolute bottom-4 left-4 bg-red-500 hover:bg-red-600 transition-all duration-200 px-3">
-                <div className="flex items-center">
-                  <span className="mr-1">🔥</span>
-                  {Math.round(
-                    (typeof product.discount_premium === 'string'
-                      ? parseFloat(product.discount_premium)
-                      : product.discount_premium) * 100
-                  )}
-                  % OFF
-                </div>
-              </Badge>
-            )}
-          {membership?.tier &&
-            ['level1', 'level2', 'level3'].includes(membership.tier) &&
-            product.discount_essential > 0 && (
-              <Badge className="absolute bottom-4 left-4 bg-red-500 hover:bg-red-600 transition-all duration-200 px-3">
-                <div className="flex items-center">
-                  <span className="mr-1">🔥</span>
-                  {Math.round(
-                    (typeof product.discount_essential === 'string'
-                      ? parseFloat(product.discount_essential)
-                      : product.discount_essential) * 100
-                  )}
-                  % OFF
-                </div>
-              </Badge>
-            )}
+          {tierDiscount > 0 && (
+            <Badge className="absolute bottom-4 left-4 bg-red-500 hover:bg-red-600 transition-all duration-200 px-3">
+              <div className="flex items-center">
+                <span className="mr-1">🔥</span>
+                {tierDiscount}% OFF
+              </div>
+            </Badge>
+          )}
         </div>
 
         {/* Product Details */}
@@ -412,9 +345,9 @@ export default function ProductDetailPage() {
                   id: product.id,
                   name: product.name,
                   price: calculateDiscountedPrice(),
-                  image_url: product.image_url,
+                  image_url: product.imageUrl || undefined,
                 }}
-                disabled={!product.in_stock}
+                disabled={!product.inStock}
                 className="w-full py-3 text-base font-medium transition-all duration-200"
                 size="lg"
               />
@@ -540,7 +473,7 @@ export default function ProductDetailPage() {
                   <div className="aspect-square relative">
                     <Image
                       src={
-                        relatedProduct.image_url || '/placeholder-product.png'
+                        relatedProduct.imageUrl || '/placeholder-product.png'
                       }
                       alt={relatedProduct.name}
                       fill
@@ -558,7 +491,7 @@ export default function ProductDetailPage() {
                       <span className="font-medium text-emerald-600">
                         {formatPrice(relatedProduct.price)}
                       </span>
-                      {!relatedProduct.in_stock && (
+                      {!relatedProduct.inStock && (
                         <Badge
                           variant="outline"
                           className="text-xs text-gray-500"

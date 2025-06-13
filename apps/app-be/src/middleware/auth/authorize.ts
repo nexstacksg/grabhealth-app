@@ -39,7 +39,7 @@ export const authorizeManager = () => {
       );
     }
 
-    const managerRoles = [UserRole.SUPER_ADMIN, UserRole.MANAGER] as string[];
+    const managerRoles = [UserRole.SUPER_ADMIN, UserRole.COMPANY, UserRole.MANAGER] as string[];
 
     if (!managerRoles.includes(req.user.role)) {
       return next(new ApiError("Manager access required", 403, "FORBIDDEN"));
@@ -102,7 +102,7 @@ export const authorizeSelfOrManager = (userIdParam: string = "id") => {
     }
 
     // Managers and above can access others' resources
-    const managerRoles = [UserRole.SUPER_ADMIN, UserRole.MANAGER] as string[];
+    const managerRoles = [UserRole.SUPER_ADMIN, UserRole.COMPANY, UserRole.MANAGER] as string[];
 
     if (!managerRoles.includes(req.user.role)) {
       return next(new ApiError("Access denied", 403, "FORBIDDEN"));

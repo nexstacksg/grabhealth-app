@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import authService from '@/services/authService';
+import { authService } from '@/services/auth.service';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
