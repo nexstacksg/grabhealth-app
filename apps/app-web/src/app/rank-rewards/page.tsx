@@ -1,18 +1,33 @@
+'use client';
+
 import React from 'react';
-import { Metadata } from 'next';
 import RankRewardsContent from '@/components/rank-rewards/rank-rewards-content';
-import { requireAuth } from '@/lib/auth';
 import { CommissionProvider } from '@/components/commission/commission-provider';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export const metadata: Metadata = {
-  title: 'Rank & Rewards | GrabHealth',
-  description:
-    'View your rank, benefits, and rewards in the GrabHealth membership program',
-};
+export default function RankRewardsPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
 
-export default async function RankRewardsPage() {
-  // Ensure user is authenticated to access this page
-  await requireAuth();
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 md:px-6 py-8 mb-16 flex justify-center items-center min-h-[50vh]">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 mb-16">

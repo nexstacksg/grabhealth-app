@@ -24,15 +24,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { authService } from '@/services/auth.service';
-import { IUserPublic } from '@app/shared-types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Header() {
   const router = useRouter();
+  const { user, logout, isLoading } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [user, setUser] = useState<IUserPublic | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // This will be set to true only on the client side
@@ -42,52 +40,9 @@ export default function Header() {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    // Fetch current user on component mount and when the component updates
-    async function fetchCurrentUser() {
-      try {
-        setIsLoading(true);
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
-        console.log('User fetched successfully:', userData);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchCurrentUser();
-
-    // Listen for login/logout events
-    const handleStorageChange = () => {
-      fetchCurrentUser();
-    };
-
-    // Add event listener for auth state changes
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('auth-state-change', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('auth-state-change', handleStorageChange);
-    };
-  }, []);
-
   const handleLogout = async () => {
     try {
-      await authService.logout();
-
-      // Update local state
-      setUser(null);
-
-      // Dispatch an event to notify components about auth state change
-      window.dispatchEvent(new Event('auth-state-change'));
-
-      // Store a flag in localStorage to trigger storage event listeners
-      localStorage.setItem('auth_timestamp', Date.now().toString());
-
+      await logout();
       router.push('/');
       router.refresh();
     } catch (error) {

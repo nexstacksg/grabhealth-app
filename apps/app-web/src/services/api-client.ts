@@ -43,6 +43,17 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw {
+          status: response.status,
+          message: `Server error: Expected JSON but got ${contentType}`,
+          error: { message: 'Invalid response format' },
+        };
+      }
+
       const data = await response.json();
 
       if (!response.ok) {

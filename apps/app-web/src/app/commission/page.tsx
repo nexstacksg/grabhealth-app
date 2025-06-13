@@ -15,7 +15,7 @@ export default function CommissionPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const userData = await authService.getCurrentUser();
+        const userData = await authService.getProfile();
 
         if (userData && userData.id) {
           setUser(userData);

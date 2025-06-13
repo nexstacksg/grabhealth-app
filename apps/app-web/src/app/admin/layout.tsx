@@ -30,7 +30,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function checkAdmin() {
       try {
-        const userData = await authService.getCurrentUser();
+        const userData = await authService.getProfile();
 
         // Check if we have a user and if they have admin role
 

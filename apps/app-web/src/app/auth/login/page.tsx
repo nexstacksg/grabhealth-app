@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,44 +57,16 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to log in');
-      }
-
-      // Check if verification is required
-      if (result.requiresVerification) {
-        router.push(
-          `/auth/verify?email=${encodeURIComponent(data.email)}&type=login`
-        );
+      await login(data.email, data.password);
+      // The AuthContext handles the redirect after successful login
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
       } else {
-        // Dispatch an event to notify components about auth state change
-        window.dispatchEvent(new Event('auth-state-change'));
-
-        // Store a flag in localStorage to trigger storage event listeners
-        localStorage.setItem('auth_timestamp', Date.now().toString());
-
-        // Check if user is admin and redirect accordingly
-        if (result.user.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/');
-        }
-        router.refresh();
+        setError('An unexpected error occurred');
       }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An unexpected error occurred'
-      );
     } finally {
       setIsLoading(false);
     }

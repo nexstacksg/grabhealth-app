@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,7 +42,7 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ referrerId }: RegisterFormProps) {
-  const router = useRouter();
+  const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,31 +61,28 @@ export default function RegisterForm({ referrerId }: RegisterFormProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          referrerId: referrerId,
-        }),
+      // Split the name into firstName and lastName
+      const nameParts = data.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      await register({
+        email: data.email,
+        password: data.password,
+        firstName,
+        lastName,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to register');
+      // The AuthContext handles the redirect after successful registration
+      // TODO: Handle referrerId for MLM referral tracking
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
       }
-
-      // Redirect to login page after successful registration
-      router.push('/auth/login?registered=true');
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An unexpected error occurred'
-      );
     } finally {
       setIsLoading(false);
     }

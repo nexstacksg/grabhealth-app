@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-// Define user type to match the one in lib/auth.ts
+// Define user type for the old auth system (to be deprecated)
 export interface User {
   id: number;
   name: string;
