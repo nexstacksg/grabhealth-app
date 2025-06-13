@@ -1,5 +1,5 @@
-import { internalApi } from "./api";
-import { LoginRequest, IUserPublic, ApiResponse } from "@app/shared-types";
+import { internalApi } from './api';
+import { LoginRequest, IUserPublic, ApiResponse } from '@app/shared-types';
 
 // Alias for compatibility
 export type LoginData = LoginRequest;
@@ -24,11 +24,11 @@ class AuthService {
    */
   async login(data: LoginData): Promise<AuthResponse> {
     const response = await internalApi.post<ApiResponse<AuthResponse>>(
-      "/auth/login",
+      '/auth/login',
       data
     );
     if (!response.data) {
-      throw new Error("Login failed: No data received");
+      throw new Error('Login failed: No data received');
     }
     return response.data;
   }
@@ -37,7 +37,7 @@ class AuthService {
    * Logout admin - uses internal API route that clears cookies
    */
   async logout(): Promise<void> {
-    await internalApi.post("/auth/logout");
+    await internalApi.post('/auth/logout');
   }
 
   /**
@@ -45,9 +45,9 @@ class AuthService {
    */
   async getProfile(): Promise<User> {
     const response =
-      await internalApi.get<ApiResponse<{ user: User }>>("/auth/profile");
+      await internalApi.get<ApiResponse<{ user: User }>>('/auth/profile');
     if (!response.data) {
-      throw new Error("Failed to get profile: No data received");
+      throw new Error('Failed to get profile: No data received');
     }
     return response.data.user;
   }

@@ -1,10 +1,10 @@
-import { PrismaClient, UserMembership, MembershipTier } from "@prisma/client";
+import { PrismaClient, UserMembership, MembershipTier } from '@prisma/client';
 import {
   IMembershipCreate,
   MembershipStatus,
   MembershipTier as MembershipTierEnum,
-} from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
+} from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
 
 export class MembershipService {
   constructor(private prisma: PrismaClient) {}
@@ -21,7 +21,7 @@ export class MembershipService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to create membership tier", 500);
+      throw new AppError('Failed to create membership tier', 500);
     }
   }
 
@@ -29,10 +29,10 @@ export class MembershipService {
   async getMembershipTiers(): Promise<MembershipTier[]> {
     try {
       return await this.prisma.membershipTier.findMany({
-        orderBy: { price: "asc" },
+        orderBy: { price: 'asc' },
       });
     } catch (_error) {
-      throw new AppError("Failed to get membership tiers", 500);
+      throw new AppError('Failed to get membership tiers', 500);
     }
   }
 
@@ -43,7 +43,7 @@ export class MembershipService {
         where: { id },
       });
     } catch (_error) {
-      throw new AppError("Failed to get membership tier", 500);
+      throw new AppError('Failed to get membership tier', 500);
     }
   }
 
@@ -65,7 +65,7 @@ export class MembershipService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to update membership tier", 500);
+      throw new AppError('Failed to update membership tier', 500);
     }
   }
 
@@ -81,7 +81,7 @@ export class MembershipService {
       });
 
       if (!tier) {
-        throw new AppError("Membership tier not found", 404);
+        throw new AppError('Membership tier not found', 404);
       }
 
       // Check if user already has active membership
@@ -117,7 +117,7 @@ export class MembershipService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to create user membership", 500);
+      throw new AppError('Failed to create user membership', 500);
     }
   }
 
@@ -145,7 +145,7 @@ export class MembershipService {
 
       return membership;
     } catch (_error) {
-      throw new AppError("Failed to get user membership", 500);
+      throw new AppError('Failed to get user membership', 500);
     }
   }
 
@@ -160,7 +160,7 @@ export class MembershipService {
       });
 
       if (!membership) {
-        throw new AppError("No active membership found", 404);
+        throw new AppError('No active membership found', 404);
       }
 
       return await this.prisma.userMembership.update({
@@ -172,7 +172,7 @@ export class MembershipService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to cancel membership", 500);
+      throw new AppError('Failed to cancel membership', 500);
     }
   }
 
@@ -190,7 +190,7 @@ export class MembershipService {
       });
 
       if (!membership) {
-        throw new AppError("No active membership found", 404);
+        throw new AppError('No active membership found', 404);
       }
 
       return await this.prisma.userMembership.update({
@@ -199,7 +199,7 @@ export class MembershipService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to update auto-renewal", 500);
+      throw new AppError('Failed to update auto-renewal', 500);
     }
   }
 
@@ -237,7 +237,7 @@ export class MembershipService {
             },
             tier: true,
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
         }),
@@ -251,7 +251,7 @@ export class MembershipService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (_error) {
-      throw new AppError("Failed to get user memberships", 500);
+      throw new AppError('Failed to get user memberships', 500);
     }
   }
 
@@ -268,7 +268,7 @@ export class MembershipService {
 
       return expiredMemberships.count;
     } catch (_error) {
-      throw new AppError("Failed to process expired memberships", 500);
+      throw new AppError('Failed to process expired memberships', 500);
     }
   }
 
@@ -292,7 +292,7 @@ export class MembershipService {
             where: { status: MembershipStatus.CANCELLED },
           }),
           this.prisma.userMembership.groupBy({
-            by: ["tierId"],
+            by: ['tierId'],
             where: { status: MembershipStatus.ACTIVE },
             _count: true,
           }),
@@ -305,7 +305,7 @@ export class MembershipService {
             where: { id: item.tierId },
           });
           return {
-            tier: tier?.name || "Unknown",
+            tier: tier?.name || 'Unknown',
             count: item._count,
             revenue: tier ? tier.price * item._count : 0,
           };
@@ -319,7 +319,7 @@ export class MembershipService {
         revenueByTier: revenueDetails,
       };
     } catch (_error) {
-      throw new AppError("Failed to get membership stats", 500);
+      throw new AppError('Failed to get membership stats', 500);
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,12 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-} from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { useNavigation } from "@react-navigation/native";
-import { Colors } from "../../constants/Colors";
-import authService from "../../services/authService";
-import { useAuth } from "../../contexts/AuthContext";
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { useNavigation } from '@react-navigation/native';
+import { Colors } from '../../constants/Colors';
+import authService from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ProfileFormData {
   firstName: string;
@@ -38,13 +38,13 @@ export default function ProfileCompletionScreen() {
     formState: { errors },
   } = useForm<ProfileFormData>({
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      phone: "",
-      dateOfBirth: "",
-      address: "",
-      emergencyContact: "",
-      department: "",
+      firstName: '',
+      lastName: '',
+      phone: '',
+      dateOfBirth: '',
+      address: '',
+      emergencyContact: '',
+      department: '',
     },
   });
 
@@ -64,14 +64,14 @@ export default function ProfileCompletionScreen() {
       setUser(updatedUser);
 
       Alert.alert(
-        "Profile Updated",
-        "Your profile has been successfully completed.",
-        [{ text: "OK", onPress: () => navigation.navigate("(tabs)") }]
+        'Profile Updated',
+        'Your profile has been successfully completed.',
+        [{ text: 'OK', onPress: () => navigation.navigate('(tabs)') }]
       );
     } catch (error: any) {
       Alert.alert(
-        "Update Failed",
-        error.response?.data?.message || "Please try again later."
+        'Update Failed',
+        error.response?.data?.message || 'Please try again later.'
       );
     } finally {
       setIsLoading(false);
@@ -80,11 +80,11 @@ export default function ProfileCompletionScreen() {
 
   const onSkip = () => {
     Alert.alert(
-      "Skip Profile Setup?",
-      "You can complete your profile later from the settings.",
+      'Skip Profile Setup?',
+      'You can complete your profile later from the settings.',
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Skip", onPress: () => navigation.navigate("(tabs)") },
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Skip', onPress: () => navigation.navigate('(tabs)') },
       ]
     );
   };
@@ -92,7 +92,7 @@ export default function ProfileCompletionScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -107,7 +107,7 @@ export default function ProfileCompletionScreen() {
           <View style={styles.row}>
             <Controller
               control={control}
-              rules={{ required: "First name is required" }}
+              rules={{ required: 'First name is required' }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <View style={[styles.inputContainer, styles.halfWidth]}>
                   <Text style={styles.label}>First Name*</Text>
@@ -133,7 +133,7 @@ export default function ProfileCompletionScreen() {
 
             <Controller
               control={control}
-              rules={{ required: "Last name is required" }}
+              rules={{ required: 'Last name is required' }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <View style={[styles.inputContainer, styles.halfWidth]}>
                   <Text style={styles.label}>Last Name*</Text>
@@ -160,7 +160,7 @@ export default function ProfileCompletionScreen() {
             rules={{
               pattern: {
                 value: /^\+?[1-9]\d{7,14}$/,
-                message: "Please enter a valid phone number",
+                message: 'Please enter a valid phone number',
               },
             }}
             render={({ field: { onChange, onBlur, value } }) => (
@@ -283,7 +283,7 @@ export default function ProfileCompletionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
@@ -295,50 +295,50 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#666",
+    color: '#666',
   },
   form: {
     marginBottom: 20,
   },
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   inputContainer: {
     marginBottom: 20,
   },
   halfWidth: {
-    width: "48%",
+    width: '48%',
   },
   label: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 15,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: '#f9f9f9',
   },
   textArea: {
     height: 80,
-    textAlignVertical: "top",
+    textAlignVertical: 'top',
   },
   inputError: {
-    borderColor: "#ff4444",
+    borderColor: '#ff4444',
   },
   errorText: {
-    color: "#ff4444",
+    color: '#ff4444',
     fontSize: 14,
     marginTop: 5,
   },
@@ -346,31 +346,31 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.tint,
     borderRadius: 8,
     padding: 15,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 10,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   skipButton: {
     padding: 15,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 10,
   },
   skipButtonText: {
     color: Colors.light.tint,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   requiredNote: {
     fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+    color: '#666',
+    textAlign: 'center',
     marginBottom: 20,
   },
 });

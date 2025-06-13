@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Users } from 'lucide-react';
-import { IUserPublic } from '@app/shared-types';
+import { adminService } from '@/services/admin.service';
+import { toast } from 'sonner';
 
 interface DashboardStats {
   totalUsers: number;
@@ -22,16 +23,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchDashboardStats() {
       try {
-        const response = await fetch('/api/admin/dashboard/stats');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch dashboard stats');
-        }
-
-        const data = await response.json();
-        setStats(data);
+        const data = await adminService.getDashboardStats();
+        setStats({
+          totalUsers: data.totalUsers,
+          pendingRequests: 0, // This might need to come from account requests
+          usersByRole: {}, // This might need to be calculated from users data
+        });
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        toast.error('Failed to load dashboard statistics');
       } finally {
         setLoading(false);
       }

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -16,10 +16,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       });
@@ -31,16 +31,16 @@ export default function LoginPage() {
         if (data.error?.details && typeof data.error.details === 'object') {
           setErrors(data.error.details);
         } else {
-          setErrors({ general: data.error?.message || "Invalid credentials" });
+          setErrors({ general: data.error?.message || 'Invalid credentials' });
         }
         return;
       }
 
       // Redirect to home on success
-      router.push("/");
+      router.push('/');
     } catch (err) {
       const error = err as { message?: string };
-      setErrors({ general: error.message || "Login failed" });
+      setErrors({ general: error.message || 'Login failed' });
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (errors.email) setErrors({ ...errors, email: "" });
+                  if (errors.email) setErrors({ ...errors, email: '' });
                 }}
                 className={`w-full px-3 py-2 border placeholder-black text-black bg-white focus:outline-none focus:border-black sm:text-sm ${
                   errors.email ? 'border-red-500' : 'border-black'
@@ -102,7 +102,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (errors.password) setErrors({ ...errors, password: "" });
+                  if (errors.password) setErrors({ ...errors, password: '' });
                 }}
                 className={`w-full px-3 py-2 border placeholder-black text-black bg-white focus:outline-none focus:border-black sm:text-sm ${
                   errors.password ? 'border-red-500' : 'border-black'
@@ -121,7 +121,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex justify-center py-2 px-4 border border-black text-sm font-medium text-black bg-white hover:bg-black hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
 

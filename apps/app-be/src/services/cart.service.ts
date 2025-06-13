@@ -1,5 +1,5 @@
-import { ICart } from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
+import { ICart } from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
 
 interface CartStore {
   [userId: string]: ICart;
@@ -53,7 +53,7 @@ export class CartService {
     );
 
     if (itemIndex === -1) {
-      throw new AppError("Item not found in cart", 404);
+      throw new AppError('Item not found in cart', 404);
     }
 
     if (quantity <= 0) {

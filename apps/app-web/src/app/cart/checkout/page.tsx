@@ -65,11 +65,9 @@ const checkoutFormSchema = z.object({
     .min(16, { message: 'Card number must be 16 digits' })
     .max(16, { message: 'Card number must be 16 digits' })
     .regex(/^\d+$/, { message: 'Card number must contain only digits' }),
-  expiryDate: z
-    .string()
-    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, {
-      message: 'Expiry date must be in MM/YY format',
-    }),
+  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, {
+    message: 'Expiry date must be in MM/YY format',
+  }),
   cvv: z
     .string()
     .min(3, { message: 'CVV must be 3 or 4 digits' })

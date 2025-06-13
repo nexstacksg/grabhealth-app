@@ -104,7 +104,9 @@ export default function AdminLayout({
                   {(user.firstName || user.email)?.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-sm font-medium text-gray-700">
-                  {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
+                  {user.firstName && user.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user.email}
                 </span>
               </div>
               <button

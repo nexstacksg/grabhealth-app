@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-} from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { useRouter, Link } from "expo-router";
-import { Colors } from "@/constants/Colors";
-import authService from "@/services/authService";
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { useRouter, Link } from 'expo-router';
+import { Colors } from '@/constants/Colors';
+import authService from '@/services/authService';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
     getValues,
   } = useForm<ForgotPasswordFormData>({
     defaultValues: {
-      email: "",
+      email: '',
     },
   });
 
@@ -42,15 +42,15 @@ export default function ForgotPasswordScreen() {
       await authService.forgotPassword(data.email);
       setEmailSent(true);
       Alert.alert(
-        "Email Sent",
-        "Password reset instructions have been sent to your email.",
-        [{ text: "OK", onPress: () => router.replace("/(auth)/login") }]
+        'Email Sent',
+        'Password reset instructions have been sent to your email.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
       );
     } catch (error: any) {
       Alert.alert(
-        "Error",
+        'Error',
         error.response?.data?.message ||
-          "Unable to send reset email. Please try again."
+          'Unable to send reset email. Please try again.'
       );
     } finally {
       setIsLoading(false);
@@ -58,17 +58,17 @@ export default function ForgotPasswordScreen() {
   };
 
   const resendEmail = async () => {
-    const email = getValues("email");
+    const email = getValues('email');
     if (!email) return;
 
     setIsLoading(true);
     try {
       await authService.forgotPassword(email);
-      Alert.alert("Success", "Reset email sent again.");
+      Alert.alert('Success', 'Reset email sent again.');
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error.response?.data?.message || "Unable to resend email."
+        'Error',
+        error.response?.data?.message || 'Unable to resend email.'
       );
     } finally {
       setIsLoading(false);
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen() {
           <Text style={styles.title}>Forgot Password?</Text>
           <Text style={styles.subtitle}>
             {emailSent
-              ? "Check your email for reset instructions"
+              ? 'Check your email for reset instructions'
               : "No worries, we'll send you reset instructions"}
           </Text>
         </View>
@@ -98,10 +98,10 @@ export default function ForgotPasswordScreen() {
             <Controller
               control={control}
               rules={{
-                required: "Email is required",
+                required: 'Email is required',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Please enter a valid email",
+                  message: 'Please enter a valid email',
                 },
               }}
               render={({ field: { onChange, onBlur, value } }) => (
@@ -166,11 +166,11 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: 20,
   },
   header: {
@@ -178,13 +178,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#666",
+    color: '#666',
     lineHeight: 24,
   },
   form: {
@@ -195,23 +195,23 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 15,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: '#f9f9f9',
   },
   inputError: {
-    borderColor: "#ff4444",
+    borderColor: '#ff4444',
   },
   errorText: {
-    color: "#ff4444",
+    color: '#ff4444',
     fontSize: 14,
     marginTop: 5,
   },
@@ -219,42 +219,42 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.tint,
     borderRadius: 8,
     padding: 15,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 10,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   successContainer: {
     marginBottom: 30,
   },
   successText: {
     fontSize: 16,
-    color: "#666",
-    textAlign: "center",
+    color: '#666',
+    textAlign: 'center',
     marginBottom: 20,
     lineHeight: 24,
   },
   resendButton: {
-    alignItems: "center",
+    alignItems: 'center',
   },
   resendText: {
     color: Colors.light.tint,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   backButton: {
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 20,
   },
   backText: {
     fontSize: 16,
     color: Colors.light.tint,
-    fontWeight: "600",
+    fontWeight: '600',
   },
 });

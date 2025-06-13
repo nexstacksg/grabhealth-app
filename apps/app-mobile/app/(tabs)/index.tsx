@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   SafeAreaView,
   RefreshControl,
   ScrollView,
-} from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
+} from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomeScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -19,7 +19,7 @@ export default function HomeScreen() {
     try {
       await refreshUser();
     } catch (error) {
-      console.error("Error refreshing user:", error);
+      console.error('Error refreshing user:', error);
     } finally {
       setRefreshing(false);
     }
@@ -27,12 +27,12 @@ export default function HomeScreen() {
 
   // Auto-refresh user status if pending verification
   useEffect(() => {
-    if (user?.status === "PENDING_VERIFICATION") {
+    if (user?.status === 'PENDING_VERIFICATION') {
       const interval = setInterval(async () => {
         try {
           await refreshUser();
         } catch (error) {
-          console.error("Auto-refresh error:", error);
+          console.error('Auto-refresh error:', error);
         }
       }, 10000); // Check every 10 seconds
 
@@ -66,14 +66,14 @@ export default function HomeScreen() {
           <Text
             style={[
               styles.infoValue,
-              user?.status === "PENDING_VERIFICATION" && styles.pendingStatus,
+              user?.status === 'PENDING_VERIFICATION' && styles.pendingStatus,
             ]}
           >
-            {user?.status === "PENDING_VERIFICATION"
-              ? "Pending Email Verification"
+            {user?.status === 'PENDING_VERIFICATION'
+              ? 'Pending Email Verification'
               : user?.status}
           </Text>
-          {user?.status === "PENDING_VERIFICATION" && (
+          {user?.status === 'PENDING_VERIFICATION' && (
             <Text style={styles.statusNote}>
               Auto-checking verification status...
             </Text>
@@ -91,64 +91,64 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   content: {
     flex: 1,
   },
   scrollContent: {
     padding: 20,
-    justifyContent: "center",
+    justifyContent: 'center',
     flexGrow: 1,
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 10,
-    textAlign: "center",
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
-    color: "#666",
+    color: '#666',
     marginBottom: 30,
-    textAlign: "center",
+    textAlign: 'center',
   },
   infoContainer: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#f5f5f5',
     padding: 20,
     borderRadius: 10,
     marginBottom: 30,
   },
   infoLabel: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
     marginTop: 10,
   },
   infoValue: {
     fontSize: 16,
-    color: "#333",
-    fontWeight: "600",
+    color: '#333',
+    fontWeight: '600',
     marginBottom: 10,
   },
   logoutButton: {
-    backgroundColor: "#ff4444",
+    backgroundColor: '#ff4444',
     padding: 15,
     borderRadius: 8,
-    alignItems: "center",
+    alignItems: 'center',
   },
   logoutText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   pendingStatus: {
-    color: "#ff9500",
+    color: '#ff9500',
   },
   statusNote: {
     fontSize: 12,
-    color: "#999",
-    fontStyle: "italic",
+    color: '#999',
+    fontStyle: 'italic',
     marginTop: -5,
     marginBottom: 10,
   },

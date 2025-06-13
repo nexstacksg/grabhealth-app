@@ -1,6 +1,6 @@
-import { PrismaClient, Category, Prisma } from "@prisma/client";
-import { ICategoryCreate, ICategoryUpdate } from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
+import { PrismaClient, Category, Prisma } from '@prisma/client';
+import { ICategoryCreate, ICategoryUpdate } from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
 
 export class CategoryService {
   constructor(private prisma: PrismaClient) {}
@@ -13,7 +13,7 @@ export class CategoryService {
       });
 
       if (existing) {
-        throw new AppError("Category slug already exists", 400);
+        throw new AppError('Category slug already exists', 400);
       }
 
       // Validate parent category if provided
@@ -22,7 +22,7 @@ export class CategoryService {
           where: { id: data.parentId },
         });
         if (!parent) {
-          throw new AppError("Parent category not found", 404);
+          throw new AppError('Parent category not found', 404);
         }
       }
 
@@ -39,7 +39,7 @@ export class CategoryService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to create category", 500);
+      throw new AppError('Failed to create category', 500);
     }
   }
 
@@ -50,7 +50,7 @@ export class CategoryService {
       });
 
       if (!category) {
-        throw new AppError("Category not found", 404);
+        throw new AppError('Category not found', 404);
       }
 
       // Check slug uniqueness if updating
@@ -59,14 +59,14 @@ export class CategoryService {
           where: { slug: data.slug },
         });
         if (existing) {
-          throw new AppError("Category slug already exists", 400);
+          throw new AppError('Category slug already exists', 400);
         }
       }
 
       // Validate parent category if updating
       if (data.parentId !== undefined) {
         if (data.parentId === id) {
-          throw new AppError("Category cannot be its own parent", 400);
+          throw new AppError('Category cannot be its own parent', 400);
         }
 
         if (data.parentId) {
@@ -74,12 +74,12 @@ export class CategoryService {
             where: { id: data.parentId },
           });
           if (!parent) {
-            throw new AppError("Parent category not found", 404);
+            throw new AppError('Parent category not found', 404);
           }
 
           // Check for circular reference
           if (await this.wouldCreateCircularReference(id, data.parentId)) {
-            throw new AppError("This would create a circular reference", 400);
+            throw new AppError('This would create a circular reference', 400);
           }
         }
       }
@@ -104,7 +104,7 @@ export class CategoryService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to update category", 500);
+      throw new AppError('Failed to update category', 500);
     }
   }
 
@@ -116,11 +116,11 @@ export class CategoryService {
           parent: true,
           children: {
             where: { isActive: true },
-            orderBy: { sortOrder: "asc" },
+            orderBy: { sortOrder: 'asc' },
           },
           products: {
             where: {
-              status: "ACTIVE",
+              status: 'ACTIVE',
               inStock: true,
             },
             take: 10,
@@ -131,7 +131,7 @@ export class CategoryService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to get category", 500);
+      throw new AppError('Failed to get category', 500);
     }
   }
 
@@ -143,7 +143,7 @@ export class CategoryService {
           parent: true,
           children: {
             where: { isActive: true },
-            orderBy: { sortOrder: "asc" },
+            orderBy: { sortOrder: 'asc' },
           },
           _count: {
             select: { products: true },
@@ -151,7 +151,7 @@ export class CategoryService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to get category", 500);
+      throw new AppError('Failed to get category', 500);
     }
   }
 
@@ -165,12 +165,12 @@ export class CategoryService {
 
       return await this.prisma.category.findMany({
         where,
-        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
         include: {
           parent: true,
           children: {
             where: includeInactive ? {} : { isActive: true },
-            orderBy: { sortOrder: "asc" },
+            orderBy: { sortOrder: 'asc' },
           },
           _count: {
             select: { products: true },
@@ -178,7 +178,7 @@ export class CategoryService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to get categories", 500);
+      throw new AppError('Failed to get categories', 500);
     }
   }
 
@@ -190,15 +190,15 @@ export class CategoryService {
           parentId: null,
           isActive: true,
         },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { sortOrder: 'asc' },
         include: {
           children: {
             where: { isActive: true },
-            orderBy: { sortOrder: "asc" },
+            orderBy: { sortOrder: 'asc' },
             include: {
               children: {
                 where: { isActive: true },
-                orderBy: { sortOrder: "asc" },
+                orderBy: { sortOrder: 'asc' },
               },
             },
           },
@@ -210,7 +210,7 @@ export class CategoryService {
 
       return rootCategories;
     } catch (_error) {
-      throw new AppError("Failed to get category tree", 500);
+      throw new AppError('Failed to get category tree', 500);
     }
   }
 
@@ -225,17 +225,17 @@ export class CategoryService {
       });
 
       if (!category) {
-        throw new AppError("Category not found", 404);
+        throw new AppError('Category not found', 404);
       }
 
       // Check if category has products
       if (category.products.length > 0) {
-        throw new AppError("Cannot delete category with products", 400);
+        throw new AppError('Cannot delete category with products', 400);
       }
 
       // Check if category has children
       if (category.children.length > 0) {
-        throw new AppError("Cannot delete category with subcategories", 400);
+        throw new AppError('Cannot delete category with subcategories', 400);
       }
 
       await this.prisma.category.delete({
@@ -243,7 +243,7 @@ export class CategoryService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to delete category", 500);
+      throw new AppError('Failed to delete category', 500);
     }
   }
 
@@ -274,9 +274,9 @@ export class CategoryService {
   async generateSlug(name: string): Promise<string> {
     let slug = name
       .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim();
 
     // Check if slug exists and add number if necessary
@@ -307,7 +307,7 @@ export class CategoryService {
         )
       );
     } catch (_error) {
-      throw new AppError("Failed to reorder categories", 500);
+      throw new AppError('Failed to reorder categories', 500);
     }
   }
 }

@@ -19,12 +19,11 @@ import { Loader2, User, Upload } from 'lucide-react';
 import { useMembership } from '@/hooks/use-membership';
 import { toast } from 'sonner';
 import { MembershipProfile } from '@/components/membership-profile';
+import { profileService } from '@/services/profile.service';
+import { membershipService } from '@/services/membership.service';
+import { IUserPublic } from '@app/shared-types';
 
-interface UserProfile {
-  id: number;
-  name: string;
-  email: string;
-  image_url?: string;
+interface UserProfile extends IUserPublic {
   membership?: {
     tier: string;
     points: number;
@@ -39,7 +38,8 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     currentPassword: '',
     newPassword: '',
@@ -50,43 +50,37 @@ export default function ProfilePage() {
     async function fetchUserProfile() {
       try {
         setIsLoading(true);
-        // Use the existing auth/user API endpoint
-        const response = await fetch('/api/auth/user', {
-          credentials: 'include', // Include cookies in the request
-        });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Redirect to login if not authenticated
-            router.push('/auth/login');
-            return;
-          }
-          throw new Error('Failed to fetch profile');
-        }
+        // Fetch user profile
+        const userProfile = await profileService.getProfile();
 
-        const data = await response.json();
-        setUser(data.user);
+        // Fetch membership data
+        const membershipData = await membershipService.getCurrentMembership();
+
+        const profileWithMembership: UserProfile = {
+          ...userProfile,
+          membership: membershipData
+            ? {
+                tier: membershipData.tier,
+                points: membershipData.points || 0,
+              }
+            : undefined,
+        };
+
+        setUser(profileWithMembership);
         setFormData((prev) => ({
           ...prev,
-          name: data.user.name,
-          email: data.user.email,
+          firstName: userProfile.firstName || '',
+          lastName: userProfile.lastName || '',
+          email: userProfile.email,
         }));
-
-        // Fetch membership data separately
-        const membershipResponse = await fetch('/api/membership/current');
-        if (membershipResponse.ok) {
-          const membershipData = await membershipResponse.json();
-          setUser((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  membership: membershipData,
-                }
-              : null
-          );
-        }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching profile:', error);
+        if (error.status === 401) {
+          // Redirect to login if not authenticated
+          router.push('/auth/login');
+          return;
+        }
         setError('Failed to load profile. Please try again later.');
       } finally {
         setIsLoading(false);

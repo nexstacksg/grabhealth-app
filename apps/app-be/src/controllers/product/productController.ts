@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction } from "express";
-import { ProductService } from "../../services/product.service";
-import prisma from "../../database/client";
-import { AppError } from "../../middleware/error/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import { ProductService } from '../../services/product.service';
+import prisma from '../../database/client';
+import { AppError } from '../../middleware/error/errorHandler';
 import {
   IProductCreate,
   IProductUpdate,
   ProductSearchParams,
-} from "@app/shared-types";
+} from '@app/shared-types';
 
 const productService = new ProductService(prisma);
 
@@ -50,7 +50,7 @@ export const productController = {
       const product = await productService.getProduct(Number(id));
 
       if (!product) {
-        throw new AppError("Product not found", 404);
+        throw new AppError('Product not found', 404);
       }
 
       res.json({
@@ -75,7 +75,7 @@ export const productController = {
         maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
         inStock:
           req.query.inStock !== undefined
-            ? req.query.inStock === "true"
+            ? req.query.inStock === 'true'
             : undefined,
         sortBy: req.query.sortBy as any,
         sortOrder: req.query.sortOrder as any,
@@ -100,7 +100,7 @@ export const productController = {
       await productService.deleteProduct(Number(id));
       res.json({
         success: true,
-        message: "Product deleted successfully",
+        message: 'Product deleted successfully',
       });
     } catch (error) {
       next(error);

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { UserRole } from "@app/shared-types";
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { UserRole } from '@app/shared-types';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,9 +11,9 @@ export async function POST(request: NextRequest) {
 
     // Forward request to backend
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
     });
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.error || { message: "Login failed" } },
+        { error: data.error || { message: 'Login failed' } },
         { status: response.status }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       data.data.user.role !== UserRole.SUPER_ADMIN
     ) {
       return NextResponse.json(
-        { error: { message: "Access denied. Admin privileges required." } },
+        { error: { message: 'Access denied. Admin privileges required.' } },
         { status: 403 }
       );
     }
@@ -41,36 +41,36 @@ export async function POST(request: NextRequest) {
     // Set secure HTTP-only cookies
     const cookieStore = await cookies();
 
-    console.log("Login API - Setting cookies for user:", data.data.user.email);
+    console.log('Login API - Setting cookies for user:', data.data.user.email);
 
     // Access token - shorter expiry
-    cookieStore.set("accessToken", data.data.accessToken, {
+    cookieStore.set('accessToken', data.data.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 24 hours
-      path: "/",
+      path: '/',
     });
 
     // Refresh token - longer expiry
-    cookieStore.set("refreshToken", data.data.refreshToken, {
+    cookieStore.set('refreshToken', data.data.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
+      path: '/',
     });
 
     // Admin role cookie for quick checks
-    cookieStore.set("adminRole", data.data.user.role, {
+    cookieStore.set('adminRole', data.data.user.role, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 24 hours
-      path: "/",
+      path: '/',
     });
 
-    console.log("Login API - Cookies set successfully");
+    console.log('Login API - Cookies set successfully');
 
     // Return user data without tokens
     return NextResponse.json({
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: { message: "Internal server error" } },
+      { error: { message: 'Internal server error' } },
       { status: 500 }
     );
   }

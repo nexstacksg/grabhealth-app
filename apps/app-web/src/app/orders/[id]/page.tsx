@@ -41,7 +41,6 @@ interface IOrderWithItems extends IOrder {
   items?: (IOrderItem & { product?: { name: string } })[];
 }
 
-
 interface OrderDetailsProps {
   params: Promise<{
     id: string;
@@ -68,7 +67,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
       try {
         setIsLoading(true);
         const orderId = Number(unwrappedParams.id);
-        
+
         if (isNaN(orderId)) {
           throw new Error('Invalid order ID');
         }
@@ -291,8 +290,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               </div>
             </div>
 
-            {order.status === 'PROCESSING' ||
-            order.status === 'COMPLETED' ? (
+            {order.status === 'PROCESSING' || order.status === 'COMPLETED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div

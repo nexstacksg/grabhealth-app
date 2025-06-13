@@ -1,14 +1,14 @@
-import { PrismaClient, Order, Prisma } from "@prisma/client";
+import { PrismaClient, Order, Prisma } from '@prisma/client';
 import {
   IOrderCreate,
   IOrderUpdate,
   OrderStatus,
   PaymentStatus,
   PaymentMethod,
-} from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
-import { CartService } from "./cart.service";
-import { CommissionService } from "./commission.service";
+} from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
+import { CartService } from './cart.service';
+import { CommissionService } from './commission.service';
 
 export class OrderService {
   private cartService: CartService;
@@ -27,7 +27,7 @@ export class OrderService {
       });
 
       if (!user) {
-        throw new AppError("User not found", 404);
+        throw new AppError('User not found', 404);
       }
 
       // Start transaction
@@ -105,7 +105,7 @@ export class OrderService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to create order", 500);
+      throw new AppError('Failed to create order', 500);
     }
   }
 
@@ -116,7 +116,7 @@ export class OrderService {
       });
 
       if (!order) {
-        throw new AppError("Order not found", 404);
+        throw new AppError('Order not found', 404);
       }
 
       const updatedOrder = await this.prisma.order.update({
@@ -150,7 +150,7 @@ export class OrderService {
       return updatedOrder;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to update order", 500);
+      throw new AppError('Failed to update order', 500);
     }
   }
 
@@ -180,13 +180,13 @@ export class OrderService {
 
       // If userId is provided, ensure the order belongs to the user
       if (userId && order && order.userId !== userId) {
-        throw new AppError("Unauthorized access to order", 403);
+        throw new AppError('Unauthorized access to order', 403);
       }
 
       return order;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to get order", 500);
+      throw new AppError('Failed to get order', 500);
     }
   }
 
@@ -213,7 +213,7 @@ export class OrderService {
               },
             },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
         }),
@@ -227,7 +227,7 @@ export class OrderService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (_error) {
-      throw new AppError("Failed to get user orders", 500);
+      throw new AppError('Failed to get user orders', 500);
     }
   }
 
@@ -281,7 +281,7 @@ export class OrderService {
             },
             items: true,
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
         }),
@@ -295,7 +295,7 @@ export class OrderService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (_error) {
-      throw new AppError("Failed to get orders", 500);
+      throw new AppError('Failed to get orders', 500);
     }
   }
 
@@ -304,11 +304,11 @@ export class OrderService {
       const order = await this.getOrder(id, userId);
 
       if (!order) {
-        throw new AppError("Order not found", 404);
+        throw new AppError('Order not found', 404);
       }
 
       if (order.status !== OrderStatus.PENDING) {
-        throw new AppError("Only pending orders can be cancelled", 400);
+        throw new AppError('Only pending orders can be cancelled', 400);
       }
 
       return await this.prisma.order.update({
@@ -320,7 +320,7 @@ export class OrderService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to cancel order", 500);
+      throw new AppError('Failed to cancel order', 500);
     }
   }
 
@@ -355,7 +355,7 @@ export class OrderService {
         completedOrders,
       };
     } catch (_error) {
-      throw new AppError("Failed to get order stats", 500);
+      throw new AppError('Failed to get order stats', 500);
     }
   }
 
@@ -373,7 +373,7 @@ export class OrderService {
       const cart = await this.cartService.getCart(userId);
 
       if (!cart.items || cart.items.length === 0) {
-        throw new AppError("Cart is empty", 400);
+        throw new AppError('Cart is empty', 400);
       }
 
       // Create order from cart
@@ -398,7 +398,7 @@ export class OrderService {
       return order;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to checkout", 500);
+      throw new AppError('Failed to checkout', 500);
     }
   }
 }

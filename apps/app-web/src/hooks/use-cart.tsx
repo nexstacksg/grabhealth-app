@@ -12,7 +12,6 @@ import { cartService } from '@/services/cart.service';
 import { ICart, ICartItem } from '@app/shared-types';
 import { useAuth } from '@/contexts/AuthContext';
 
-
 interface CartContextType {
   cart: ICart | null;
   cartItems: ICartItem[];
@@ -43,7 +42,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // Get cart items from cart object
   const cartItems = cart?.items || [];
-  
+
   // Calculate cart count and total
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart?.total || 0;
@@ -113,7 +112,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         await removeItem(productId);
         return;
       }
-      
+
       const updatedCart = await cartService.updateCartItem(productId, quantity);
       setCart(updatedCart);
       toast.success('Cart updated');

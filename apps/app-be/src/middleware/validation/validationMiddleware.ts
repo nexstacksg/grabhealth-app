@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { validationResult, ValidationError } from "express-validator";
-import { ApiError } from "../error/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import { validationResult, ValidationError } from 'express-validator';
+import { ApiError } from '../error/errorHandler';
 
 export const validate = (
   req: Request,
@@ -13,16 +13,16 @@ export const validate = (
     const formattedErrors = errors
       .array()
       .reduce((acc: any, error: ValidationError) => {
-        if ("path" in error) {
+        if ('path' in error) {
           acc[error.path] = error.msg;
         }
         return acc;
       }, {});
 
     throw new ApiError(
-      "Validation failed",
+      'Validation failed',
       422,
-      "VALIDATION_ERROR",
+      'VALIDATION_ERROR',
       formattedErrors
     );
   }

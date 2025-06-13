@@ -1,8 +1,8 @@
-import bcrypt from "bcrypt";
-import crypto from "crypto";
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 export const hashPassword = async (password: string): Promise<string> => {
-  const rounds = parseInt(process.env.BCRYPT_ROUNDS || "10");
+  const rounds = parseInt(process.env.BCRYPT_ROUNDS || '10');
   return bcrypt.hash(password, rounds);
 };
 
@@ -20,7 +20,7 @@ export const generateTokenId = (): string => {
 export const extractBearerToken = (
   authHeader: string | undefined
 ): string | null => {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
   return authHeader.substring(7);

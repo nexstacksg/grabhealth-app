@@ -1,8 +1,8 @@
-import winston from "winston";
-import path from "path";
-import { config } from "../config/env";
+import winston from 'winston';
+import path from 'path';
+import { config } from '../config/env';
 
-const logDir = "logs";
+const logDir = 'logs';
 
 // Define log levels
 const levels = {
@@ -15,18 +15,18 @@ const levels = {
 
 // Define log colors
 const colors = {
-  error: "red",
-  warn: "yellow",
-  info: "green",
-  http: "magenta",
-  debug: "white",
+  error: 'red',
+  warn: 'yellow',
+  info: 'green',
+  http: 'magenta',
+  debug: 'white',
 };
 
 winston.addColors(colors);
 
 // Format for console output
 const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.colorize({ all: true }),
   winston.format.printf(
     (info) => `${info.timestamp} ${info.level}: ${info.message}`
@@ -35,7 +35,7 @@ const consoleFormat = winston.format.combine(
 
 // Format for file output
 const fileFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
   winston.format.json()
@@ -43,7 +43,7 @@ const fileFormat = winston.format.combine(
 
 // Create the logger
 const logger = winston.createLogger({
-  level: config.env === "development" ? "debug" : "info",
+  level: config.env === 'development' ? 'debug' : 'info',
   levels,
   transports: [
     // Console transport
@@ -52,26 +52,26 @@ const logger = winston.createLogger({
     }),
     // Error log file
     new winston.transports.File({
-      filename: path.join(logDir, "error.log"),
-      level: "error",
+      filename: path.join(logDir, 'error.log'),
+      level: 'error',
       format: fileFormat,
     }),
     // Combined log file
     new winston.transports.File({
-      filename: path.join(logDir, "combined.log"),
+      filename: path.join(logDir, 'combined.log'),
       format: fileFormat,
     }),
   ],
   // Handle exceptions
   exceptionHandlers: [
     new winston.transports.File({
-      filename: path.join(logDir, "exceptions.log"),
+      filename: path.join(logDir, 'exceptions.log'),
     }),
   ],
   // Handle rejections
   rejectionHandlers: [
     new winston.transports.File({
-      filename: path.join(logDir, "rejections.log"),
+      filename: path.join(logDir, 'rejections.log'),
     }),
   ],
 });

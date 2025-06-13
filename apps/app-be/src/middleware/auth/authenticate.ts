@@ -1,11 +1,11 @@
-import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../../config/jwt";
-import { extractBearerToken } from "../../utils/auth";
-import { ApiError } from "../error/errorHandler";
-import logger from "../../utils/logger";
-import prisma from "../../database/client";
-import { UserRole, UserStatus } from "@app/shared-types";
-import cacheService from "../../services/cache";
+import { Request, Response, NextFunction } from 'express';
+import { verifyAccessToken } from '../../config/jwt';
+import { extractBearerToken } from '../../utils/auth';
+import { ApiError } from '../error/errorHandler';
+import logger from '../../utils/logger';
+import prisma from '../../database/client';
+import { UserRole, UserStatus } from '@app/shared-types';
+import cacheService from '../../services/cache';
 
 export interface AuthRequest<
   P = any,
@@ -36,14 +36,14 @@ export const authenticate = async (
     }
 
     if (!token) {
-      throw new ApiError("No token provided", 401, "NO_TOKEN");
+      throw new ApiError('No token provided', 401, 'NO_TOKEN');
     }
 
     // Verify token
     const payload = verifyAccessToken(token);
 
     // Try to get user from cache first
-    const cacheKey = cacheService.generateKey("user", payload.userId);
+    const cacheKey = cacheService.generateKey('user', payload.userId);
     const cachedUser = await cacheService.get(cacheKey);
 
     let user;
@@ -68,11 +68,11 @@ export const authenticate = async (
     }
 
     if (!user) {
-      throw new ApiError("User not found", 401, "USER_NOT_FOUND");
+      throw new ApiError('User not found', 401, 'USER_NOT_FOUND');
     }
 
     if (user.status !== UserStatus.ACTIVE) {
-      throw new ApiError("Account is not active", 403, "ACCOUNT_INACTIVE");
+      throw new ApiError('Account is not active', 403, 'ACCOUNT_INACTIVE');
     }
 
     // Attach user to request
@@ -88,7 +88,7 @@ export const authenticate = async (
     if (error instanceof ApiError) {
       next(error);
     } else {
-      next(new ApiError("Invalid token", 401, "INVALID_TOKEN"));
+      next(new ApiError('Invalid token', 401, 'INVALID_TOKEN'));
     }
   }
 };
@@ -130,7 +130,7 @@ export const optionalAuth = async (
       }
     }
   } catch (error) {
-    logger.debug("Optional auth error ignored:", error);
+    logger.debug('Optional auth error ignored:', error);
     // Ignore errors for optional auth
   }
 

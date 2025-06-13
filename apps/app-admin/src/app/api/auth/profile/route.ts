@@ -1,26 +1,26 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { UserRole } from "@app/shared-types";
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { UserRole } from '@app/shared-types';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken");
-    const adminRole = cookieStore.get("adminRole");
+    const accessToken = cookieStore.get('accessToken');
+    const adminRole = cookieStore.get('adminRole');
 
-    console.log("Profile API - Cookies check:", {
+    console.log('Profile API - Cookies check:', {
       hasAccessToken: !!accessToken,
       hasAdminRole: !!adminRole,
       adminRoleValue: adminRole?.value,
     });
 
     if (!accessToken) {
-      console.log("Profile API - No access token found");
+      console.log('Profile API - No access token found');
       return NextResponse.json(
-        { error: { message: "Not authenticated" } },
+        { error: { message: 'Not authenticated' } },
         { status: 401 }
       );
     }
@@ -32,14 +32,14 @@ export async function GET() {
         adminRole.value !== UserRole.SUPER_ADMIN)
     ) {
       return NextResponse.json(
-        { error: { message: "Admin access required" } },
+        { error: { message: 'Admin access required' } },
         { status: 403 }
       );
     }
 
     // Forward request to backend with token
     const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken.value}`,
       },
@@ -50,13 +50,13 @@ export async function GET() {
     if (!response.ok) {
       // If token is invalid, clear cookies
       if (response.status === 401) {
-        cookieStore.delete("accessToken");
-        cookieStore.delete("refreshToken");
-        cookieStore.delete("adminRole");
+        cookieStore.delete('accessToken');
+        cookieStore.delete('refreshToken');
+        cookieStore.delete('adminRole');
       }
 
       return NextResponse.json(
-        { error: data.error || { message: "Failed to get profile" } },
+        { error: data.error || { message: 'Failed to get profile' } },
         { status: response.status }
       );
     }
@@ -67,7 +67,7 @@ export async function GET() {
       data.data.user.role !== UserRole.SUPER_ADMIN
     ) {
       return NextResponse.json(
-        { error: { message: "Admin access required" } },
+        { error: { message: 'Admin access required' } },
         { status: 403 }
       );
     }
@@ -75,7 +75,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: { message: "Internal server error" } },
+      { error: { message: 'Internal server error' } },
       { status: 500 }
     );
   }

@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import { CommissionService } from "../../services/commission.service";
-import prisma from "../../database/client";
-import { AppError } from "../../middleware/error/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import { CommissionService } from '../../services/commission.service';
+import prisma from '../../database/client';
+import { AppError } from '../../middleware/error/errorHandler';
 
 const commissionService = new CommissionService(prisma);
 
@@ -22,14 +22,14 @@ export const commissionController = {
   ) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const status = req.query.status as string;
 
       const result = await commissionService.getUserCommissions(
         req.user.id,
-        status as "earned" | "generated" | undefined
+        status as 'earned' | 'generated' | undefined
       );
 
       res.json({
@@ -54,15 +54,15 @@ export const commissionController = {
       );
 
       if (!commission) {
-        throw new AppError("Commission not found", 404);
+        throw new AppError('Commission not found', 404);
       }
 
       // Check if user has access to this commission
       if (
-        req.user?.role !== "SUPER_ADMIN" &&
+        req.user?.role !== 'SUPER_ADMIN' &&
         commission.recipientId !== req.user?.id
       ) {
-        throw new AppError("Unauthorized access", 403);
+        throw new AppError('Unauthorized access', 403);
       }
 
       res.json({
@@ -82,7 +82,7 @@ export const commissionController = {
   ) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const stats = await commissionService.getCommissionStats(req.user.id);
@@ -99,7 +99,7 @@ export const commissionController = {
   async getUserNetwork(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const network = await commissionService.getUserNetwork(req.user.id);
@@ -116,7 +116,7 @@ export const commissionController = {
   async getNetworkStats(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const stats = await commissionService.getNetworkStats(req.user.id);
@@ -136,8 +136,8 @@ export const commissionController = {
     next: NextFunction
   ) {
     try {
-      if (req.user?.role !== "SUPER_ADMIN") {
-        throw new AppError("Unauthorized", 403);
+      if (req.user?.role !== 'SUPER_ADMIN') {
+        throw new AppError('Unauthorized', 403);
       }
 
       const { commissionIds } = req.body;
@@ -159,8 +159,8 @@ export const commissionController = {
     next: NextFunction
   ) {
     try {
-      if (req.user?.role !== "SUPER_ADMIN") {
-        throw new AppError("Unauthorized", 403);
+      if (req.user?.role !== 'SUPER_ADMIN') {
+        throw new AppError('Unauthorized', 403);
       }
 
       const startDate = req.query.startDate

@@ -1,4 +1,4 @@
-import logger from "../utils/logger";
+import logger from '../utils/logger';
 
 interface CacheItem<T> {
   value: T;
@@ -62,7 +62,7 @@ class MemoryCacheService {
   }
 
   generateKey(prefix: string, ...parts: string[]): string {
-    return `${prefix}:${parts.join(":")}`;
+    return `${prefix}:${parts.join(':')}`;
   }
 
   private cleanup(): void {

@@ -1,11 +1,11 @@
-import { Router } from "express";
-import * as userController from "../../../controllers/user/userController";
-import { authenticate } from "../../../middleware/auth/authenticate";
+import { Router } from 'express';
+import * as userController from '../../../controllers/user/userController';
+import { authenticate } from '../../../middleware/auth/authenticate';
 import {
   authorizeManager,
   authorizeAdmin,
   authorizeSelfOrManager,
-} from "../../../middleware/auth/authorize";
+} from '../../../middleware/auth/authorize';
 
 const router = Router();
 
@@ -51,7 +51,7 @@ router.use(authenticate);
  *       403:
  *         description: Forbidden
  */
-router.post("/", authorizeManager(), userController.createUser);
+router.post('/', authorizeManager(), userController.createUser);
 
 /**
  * @swagger
@@ -90,7 +90,7 @@ router.post("/", authorizeManager(), userController.createUser);
  *       200:
  *         description: List of users
  */
-router.get("/", userController.getUserList);
+router.get('/', userController.getUserList);
 
 /**
  * @swagger
@@ -118,7 +118,7 @@ router.get("/", userController.getUserList);
  *       200:
  *         description: Profile updated successfully
  */
-router.put("/my-profile", userController.updateMyProfile);
+router.put('/my-profile', userController.updateMyProfile);
 
 /**
  * @swagger
@@ -148,7 +148,7 @@ router.put("/my-profile", userController.updateMyProfile);
  *       200:
  *         description: Password changed successfully
  */
-router.post("/change-password", userController.changePassword);
+router.post('/change-password', userController.changePassword);
 
 /**
  * @swagger
@@ -171,7 +171,7 @@ router.post("/change-password", userController.changePassword);
  *       404:
  *         description: User not found
  */
-router.get("/:id", authorizeSelfOrManager("id"), userController.getUserById);
+router.get('/:id', authorizeSelfOrManager('id'), userController.getUserById);
 
 /**
  * @swagger
@@ -208,7 +208,7 @@ router.get("/:id", authorizeSelfOrManager("id"), userController.getUserById);
  *       200:
  *         description: User updated successfully
  */
-router.put("/:id", authorizeSelfOrManager("id"), userController.updateUser);
+router.put('/:id', authorizeSelfOrManager('id'), userController.updateUser);
 
 /**
  * @swagger
@@ -241,7 +241,7 @@ router.put("/:id", authorizeSelfOrManager("id"), userController.updateUser);
  *         description: Status updated successfully
  */
 router.patch(
-  "/:id/status",
+  '/:id/status',
   authorizeManager(),
   userController.updateUserStatus
 );
@@ -266,6 +266,6 @@ router.patch(
  *       404:
  *         description: User not found
  */
-router.delete("/:id", authorizeAdmin(), userController.deleteUser);
+router.delete('/:id', authorizeAdmin(), userController.deleteUser);
 
 export default router;

@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import { ErrorCode, HttpStatus, ApiErrorResponse } from "@app/shared-types";
+import { Request, Response } from 'express';
+import { ErrorCode, HttpStatus, ApiErrorResponse } from '@app/shared-types';
 
 export class ApiError extends Error {
   statusCode: number;
@@ -13,7 +13,7 @@ export class ApiError extends Error {
     details?: any
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.statusCode = statusCode;
     this.code = code;
     this.details = details;
@@ -29,10 +29,10 @@ export const errorHandler = (
   res: Response
 ): void => {
   const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
-  const message = error.message || "Internal Server Error";
+  const message = error.message || 'Internal Server Error';
   const code = error.code || ErrorCode.INTERNAL_ERROR;
 
-  console.error("Error:", {
+  console.error('Error:', {
     message: error.message,
     stack: error.stack,
     statusCode,

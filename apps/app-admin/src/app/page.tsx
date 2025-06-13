@@ -1,16 +1,16 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 async function checkAuth(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken");
-    const adminRole = cookieStore.get("adminRole");
+    const accessToken = cookieStore.get('accessToken');
+    const adminRole = cookieStore.get('adminRole');
 
     return !!(
       accessToken &&
       adminRole &&
-      (adminRole.value === "MANAGER" || adminRole.value === "SUPER_ADMIN")
+      (adminRole.value === 'MANAGER' || adminRole.value === 'SUPER_ADMIN')
     );
   } catch {
     return false;
@@ -21,7 +21,7 @@ export default async function Home() {
   const isAuthenticated = await checkAuth();
 
   if (!isAuthenticated) {
-    redirect("/login");
+    redirect('/login');
   }
 
   // Show hello message for authenticated admin

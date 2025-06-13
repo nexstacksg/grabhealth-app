@@ -227,8 +227,8 @@ export default function UsersPage() {
                     <TableCell className="py-2 px-3 align-middle">
                       <div>
                         <div className="font-medium">
-                          {user.firstName && user.lastName 
-                            ? `${user.firstName} ${user.lastName}` 
+                          {user.firstName && user.lastName
+                            ? `${user.firstName} ${user.lastName}`
                             : user.email}
                         </div>
                       </div>

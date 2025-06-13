@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import { MembershipService } from "../../services/membership.service";
-import prisma from "../../database/client";
-import { AppError } from "../../middleware/error/errorHandler";
-import { IMembershipCreate, MembershipStatus } from "@app/shared-types";
+import { Request, Response, NextFunction } from 'express';
+import { MembershipService } from '../../services/membership.service';
+import prisma from '../../database/client';
+import { AppError } from '../../middleware/error/errorHandler';
+import { IMembershipCreate, MembershipStatus } from '@app/shared-types';
 
 const membershipService = new MembershipService(prisma);
 
@@ -35,7 +35,7 @@ export const membershipController = {
       const tier = await membershipService.getMembershipTier(Number(id));
 
       if (!tier) {
-        throw new AppError("Membership tier not found", 404);
+        throw new AppError('Membership tier not found', 404);
       }
 
       res.json({
@@ -83,7 +83,7 @@ export const membershipController = {
   async getUserMembership(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const membership = await membershipService.getUserMembership(req.user.id);
@@ -104,7 +104,7 @@ export const membershipController = {
   ) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const { tierId } = req.body;
@@ -125,7 +125,7 @@ export const membershipController = {
   async cancelMembership(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const membership = await membershipService.cancelUserMembership(
@@ -144,7 +144,7 @@ export const membershipController = {
   async updateAutoRenew(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const { autoRenew } = req.body;

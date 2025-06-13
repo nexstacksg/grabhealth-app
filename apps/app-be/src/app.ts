@@ -1,18 +1,18 @@
-import express, { Application } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import compression from "compression";
-import cookieParser from "cookie-parser";
-import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./config/swagger";
-import { errorHandler } from "./middleware/error/errorHandler";
-import { notFound } from "./middleware/error/notFound";
-import routes from "./routes";
-import { config } from "./config/env";
-import { apiLimiter } from "./middleware/security/rateLimiter";
-import { stream } from "./utils/logger";
-import cacheService from "./services/cache";
+import express, { Application } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+import { errorHandler } from './middleware/error/errorHandler';
+import { notFound } from './middleware/error/notFound';
+import routes from './routes';
+import { config } from './config/env';
+import { apiLimiter } from './middleware/security/rateLimiter';
+import { stream } from './utils/logger';
+import cacheService from './services/cache';
 
 const app: Application = express();
 
@@ -22,13 +22,13 @@ app.use(helmet());
 // CORS configuration
 app.use(
   cors({
-    origin: config.cors.origin?.split(",") || "*",
+    origin: config.cors.origin?.split(',') || '*',
     credentials: true,
   })
 );
 
 // Request logging
-app.use(morgan(config.env === "production" ? "combined" : "dev", { stream }));
+app.use(morgan(config.env === 'production' ? 'combined' : 'dev', { stream }));
 
 // Compression
 app.use(compression());
@@ -41,10 +41,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Health check
-app.get("/health", (_req, res) => {
+app.get('/health', (_req, res) => {
   const cacheStats = cacheService.getStats();
   res.json({
-    status: "OK",
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: config.env,
     cache: {
@@ -55,13 +55,13 @@ app.get("/health", (_req, res) => {
 });
 
 // Swagger documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Apply general rate limiting to all API routes
-app.use("/api", apiLimiter);
+app.use('/api', apiLimiter);
 
 // API routes
-app.use("/api", routes);
+app.use('/api', routes);
 
 // Error handling
 app.use(notFound);

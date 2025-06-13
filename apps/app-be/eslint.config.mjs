@@ -44,7 +44,7 @@ const eslintConfig = [
       "@typescript-eslint": tseslint,
     },
     rules: {
-      "quotes": ["error", "double", { "avoidEscape": true }],
+      "quotes": ["warn", "single", { "avoidEscape": true }],
       "@typescript-eslint/no-unused-vars": ["warn", { 
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_",

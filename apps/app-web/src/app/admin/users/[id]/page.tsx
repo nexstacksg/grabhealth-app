@@ -53,7 +53,13 @@ export default function UserDetailPage() {
     email: string;
     role: string;
     user_points: string;
-  }>({ firstName: '', lastName: '', email: '', role: 'customer', user_points: '0' });
+  }>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'customer',
+    user_points: '0',
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -224,7 +230,10 @@ export default function UserDetailPage() {
                   id="firstName"
                   value={editFormData.firstName}
                   onChange={(e) =>
-                    setEditFormData({ ...editFormData, firstName: e.target.value })
+                    setEditFormData({
+                      ...editFormData,
+                      firstName: e.target.value,
+                    })
                   }
                   placeholder="First name"
                 />
@@ -236,7 +245,10 @@ export default function UserDetailPage() {
                   id="lastName"
                   value={editFormData.lastName}
                   onChange={(e) =>
-                    setEditFormData({ ...editFormData, lastName: e.target.value })
+                    setEditFormData({
+                      ...editFormData,
+                      lastName: e.target.value,
+                    })
                   }
                   placeholder="Last name"
                 />
@@ -329,13 +341,17 @@ export default function UserDetailPage() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
           <div className="h-20 w-20 rounded-full bg-[#E6F7FA] text-[#0C99B4] flex items-center justify-center text-2xl font-medium flex-shrink-0">
-            {(user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
+            {(
+              user?.firstName?.charAt(0) ||
+              user?.email?.charAt(0) ||
+              'U'
+            ).toUpperCase()}
           </div>
 
           <div className="flex-1">
             <h1 className="text-2xl font-semibold text-gray-800">
-              {user?.firstName && user?.lastName 
-                ? `${user.firstName} ${user.lastName}` 
+              {user?.firstName && user?.lastName
+                ? `${user.firstName} ${user.lastName}`
                 : user?.email}
             </h1>
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-2 text-sm text-gray-500">
@@ -385,8 +401,8 @@ export default function UserDetailPage() {
                       Full Name
                     </p>
                     <p>
-                      {user.firstName && user.lastName 
-                        ? `${user.firstName} ${user.lastName}` 
+                      {user.firstName && user.lastName
+                        ? `${user.firstName} ${user.lastName}`
                         : user.email || 'Not provided'}
                     </p>
                   </div>

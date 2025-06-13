@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import { CategoryService } from "../../services/category.service";
-import prisma from "../../database/client";
-import { AppError } from "../../middleware/error/errorHandler";
-import { ICategoryCreate, ICategoryUpdate } from "@app/shared-types";
+import { Request, Response, NextFunction } from 'express';
+import { CategoryService } from '../../services/category.service';
+import prisma from '../../database/client';
+import { AppError } from '../../middleware/error/errorHandler';
+import { ICategoryCreate, ICategoryUpdate } from '@app/shared-types';
 
 const categoryService = new CategoryService(prisma);
 
@@ -46,7 +46,7 @@ export const categoryController = {
       const category = await categoryService.getCategory(Number(id));
 
       if (!category) {
-        throw new AppError("Category not found", 404);
+        throw new AppError('Category not found', 404);
       }
 
       res.json({
@@ -61,7 +61,7 @@ export const categoryController = {
   // Get all categories
   async getAllCategories(req: Request, res: Response, next: NextFunction) {
     try {
-      const includeInactive = req.query.includeInactive === "true";
+      const includeInactive = req.query.includeInactive === 'true';
       const categories =
         await categoryService.getAllCategories(includeInactive);
       res.json({
@@ -93,7 +93,7 @@ export const categoryController = {
       await categoryService.deleteCategory(Number(id));
       res.json({
         success: true,
-        message: "Category deleted successfully",
+        message: 'Category deleted successfully',
       });
     } catch (error) {
       next(error);
@@ -107,7 +107,7 @@ export const categoryController = {
       await categoryService.reorderCategories(categoryOrders);
       res.json({
         success: true,
-        message: "Categories reordered successfully",
+        message: 'Categories reordered successfully',
       });
     } catch (error) {
       next(error);

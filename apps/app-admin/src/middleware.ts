@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // Add paths that require authentication
-const protectedPaths = ["/users", "/companies", "/settings", "/reports"];
+const protectedPaths = ['/users', '/companies', '/settings', '/reports'];
 
 // Add paths that should redirect to home if already authenticated
-const authPaths = ["/login"];
+const authPaths = ['/login'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get("accessToken");
-  const adminRole = request.cookies.get("adminRole");
+  const accessToken = request.cookies.get('accessToken');
+  const adminRole = request.cookies.get('adminRole');
 
   // Check if the path requires authentication
   const isProtectedPath = protectedPaths.some((path) =>
@@ -20,8 +20,8 @@ export function middleware(request: NextRequest) {
 
   // Redirect to login if accessing protected path without token or admin role
   if (isProtectedPath && (!accessToken || !adminRole)) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -29,15 +29,15 @@ export function middleware(request: NextRequest) {
   if (
     isProtectedPath &&
     adminRole &&
-    adminRole.value !== "MANAGER" &&
-    adminRole.value !== "SUPER_ADMIN"
+    adminRole.value !== 'MANAGER' &&
+    adminRole.value !== 'SUPER_ADMIN'
   ) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Redirect to home if accessing auth pages while authenticated as admin
   if (isAuthPath && accessToken && adminRole) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();
@@ -52,6 +52,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-} from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { Colors } from "../../constants/Colors";
-import authService from "../../services/authService";
-import { useAuth } from "../../contexts/AuthContext";
+} from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Colors } from '../../constants/Colors';
+import authService from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function EmailVerificationScreen() {
   const navigation = useNavigation<any>();
@@ -19,11 +19,11 @@ export default function EmailVerificationScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
 
-  const email = route.params?.email || "";
+  const email = route.params?.email || '';
 
   const resendVerificationEmail = async () => {
     if (!email) {
-      Alert.alert("Error", "Email address not found");
+      Alert.alert('Error', 'Email address not found');
       return;
     }
 
@@ -31,13 +31,13 @@ export default function EmailVerificationScreen() {
     try {
       await authService.resendVerificationEmail(email);
       Alert.alert(
-        "Email Sent",
-        "Verification email has been resent. Please check your inbox."
+        'Email Sent',
+        'Verification email has been resent. Please check your inbox.'
       );
     } catch (error: any) {
       Alert.alert(
-        "Error",
-        error.response?.data?.message || "Unable to resend verification email."
+        'Error',
+        error.response?.data?.message || 'Unable to resend verification email.'
       );
     } finally {
       setIsLoading(false);
@@ -87,17 +87,17 @@ export default function EmailVerificationScreen() {
             try {
               await refreshUser();
               Alert.alert(
-                "Status Updated",
-                "Your account status has been refreshed.",
+                'Status Updated',
+                'Your account status has been refreshed.',
                 [
                   {
-                    text: "OK",
-                    onPress: () => navigation.navigate("Login"),
+                    text: 'OK',
+                    onPress: () => navigation.navigate('Login'),
                   },
                 ]
               );
             } catch (error) {
-              console.error("Error refreshing status:", error);
+              console.error('Error refreshing status:', error);
             } finally {
               setCheckingStatus(false);
             }
@@ -115,7 +115,7 @@ export default function EmailVerificationScreen() {
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => navigation.navigate("Login")}
+          onPress={() => navigation.navigate('Login')}
         >
           <Text style={styles.linkText}>Back to Login</Text>
         </TouchableOpacity>
@@ -134,13 +134,13 @@ export default function EmailVerificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   content: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: 20,
-    alignItems: "center",
+    alignItems: 'center',
   },
   iconContainer: {
     marginBottom: 30,
@@ -150,29 +150,29 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 20,
-    textAlign: "center",
+    textAlign: 'center',
   },
   description: {
     fontSize: 16,
-    color: "#666",
+    color: '#666',
     marginBottom: 10,
-    textAlign: "center",
+    textAlign: 'center',
   },
   email: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 20,
-    textAlign: "center",
+    textAlign: 'center',
   },
   instructions: {
     fontSize: 16,
-    color: "#666",
+    color: '#666',
     marginBottom: 30,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
   },
@@ -180,17 +180,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.tint,
     borderRadius: 8,
     padding: 15,
-    alignItems: "center",
-    width: "100%",
+    alignItems: 'center',
+    width: '100%',
     marginBottom: 15,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   linkButton: {
     padding: 10,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   linkText: {
     color: Colors.light.tint,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   footer: {
     padding: 20,
@@ -206,12 +206,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: "#999",
-    textAlign: "center",
+    color: '#999',
+    textAlign: 'center',
     lineHeight: 20,
   },
   secondaryButton: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: Colors.light.tint,
   },

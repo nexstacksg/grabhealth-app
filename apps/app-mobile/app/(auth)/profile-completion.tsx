@@ -1,3 +1,3 @@
-import ProfileCompletionScreen from "../../screens/auth/ProfileCompletionScreen";
+import ProfileCompletionScreen from '../../screens/auth/ProfileCompletionScreen';
 
 export default ProfileCompletionScreen;

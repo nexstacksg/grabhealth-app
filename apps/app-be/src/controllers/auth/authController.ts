@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import authService from "../../services/auth/authService";
-import { AuthRequest } from "../../middleware/auth/authenticate";
-import { ApiError } from "../../middleware/error/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import authService from '../../services/auth/authService';
+import { AuthRequest } from '../../middleware/auth/authenticate';
+import { ApiError } from '../../middleware/error/errorHandler';
 import {
   RegisterRequest,
   LoginRequest,
@@ -12,7 +12,7 @@ import {
   ErrorCode,
   HttpStatus,
   ApiResponse,
-} from "@app/shared-types";
+} from '@app/shared-types';
 
 export const register = async (
   req: Request<{}, {}, RegisterRequest>,
@@ -98,15 +98,15 @@ export const refreshToken = async (
   try {
     // Get refresh token from cookie instead of body
     const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
-    
+
     if (!refreshToken) {
       throw new ApiError(
-        "Refresh token required",
+        'Refresh token required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
     }
-    
+
     const result = await authService.refreshToken(refreshToken);
 
     // Set new httpOnly cookies
@@ -147,7 +147,7 @@ export const logout = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -161,7 +161,7 @@ export const logout = async (
 
     const response: ApiResponse = {
       success: true,
-      message: "Logged out successfully",
+      message: 'Logged out successfully',
     };
 
     res.json(response);
@@ -178,7 +178,7 @@ export const getProfile = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -207,7 +207,7 @@ export const verifyEmail = async (
 
     const response: ApiResponse = {
       success: true,
-      message: "Email verified successfully",
+      message: 'Email verified successfully',
     };
 
     res.json(response);
@@ -226,7 +226,7 @@ export const requestPasswordReset = async (
 
     const response: ApiResponse = {
       success: true,
-      message: "Password reset email sent if the email exists",
+      message: 'Password reset email sent if the email exists',
     };
 
     res.json(response);
@@ -245,7 +245,7 @@ export const resetPassword = async (
 
     const response: ApiResponse = {
       success: true,
-      message: "Password reset successfully",
+      message: 'Password reset successfully',
     };
 
     res.json(response);

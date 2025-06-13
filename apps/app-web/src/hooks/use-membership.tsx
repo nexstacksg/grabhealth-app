@@ -8,6 +8,8 @@ import {
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
+import { membershipService } from '@/services/membership.service';
+import { IMembership } from '@app/shared-types';
 
 export interface Membership {
   id: number;
@@ -123,23 +125,28 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   const fetchMembership = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/membership/current');
+      const membershipData = await membershipService.getCurrentMembership();
 
-      if (response.status === 401 || response.status === 404) {
-        // User not logged in or membership not found
+      if (membershipData) {
+        // Convert IMembership to local Membership type
+        setMembership({
+          id: membershipData.id,
+          tier: membershipData.tier as any,
+          points: membershipData.points || 0,
+          created_at: membershipData.createdAt.toString(),
+          updated_at: membershipData.updatedAt.toString(),
+          name:
+            membershipData.user?.firstName +
+              ' ' +
+              membershipData.user?.lastName || '',
+          email: membershipData.user?.email || '',
+        });
+      } else {
         setMembership(null);
-        return;
       }
-
-      if (!response.ok) {
-        console.error('Failed to fetch membership');
-        return;
-      }
-
-      const data = await response.json();
-      setMembership(data);
     } catch (error) {
       console.error('Error fetching membership:', error);
+      setMembership(null);
     } finally {
       setIsLoading(false);
     }

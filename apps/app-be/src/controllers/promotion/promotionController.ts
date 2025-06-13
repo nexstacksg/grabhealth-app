@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import { PromotionService } from "../../services/promotion.service";
-import prisma from "../../database/client";
-import { AppError } from "../../middleware/error/errorHandler";
-import { IPromotionCreate } from "@app/shared-types";
+import { Request, Response, NextFunction } from 'express';
+import { PromotionService } from '../../services/promotion.service';
+import prisma from '../../database/client';
+import { AppError } from '../../middleware/error/errorHandler';
+import { IPromotionCreate } from '@app/shared-types';
 
 const promotionService = new PromotionService(prisma);
 
@@ -12,12 +12,12 @@ export const promotionController = {
     try {
       const filters = {
         isActive:
-          req.query.isActive === "true"
+          req.query.isActive === 'true'
             ? true
-            : req.query.isActive === "false"
+            : req.query.isActive === 'false'
               ? false
               : undefined,
-        includeExpired: req.query.includeExpired === "true",
+        includeExpired: req.query.includeExpired === 'true',
         page: req.query.page ? Number(req.query.page) : 1,
         limit: req.query.limit ? Number(req.query.limit) : 10,
       };
@@ -52,7 +52,7 @@ export const promotionController = {
       const promotion = await promotionService.getPromotion(Number(id));
 
       if (!promotion) {
-        throw new AppError("Promotion not found", 404);
+        throw new AppError('Promotion not found', 404);
       }
 
       res.json({
@@ -103,7 +103,7 @@ export const promotionController = {
       await promotionService.deletePromotion(Number(id));
       res.json({
         success: true,
-        message: "Promotion deleted successfully",
+        message: 'Promotion deleted successfully',
       });
     } catch (error) {
       next(error);
@@ -132,7 +132,7 @@ export const promotionController = {
       const { code, orderTotal } = req.body;
 
       if (!code || !orderTotal) {
-        throw new AppError("Promotion code and order total are required", 400);
+        throw new AppError('Promotion code and order total are required', 400);
       }
 
       const result = await promotionService.validatePromotion(code, orderTotal);

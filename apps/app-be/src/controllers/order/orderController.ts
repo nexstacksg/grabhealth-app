@@ -1,13 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import { OrderService } from "../../services/order.service";
-import prisma from "../../database/client";
-import { AppError } from "../../middleware/error/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import { OrderService } from '../../services/order.service';
+import prisma from '../../database/client';
+import { AppError } from '../../middleware/error/errorHandler';
 import {
   IOrderCreate,
   IOrderUpdate,
   OrderStatus,
   PaymentStatus,
-} from "@app/shared-types";
+} from '@app/shared-types';
 
 const orderService = new OrderService(prisma);
 
@@ -24,7 +24,7 @@ export const orderController = {
   async createOrder(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const orderData: IOrderCreate = {
@@ -62,11 +62,11 @@ export const orderController = {
     try {
       const { id } = req.params;
       const userId =
-        req.user?.role === "SUPER_ADMIN" ? undefined : req.user?.id;
+        req.user?.role === 'SUPER_ADMIN' ? undefined : req.user?.id;
       const order = await orderService.getOrder(Number(id), userId);
 
       if (!order) {
-        throw new AppError("Order not found", 404);
+        throw new AppError('Order not found', 404);
       }
 
       res.json({
@@ -82,7 +82,7 @@ export const orderController = {
   async getUserOrders(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const page = req.query.page ? Number(req.query.page) : 1;
@@ -129,7 +129,7 @@ export const orderController = {
     try {
       const { id } = req.params;
       const userId =
-        req.user?.role === "SUPER_ADMIN" ? undefined : req.user?.id;
+        req.user?.role === 'SUPER_ADMIN' ? undefined : req.user?.id;
       const order = await orderService.cancelOrder(Number(id), userId);
       res.json({
         success: true,
@@ -144,7 +144,7 @@ export const orderController = {
   async getOrderStats(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const userId =
-        req.user?.role === "SUPER_ADMIN" ? undefined : req.user?.id;
+        req.user?.role === 'SUPER_ADMIN' ? undefined : req.user?.id;
       const stats = await orderService.getOrderStats(userId);
       res.json({
         success: true,
@@ -159,7 +159,7 @@ export const orderController = {
   async checkoutFromCart(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const checkoutData = {

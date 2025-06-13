@@ -1,6 +1,6 @@
-import jwt, { SignOptions } from "jsonwebtoken";
-import { TokenPayload, RefreshTokenPayload } from "@app/shared-types";
-import { config } from "./env";
+import jwt, { SignOptions } from 'jsonwebtoken';
+import { TokenPayload, RefreshTokenPayload } from '@app/shared-types';
+import { config } from './env';
 
 export const generateAccessToken = (payload: TokenPayload): string => {
   const options: SignOptions = {

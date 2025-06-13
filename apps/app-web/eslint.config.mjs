@@ -13,8 +13,8 @@ const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
-      // Enforce double quotes
-      quotes: ['error', 'double', { avoidEscape: true }],
+      // Enforce single quotes (as warning to match Prettier)
+      quotes: ['warn', 'single', { avoidEscape: true }],
       // Warn on unused variables
       '@typescript-eslint/no-unused-vars': 'warn',
       'no-unused-vars': 'warn',

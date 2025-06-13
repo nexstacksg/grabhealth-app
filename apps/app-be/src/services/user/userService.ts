@@ -1,7 +1,7 @@
-import prisma from "../../database/client";
-import { ApiError } from "../../middleware/error/errorHandler";
-import { hashPassword, verifyPassword } from "../../utils/auth";
-import { HttpStatus, ErrorCode, UserRole, UserStatus } from "@app/shared-types";
+import prisma from '../../database/client';
+import { ApiError } from '../../middleware/error/errorHandler';
+import { hashPassword, verifyPassword } from '../../utils/auth';
+import { HttpStatus, ErrorCode, UserRole, UserStatus } from '@app/shared-types';
 
 export class UserService {
   async createUser(data: {
@@ -18,7 +18,7 @@ export class UserService {
 
     if (existingUser) {
       throw new ApiError(
-        "User with this email already exists",
+        'User with this email already exists',
         HttpStatus.BAD_REQUEST,
         ErrorCode.USER_EXISTS
       );
@@ -61,7 +61,7 @@ export class UserService {
       page?: number;
       limit?: number;
       sortBy?: string;
-      sortOrder?: "asc" | "desc";
+      sortOrder?: 'asc' | 'desc';
     }
   ): Promise<{
     data: any[];
@@ -75,8 +75,8 @@ export class UserService {
     const {
       page = 1,
       limit = 10,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
     } = pagination;
     const skip = (page - 1) * limit;
 
@@ -85,9 +85,9 @@ export class UserService {
     if (filters.status) where.status = filters.status;
     if (filters.search) {
       where.OR = [
-        { firstName: { contains: filters.search, mode: "insensitive" } },
-        { lastName: { contains: filters.search, mode: "insensitive" } },
-        { email: { contains: filters.search, mode: "insensitive" } },
+        { firstName: { contains: filters.search, mode: 'insensitive' } },
+        { lastName: { contains: filters.search, mode: 'insensitive' } },
+        { email: { contains: filters.search, mode: 'insensitive' } },
       ];
     }
 
@@ -141,7 +141,7 @@ export class UserService {
 
     if (!user) {
       throw new ApiError(
-        "User not found",
+        'User not found',
         HttpStatus.NOT_FOUND,
         ErrorCode.USER_NOT_FOUND
       );
@@ -182,7 +182,7 @@ export class UserService {
 
       if (existingUser) {
         throw new ApiError(
-          "User with this email already exists",
+          'User with this email already exists',
           HttpStatus.BAD_REQUEST,
           ErrorCode.USER_EXISTS
         );
@@ -248,7 +248,7 @@ export class UserService {
 
     if (!user) {
       throw new ApiError(
-        "User not found",
+        'User not found',
         HttpStatus.NOT_FOUND,
         ErrorCode.USER_NOT_FOUND
       );
@@ -259,7 +259,7 @@ export class UserService {
 
     if (!isValidPassword) {
       throw new ApiError(
-        "Invalid current password",
+        'Invalid current password',
         HttpStatus.BAD_REQUEST,
         ErrorCode.INVALID_CREDENTIALS
       );
@@ -288,63 +288,63 @@ export class UserService {
     // Define permissions based on role
     const permissions: Record<UserRole, string[]> = {
       [UserRole.SUPER_ADMIN]: [
-        "user:manage",
-        "user:create",
-        "user:delete",
-        "user:update",
-        "role:manage",
-        "audit:view",
-        "settings:manage",
-        "commission:manage",
-        "order:manage",
-        "product:manage",
+        'user:manage',
+        'user:create',
+        'user:delete',
+        'user:update',
+        'role:manage',
+        'audit:view',
+        'settings:manage',
+        'commission:manage',
+        'order:manage',
+        'product:manage',
       ],
       [UserRole.COMPANY]: [
-        "user:view",
-        "user:create",
-        "user:update",
-        "audit:view",
-        "commission:view",
-        "commission:manage",
-        "order:view",
-        "order:update",
-        "product:view",
-        "network:view",
+        'user:view',
+        'user:create',
+        'user:update',
+        'audit:view',
+        'commission:view',
+        'commission:manage',
+        'order:view',
+        'order:update',
+        'product:view',
+        'network:view',
       ],
       [UserRole.MANAGER]: [
-        "user:view",
-        "user:create",
-        "user:update",
-        "audit:view",
-        "commission:view",
-        "order:view",
-        "product:view",
-        "network:view",
+        'user:view',
+        'user:create',
+        'user:update',
+        'audit:view',
+        'commission:view',
+        'order:view',
+        'product:view',
+        'network:view',
       ],
       [UserRole.LEADER]: [
-        "profile:view",
-        "profile:update",
-        "commission:view",
-        "order:view",
-        "order:create",
-        "product:view",
-        "network:view",
+        'profile:view',
+        'profile:update',
+        'commission:view',
+        'order:view',
+        'order:create',
+        'product:view',
+        'network:view',
       ],
       [UserRole.SALES]: [
-        "profile:view",
-        "profile:update",
-        "commission:view",
-        "order:view",
-        "order:create",
-        "product:view",
-        "downline:view",
+        'profile:view',
+        'profile:update',
+        'commission:view',
+        'order:view',
+        'order:create',
+        'product:view',
+        'downline:view',
       ],
       [UserRole.USER]: [
-        "profile:view",
-        "profile:update",
-        "order:view",
-        "order:create",
-        "product:view",
+        'profile:view',
+        'profile:update',
+        'order:view',
+        'order:create',
+        'product:view',
       ],
     };
 

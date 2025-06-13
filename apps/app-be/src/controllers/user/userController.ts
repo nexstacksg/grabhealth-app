@@ -1,13 +1,13 @@
-import { Response, NextFunction } from "express";
-import { AuthRequest } from "../../middleware/auth/authenticate";
-import { ApiError } from "../../middleware/error/errorHandler";
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from '../../middleware/auth/authenticate';
+import { ApiError } from '../../middleware/error/errorHandler';
 import {
   ApiResponse,
   HttpStatus,
   ErrorCode,
   UserRole,
-} from "@app/shared-types";
-import userService from "../../services/user/userService";
+} from '@app/shared-types';
+import userService from '../../services/user/userService';
 
 export const createUser = async (
   req: AuthRequest,
@@ -17,7 +17,7 @@ export const createUser = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -26,7 +26,7 @@ export const createUser = async (
     // Only admins and managers can create users
     if (req.user.role === UserRole.USER) {
       throw new ApiError(
-        "Permission denied",
+        'Permission denied',
         HttpStatus.FORBIDDEN,
         ErrorCode.FORBIDDEN
       );
@@ -53,7 +53,7 @@ export const getUserList = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -70,7 +70,7 @@ export const getUserList = async (
       page: page ? parseInt(page as string) : undefined,
       limit: limit ? parseInt(limit as string) : undefined,
       sortBy: sortBy as string,
-      sortOrder: sortOrder as "asc" | "desc",
+      sortOrder: sortOrder as 'asc' | 'desc',
     });
 
     const response: ApiResponse = {
@@ -92,7 +92,7 @@ export const getUserById = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -119,7 +119,7 @@ export const updateUser = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -128,7 +128,7 @@ export const updateUser = async (
     // Users can update their own profile, managers/admins can update others
     if (req.user.id !== req.params.id && req.user.role === UserRole.USER) {
       throw new ApiError(
-        "Permission denied",
+        'Permission denied',
         HttpStatus.FORBIDDEN,
         ErrorCode.FORBIDDEN
       );
@@ -155,7 +155,7 @@ export const deleteUser = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -167,7 +167,7 @@ export const deleteUser = async (
       req.user.role !== UserRole.MANAGER
     ) {
       throw new ApiError(
-        "Permission denied",
+        'Permission denied',
         HttpStatus.FORBIDDEN,
         ErrorCode.FORBIDDEN
       );
@@ -177,7 +177,7 @@ export const deleteUser = async (
 
     const response: ApiResponse = {
       success: true,
-      message: "User deleted successfully",
+      message: 'User deleted successfully',
     };
 
     res.json(response);
@@ -194,7 +194,7 @@ export const updateUserStatus = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -203,7 +203,7 @@ export const updateUserStatus = async (
     // Only managers and admins can update user status
     if (req.user.role === UserRole.USER) {
       throw new ApiError(
-        "Permission denied",
+        'Permission denied',
         HttpStatus.FORBIDDEN,
         ErrorCode.FORBIDDEN
       );
@@ -233,7 +233,7 @@ export const updateMyProfile = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -260,7 +260,7 @@ export const changePassword = async (
   try {
     if (!req.user) {
       throw new ApiError(
-        "Authentication required",
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.AUTH_REQUIRED
       );
@@ -272,7 +272,7 @@ export const changePassword = async (
 
     const response: ApiResponse = {
       success: true,
-      message: "Password changed successfully",
+      message: 'Password changed successfully',
     };
 
     res.json(response);

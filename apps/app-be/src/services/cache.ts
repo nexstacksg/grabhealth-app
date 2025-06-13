@@ -1,9 +1,9 @@
-import Redis from "ioredis";
-import { config } from "../config/env";
-import logger from "../utils/logger";
-import memoryCacheService from "./memoryCache";
+import Redis from 'ioredis';
+import { config } from '../config/env';
+import logger from '../utils/logger';
+import memoryCacheService from './memoryCache';
 
-type CacheBackend = "redis" | "memory";
+type CacheBackend = 'redis' | 'memory';
 
 class CacheService {
   private client: Redis | null = null;
@@ -12,12 +12,12 @@ class CacheService {
 
   constructor() {
     // Automatically choose backend based on environment and Redis availability
-    if (config.redis.url && config.env === "production") {
-      this.backend = "redis";
+    if (config.redis.url && config.env === 'production') {
+      this.backend = 'redis';
       this.connect();
     } else {
-      this.backend = "memory";
-      logger.info("Using in-memory cache for development");
+      this.backend = 'memory';
+      logger.info('Using in-memory cache for development');
     }
   }
 
@@ -31,22 +31,22 @@ class CacheService {
         },
       });
 
-      this.client.on("connect", () => {
+      this.client.on('connect', () => {
         this.isConnected = true;
-        logger.info("Redis connected successfully");
+        logger.info('Redis connected successfully');
       });
 
-      this.client.on("error", (error) => {
-        logger.error("Redis connection error:", error);
+      this.client.on('error', (error) => {
+        logger.error('Redis connection error:', error);
         this.isConnected = false;
       });
     } catch (error) {
-      logger.error("Failed to initialize Redis:", error);
+      logger.error('Failed to initialize Redis:', error);
     }
   }
 
   async get(key: string): Promise<string | null> {
-    if (this.backend === "memory") {
+    if (this.backend === 'memory') {
       return await memoryCacheService.get(key);
     }
 
@@ -67,7 +67,7 @@ class CacheService {
     value: string,
     ttl: number = config.redis.ttl
   ): Promise<boolean> {
-    if (this.backend === "memory") {
+    if (this.backend === 'memory') {
       return await memoryCacheService.set(key, value, ttl);
     }
 
@@ -76,7 +76,7 @@ class CacheService {
     }
 
     try {
-      await this.client.set(key, value, "EX", ttl);
+      await this.client.set(key, value, 'EX', ttl);
       return true;
     } catch (error) {
       logger.error(`Cache set error for key ${key}:`, error);
@@ -85,7 +85,7 @@ class CacheService {
   }
 
   async del(key: string): Promise<boolean> {
-    if (this.backend === "memory") {
+    if (this.backend === 'memory') {
       return await memoryCacheService.del(key);
     }
 
@@ -103,7 +103,7 @@ class CacheService {
   }
 
   async exists(key: string): Promise<boolean> {
-    if (this.backend === "memory") {
+    if (this.backend === 'memory') {
       return await memoryCacheService.exists(key);
     }
 
@@ -121,11 +121,11 @@ class CacheService {
   }
 
   generateKey(prefix: string, ...parts: string[]): string {
-    return `${prefix}:${parts.join(":")}`;
+    return `${prefix}:${parts.join(':')}`;
   }
 
   async disconnect(): Promise<void> {
-    if (this.backend === "memory") {
+    if (this.backend === 'memory') {
       memoryCacheService.disconnect();
       return;
     }
@@ -141,10 +141,10 @@ class CacheService {
   }
 
   getStats() {
-    if (this.backend === "memory") {
+    if (this.backend === 'memory') {
       return memoryCacheService.getStats();
     }
-    return { backend: "redis", connected: this.isConnected };
+    return { backend: 'redis', connected: this.isConnected };
   }
 }
 

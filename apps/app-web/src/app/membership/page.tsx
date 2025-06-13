@@ -16,6 +16,8 @@ import { useMembership } from '@/hooks/use-membership';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { format } from 'date-fns';
+import { membershipService } from '@/services/membership.service';
+import { IMembershipTier } from '@app/shared-types';
 import {
   Loader2,
   Check,
@@ -48,7 +50,7 @@ export default dynamic(() => Promise.resolve(MembershipPage), {
 
 function MembershipPage() {
   const router = useRouter();
-  const [membershipTiers, setMembershipTiers] = useState<any[]>([]);
+  const [membershipTiers, setMembershipTiers] = useState<IMembershipTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -59,16 +61,11 @@ function MembershipPage() {
   useEffect(() => {
     async function fetchMembershipTiers() {
       try {
-        const response = await fetch('/api/membership-tiers');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch membership tiers');
-        }
-
-        const data = await response.json();
-        setMembershipTiers(data);
+        const tiers = await membershipService.getMembershipTiers();
+        setMembershipTiers(tiers);
       } catch (error) {
         console.error('Error fetching membership tiers:', error);
+        toast.error('Failed to load membership tiers');
         setMembershipTiers([]);
       } finally {
         setIsLoading(false);
@@ -86,19 +83,14 @@ function MembershipPage() {
       if (tierName === 'level7') {
         setIsJoining(true);
 
-        // Create new membership
-        const response = await fetch('/api/membership/join', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ tier: tierName }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to join membership');
+        // Find the tier ID for level7
+        const tier = membershipTiers.find((t) => t.name === tierName);
+        if (!tier) {
+          throw new Error('Tier not found');
         }
+
+        // Create new membership
+        await membershipService.joinMembership({ tierId: tier.id });
 
         // Refresh membership data
         await refreshMembership();

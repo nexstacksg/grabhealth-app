@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { CartService } from "../../services/cart.service";
-import { AppError } from "../../middleware/error/errorHandler";
+import { Request, Response, NextFunction } from 'express';
+import { CartService } from '../../services/cart.service';
+import { AppError } from '../../middleware/error/errorHandler';
 
 const cartService = new CartService();
 
@@ -17,7 +17,7 @@ export const cartController = {
   async getCart(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const cart = await cartService.getCart(req.user.id);
@@ -34,7 +34,7 @@ export const cartController = {
   async addToCart(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const { productId, quantity } = req.body;
@@ -56,7 +56,7 @@ export const cartController = {
   async updateCartItem(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const { productId, quantity } = req.body;
@@ -78,7 +78,7 @@ export const cartController = {
   async removeFromCart(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const { productId } = req.params;
@@ -99,13 +99,13 @@ export const cartController = {
   async clearCart(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       await cartService.clearCart(req.user.id);
       res.json({
         success: true,
-        message: "Cart cleared successfully",
+        message: 'Cart cleared successfully',
       });
     } catch (error) {
       next(error);
@@ -116,7 +116,7 @@ export const cartController = {
   async syncCart(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
-        throw new AppError("Unauthorized", 401);
+        throw new AppError('Unauthorized', 401);
       }
 
       const { items } = req.body;

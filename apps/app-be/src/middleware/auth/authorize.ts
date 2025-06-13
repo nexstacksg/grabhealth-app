@@ -1,13 +1,13 @@
-import { Response, NextFunction } from "express";
-import { AuthRequest } from "./authenticate";
-import { ApiError } from "../error/errorHandler";
-import { UserRole } from "@app/shared-types";
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from './authenticate';
+import { ApiError } from '../error/errorHandler';
+import { UserRole } from '@app/shared-types';
 
 export const authorize = (...allowedRoles: string[]) => {
   return async (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(
-        new ApiError("Authentication required", 401, "AUTH_REQUIRED")
+        new ApiError('Authentication required', 401, 'AUTH_REQUIRED')
       );
     }
 
@@ -18,7 +18,7 @@ export const authorize = (...allowedRoles: string[]) => {
     const hasRole = allowedRoles.includes(req.user.role);
 
     if (!hasRole) {
-      return next(new ApiError("Insufficient permissions", 403, "FORBIDDEN"));
+      return next(new ApiError('Insufficient permissions', 403, 'FORBIDDEN'));
     }
 
     next();
@@ -35,14 +35,18 @@ export const authorizeManager = () => {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(
-        new ApiError("Authentication required", 401, "AUTH_REQUIRED")
+        new ApiError('Authentication required', 401, 'AUTH_REQUIRED')
       );
     }
 
-    const managerRoles = [UserRole.SUPER_ADMIN, UserRole.COMPANY, UserRole.MANAGER] as string[];
+    const managerRoles = [
+      UserRole.SUPER_ADMIN,
+      UserRole.COMPANY,
+      UserRole.MANAGER,
+    ] as string[];
 
     if (!managerRoles.includes(req.user.role)) {
-      return next(new ApiError("Manager access required", 403, "FORBIDDEN"));
+      return next(new ApiError('Manager access required', 403, 'FORBIDDEN'));
     }
 
     next();
@@ -54,12 +58,12 @@ export const authorizeAdmin = () => {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(
-        new ApiError("Authentication required", 401, "AUTH_REQUIRED")
+        new ApiError('Authentication required', 401, 'AUTH_REQUIRED')
       );
     }
 
     if (req.user.role !== UserRole.SUPER_ADMIN) {
-      return next(new ApiError("Admin access required", 403, "FORBIDDEN"));
+      return next(new ApiError('Admin access required', 403, 'FORBIDDEN'));
     }
 
     next();
@@ -71,13 +75,13 @@ export const authorizeSuperAdmin = () => {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(
-        new ApiError("Authentication required", 401, "AUTH_REQUIRED")
+        new ApiError('Authentication required', 401, 'AUTH_REQUIRED')
       );
     }
 
     if (req.user.role !== UserRole.SUPER_ADMIN) {
       return next(
-        new ApiError("Super admin access required", 403, "FORBIDDEN")
+        new ApiError('Super admin access required', 403, 'FORBIDDEN')
       );
     }
 
@@ -86,11 +90,11 @@ export const authorizeSuperAdmin = () => {
 };
 
 // Check if user can access their own resources or is a manager
-export const authorizeSelfOrManager = (userIdParam: string = "id") => {
+export const authorizeSelfOrManager = (userIdParam: string = 'id') => {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(
-        new ApiError("Authentication required", 401, "AUTH_REQUIRED")
+        new ApiError('Authentication required', 401, 'AUTH_REQUIRED')
       );
     }
 
@@ -102,10 +106,14 @@ export const authorizeSelfOrManager = (userIdParam: string = "id") => {
     }
 
     // Managers and above can access others' resources
-    const managerRoles = [UserRole.SUPER_ADMIN, UserRole.COMPANY, UserRole.MANAGER] as string[];
+    const managerRoles = [
+      UserRole.SUPER_ADMIN,
+      UserRole.COMPANY,
+      UserRole.MANAGER,
+    ] as string[];
 
     if (!managerRoles.includes(req.user.role)) {
-      return next(new ApiError("Access denied", 403, "FORBIDDEN"));
+      return next(new ApiError('Access denied', 403, 'FORBIDDEN'));
     }
 
     next();

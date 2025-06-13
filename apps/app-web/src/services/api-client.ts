@@ -1,6 +1,8 @@
 import { ApiResponse } from '@app/shared-types';
 
-interface RequestOptions extends RequestInit {}
+interface RequestOptions extends RequestInit {
+  params?: Record<string, any>;
+}
 
 class ApiClient {
   private baseURL: string;
@@ -13,7 +15,22 @@ class ApiClient {
     endpoint: string,
     options: RequestOptions = {}
   ): Promise<T> {
-    const { headers = {}, ...restOptions } = options;
+    const { headers = {}, params, ...restOptions } = options;
+
+    // Build URL with query params
+    let url = `${this.baseURL}${endpoint}`;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
 
     const config: RequestInit = {
       ...restOptions,
@@ -25,7 +42,7 @@ class ApiClient {
     };
 
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, config);
+      const response = await fetch(url, config);
       const data = await response.json();
 
       if (!response.ok) {

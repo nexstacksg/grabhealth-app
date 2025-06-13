@@ -1,10 +1,10 @@
-import { PrismaClient, Commission, UserRelationship } from "@prisma/client";
+import { PrismaClient, Commission, UserRelationship } from '@prisma/client';
 import {
   CommissionStatus,
   CommissionType,
   INetworkNode,
-} from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
+} from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
 
 export class CommissionService {
   constructor(private prisma: PrismaClient) {}
@@ -33,7 +33,7 @@ export class CommissionService {
       });
 
       if (!order) {
-        throw new AppError("Order not found", 404);
+        throw new AppError('Order not found', 404);
       }
 
       const commissions: Commission[] = [];
@@ -67,7 +67,7 @@ export class CommissionService {
       return commissions;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to process commission", 500);
+      throw new AppError('Failed to process commission', 500);
     }
   }
 
@@ -105,10 +105,10 @@ export class CommissionService {
 
   async getUserCommissions(
     userId: string,
-    type: "earned" | "generated" = "earned"
+    type: 'earned' | 'generated' = 'earned'
   ): Promise<Commission[]> {
     try {
-      const where = type === "earned" ? { recipientId: userId } : { userId };
+      const where = type === 'earned' ? { recipientId: userId } : { userId };
 
       return await this.prisma.commission.findMany({
         where,
@@ -131,10 +131,10 @@ export class CommissionService {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
     } catch (_error) {
-      throw new AppError("Failed to get user commissions", 500);
+      throw new AppError('Failed to get user commissions', 500);
     }
   }
 
@@ -192,7 +192,7 @@ export class CommissionService {
         lastMonth: lastMonth._sum.amount || 0,
       };
     } catch (_error) {
-      throw new AppError("Failed to get commission stats", 500);
+      throw new AppError('Failed to get commission stats', 500);
     }
   }
 
@@ -207,7 +207,7 @@ export class CommissionService {
       });
 
       if (!user) {
-        throw new AppError("User not found", 404);
+        throw new AppError('User not found', 404);
       }
 
       const network = await this.buildNetworkTree(userId, 1, 5);
@@ -226,7 +226,7 @@ export class CommissionService {
       };
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to get user network", 500);
+      throw new AppError('Failed to get user network', 500);
     }
   }
 
@@ -297,13 +297,13 @@ export class CommissionService {
       });
 
       if (existing) {
-        throw new AppError("Relationship already exists", 400);
+        throw new AppError('Relationship already exists', 400);
       }
 
       // Check for circular reference
       const uplineChain = await this.getUplineChain(uplineId, 10);
       if (uplineChain.includes(userId)) {
-        throw new AppError("Circular reference detected", 400);
+        throw new AppError('Circular reference detected', 400);
       }
 
       return await this.prisma.userRelationship.create({
@@ -315,7 +315,7 @@ export class CommissionService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to create relationship", 500);
+      throw new AppError('Failed to create relationship', 500);
     }
   }
 
@@ -329,7 +329,7 @@ export class CommissionService {
         data: { status },
       });
     } catch (_error) {
-      throw new AppError("Failed to update commission status", 500);
+      throw new AppError('Failed to update commission status', 500);
     }
   }
 
@@ -364,7 +364,7 @@ export class CommissionService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to get commission details", 500);
+      throw new AppError('Failed to get commission details', 500);
     }
   }
 
@@ -396,7 +396,7 @@ export class CommissionService {
       const salesData = await this.prisma.order.aggregate({
         where: {
           userId: { in: Array.from(allMembers) },
-          status: "COMPLETED",
+          status: 'COMPLETED',
         },
         _sum: { total: true },
       });
@@ -409,7 +409,7 @@ export class CommissionService {
         levels: levelStats,
       };
     } catch (_error) {
-      throw new AppError("Failed to get network stats", 500);
+      throw new AppError('Failed to get network stats', 500);
     }
   }
 
@@ -431,7 +431,7 @@ export class CommissionService {
 
       return results;
     } catch (_error) {
-      throw new AppError("Failed to process commissions", 500);
+      throw new AppError('Failed to process commissions', 500);
     }
   }
 
@@ -461,10 +461,10 @@ export class CommissionService {
           }),
           this.prisma.commission.count({ where }),
           this.prisma.commission.groupBy({
-            by: ["recipientId"],
+            by: ['recipientId'],
             where,
             _sum: { amount: true },
-            orderBy: { _sum: { amount: "desc" } },
+            orderBy: { _sum: { amount: 'desc' } },
             take: 10,
           }),
         ]);
@@ -490,7 +490,7 @@ export class CommissionService {
         topEarners: topEarnersWithDetails,
       };
     } catch (_error) {
-      throw new AppError("Failed to get commission summary", 500);
+      throw new AppError('Failed to get commission summary', 500);
     }
   }
 }

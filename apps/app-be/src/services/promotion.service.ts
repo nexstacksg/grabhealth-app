@@ -1,6 +1,6 @@
-import { PrismaClient, Promotion, Prisma } from "@prisma/client";
-import { IPromotionCreate } from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
+import { PrismaClient, Promotion, Prisma } from '@prisma/client';
+import { IPromotionCreate } from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
 
 export class PromotionService {
   constructor(private prisma: PrismaClient) {}
@@ -10,7 +10,7 @@ export class PromotionService {
     try {
       // Validate dates
       if (data.endDate && data.startDate && data.endDate < data.startDate) {
-        throw new AppError("End date must be after start date", 400);
+        throw new AppError('End date must be after start date', 400);
       }
 
       return await this.prisma.promotion.create({
@@ -27,7 +27,7 @@ export class PromotionService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to create promotion", 500);
+      throw new AppError('Failed to create promotion', 500);
     }
   }
 
@@ -42,7 +42,7 @@ export class PromotionService {
       });
 
       if (!promotion) {
-        throw new AppError("Promotion not found", 404);
+        throw new AppError('Promotion not found', 404);
       }
 
       // Validate dates if being updated
@@ -51,7 +51,7 @@ export class PromotionService {
         const endDate = data.endDate || promotion.endDate;
 
         if (endDate && startDate && endDate < startDate) {
-          throw new AppError("End date must be after start date", 400);
+          throw new AppError('End date must be after start date', 400);
         }
       }
 
@@ -76,7 +76,7 @@ export class PromotionService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to update promotion", 500);
+      throw new AppError('Failed to update promotion', 500);
     }
   }
 
@@ -87,7 +87,7 @@ export class PromotionService {
         where: { id },
       });
     } catch (_error) {
-      throw new AppError("Failed to get promotion", 500);
+      throw new AppError('Failed to get promotion', 500);
     }
   }
 
@@ -126,7 +126,7 @@ export class PromotionService {
       const [promotions, total] = await Promise.all([
         this.prisma.promotion.findMany({
           where,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
         }),
@@ -140,7 +140,7 @@ export class PromotionService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (_error) {
-      throw new AppError("Failed to get promotions", 500);
+      throw new AppError('Failed to get promotions', 500);
     }
   }
 
@@ -155,10 +155,10 @@ export class PromotionService {
           startDate: { lte: now },
           OR: [{ endDate: null }, { endDate: { gte: now } }],
         },
-        orderBy: { discountValue: "desc" },
+        orderBy: { discountValue: 'desc' },
       });
     } catch (_error) {
-      throw new AppError("Failed to get active promotions", 500);
+      throw new AppError('Failed to get active promotions', 500);
     }
   }
 
@@ -183,7 +183,7 @@ export class PromotionService {
       if (!promotion) {
         return {
           valid: false,
-          message: "Invalid promotion code",
+          message: 'Invalid promotion code',
         };
       }
 
@@ -191,7 +191,7 @@ export class PromotionService {
       if (!promotion.isActive) {
         return {
           valid: false,
-          message: "This promotion is no longer active",
+          message: 'This promotion is no longer active',
         };
       }
 
@@ -200,14 +200,14 @@ export class PromotionService {
       if (promotion.startDate > now) {
         return {
           valid: false,
-          message: "This promotion has not started yet",
+          message: 'This promotion has not started yet',
         };
       }
 
       if (promotion.endDate && promotion.endDate < now) {
         return {
           valid: false,
-          message: "This promotion has expired",
+          message: 'This promotion has expired',
         };
       }
 
@@ -221,9 +221,9 @@ export class PromotionService {
 
       // Calculate discount amount
       let discountAmount = 0;
-      if (promotion.discountType === "PERCENTAGE") {
+      if (promotion.discountType === 'PERCENTAGE') {
         discountAmount = (orderTotal * promotion.discountValue) / 100;
-      } else if (promotion.discountType === "FIXED") {
+      } else if (promotion.discountType === 'FIXED') {
         discountAmount = Math.min(promotion.discountValue, orderTotal);
       }
 
@@ -233,7 +233,7 @@ export class PromotionService {
         discountAmount,
       };
     } catch (_error) {
-      throw new AppError("Failed to validate promotion", 500);
+      throw new AppError('Failed to validate promotion', 500);
     }
   }
 
@@ -245,7 +245,7 @@ export class PromotionService {
       });
 
       if (!promotion) {
-        throw new AppError("Promotion not found", 404);
+        throw new AppError('Promotion not found', 404);
       }
 
       await this.prisma.promotion.delete({
@@ -253,7 +253,7 @@ export class PromotionService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to delete promotion", 500);
+      throw new AppError('Failed to delete promotion', 500);
     }
   }
 
@@ -265,7 +265,7 @@ export class PromotionService {
       });
 
       if (!promotion) {
-        throw new AppError("Promotion not found", 404);
+        throw new AppError('Promotion not found', 404);
       }
 
       return await this.prisma.promotion.update({
@@ -274,7 +274,7 @@ export class PromotionService {
       });
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to toggle promotion status", 500);
+      throw new AppError('Failed to toggle promotion status', 500);
     }
   }
 
@@ -319,7 +319,7 @@ export class PromotionService {
         upcomingPromotions,
       };
     } catch (_error) {
-      throw new AppError("Failed to get promotion stats", 500);
+      throw new AppError('Failed to get promotion stats', 500);
     }
   }
 }

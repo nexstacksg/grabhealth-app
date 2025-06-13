@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from '@prisma/client';
 import {
   IProduct,
   IProductCreate,
@@ -6,8 +6,8 @@ import {
   ProductSearchParams,
   ProductSearchResponse,
   ProductStatus,
-} from "@app/shared-types";
-import { AppError } from "../middleware/error/errorHandler";
+} from '@app/shared-types';
+import { AppError } from '../middleware/error/errorHandler';
 
 export class ProductService {
   constructor(private prisma: PrismaClient) {}
@@ -20,7 +20,7 @@ export class ProductService {
           where: { id: data.categoryId },
         });
         if (!category || !category.isActive) {
-          throw new AppError("Invalid or inactive category", 400);
+          throw new AppError('Invalid or inactive category', 400);
         }
       }
 
@@ -41,7 +41,7 @@ export class ProductService {
       return product as IProduct;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to create product", 500);
+      throw new AppError('Failed to create product', 500);
     }
   }
 
@@ -52,7 +52,7 @@ export class ProductService {
       });
 
       if (!product) {
-        throw new AppError("Product not found", 404);
+        throw new AppError('Product not found', 404);
       }
 
       // Validate category if updating
@@ -61,7 +61,7 @@ export class ProductService {
           where: { id: data.categoryId },
         });
         if (!category || !category.isActive) {
-          throw new AppError("Invalid or inactive category", 400);
+          throw new AppError('Invalid or inactive category', 400);
         }
       }
 
@@ -85,7 +85,7 @@ export class ProductService {
       return updatedProduct as any as IProduct;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to update product", 500);
+      throw new AppError('Failed to update product', 500);
     }
   }
 
@@ -100,7 +100,7 @@ export class ProductService {
       });
       return result as any as IProduct | null;
     } catch (_error) {
-      throw new AppError("Failed to get product", 500);
+      throw new AppError('Failed to get product', 500);
     }
   }
 
@@ -115,8 +115,8 @@ export class ProductService {
         minPrice,
         maxPrice,
         inStock,
-        sortBy = "created",
-        sortOrder = "desc",
+        sortBy = 'created',
+        sortOrder = 'desc',
         page = 1,
         limit = 10,
       } = params;
@@ -141,9 +141,9 @@ export class ProductService {
       };
 
       const orderBy: Prisma.ProductOrderByWithRelationInput = {};
-      if (sortBy === "price") {
+      if (sortBy === 'price') {
         orderBy.price = sortOrder;
-      } else if (sortBy === "name") {
+      } else if (sortBy === 'name') {
         orderBy.name = sortOrder;
       } else {
         orderBy.createdAt = sortOrder;
@@ -169,7 +169,7 @@ export class ProductService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (_error) {
-      throw new AppError("Failed to search products", 500);
+      throw new AppError('Failed to search products', 500);
     }
   }
 
@@ -181,7 +181,7 @@ export class ProductService {
       });
 
       if (!product) {
-        throw new AppError("Product not found", 404);
+        throw new AppError('Product not found', 404);
       }
 
       if (product.orderItems.length > 0) {
@@ -198,7 +198,7 @@ export class ProductService {
       }
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
-      throw new AppError("Failed to delete product", 500);
+      throw new AppError('Failed to delete product', 500);
     }
   }
 
@@ -206,7 +206,7 @@ export class ProductService {
     try {
       return await this.prisma.category.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { sortOrder: 'asc' },
         include: {
           _count: {
             select: { products: true },
@@ -214,7 +214,7 @@ export class ProductService {
         },
       });
     } catch (_error) {
-      throw new AppError("Failed to get categories", 500);
+      throw new AppError('Failed to get categories', 500);
     }
   }
 
@@ -229,11 +229,11 @@ export class ProductService {
         include: {
           category: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
       return products as any as IProduct[];
     } catch (_error) {
-      throw new AppError("Failed to get products by category", 500);
+      throw new AppError('Failed to get products by category', 500);
     }
   }
 
@@ -244,12 +244,12 @@ export class ProductService {
           status: ProductStatus.ACTIVE,
           inStock: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         take: limit,
       });
       return products as any as IProduct[];
     } catch (_error) {
-      throw new AppError("Failed to get featured products", 500);
+      throw new AppError('Failed to get featured products', 500);
     }
   }
 
@@ -264,7 +264,7 @@ export class ProductService {
       });
       return updatedProduct as any as IProduct;
     } catch (_error) {
-      throw new AppError("Failed to update stock", 500);
+      throw new AppError('Failed to update stock', 500);
     }
   }
 }

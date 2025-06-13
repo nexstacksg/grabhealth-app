@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-} from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter, Link } from "expo-router";
-import { Colors } from "@/constants/Colors";
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter, Link } from 'expo-router';
+import { Colors } from '@/constants/Colors';
 
 interface RegisterFormData {
   firstName: string;
@@ -36,15 +36,15 @@ export default function RegisterScreen() {
     formState: { errors },
   } = useForm<RegisterFormData>({
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
     },
   });
 
-  const password = watch("password");
+  const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
@@ -57,13 +57,13 @@ export default function RegisterScreen() {
       });
 
       router.replace({
-        pathname: "/(auth)/email-verification",
+        pathname: '/(auth)/email-verification',
         params: { email: data.email },
       });
     } catch (error: any) {
       Alert.alert(
-        "Registration Failed",
-        error.response?.data?.message || "Please try again later."
+        'Registration Failed',
+        error.response?.data?.message || 'Please try again later.'
       );
     } finally {
       setIsLoading(false);
@@ -73,7 +73,7 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -88,7 +88,7 @@ export default function RegisterScreen() {
           <View style={styles.row}>
             <Controller
               control={control}
-              rules={{ required: "First name is required" }}
+              rules={{ required: 'First name is required' }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <View style={[styles.inputContainer, styles.halfWidth]}>
                   <Text style={styles.label}>First Name</Text>
@@ -114,7 +114,7 @@ export default function RegisterScreen() {
 
             <Controller
               control={control}
-              rules={{ required: "Last name is required" }}
+              rules={{ required: 'Last name is required' }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <View style={[styles.inputContainer, styles.halfWidth]}>
                   <Text style={styles.label}>Last Name</Text>
@@ -139,10 +139,10 @@ export default function RegisterScreen() {
           <Controller
             control={control}
             rules={{
-              required: "Email is required",
+              required: 'Email is required',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Please enter a valid email",
+                message: 'Please enter a valid email',
               },
             }}
             render={({ field: { onChange, onBlur, value } }) => (
@@ -168,10 +168,10 @@ export default function RegisterScreen() {
           <Controller
             control={control}
             rules={{
-              required: "Password is required",
+              required: 'Password is required',
               minLength: {
                 value: 6,
-                message: "Password must be at least 6 characters",
+                message: 'Password must be at least 6 characters',
               },
             }}
             render={({ field: { onChange, onBlur, value } }) => (
@@ -198,9 +198,9 @@ export default function RegisterScreen() {
           <Controller
             control={control}
             rules={{
-              required: "Please confirm your password",
+              required: 'Please confirm your password',
               validate: (value) =>
-                value === password || "Passwords do not match",
+                value === password || 'Passwords do not match',
             }}
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={styles.inputContainer}>
@@ -255,7 +255,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
@@ -267,46 +267,46 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#666",
+    color: '#666',
   },
   form: {
     marginBottom: 30,
   },
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   inputContainer: {
     marginBottom: 20,
   },
   halfWidth: {
-    width: "48%",
+    width: '48%',
   },
   label: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 15,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: '#f9f9f9',
   },
   inputError: {
-    borderColor: "#ff4444",
+    borderColor: '#ff4444',
   },
   errorText: {
-    color: "#ff4444",
+    color: '#ff4444',
     fontSize: 14,
     marginTop: 5,
   },
@@ -314,29 +314,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.tint,
     borderRadius: 8,
     padding: 15,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 10,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footerText: {
     fontSize: 16,
-    color: "#666",
+    color: '#666',
   },
   linkText: {
     fontSize: 16,
     color: Colors.light.tint,
-    fontWeight: "600",
+    fontWeight: '600',
   },
 });

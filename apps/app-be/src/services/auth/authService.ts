@@ -1,15 +1,15 @@
-import prisma from "../../database/client";
+import prisma from '../../database/client';
 import {
   hashPassword,
   verifyPassword,
   generateTokenId,
-} from "../../utils/auth";
+} from '../../utils/auth';
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} from "../../config/jwt";
-import { ApiError } from "../../middleware/error/errorHandler";
+} from '../../config/jwt';
+import { ApiError } from '../../middleware/error/errorHandler';
 import {
   RegisterRequest,
   LoginRequest,
@@ -21,14 +21,14 @@ import {
   ErrorCode,
   HttpStatus,
   TokenPayload,
-} from "@app/shared-types";
+} from '@app/shared-types';
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-} from "../../utils/email";
-import crypto from "crypto";
-import logger from "../../utils/logger";
-import cacheService from "../cache";
+} from '../../utils/email';
+import crypto from 'crypto';
+import logger from '../../utils/logger';
+import cacheService from '../cache';
 
 export class AuthService {
   private createUserPublic(user: any): IUserPublic {
@@ -53,7 +53,7 @@ export class AuthService {
 
     if (existingUser) {
       throw new ApiError(
-        "User with this email already exists",
+        'User with this email already exists',
         HttpStatus.CONFLICT,
         ErrorCode.USER_EXISTS
       );
@@ -63,15 +63,15 @@ export class AuthService {
     const passwordHash = await hashPassword(data.password);
 
     // Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
 
     // Create user
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: passwordHash,
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
         role: UserRole.USER,
         status: UserStatus.PENDING_VERIFICATION,
         emailVerificationToken,
@@ -102,7 +102,7 @@ export class AuthService {
     try {
       await sendVerificationEmail(user.email, emailVerificationToken);
     } catch (error) {
-      logger.error("Failed to send verification email:", error);
+      logger.error('Failed to send verification email:', error);
       // Don't fail the registration if email fails
     }
 
@@ -122,7 +122,7 @@ export class AuthService {
 
     if (!user) {
       throw new ApiError(
-        "Invalid credentials",
+        'Invalid credentials',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.INVALID_CREDENTIALS
       );
@@ -134,7 +134,7 @@ export class AuthService {
       user.status !== UserStatus.PENDING_VERIFICATION
     ) {
       throw new ApiError(
-        "Account is not active",
+        'Account is not active',
         HttpStatus.FORBIDDEN,
         ErrorCode.ACCOUNT_INACTIVE
       );
@@ -144,7 +144,7 @@ export class AuthService {
     const isValidPassword = await verifyPassword(data.password, user.password);
     if (!isValidPassword) {
       throw new ApiError(
-        "Invalid credentials",
+        'Invalid credentials',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.INVALID_CREDENTIALS
       );
@@ -177,8 +177,8 @@ export class AuthService {
     await prisma.auditLog.create({
       data: {
         userId: user.id,
-        action: "LOGIN",
-        entity: "User",
+        action: 'LOGIN',
+        entity: 'User',
         entityId: user.id,
       },
     });
@@ -203,7 +203,7 @@ export class AuthService {
 
       if (!user) {
         throw new ApiError(
-          "Invalid refresh token",
+          'Invalid refresh token',
           HttpStatus.UNAUTHORIZED,
           ErrorCode.INVALID_TOKEN
         );
@@ -212,11 +212,11 @@ export class AuthService {
       // Verify the refresh token hash
       const isValidToken = await verifyPassword(
         refreshToken,
-        user.refreshToken || ""
+        user.refreshToken || ''
       );
       if (!isValidToken) {
         throw new ApiError(
-          "Invalid refresh token",
+          'Invalid refresh token',
           HttpStatus.UNAUTHORIZED,
           ErrorCode.INVALID_TOKEN
         );
@@ -224,7 +224,7 @@ export class AuthService {
 
       if (user.status !== UserStatus.ACTIVE) {
         throw new ApiError(
-          "Account is not active",
+          'Account is not active',
           HttpStatus.FORBIDDEN,
           ErrorCode.ACCOUNT_INACTIVE
         );
@@ -260,7 +260,7 @@ export class AuthService {
       };
     } catch {
       throw new ApiError(
-        "Invalid refresh token",
+        'Invalid refresh token',
         HttpStatus.UNAUTHORIZED,
         ErrorCode.INVALID_TOKEN
       );
@@ -275,15 +275,15 @@ export class AuthService {
     });
 
     // Clear user cache
-    const cacheKey = cacheService.generateKey("user", userId);
+    const cacheKey = cacheService.generateKey('user', userId);
     await cacheService.del(cacheKey);
 
     // Log audit
     await prisma.auditLog.create({
       data: {
         userId,
-        action: "LOGOUT",
-        entity: "User",
+        action: 'LOGOUT',
+        entity: 'User',
         entityId: userId,
       },
     });
@@ -296,7 +296,7 @@ export class AuthService {
 
     if (!user) {
       throw new ApiError(
-        "Invalid verification token",
+        'Invalid verification token',
         HttpStatus.BAD_REQUEST,
         ErrorCode.INVALID_TOKEN
       );
@@ -323,7 +323,7 @@ export class AuthService {
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpires = new Date(Date.now() + 3600000); // 1 hour
 
     await prisma.user.update({
@@ -338,7 +338,7 @@ export class AuthService {
     try {
       await sendPasswordResetEmail(user.email, resetToken);
     } catch (error) {
-      logger.error("Failed to send password reset email:", error);
+      logger.error('Failed to send password reset email:', error);
     }
   }
 
@@ -352,7 +352,7 @@ export class AuthService {
 
     if (!user) {
       throw new ApiError(
-        "Invalid or expired reset token",
+        'Invalid or expired reset token',
         HttpStatus.BAD_REQUEST,
         ErrorCode.INVALID_TOKEN
       );
@@ -378,7 +378,7 @@ export class AuthService {
 
     if (!user) {
       throw new ApiError(
-        "User not found",
+        'User not found',
         HttpStatus.NOT_FOUND,
         ErrorCode.USER_NOT_FOUND
       );

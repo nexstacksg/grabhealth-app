@@ -1,16 +1,16 @@
-import dotenv from "dotenv";
-import path from "path";
+import dotenv from 'dotenv';
+import path from 'path';
 
 // Load test environment variables
 dotenv.config({
-  path: path.join(__dirname, "../../.env.test"),
+  path: path.join(__dirname, '../../.env.test'),
 });
 
 // Set test database
-process.env.DATABASE_URL = "file:./test.db";
+process.env.DATABASE_URL = 'file:./test.db';
 
 // Mock logger to avoid console output during tests
-jest.mock("../utils/logger", () => ({
+jest.mock('../utils/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),
