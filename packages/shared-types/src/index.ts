@@ -6,6 +6,11 @@ export * from './types/common';
 export * from './types/auth';
 export * from './types/ecommerce';
 export * from './types/user';
+export * from './types/ai';
+export * from './types/profile';
+export * from './types/membership';
+export * from './types/promotion';
+export * from './types/admin';
 
 // Export all models
 export * from './models';

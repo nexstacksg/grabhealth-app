@@ -30,6 +30,7 @@ import {
   CopyIcon,
 } from 'lucide-react';
 import { useMembership } from '@/hooks/use-membership';
+import { membershipService } from '@/services/membership.service';
 import QRCode from 'react-qr-code';
 import { toast } from 'sonner';
 
@@ -111,25 +112,13 @@ export function MembershipProfile({
     try {
       setUpgrading(true);
 
-      const response = await fetch('/api/membership', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: membership.id,
-          tier: 'premium',
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to upgrade membership');
-      }
+      await membershipService.upgradeTier('premium');
 
       // Refresh the page to show updated membership
       window.location.reload();
     } catch (error) {
       console.error('Error upgrading membership:', error);
+      toast.error('Failed to upgrade membership');
     } finally {
       setUpgrading(false);
     }

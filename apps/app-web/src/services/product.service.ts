@@ -1,8 +1,6 @@
 import { apiClient } from './api-client';
 import {
   IProduct,
-  IProductCreate,
-  IProductUpdate,
   ProductSearchParams,
   ProductSearchResponse,
 } from '@app/shared-types';

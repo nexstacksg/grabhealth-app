@@ -1,16 +1,9 @@
 import { apiClient } from './api-client';
-import { IMembership, IMembershipTier, ApiResponse } from '@app/shared-types';
-
-export interface JoinMembershipRequest {
-  tier: string;
-  referralCode?: string;
-}
-
-export interface MembershipStats {
-  totalMembers: number;
-  activeMembers: number;
-  membersByTier: Record<string, number>;
-}
+import {
+  IMembership,
+  IMembershipTier,
+  MembershipStats,
+} from '@app/shared-types';
 
 class MembershipService {
   private baseUrl = '/memberships';

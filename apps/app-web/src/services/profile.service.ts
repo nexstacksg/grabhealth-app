@@ -1,23 +1,10 @@
 import { apiClient } from './api-client';
-import { IUserPublic, IUserUpdate } from '@app/shared-types';
-
-export interface ProfileUpdateRequest {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  address?: string;
-}
-
-export interface PasswordChangeRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
-export interface ProfileImageUploadResponse {
-  imageUrl: string;
-}
+import {
+  IUserPublic,
+  ProfileUpdateRequest,
+  PasswordChangeRequest,
+  ProfileImageUploadResponse,
+} from '@app/shared-types';
 
 class ProfileService {
   private baseUrl = '/users';

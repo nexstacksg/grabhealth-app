@@ -1,57 +1,11 @@
 import { apiClient } from './api-client';
-import { IUser, ApiResponse } from '@app/shared-types';
-
-export interface DashboardStats {
-  totalUsers: number;
-  totalOrders: number;
-  totalRevenue: number;
-  totalProducts: number;
-  recentOrders: any[];
-  topProducts: any[];
-  commissionStats: {
-    totalPaid: number;
-    totalPending: number;
-    topEarners: Array<{
-      userId: string;
-      userName: string;
-      totalEarned: number;
-    }>;
-  };
-}
-
-export interface AccountRequest {
-  id: number;
-  userId: string;
-  requestType: string;
-  status: 'pending' | 'approved' | 'rejected';
-  details: any;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface NetworkNode {
-  id: string;
-  name: string;
-  email: string;
-  tier?: string;
-  children?: NetworkNode[];
-  totalSales?: number;
-  totalCommissions?: number;
-}
-
-export interface AdminSettings {
-  siteName?: string;
-  siteDescription?: string;
-  maintenanceMode?: boolean;
-  allowRegistration?: boolean;
-  emailNotifications?: boolean;
-  commissionSettings?: {
-    level1Rate: number;
-    level2Rate: number;
-    level3Rate: number;
-    level4Rate: number;
-  };
-}
+import {
+  IUser,
+  DashboardStats,
+  IAccountRequest,
+  INetworkNode,
+  AdminSettings,
+} from '@app/shared-types';
 
 class AdminService {
   private baseUrl = '/admin';
@@ -153,13 +107,13 @@ class AdminService {
     limit?: number;
     status?: string;
   }): Promise<{
-    requests: AccountRequest[];
+    requests: IAccountRequest[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     const response = await apiClient.get<{
-      requests: AccountRequest[];
+      requests: IAccountRequest[];
       total: number;
       page: number;
       totalPages: number;
@@ -181,8 +135,8 @@ class AdminService {
     requestId: number,
     status: 'approved' | 'rejected',
     reason?: string
-  ): Promise<AccountRequest> {
-    const response = await apiClient.put<AccountRequest>(
+  ): Promise<IAccountRequest> {
+    const response = await apiClient.put<IAccountRequest>(
       `${this.baseUrl}/account-requests/${requestId}`,
       { status, reason }
     );
@@ -199,12 +153,12 @@ class AdminService {
   /**
    * Get network visualization data
    */
-  async getNetworkData(userId?: string): Promise<NetworkNode> {
+  async getNetworkData(userId?: string): Promise<INetworkNode> {
     const url = userId
       ? `${this.baseUrl}/networks/${userId}`
       : `${this.baseUrl}/networks`;
 
-    const response = await apiClient.get<NetworkNode>(url);
+    const response = await apiClient.get<INetworkNode>(url);
 
     if (!response.success || !response.data) {
       throw new Error(

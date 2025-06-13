@@ -112,35 +112,14 @@ export default function ProfilePage() {
         size: file.size,
       });
 
-      const formData = new FormData();
-      formData.append('file', file);
-
-      console.log('Sending request to /api/profile/upload');
-      const response = await fetch('/api/profile/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      console.log('Response status:', response.status);
-
-      const responseData = await response.json().catch(() => ({}));
-      console.log('Response data:', responseData);
-
-      if (!response.ok) {
-        const errorMessage =
-          responseData.error ||
-          responseData.message ||
-          `Server responded with status ${response.status}`;
-        throw new Error(errorMessage);
-      }
+      const result = await profileService.uploadProfileImage(file);
 
       // Update the user's image URL in the local state
       setUser((prev) =>
         prev
           ? {
               ...prev,
-              image_url: responseData.imageUrl || responseData.image_url,
+              image_url: result.imageUrl,
             }
           : null
       );
@@ -171,31 +150,18 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      // Send update to the user update API endpoint
-      const response = await fetch('/api/auth/update', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-        }),
+      const updatedUser = await profileService.updateProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update profile');
-      }
-
-      const data = await response.json();
 
       // Update local state with the returned user data
       setUser((prev) =>
         prev
           ? {
               ...prev,
-              ...data.user,
+              ...updatedUser,
             }
           : null
       );
@@ -235,23 +201,10 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      // Send password update to the auth API endpoint
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        credentials: 'include', // Include cookies in the request
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword,
-        }),
+      await profileService.changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update password');
-      }
 
       // Clear password fields
       setFormData((prev) => ({
@@ -370,15 +323,27 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex-1 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">

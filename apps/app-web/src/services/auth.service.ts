@@ -3,13 +3,8 @@ import {
   LoginRequest,
   RegisterRequest,
   IUserPublic,
-  ApiResponse,
+  AuthResponse,
 } from '@app/shared-types';
-
-export interface AuthResponse {
-  user: IUserPublic;
-  expiresIn: number;
-}
 
 class AuthService {
   private baseUrl = '/auth';

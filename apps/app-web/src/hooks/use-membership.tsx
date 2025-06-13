@@ -164,36 +164,29 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     try {
       const newPoints = membership.points + points;
 
-      const response = await fetch('/api/membership/current', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          points: newPoints,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update points');
-      }
-
-      const data = await response.json();
+      const updatedMembership = await membershipService.updatePoints(newPoints);
 
       // Check if tier changed
-      if (data.tier !== membership.tier) {
+      if (updatedMembership.tier !== membership.tier) {
         toast.success(
-          `Congratulations! You've been upgraded to ${data.tier} tier!`
+          `Congratulations! You've been upgraded to ${updatedMembership.tier} tier!`
         );
       } else {
         toast.success(`Added ${points} points to your membership!`);
       }
 
-      // Update local state
+      // Update local state - convert IMembership to local Membership type
       setMembership({
-        ...membership,
-        points: newPoints,
-        tier: data.tier,
+        id: updatedMembership.id,
+        tier: updatedMembership.tier as any,
+        points: updatedMembership.points || 0,
+        created_at: updatedMembership.createdAt.toString(),
+        updated_at: updatedMembership.updatedAt.toString(),
+        name:
+          updatedMembership.user?.firstName +
+            ' ' +
+            updatedMembership.user?.lastName || '',
+        email: updatedMembership.user?.email || '',
       });
     } catch (error) {
       console.error('Error adding points:', error);

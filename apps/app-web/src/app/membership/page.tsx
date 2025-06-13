@@ -146,18 +146,7 @@ function MembershipPage() {
         }
 
         // Upgrade membership
-        const response = await fetch('/api/membership/current', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ tier: tierName }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to upgrade membership');
-        }
+        await membershipService.upgradeTier(tierName);
 
         // Refresh membership data
         await refreshMembership();
