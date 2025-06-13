@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Users } from 'lucide-react';
-import { User } from '@/lib/auth';
+import { IUserPublic } from '@app/shared-types';
 
 interface DashboardStats {
   totalUsers: number;

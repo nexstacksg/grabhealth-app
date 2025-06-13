@@ -23,11 +23,12 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { User } from '@/lib/auth';
+import { IUserPublic } from '@app/shared-types';
 
-// Extend the User type to include user_points
-interface ExtendedUser extends User {
+// Extend the User type to include user_points and other fields
+interface ExtendedUser extends IUserPublic {
   user_points?: number;
+  name?: string; // For compatibility with form
 }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,11 +47,12 @@ export default function UserDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<{
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     role: string;
     user_points: string;
-  }>({ name: '', email: '', role: 'customer', user_points: '0' });
+  }>({ firstName: '', lastName: '', email: '', role: 'customer', user_points: '0' });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -61,7 +63,8 @@ export default function UserDetailPage() {
   useEffect(() => {
     if (user) {
       setEditFormData({
-        name: user.name || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         email: user.email || '',
         role: user.role || 'customer',
         user_points: user.user_points?.toString() || '0',
@@ -98,7 +101,8 @@ export default function UserDetailPage() {
 
     try {
       console.log('Sending update with data:', {
-        name: editFormData.name,
+        firstName: editFormData.firstName,
+        lastName: editFormData.lastName,
         email: editFormData.email,
         role: editFormData.role,
         user_points: editFormData.user_points,
@@ -110,7 +114,8 @@ export default function UserDetailPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: editFormData.name,
+          firstName: editFormData.firstName,
+          lastName: editFormData.lastName,
           email: editFormData.email,
           role: editFormData.role,
           user_points: parseInt(editFormData.user_points) || 0,
@@ -130,9 +135,10 @@ export default function UserDetailPage() {
         prev
           ? {
               ...prev,
-              name: editFormData.name,
+              firstName: editFormData.firstName,
+              lastName: editFormData.lastName,
               email: editFormData.email,
-              role: editFormData.role as User['role'],
+              role: editFormData.role as any,
               user_points: parseInt(editFormData.user_points),
             }
           : null
@@ -212,14 +218,26 @@ export default function UserDetailPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="name"
-                  value={editFormData.name}
+                  id="firstName"
+                  value={editFormData.firstName}
                   onChange={(e) =>
-                    setEditFormData({ ...editFormData, name: e.target.value })
+                    setEditFormData({ ...editFormData, firstName: e.target.value })
                   }
-                  placeholder="User's full name"
+                  placeholder="First name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={editFormData.lastName}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, lastName: e.target.value })
+                  }
+                  placeholder="Last name"
                 />
               </div>
 
@@ -310,12 +328,14 @@ export default function UserDetailPage() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
           <div className="h-20 w-20 rounded-full bg-[#E6F7FA] text-[#0C99B4] flex items-center justify-center text-2xl font-medium flex-shrink-0">
-            {user?.name?.charAt(0).toUpperCase() || 'U'}
+            {(user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()}
           </div>
 
           <div className="flex-1">
             <h1 className="text-2xl font-semibold text-gray-800">
-              {user?.name}
+              {user?.firstName && user?.lastName 
+                ? `${user.firstName} ${user.lastName}` 
+                : user?.email}
             </h1>
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-2 text-sm text-gray-500">
               <div className="flex items-center">
@@ -323,10 +343,10 @@ export default function UserDetailPage() {
                 {user.email}
               </div>
               {/* Phone number would go here if available in the User type */}
-              {user.created_at && (
+              {user.createdAt && (
                 <div className="flex items-center">
                   <Calendar size={14} className="mr-1.5" />
-                  Joined {new Date(user.created_at).toLocaleDateString()}
+                  Joined {new Date(user.createdAt).toLocaleDateString()}
                 </div>
               )}
             </div>
@@ -363,7 +383,11 @@ export default function UserDetailPage() {
                     <p className="text-sm font-medium text-gray-500 mb-1">
                       Full Name
                     </p>
-                    <p>{user.name || 'Not provided'}</p>
+                    <p>
+                      {user.firstName && user.lastName 
+                        ? `${user.firstName} ${user.lastName}` 
+                        : user.email || 'Not provided'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500 mb-1">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User } from '@/lib/auth';
+import { IUserPublic } from '@app/shared-types';
 import { Sidebar } from '@/components/admin/sidebar';
 import { Menu, X } from 'lucide-react';
 import './styles/admin-styles.css';
@@ -17,7 +17,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUserPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -101,10 +101,10 @@ export default function AdminLayout({
             <div className="flex items-center gap-3">
               <div className="hidden md:flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-[#E6F7FA] text-[#0C99B4] flex items-center justify-center font-medium">
-                  {user.name?.charAt(0).toUpperCase()}
+                  {(user.firstName || user.email)?.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-sm font-medium text-gray-700">
-                  {user.name}
+                  {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
                 </span>
               </div>
               <button

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { User } from '@/lib/auth';
+import { IUserPublic } from '@app/shared-types';
 import { Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Pagination,
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/pagination';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<IUserPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -225,7 +225,11 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
                       <div>
-                        <div className="font-medium">{user.name}</div>
+                        <div className="font-medium">
+                          {user.firstName && user.lastName 
+                            ? `${user.firstName} ${user.lastName}` 
+                            : user.email}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
