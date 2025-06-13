@@ -39,6 +39,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { adminService } from '@/services/admin.service';
+import { INetworkNode } from '@app/shared-types';
 
 interface NetworkUser {
   id: number;
@@ -174,14 +176,9 @@ export default function NetworksPage() {
   async function fetchNetworks() {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/networks');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch networks');
-      }
-
-      const data = await response.json();
-      setNetworks(data.networks);
+      const data = await adminService.getNetworkData();
+      // Note: Assuming the service returns the data directly, might need adjustment based on actual backend response
+      setNetworks(data.networks || []);
     } catch (error) {
       console.error('Error fetching networks:', error);
     } finally {
@@ -211,13 +208,7 @@ export default function NetworksPage() {
 
   async function fetchUserDownline(userId: number) {
     try {
-      const response = await fetch(`/api/admin/networks/${userId}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user downline');
-      }
-
-      const data = await response.json();
+      const data = await adminService.getNetworkData(userId.toString());
       setDownlineUsers(data.downline || []);
       resetTabPages(); // Reset all tab pages when loading new downline
 

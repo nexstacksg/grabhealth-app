@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { IUserPublic } from '@app/shared-types';
 import { Sidebar } from '@/components/admin/sidebar';
+import { authService } from '@/services/auth.service';
 import { Menu, X } from 'lucide-react';
 import './styles/admin-styles.css';
 import './styles/mobile-table.css';
@@ -29,15 +30,9 @@ export default function AdminLayout({
   useEffect(() => {
     async function checkAdmin() {
       try {
-        const response = await fetch('/api/auth/me');
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch user data');
-        }
+        const userData = await authService.getCurrentUser();
 
         // Check if we have a user and if they have admin role
-        const userData = data.user || data;
 
         if (!userData || userData.role !== 'admin') {
           console.log('Not an admin user:', userData);
@@ -112,19 +107,9 @@ export default function AdminLayout({
               <button
                 onClick={async () => {
                   try {
-                    const response = await fetch('/api/auth/logout', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                    });
-
-                    if (response.ok) {
-                      // Redirect to homepage after successful logout
-                      window.location.href = '/';
-                    } else {
-                      console.error('Logout failed');
-                    }
+                    await authService.logout();
+                    // Redirect to homepage after successful logout
+                    window.location.href = '/';
                   } catch (error) {
                     console.error('Logout error:', error);
                   }

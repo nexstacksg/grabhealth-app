@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Loader2, Save, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { adminService } from '@/services/admin.service';
 
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,18 +37,7 @@ export default function AdminSettingsPage() {
 
   async function fetchSettings() {
     try {
-      const response = await fetch('/api/admin/settings', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch settings');
-      }
-
-      const data = await response.json();
+      const data = await adminService.getSettings();
       setSiteName(data.siteName);
       setContactEmail(data.contactEmail);
       setAdminName(data.adminName);
@@ -63,16 +53,7 @@ export default function AdminSettingsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/init', {
-        method: 'GET',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to run migrations');
-      }
-
+      await adminService.initializeAdmin();
       setSuccess('Database migrations completed successfully');
     } catch (err) {
       setError(
@@ -89,22 +70,10 @@ export default function AdminSettingsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          siteName,
-          contactEmail,
-        }),
+      await adminService.updateSettings({
+        siteName,
+        contactEmail,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save settings');
-      }
 
       setSuccess('Settings saved successfully');
     } catch (err) {
@@ -129,23 +98,11 @@ export default function AdminSettingsPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: adminName,
-          password,
-          confirmPassword,
-        }),
+      await adminService.updateAdminProfile({
+        name: adminName,
+        password,
+        confirmPassword,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update profile');
-      }
 
       setSuccess('Profile updated successfully');
 

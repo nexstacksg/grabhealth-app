@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { IUserPublic } from '@app/shared-types';
+import { adminService } from '@/services/admin.service';
 
 // Extend the User type to include user_points and other fields
 interface ExtendedUser extends IUserPublic {
@@ -84,13 +85,7 @@ export default function UserDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/users/${id}`);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user details: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await adminService.getUser(id as string);
       setUser(data);
     } catch (err) {
       console.error('Error fetching user details:', err);
@@ -115,37 +110,20 @@ export default function UserDetailPage() {
         user_points: editFormData.user_points,
       });
 
-      const response = await fetch(`/api/admin/users/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: editFormData.firstName,
-          lastName: editFormData.lastName,
-          email: editFormData.email,
-          role: editFormData.role,
-          user_points: parseInt(editFormData.user_points) || 0,
-        }),
+      const updatedUser = await adminService.updateUser(id as string, {
+        firstName: editFormData.firstName,
+        lastName: editFormData.lastName,
+        email: editFormData.email,
+        role: editFormData.role as any,
+        user_points: parseInt(editFormData.user_points) || 0,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API error response:', errorData);
-        throw new Error(
-          errorData.error || `Failed to update user: ${response.statusText}`
-        );
-      }
 
       // Update the user data in state
       setUser((prev) =>
         prev
           ? {
               ...prev,
-              firstName: editFormData.firstName,
-              lastName: editFormData.lastName,
-              email: editFormData.email,
-              role: editFormData.role as any,
+              ...updatedUser,
               user_points: parseInt(editFormData.user_points),
             }
           : null

@@ -210,6 +210,21 @@ class AdminService {
       throw new Error(response.error?.message || 'Failed to initialize admin');
     }
   }
+
+  /**
+   * Update admin profile
+   */
+  async updateAdminProfile(data: {
+    name?: string;
+    password?: string;
+    confirmPassword?: string;
+  }): Promise<void> {
+    const response = await apiClient.post<void>(`${this.baseUrl}/profile`, data);
+
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Failed to update admin profile');
+    }
+  }
 }
 
 export const adminService = new AdminService();

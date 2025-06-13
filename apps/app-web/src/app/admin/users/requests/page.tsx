@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { adminService } from '@/services/admin.service';
+import { IAccountRequest } from '@app/shared-types';
 import {
   Pagination,
   PaginationContent,
@@ -31,17 +33,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
-interface AccountRequest {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-}
-
 export default function AccountRequestsPage() {
-  const [requests, setRequests] = useState<AccountRequest[]>([]);
+  const [requests, setRequests] = useState<IAccountRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -55,13 +48,7 @@ export default function AccountRequestsPage() {
   async function fetchRequests() {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/account-requests');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch account requests');
-      }
-
-      const data = await response.json();
+      const data = await adminService.getAccountRequests();
       setRequests(data.requests);
     } catch (error) {
       console.error('Error fetching account requests:', error);
@@ -75,19 +62,8 @@ export default function AccountRequestsPage() {
     status: 'approved' | 'rejected'
   ) {
     try {
-      const response = await fetch(`/api/admin/account-requests/${requestId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      });
+      await adminService.updateAccountRequest(requestId, status);
 
-      if (!response.ok) {
-        throw new Error(`Failed to ${status} account request`);
-      }
-
-      // If approved, the user will be created by the API
       // Update the local state
       setRequests(
         requests.map((request) =>

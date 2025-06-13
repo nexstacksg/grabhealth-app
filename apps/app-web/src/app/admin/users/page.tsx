@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IUserPublic } from '@app/shared-types';
+import { adminService } from '@/services/admin.service';
 import { Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Pagination,
@@ -46,13 +47,7 @@ export default function UsersPage() {
   async function fetchUsers() {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/users');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
+      const data = await adminService.getUsers();
       setUsers(data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -63,17 +58,7 @@ export default function UsersPage() {
 
   async function updateUserRole(userId: string, newRole: string) {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update user role');
-      }
+      await adminService.updateUser(userId, { role: newRole as any });
 
       // Update the local state
       setUsers(
