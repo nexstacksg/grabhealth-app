@@ -59,14 +59,9 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       // The AuthContext handles the redirect after successful login
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
+    } catch (error: any) {
+      // Handle error with backend's error structure
+      setError(error.response?.data?.error?.message || error.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

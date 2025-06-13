@@ -13,16 +13,21 @@ class AuthService {
    * Login user - sets httpOnly cookies
    */
   async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>(
-      `${this.baseUrl}/login`,
-      data
-    );
+    try {
+      const response = await apiClient.post<AuthResponse>(
+        `${this.baseUrl}/login`,
+        data
+      );
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Login failed');
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || 'Login failed');
+      }
+
+      return response.data;
+    } catch (error: any) {
+      // Throw the error object to preserve response data
+      throw error;
     }
-
-    return response.data;
   }
 
   /**

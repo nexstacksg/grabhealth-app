@@ -176,6 +176,7 @@
         "@types/uuid": "^10.0.0",
         "ai": "latest",
         "autoprefixer": "^10.4.20",
+        "axios": "^1.9.0",
         "bcryptjs": "^3.0.2",
         "class-variance-authority": "^0.7.1",
         "cloudinary": "^2.6.1",

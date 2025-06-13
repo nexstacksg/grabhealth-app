@@ -25,17 +25,38 @@ const useAuthProvider = () => {
 
   const checkAuth = useCallback(async () => {
     try {
-      // Try to get user profile - cookies will be sent automatically
-      const userProfile = await authService.getProfile();
-
-      if (userProfile && userProfile.id) {
-        setUser(userProfile);
+      // First check if we have user data in sessionStorage (for PENDING_VERIFICATION users)
+      const storedUser = sessionStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        
+        // If user is ACTIVE, try to get fresh data from profile
+        if (parsedUser.status === 'ACTIVE') {
+          try {
+            const userProfile = await authService.getProfile();
+            if (userProfile && userProfile.id) {
+              setUser(userProfile);
+              sessionStorage.setItem('user', JSON.stringify(userProfile));
+            }
+          } catch {
+            // If profile fails, keep using stored data
+          }
+        }
       } else {
-        setUser(null);
+        // No stored user, try to get profile (for ACTIVE users)
+        const userProfile = await authService.getProfile();
+        if (userProfile && userProfile.id) {
+          setUser(userProfile);
+          sessionStorage.setItem('user', JSON.stringify(userProfile));
+        } else {
+          setUser(null);
+        }
       }
     } catch {
-      // User is not authenticated
+      // If all fails, clear user
       setUser(null);
+      sessionStorage.removeItem('user');
     } finally {
       setIsLoading(false);
     }
@@ -55,10 +76,12 @@ const useAuthProvider = () => {
       try {
         const authData = await authService.login({ email, password });
         setUser(authData.user);
+        // Store user data for persistence across refreshes
+        sessionStorage.setItem('user', JSON.stringify(authData.user));
         router.push('/');
-      } catch (error) {
-        const err = error as { message?: string };
-        throw new Error(err.message || 'Invalid email or password');
+      } catch (error: any) {
+        // Handle error like in example.md
+        throw error;
       }
     },
     [router]
@@ -71,6 +94,7 @@ const useAuthProvider = () => {
       // Ignore logout errors
     } finally {
       setUser(null);
+      sessionStorage.removeItem('user');
       router.push('/login');
     }
   }, [router]);
@@ -80,6 +104,8 @@ const useAuthProvider = () => {
       try {
         const authData = await authService.register(data);
         setUser(authData.user);
+        // Store user data for persistence across refreshes
+        sessionStorage.setItem('user', JSON.stringify(authData.user));
         router.push('/');
       } catch (error: any) {
         // Pass through the full error structure including details

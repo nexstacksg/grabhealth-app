@@ -53,10 +53,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       const cartData = await cartService.getCart();
       setCart(cartData);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      // Only show error if user is authenticated
-      if (user) {
+    } catch (error: any) {
+      // Don't show error for PENDING_VERIFICATION users or 403 errors
+      if (error?.response?.status === 403) {
+        // User doesn't have access to cart yet (PENDING_VERIFICATION)
+        setCart(null);
+      } else if (user) {
+        // Only show error for other types of errors
+        console.error('Error fetching cart:', error);
         toast.error('Failed to load cart');
       }
     } finally {
