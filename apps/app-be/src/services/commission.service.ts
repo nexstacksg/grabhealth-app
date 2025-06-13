@@ -74,8 +74,8 @@ export class CommissionService {
   private getCommissionRateByLevel(level: number): number {
     // Commission structure based on commission.md
     const rates: { [key: number]: number } = {
-      1: 0.30, // 30% for Level 1 (Sales)
-      2: 0.10, // 10% for Level 2 (Leader)
+      1: 0.3, // 30% for Level 1 (Sales)
+      2: 0.1, // 10% for Level 2 (Leader)
       3: 0.05, // 5% for Level 3 (Manager)
       4: 0.05, // 5% for Level 4 (Company)
     };

@@ -29,7 +29,7 @@ export const authenticate = async (
   try {
     // Extract token from Authorization header or cookies
     let token = extractBearerToken(req.headers.authorization);
-    
+
     // If no token in header, check cookies
     if (!token && req.cookies?.accessToken) {
       token = req.cookies.accessToken;
@@ -102,7 +102,7 @@ export const optionalAuth = async (
   try {
     // Extract token from Authorization header or cookies
     let token = extractBearerToken(req.headers.authorization);
-    
+
     // If no token in header, check cookies
     if (!token && req.cookies?.accessToken) {
       token = req.cookies.accessToken;

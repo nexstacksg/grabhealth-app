@@ -250,7 +250,10 @@ export class AuthService {
         data: { refreshToken: hashedNewRefreshToken },
       });
 
+      const userProfile = await this.getCurrentUser(user.id);
+
       return {
+        user: userProfile,
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
         expiresIn: 15 * 60 * 1000, // 15 minutes in milliseconds
