@@ -80,6 +80,71 @@ class CommissionService {
 
     return response.data;
   }
+
+  /**
+   * Initialize commission system
+   */
+  async initializeCommissionSystem(): Promise<void> {
+    const response = await apiClient.post<void>(`${this.baseUrl}/init`);
+
+    if (!response.success) {
+      throw new Error(
+        response.error?.message || 'Failed to initialize commission system'
+      );
+    }
+  }
+
+  /**
+   * Get full commission data for a user (upline, downlines, commissions, etc.)
+   */
+  async getCommissionData(): Promise<{
+    upline: any;
+    downlines: any[];
+    commissions: ICommission[];
+    points: number;
+    referralLink: string;
+    totalEarnings: number;
+  }> {
+    const response = await apiClient.get<{
+      upline: any;
+      downlines: any[];
+      commissions: ICommission[];
+      points: number;
+      referralLink: string;
+      totalEarnings: number;
+    }>(`${this.baseUrl}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(
+        response.error?.message || 'Failed to get commission data'
+      );
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Get commission structure (product tiers, role types, volume bonuses)
+   */
+  async getCommissionStructure(): Promise<{
+    productTiers: any[];
+    roleTypes: any[];
+    volumeBonusTiers: any[];
+  }> {
+    const response = await apiClient.get<{
+      productTiers: any[];
+      roleTypes: any[];
+      volumeBonusTiers: any[];
+    }>(`${this.baseUrl}/structure`);
+
+    if (!response.success || !response.data) {
+      throw new Error(
+        response.error?.message || 'Failed to get commission structure'
+      );
+    }
+
+    return response.data;
+  }
 }
 
 export const commissionService = new CommissionService();

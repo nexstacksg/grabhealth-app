@@ -24,18 +24,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+import { authService } from '@/services/auth.service';
+import { IUserPublic } from '@app/shared-types';
 
 export default function Header() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUserPublic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -51,16 +47,9 @@ export default function Header() {
     async function fetchCurrentUser() {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/auth/user');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-          console.log('User fetched successfully:', data.user);
-        } else {
-          // If response is not ok, clear the user state
-          setUser(null);
-          console.log('No authenticated user found');
-        }
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        console.log('User fetched successfully:', userData);
       } catch (error) {
         console.error('Error fetching user:', error);
         setUser(null);
@@ -88,9 +77,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
+      await authService.logout();
 
       // Update local state
       setUser(null);
@@ -170,7 +157,7 @@ export default function Header() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="gap-2">
                           <User className="h-4 w-4" />
-                          <span>{user.name}</span>
+                          <span>{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -243,7 +230,7 @@ export default function Header() {
                               <User className="h-4 w-4 text-emerald-500" />
                             </div>
                             <div>
-                              <div className="font-medium">{user.name}</div>
+                              <div className="font-medium">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}</div>
                               <div className="text-sm text-gray-500">
                                 {user.email}
                               </div>

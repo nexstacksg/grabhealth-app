@@ -1,4 +1,4 @@
-// Client-side commission utilities
+import { commissionService } from '@/services/commission.service';
 
 /**
  * Initialize commission system on the client side
@@ -6,22 +6,7 @@
  */
 export async function initializeCommissionSystem(): Promise<boolean> {
   try {
-    // Make a simple request to the commission API which will initialize tables on the server
-    const response = await fetch('/api/commission', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(
-        'Failed to initialize commission system:',
-        response.statusText
-      );
-      return false;
-    }
-
+    await commissionService.initializeCommissionSystem();
     return true;
   } catch (error) {
     console.error('Error initializing commission system:', error);

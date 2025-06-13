@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initializeCommissionSystem as initCommissionClient } from '../../lib/commission-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { commissionService } from '@/services/commission.service';
 
 // Types for commission context
 type UserRelationship = {
@@ -68,17 +69,8 @@ export function CommissionProvider({
   // Function to initialize commission system
   const initializeCommissionSystem = async () => {
     try {
-      // Call the initialization endpoint
-      const initResponse = await fetch('/api/commission/init');
-
-      if (!initResponse.ok) {
-        console.error(
-          'Failed to initialize commission system:',
-          await initResponse.text()
-        );
-      } else {
-        console.log('Commission system initialized successfully');
-      }
+      await commissionService.initializeCommissionSystem();
+      console.log('Commission system initialized successfully');
     } catch (err) {
       console.error('Error initializing commission system:', err);
     }
@@ -108,26 +100,7 @@ export function CommissionProvider({
 
       // Then fetch the commission data
       try {
-        const response = await fetch('/api/commission');
-
-        if (!response.ok) {
-          console.warn(
-            'Commission API returned non-OK status:',
-            response.status
-          );
-          // Set default values but don't throw error to allow UI to render
-          setUpline(null);
-          setDownlines([]);
-          setCommissions([]);
-          setPoints(0);
-          setReferralLink(
-            `${window.location.origin}/auth/register?referrer=${user.id || 'user'}`
-          );
-          setTotalEarnings(0);
-          return;
-        }
-
-        const data = await response.json();
+        const data = await commissionService.getCommissionData();
 
         // Use data with fallbacks
         setUpline(data.upline || null);
@@ -139,15 +112,13 @@ export function CommissionProvider({
             `${window.location.origin}/auth/register?referrer=${user.id || 'user'}`
         );
 
-        // Calculate total earnings from commissions
-        const total = (data.commissions || []).reduce(
+        // Use total earnings from service or calculate if not provided
+        setTotalEarnings(data.totalEarnings || (data.commissions || []).reduce(
           (sum: number, commission: Commission) => {
             return sum + (commission.amount || 0);
           },
           0
-        );
-
-        setTotalEarnings(total);
+        ));
       } catch (fetchError) {
         console.error('Error fetching commission data:', fetchError);
         // Set default values to allow UI to render

@@ -19,6 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { commissionService } from '@/services/commission.service';
 // Authentication is now handled at the page level
 
 // Types for commission structure data
@@ -152,22 +153,7 @@ function CommissionStructure() {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch('/api/commission/structure');
-
-        if (!response.ok) {
-          console.warn(
-            'Commission structure API returned non-OK status:',
-            response.status
-          );
-          // Use default data instead of throwing error
-          setProductTiers(defaultProductTiers);
-          setRoleTypes([]);
-          setVolumeBonusTiers(defaultVolumeBonusTiers);
-          setError('Using default commission structure data');
-          return;
-        }
-
-        const data = await response.json();
+        const data = await commissionService.getCommissionStructure();
 
         // If we got empty data from the API, use defaults
         if (!data.productTiers || data.productTiers.length === 0) {

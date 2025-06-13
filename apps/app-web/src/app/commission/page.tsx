@@ -4,39 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CommissionProvider } from '@/components/commission/commission-provider';
 import CommissionDashboard from '@/components/commission/commission-dashboard';
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role?: string;
-};
+import { authService } from '@/services/auth.service';
+import { IUserPublic } from '@app/shared-types';
 
 export default function CommissionPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUserPublic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simple direct API call to check authentication
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          console.log('Not authenticated, redirecting to login');
-          router.push('/auth/login');
-          return;
-        }
-
-        const userData = await response.json();
-        console.log('User data from direct API call:', userData);
+        const userData = await authService.getCurrentUser();
 
         if (userData && userData.id) {
           setUser(userData);
