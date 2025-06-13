@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initializeCommissionSystem as initCommissionClient } from '../../lib/commission-client';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Types for commission context
 type UserRelationship = {

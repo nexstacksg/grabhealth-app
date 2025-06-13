@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 // Higher-order component to protect routes that require authentication
