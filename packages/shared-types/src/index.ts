@@ -11,6 +11,7 @@ export * from './types/profile';
 export * from './types/membership';
 export * from './types/promotion';
 export * from './types/admin';
+export * from './types/dashboard';
 
 // Export all models
 export * from './models';

@@ -9,6 +9,7 @@ import cartRoutes from './cart';
 import commissionRoutes from './commissions';
 import membershipRoutes from './memberships';
 import promotionRoutes from './promotions';
+import aiRoutes from './ai';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.get('/', (_req, res) => {
       commissions: '/api/v1/commissions',
       memberships: '/api/v1/memberships',
       promotions: '/api/v1/promotions',
+      ai: '/api/v1/ai',
     },
   });
 });
@@ -42,5 +44,6 @@ router.use('/cart', cartRoutes);
 router.use('/commissions', commissionRoutes);
 router.use('/memberships', membershipRoutes);
 router.use('/promotions', promotionRoutes);
+router.use('/ai', aiRoutes);
 
 export default router;

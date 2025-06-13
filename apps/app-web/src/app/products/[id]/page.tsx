@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMembership } from '@/hooks/use-membership';
 import { formatPrice } from '@/lib/utils';
 import { productService } from '@/services/product.service';
+import { aiService } from '@/services/ai.service';
 import { IProduct } from '@app/shared-types';
 
 interface ProductWithExtras extends IProduct {
@@ -57,20 +58,43 @@ export default function ProductDetailPage() {
         const enhancedProduct = addDemoData(productData);
         setProduct(enhancedProduct);
 
-        // Fetch related products from the same category
-        if (productData.categoryId) {
-          try {
-            const categoryProducts = await productService.getProductsByCategory(
-              productData.categoryId
-            );
-            setRelatedProducts(
-              categoryProducts
-                .filter((p) => p.id !== productData.id)
-                .slice(0, 4)
-            );
-          } catch (err) {
-            console.error('Error fetching related products:', err);
-            // Continue without related products
+        // Track product view for AI recommendations
+        try {
+          await aiService.recordInteraction({
+            userId: undefined, // Will be handled by the service if user is authenticated
+            productId: productData.id,
+            interactionType: 'view',
+            metadata: {
+              source: 'product_detail',
+              category: productData.categoryId
+            }
+          });
+        } catch (trackingError) {
+          console.warn('Failed to track product view:', trackingError);
+        }
+
+        // Fetch AI-powered similar products
+        try {
+          const similarProducts = await aiService.getSimilarProducts(productData.id, {
+            limit: 4
+          });
+          setRelatedProducts(similarProducts);
+        } catch (err) {
+          console.error('Error fetching similar products:', err);
+          // Fallback to category-based products if AI fails
+          if (productData.categoryId) {
+            try {
+              const categoryProducts = await productService.getProductsByCategory(
+                productData.categoryId
+              );
+              setRelatedProducts(
+                categoryProducts
+                  .filter((p) => p.id !== productData.id)
+                  .slice(0, 4)
+              );
+            } catch (fallbackErr) {
+              console.error('Error fetching category products as fallback:', fallbackErr);
+            }
           }
         }
       } catch (err: any) {
@@ -459,10 +483,10 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Related Products */}
+      {/* AI-Powered Similar Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+          <h2 className="text-2xl font-bold mb-6">You Might Also Like</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
               <Link

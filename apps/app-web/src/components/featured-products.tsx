@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { aiService } from '@/services/ai.service';
+import { IProduct } from '@app/shared-types';
 
 export default function FeaturedProducts() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,20 +19,15 @@ export default function FeaturedProducts() {
     async function fetchProducts() {
       try {
         setLoading(true);
-        // Use a consistent approach for fetching that works in both environments
-        const response = await fetch('/api/products?featured=true');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-
-        const data = await response.json();
-        // The API now returns data in a different structure with products inside a 'products' property
-        const productsArray = Array.isArray(data.products) ? data.products : [];
-        setProducts(productsArray.slice(0, 4)); // Get first 4 products
+        // Use AI service for personalized recommendations instead of featured products
+        const recommendedProducts = await aiService.getPersonalizedRecommendations({
+          limit: 4,
+          category: undefined
+        });
+        setProducts(recommendedProducts);
         setError(null);
       } catch (err) {
-        setError('Error loading products. Please try again later.');
+        setError('Error loading personalized recommendations. Please try again later.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -64,21 +61,20 @@ export default function FeaturedProducts() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-      {products.map((product: any) => (
+      {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );
 }
 
-function ProductCard({ product }: { product: any }) {
+function ProductCard({ product }: { product: IProduct }) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
-  const regularPrice = Number.parseFloat(product.price);
-  const discountedPrice = product.discounted_price
-    ? Number.parseFloat(product.discounted_price)
-    : regularPrice;
-  const discount = Math.round((1 - discountedPrice / regularPrice) * 100);
+  const regularPrice = product.price;
+  // For AI recommendations, we'll use the regular price (no discounts for now)
+  const discountedPrice = regularPrice;
+  const discount = 0; // No discount calculation for AI recommendations
 
   const handleAddToCart = async () => {
     try {
@@ -88,10 +84,27 @@ function ProductCard({ product }: { product: any }) {
           id: product.id,
           name: product.name,
           price: discountedPrice,
-          image_url: product.image_url,
+          image_url: product.imageUrl || '',
         },
         1
       );
+      
+      // Track user interaction for AI recommendations
+      try {
+        await aiService.recordInteraction({
+          userId: undefined, // Will be handled by the service if user is authenticated
+          productId: product.id,
+          interactionType: 'add_to_cart',
+          metadata: {
+            source: 'featured_products',
+            price: discountedPrice,
+            category: product.categoryId
+          }
+        });
+      } catch (trackingError) {
+        console.warn('Failed to track interaction:', trackingError);
+      }
+      
       toast.success(`${product.name} added to cart`);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -105,7 +118,7 @@ function ProductCard({ product }: { product: any }) {
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="relative">
         <Image
-          src={product.image_url || '/placeholder.svg?height=200&width=200'}
+          src={product.imageUrl || '/placeholder.svg?height=200&width=200'}
           alt={product.name}
           width={300}
           height={300}
@@ -119,7 +132,7 @@ function ProductCard({ product }: { product: any }) {
       </div>
       <CardContent className="p-4">
         <div className="text-sm text-emerald-600 font-medium mb-1">
-          {product.category_name}
+          {product.category?.name || 'AI Recommendation'}
         </div>
         <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">

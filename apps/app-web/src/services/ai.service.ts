@@ -9,7 +9,7 @@ import {
 
 class AIService {
   private chatBaseUrl = '/ai/chat';
-  private recommendBaseUrl = '/ai/recommend';
+  private recommendBaseUrl = '/ai';
   private chatbotBaseUrl = '/chatbot';
 
   /**
@@ -59,7 +59,7 @@ class AIService {
     category?: string;
   }): Promise<IProduct[]> {
     const response = await apiClient.get<IProduct[]>(
-      `${this.recommendBaseUrl}/personalized`,
+      `${this.recommendBaseUrl}/recommend`,
       { params }
     );
 
@@ -77,11 +77,11 @@ class AIService {
    */
   async getSimilarProducts(
     productId: number,
-    limit: number = 5
+    params?: { limit?: number }
   ): Promise<IProduct[]> {
     const response = await apiClient.get<IProduct[]>(
       `${this.recommendBaseUrl}/similar/${productId}`,
-      { params: { limit } }
+      { params }
     );
 
     if (!response.success || !response.data) {
@@ -96,10 +96,10 @@ class AIService {
   /**
    * Get trending products
    */
-  async getTrendingProducts(limit: number = 10): Promise<IProduct[]> {
+  async getTrendingProducts(params?: { limit?: number }): Promise<IProduct[]> {
     const response = await apiClient.get<IProduct[]>(
       `${this.recommendBaseUrl}/trending`,
-      { params: { limit } }
+      { params }
     );
 
     if (!response.success || !response.data) {
@@ -182,9 +182,9 @@ class AIService {
    * Get product search suggestions
    */
   async getSearchSuggestions(query: string): Promise<string[]> {
-    const response = await apiClient.get<string[]>(
-      `${this.recommendBaseUrl}/suggestions`,
-      { params: { q: query } }
+    const response = await apiClient.post<string[]>(
+      `${this.recommendBaseUrl}/search-suggestions`,
+      { query, limit: 5 }
     );
 
     if (!response.success || !response.data) {
@@ -200,13 +200,17 @@ class AIService {
    * Record user interaction for ML training
    */
   async recordInteraction(data: {
-    type: 'view' | 'add_to_cart' | 'purchase' | 'search' | 'like';
-    productId?: number;
-    searchQuery?: string;
+    userId?: number;
+    productId: number;
+    interactionType: 'view' | 'add_to_cart' | 'purchase' | 'share' | 'review';
     metadata?: any;
   }): Promise<void> {
     try {
-      await apiClient.post<void>(`${this.recommendBaseUrl}/interaction`, data);
+      await apiClient.post<void>(`${this.recommendBaseUrl}/track`, {
+        productId: data.productId,
+        interactionType: data.interactionType,
+        metadata: data.metadata,
+      });
     } catch (error) {
       // Don't throw errors for interaction recording
       console.warn('Failed to record interaction:', error);

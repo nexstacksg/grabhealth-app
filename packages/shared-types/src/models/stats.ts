@@ -26,3 +26,21 @@ export interface INetworkStats {
     totalSales: number;
   }>;
 }
+
+export interface ICommissionSummary {
+  totalPaid: number;
+  totalPending: number;
+  totalEarned: number;
+  periodSummary: {
+    startDate: string;
+    endDate: string;
+    totalCommissions: number;
+    totalOrders: number;
+  };
+  topEarners: Array<{
+    userId: number;
+    username: string;
+    totalEarned: number;
+    rank: number;
+  }>;
+}
