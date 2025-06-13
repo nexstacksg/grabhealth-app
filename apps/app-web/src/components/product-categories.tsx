@@ -18,9 +18,11 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import type { JSX } from 'react';
+import { categoryService } from '@/services/category.service';
+import { ICategory } from '@app/shared-types';
 
 export default function ProductCategories() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -45,19 +47,12 @@ export default function ProductCategories() {
     async function fetchCategories() {
       try {
         setLoading(true);
-        // Use a consistent approach for fetching that works in both environments
-        const response = await fetch('/api/product-categories');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch categories');
-        }
-
-        const data = await response.json();
+        const data = await categoryService.getCategories();
         setCategories(data);
         setError(null);
       } catch (err) {
         setError('Error loading categories. Please try again later.');
-        console.error(err);
+        console.error('Error fetching categories:', err);
       } finally {
         setLoading(false);
       }
@@ -66,20 +61,34 @@ export default function ProductCategories() {
     fetchCategories();
   }, []);
 
-  // Map category names to icons
-  const getIconForCategory = (iconName: string) => {
-    const icons: Record<string, JSX.Element> = {
-      Thermometer: <Thermometer className="h-8 w-8 text-emerald-500" />,
-      Pill: <Pill className="h-8 w-8 text-emerald-500" />,
-      Vitamins: <Vitamins className="h-8 w-8 text-emerald-500" />,
-      Heart: <Heart className="h-8 w-8 text-emerald-500" />,
-      Stethoscope: <Stethoscope className="h-8 w-8 text-emerald-500" />,
-      Brain: <Brain className="h-8 w-8 text-emerald-500" />,
-      Droplet: <Droplet className="h-8 w-8 text-emerald-500" />,
-      Bandage: <Bandage className="h-8 w-8 text-emerald-500" />,
+  // Map category names to icons based on category name
+  const getIconForCategory = (categoryName: string) => {
+    const iconMap: Record<string, JSX.Element> = {
+      'Medical Devices': <Thermometer className="h-8 w-8 text-emerald-500" />,
+      'Medications': <Pill className="h-8 w-8 text-emerald-500" />,
+      'Vitamins': <Vitamins className="h-8 w-8 text-emerald-500" />,
+      'Supplements': <Vitamins className="h-8 w-8 text-emerald-500" />,
+      'Health & Wellness': <Heart className="h-8 w-8 text-emerald-500" />,
+      'Diagnostics': <Stethoscope className="h-8 w-8 text-emerald-500" />,
+      'Mental Health': <Brain className="h-8 w-8 text-emerald-500" />,
+      'Personal Care': <Droplet className="h-8 w-8 text-emerald-500" />,
+      'First Aid': <Bandage className="h-8 w-8 text-emerald-500" />,
     };
 
-    return icons[iconName] || <Pill className="h-8 w-8 text-emerald-500" />;
+    // Try exact match first, then partial match
+    if (iconMap[categoryName]) {
+      return iconMap[categoryName];
+    }
+    
+    // Check for partial matches
+    for (const [key, icon] of Object.entries(iconMap)) {
+      if (categoryName.toLowerCase().includes(key.toLowerCase()) || 
+          key.toLowerCase().includes(categoryName.toLowerCase())) {
+        return icon;
+      }
+    }
+    
+    return <Pill className="h-8 w-8 text-emerald-500" />; // Default icon
   };
 
   const nextSlide = () => {
@@ -132,12 +141,12 @@ export default function ProductCategories() {
   }
 
   // Function to render a category card
-  const renderCategoryCard = (category: any) => (
+  const renderCategoryCard = (category: ICategory) => (
     <Link key={category.id} href={`/products?category=${category.name}`}>
       <Card className="h-full hover:shadow-md transition-shadow cursor-pointer border-none bg-gray-50">
         <CardContent className="p-6 flex flex-col items-center text-center">
           <div className="mb-4 p-3 bg-white rounded-full shadow-sm">
-            {getIconForCategory(category.icon)}
+            {getIconForCategory(category.name)}
           </div>
           <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
           <p className="text-sm text-gray-600">{category.description}</p>
@@ -155,7 +164,7 @@ export default function ProductCategories() {
 
         {/* Desktop view - Grid layout */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category: any) => renderCategoryCard(category))}
+          {categories.map((category) => renderCategoryCard(category))}
         </div>
 
         {/* Mobile view - Carousel with 2 items per slide */}
@@ -171,13 +180,13 @@ export default function ProductCategories() {
                     <div className="grid grid-cols-2 gap-4">
                       {categories
                         .slice(slideIndex * 2, slideIndex * 2 + 2)
-                        .map((category: any) => (
+                        .map((category) => (
                           <div key={category.id} className="px-1">
                             <Link href={`/products?category=${category.name}`}>
                               <Card className="h-full hover:shadow-md transition-shadow cursor-pointer border-none bg-gray-50">
                                 <CardContent className="p-3 flex flex-col items-center text-center">
                                   <div className="mb-2 p-2 bg-white rounded-full shadow-sm">
-                                    {getIconForCategory(category.icon)}
+                                    {getIconForCategory(category.name)}
                                   </div>
                                   <h3 className="font-semibold text-sm mb-1">
                                     {category.name}
