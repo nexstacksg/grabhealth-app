@@ -144,9 +144,15 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setMembership(null);
       }
-    } catch (error) {
-      console.error('Error fetching membership:', error);
-      setMembership(null);
+    } catch (error: any) {
+      // Don't show error for PENDING_VERIFICATION users or 403 errors
+      if (error?.response?.status === 403) {
+        // User doesn't have access to membership yet (PENDING_VERIFICATION)
+        setMembership(null);
+      } else {
+        console.error('Error fetching membership:', error);
+        setMembership(null);
+      }
     } finally {
       setIsLoading(false);
     }

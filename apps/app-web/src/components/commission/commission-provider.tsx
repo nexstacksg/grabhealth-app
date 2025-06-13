@@ -119,8 +119,11 @@ export function CommissionProvider({
           },
           0
         ));
-      } catch (fetchError) {
-        console.error('Error fetching commission data:', fetchError);
+      } catch (fetchError: any) {
+        // Don't log error for PENDING_VERIFICATION users
+        if (fetchError?.response?.status !== 403) {
+          console.error('Error fetching commission data:', fetchError);
+        }
         // Set default values to allow UI to render
         setUpline(null);
         setDownlines([]);
