@@ -28,6 +28,8 @@ model User {
   lastLoginAt            DateTime?
   emailVerificationToken String?
   emailVerifiedAt        DateTime?
+  emailVerificationCode  String?
+  emailVerificationCodeExpires DateTime?
   passwordResetToken     String?
   passwordResetExpires   DateTime?
   createdAt              DateTime  @default(now())

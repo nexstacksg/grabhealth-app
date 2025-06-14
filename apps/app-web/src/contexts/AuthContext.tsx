@@ -78,7 +78,13 @@ const useAuthProvider = () => {
         setUser(authData.user);
         // Store user data for persistence across refreshes
         sessionStorage.setItem('user', JSON.stringify(authData.user));
-        router.push('/');
+        
+        // Check if email verification is needed
+        if (authData.user.status === 'PENDING_VERIFICATION') {
+          router.push('/auth/verify');
+        } else {
+          router.push('/');
+        }
       } catch (error: any) {
         // Handle error like in example.md
         throw error;
@@ -106,7 +112,13 @@ const useAuthProvider = () => {
         setUser(authData.user);
         // Store user data for persistence across refreshes
         sessionStorage.setItem('user', JSON.stringify(authData.user));
-        router.push('/');
+        
+        // Check if email verification is needed
+        if (authData.user.status === 'PENDING_VERIFICATION') {
+          router.push('/auth/verify');
+        } else {
+          router.push('/');
+        }
       } catch (error: any) {
         // Pass through the full error structure including details
         throw error;

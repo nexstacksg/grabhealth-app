@@ -114,7 +114,7 @@ class AuthService {
   }
 
   /**
-   * Verify email address
+   * Verify email address with token
    */
   async verifyEmail(token: string): Promise<void> {
     const response = await apiClient.post<void>(
@@ -124,6 +124,34 @@ class AuthService {
 
     if (!response.success) {
       throw new Error(response.error?.message || 'Failed to verify email');
+    }
+  }
+
+  /**
+   * Verify email with 4-digit code
+   */
+  async verifyEmailCode(email: string, code: string): Promise<void> {
+    const response = await apiClient.post<void>(
+      `${this.baseUrl}/verify-email-code`,
+      { email, code }
+    );
+
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Invalid verification code');
+    }
+  }
+
+  /**
+   * Resend verification code
+   */
+  async resendVerificationCode(email: string): Promise<void> {
+    const response = await apiClient.post<void>(
+      `${this.baseUrl}/resend-verification-code`,
+      { email }
+    );
+
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Failed to resend code');
     }
   }
 }

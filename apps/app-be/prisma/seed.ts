@@ -4,17 +4,39 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clear existing data
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.commission.deleteMany();
-  await prisma.productCommissionTier.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.userRelationship.deleteMany();
-  await prisma.userMembership.deleteMany();
-  await prisma.membershipTier.deleteMany();
-  await prisma.user.deleteMany();
+  console.log("🧹 Clearing existing data...");
+  
+  // Clear existing data in correct order (respecting foreign key constraints)
+  try {
+    // First, clear tables that depend on others
+    await prisma.emailVerification.deleteMany();
+    await prisma.accountRequest.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.commission.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.productCommissionTier.deleteMany();
+    await prisma.giftItem.deleteMany();
+    await prisma.promotion.deleteMany();
+    await prisma.product.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.userPoints.deleteMany();
+    await prisma.userRole.deleteMany();
+    await prisma.userRoleType.deleteMany();
+    await prisma.userRelationship.deleteMany();
+    await prisma.userMembership.deleteMany();
+    await prisma.membershipTier.deleteMany();
+    await prisma.commissionTier.deleteMany();
+    await prisma.volumeBonusTier.deleteMany();
+    await prisma.auditLog.deleteMany();
+    
+    // Finally, delete users
+    await prisma.user.deleteMany();
+    
+    console.log("✅ Data cleared successfully");
+  } catch (error) {
+    console.error("❌ Error clearing data:", error);
+    throw error;
+  }
 
   // Create membership tier (free)
   const freeTier = await prisma.membershipTier.create({

@@ -191,6 +191,72 @@ router.post(
 
 /**
  * @swagger
+ * /auth/verify-email-code:
+ *   post:
+ *     summary: Verify email with 4-digit code
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               code:
+ *                 type: string
+ *                 pattern: '^[0-9]{4}$'
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid code
+ */
+router.post(
+  '/verify-email-code',
+  emailVerificationLimiter,
+  authController.verifyEmailCode
+);
+
+/**
+ * @swagger
+ * /auth/resend-verification-code:
+ *   post:
+ *     summary: Resend verification code
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification code sent successfully
+ *       429:
+ *         description: Too many requests
+ */
+router.post(
+  '/resend-verification-code',
+  emailVerificationLimiter,
+  authController.resendVerificationCode
+);
+
+/**
+ * @swagger
  * /auth/request-password-reset:
  *   post:
  *     summary: Request password reset

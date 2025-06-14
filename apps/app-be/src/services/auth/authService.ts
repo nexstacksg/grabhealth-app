@@ -23,6 +23,7 @@ import {
   TokenPayload,
 } from '@app/shared-types';
 import {
+  sendEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from '../../utils/email';
@@ -45,6 +46,11 @@ export class AuthService {
     };
   }
 
+  private generateVerificationCode(): string {
+    // Generate a random 4-digit code between 1000-9999
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
   async register(data: RegisterRequest): Promise<AuthResponse> {
     // Check if user already exists by email
     const existingUser = await prisma.user.findUnique({
@@ -62,8 +68,10 @@ export class AuthService {
     // Hash password
     const passwordHash = await hashPassword(data.password);
 
-    // Generate email verification token
+    // Generate email verification token and code
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationCode = this.generateVerificationCode();
+    const emailVerificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Create user
     const user = await prisma.user.create({
@@ -75,6 +83,8 @@ export class AuthService {
         role: UserRole.USER,
         status: UserStatus.PENDING_VERIFICATION,
         emailVerificationToken,
+        emailVerificationCode,
+        emailVerificationCodeExpires,
       },
     });
 
@@ -98,9 +108,9 @@ export class AuthService {
       data: { refreshToken: hashedRefreshToken },
     });
 
-    // Send verification email
+    // Send verification email with code
     try {
-      await sendVerificationEmail(user.email, emailVerificationToken);
+      await this.sendVerificationCode(user.email, emailVerificationCode);
     } catch (error) {
       logger.error('Failed to send verification email:', error);
       // Don't fail the registration if email fails
@@ -385,6 +395,150 @@ export class AuthService {
     }
 
     return this.createUserPublic(user);
+  }
+
+  // Generate a 4-digit verification code
+  private generateVerificationCode(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  // Send verification code email
+  async sendVerificationCode(email: string, code: string): Promise<void> {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Verify Your Email</h2>
+        <p>Thank you for registering. Please enter this verification code to verify your email address:</p>
+        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+          <h1 style="color: #007bff; font-size: 36px; letter-spacing: 10px; margin: 0;">${code}</h1>
+        </div>
+        <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="color: #999; font-size: 12px;">If you didn't create an account, please ignore this email.</p>
+      </div>
+    `;
+
+    await sendEmail(email, 'Your Verification Code', html);
+  }
+
+  // Verify email with 4-digit code
+  async verifyEmailCode(email: string, code: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new ApiError(
+        'User not found',
+        HttpStatus.NOT_FOUND,
+        ErrorCode.USER_NOT_FOUND
+      );
+    }
+
+    if (!user.emailVerificationCode || !user.emailVerificationCodeExpires) {
+      throw new ApiError(
+        'No verification code found',
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    if (new Date() > user.emailVerificationCodeExpires) {
+      throw new ApiError(
+        'Verification code has expired',
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.EXPIRED_TOKEN
+      );
+    }
+
+    if (user.emailVerificationCode !== code) {
+      // Increment failed attempts in cache
+      const attemptsKey = cacheService.generateKey('verify_attempts', email);
+      const attempts = await cacheService.get<number>(attemptsKey) || 0;
+      
+      if (attempts >= 4) { // 5th attempt will fail
+        throw new ApiError(
+          'Too many failed attempts. Please request a new code.',
+          HttpStatus.TOO_MANY_REQUESTS,
+          ErrorCode.RATE_LIMIT_EXCEEDED
+        );
+      }
+
+      await cacheService.set(attemptsKey, attempts + 1, 600); // 10 minutes
+
+      throw new ApiError(
+        'Invalid verification code',
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    // Clear attempts on success
+    const attemptsKey = cacheService.generateKey('verify_attempts', email);
+    await cacheService.del(attemptsKey);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailVerificationToken: null,
+        emailVerificationCode: null,
+        emailVerificationCodeExpires: null,
+        status: UserStatus.ACTIVE,
+      },
+    });
+  }
+
+  // Resend verification code
+  async resendVerificationCode(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new ApiError(
+        'User not found',
+        HttpStatus.NOT_FOUND,
+        ErrorCode.USER_NOT_FOUND
+      );
+    }
+
+    if (user.emailVerifiedAt) {
+      throw new ApiError(
+        'Email already verified',
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.ALREADY_VERIFIED
+      );
+    }
+
+    // Check rate limit for resend
+    const resendKey = cacheService.generateKey('resend_code', email);
+    const lastResend = await cacheService.get<number>(resendKey);
+    
+    if (lastResend) {
+      throw new ApiError(
+        'Please wait before requesting a new code',
+        HttpStatus.TOO_MANY_REQUESTS,
+        ErrorCode.RATE_LIMIT_EXCEEDED
+      );
+    }
+
+    // Generate new code
+    const emailVerificationCode = this.generateVerificationCode();
+    const emailVerificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationCode,
+        emailVerificationCodeExpires,
+      },
+    });
+
+    // Set rate limit (1 minute between resends)
+    await cacheService.set(resendKey, Date.now(), 60);
+
+    // Send new code
+    await this.sendVerificationCode(user.email, emailVerificationCode);
   }
 }
 

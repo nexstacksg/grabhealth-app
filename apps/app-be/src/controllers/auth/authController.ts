@@ -253,3 +253,41 @@ export const resetPassword = async (
     next(error);
   }
 };
+
+export const verifyEmailCode = async (
+  req: Request<{}, {}, { email: string; code: string }>,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await authService.verifyEmailCode(req.body.email, req.body.code);
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Email verified successfully',
+    };
+
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resendVerificationCode = async (
+  req: Request<{}, {}, { email: string }>,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await authService.resendVerificationCode(req.body.email);
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Verification code sent successfully',
+    };
+
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
