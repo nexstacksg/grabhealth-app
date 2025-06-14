@@ -45,12 +45,23 @@ const useAuthProvider = () => {
         }
       } else {
         // No stored user, try to get profile (for ACTIVE users)
-        const userProfile = await authService.getProfile();
-        if (userProfile && userProfile.id) {
-          setUser(userProfile);
-          sessionStorage.setItem('user', JSON.stringify(userProfile));
-        } else {
-          setUser(null);
+        try {
+          const userProfile = await authService.getProfile();
+          if (userProfile && userProfile.id) {
+            setUser(userProfile);
+            sessionStorage.setItem('user', JSON.stringify(userProfile));
+          } else {
+            setUser(null);
+          }
+        } catch (error: any) {
+          // If 401, user is not authenticated - this is expected
+          if (error?.response?.status === 401) {
+            setUser(null);
+          } else {
+            // Log other errors
+            console.error('Error fetching profile:', error);
+            setUser(null);
+          }
         }
       }
     } catch {

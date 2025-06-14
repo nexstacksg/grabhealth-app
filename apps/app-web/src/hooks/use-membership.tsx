@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { membershipService } from '@/services/membership.service';
-import { IMembership } from '@app/shared-types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Membership {
   id: number;
@@ -44,6 +44,7 @@ const MembershipContext = createContext<MembershipContextType | undefined>(
 );
 
 export const MembershipProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
   const [membership, setMembership] = useState<Membership | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -123,6 +124,13 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch membership data
   const fetchMembership = async () => {
+    // Skip if user is not authenticated
+    if (!user) {
+      setMembership(null);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       const membershipData = await membershipService.getCurrentMembership();
@@ -219,7 +227,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]); // Re-fetch when user changes
 
   return (
     <MembershipContext.Provider
