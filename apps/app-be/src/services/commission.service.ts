@@ -213,16 +213,21 @@ export class CommissionService {
       const network = await this.buildNetworkTree(userId, 1, 5);
 
       return {
-        userId: user.id,
-        userName: `${user.firstName} ${user.lastName}`,
-        userEmail: user.email,
+        id: parseInt(user.id), // Convert string ID to number for INetworkNode
+        username: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
         level: 0,
         totalSales: user.orders.reduce((sum, order) => sum + order.total, 0),
-        totalCommissions: user.commissionsReceived.reduce(
+        commissionEarned: user.commissionsReceived.reduce(
           (sum, c) => sum + c.amount,
           0
         ),
-        downlines: network,
+        isActive: user.status === 'ACTIVE',
+        joinedAt: user.createdAt.toISOString(),
+        children: network,
       };
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
@@ -261,20 +266,24 @@ export class CommissionService {
       );
 
       nodes.push({
-        userId: rel.user.id,
-        userName: `${rel.user.firstName} ${rel.user.lastName}`,
-        userEmail: rel.user.email,
-        uplineId,
+        id: parseInt(rel.user.id),
+        username: rel.user.email,
+        firstName: rel.user.firstName,
+        lastName: rel.user.lastName,
+        email: rel.user.email,
+        role: rel.user.role,
         level: currentLevel,
         totalSales: rel.user.orders.reduce(
           (sum, order) => sum + order.total,
           0
         ),
-        totalCommissions: rel.user.commissionsReceived.reduce(
+        commissionEarned: rel.user.commissionsReceived.reduce(
           (sum, c) => sum + c.amount,
           0
         ),
-        downlines,
+        isActive: rel.user.status === 'ACTIVE',
+        joinedAt: rel.user.createdAt.toISOString(),
+        children: downlines,
       });
     }
 
@@ -381,9 +390,9 @@ export class CommissionService {
 
       // Collect all members from downlines recursively
       const collectMembers = (node: INetworkNode, level: number) => {
-        allMembers.add(node.userId);
-        if (node.downlines && node.downlines.length > 0) {
-          for (const downline of node.downlines) {
+        allMembers.add(node.id.toString());
+        if (node.children && node.children.length > 0) {
+          for (const downline of node.children) {
             collectMembers(downline, level + 1);
           }
         }

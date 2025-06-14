@@ -24,7 +24,6 @@ import {
 } from '@app/shared-types';
 import {
   sendEmail,
-  sendVerificationEmail,
   sendPasswordResetEmail,
 } from '../../utils/email';
 import crypto from 'crypto';
@@ -85,7 +84,7 @@ export class AuthService {
         emailVerificationToken,
         emailVerificationCode,
         emailVerificationCodeExpires,
-      },
+      } as any, // Type assertion to bypass Prisma type issue
     });
 
     // Generate tokens
@@ -397,10 +396,6 @@ export class AuthService {
     return this.createUserPublic(user);
   }
 
-  // Generate a 4-digit verification code
-  private generateVerificationCode(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
-  }
 
   // Send verification code email
   async sendVerificationCode(email: string, code: string): Promise<void> {
@@ -424,7 +419,7 @@ export class AuthService {
   async verifyEmailCode(email: string, code: string): Promise<void> {
     const user = await prisma.user.findUnique({
       where: { email },
-    });
+    }) as any; // Type assertion for user with verification fields
 
     if (!user) {
       throw new ApiError(
@@ -453,7 +448,8 @@ export class AuthService {
     if (user.emailVerificationCode !== code) {
       // Increment failed attempts in cache
       const attemptsKey = cacheService.generateKey('verify_attempts', email);
-      const attempts = await cacheService.get<number>(attemptsKey) || 0;
+      const attemptsStr = await cacheService.get(attemptsKey);
+      const attempts = attemptsStr ? parseInt(attemptsStr, 10) : 0;
       
       if (attempts >= 4) { // 5th attempt will fail
         throw new ApiError(
@@ -463,7 +459,7 @@ export class AuthService {
         );
       }
 
-      await cacheService.set(attemptsKey, attempts + 1, 600); // 10 minutes
+      await cacheService.set(attemptsKey, (attempts + 1).toString(), 600); // 10 minutes
 
       throw new ApiError(
         'Invalid verification code',
@@ -484,7 +480,7 @@ export class AuthService {
         emailVerificationCode: null,
         emailVerificationCodeExpires: null,
         status: UserStatus.ACTIVE,
-      },
+      } as any, // Type assertion to bypass Prisma type issue
     });
   }
 
@@ -512,7 +508,7 @@ export class AuthService {
 
     // Check rate limit for resend
     const resendKey = cacheService.generateKey('resend_code', email);
-    const lastResend = await cacheService.get<number>(resendKey);
+    const lastResend = await cacheService.get(resendKey);
     
     if (lastResend) {
       throw new ApiError(
@@ -531,11 +527,11 @@ export class AuthService {
       data: {
         emailVerificationCode,
         emailVerificationCodeExpires,
-      },
+      } as any, // Type assertion to bypass Prisma type issue
     });
 
     // Set rate limit (1 minute between resends)
-    await cacheService.set(resendKey, Date.now(), 60);
+    await cacheService.set(resendKey, Date.now().toString(), 60);
 
     // Send new code
     await this.sendVerificationCode(user.email, emailVerificationCode);
