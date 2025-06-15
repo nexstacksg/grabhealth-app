@@ -16,7 +16,7 @@ import { useMembership } from '@/hooks/use-membership';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { format } from 'date-fns';
-import { membershipService } from '@/services/membership.service';
+import services from '@/lib/services';
 import { IMembershipTier } from '@app/shared-types';
 import {
   Loader2,
@@ -61,7 +61,7 @@ function MembershipPage() {
   useEffect(() => {
     async function fetchMembershipTiers() {
       try {
-        const tiers = await membershipService.getMembershipTiers();
+        const tiers = await services.membership.getMembershipTiers();
         setMembershipTiers(tiers);
       } catch (error) {
         console.error('Error fetching membership tiers:', error);

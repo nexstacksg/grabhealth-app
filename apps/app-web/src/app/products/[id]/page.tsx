@@ -13,7 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMembership } from '@/hooks/use-membership';
 import { formatPrice } from '@/lib/utils';
 import services from '@/lib/services';
-import { aiService } from '@/services/ai.service';
 import { IProduct } from '@app/shared-types';
 
 interface ProductWithExtras extends IProduct {
@@ -60,7 +59,7 @@ export default function ProductDetailPage() {
 
         // Track product view for AI recommendations
         try {
-          await aiService.recordInteraction({
+          await services.ai.recordInteraction({
             userId: undefined, // Will be handled by the service if user is authenticated
             productId: productData.id,
             interactionType: 'view',
@@ -75,7 +74,7 @@ export default function ProductDetailPage() {
 
         // Fetch AI-powered similar products
         try {
-          const similarProducts = await aiService.getSimilarProducts(productData.id, {
+          const similarProducts = await services.ai.getSimilarProducts(productData.id, {
             limit: 4
           });
           setRelatedProducts(similarProducts);

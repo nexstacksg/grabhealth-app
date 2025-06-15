@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import { commissionService } from '@/services/commission.service';
+import services from '@/lib/services';
 // Authentication is now handled at the page level
 
 // Types for commission structure data
@@ -153,7 +153,7 @@ function CommissionStructure() {
         setIsLoading(true);
         setError(null);
 
-        const data = await commissionService.getCommissionStructure();
+        const data = await services.commission.getCommissionStructure();
 
         // If we got empty data from the API, use defaults
         if (!data.productTiers || data.productTiers.length === 0) {

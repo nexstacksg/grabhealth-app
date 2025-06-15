@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarIcon } from 'lucide-react';
-import { promotionService } from '@/services/promotion.service';
+import services from '@/lib/services';
 
 // Force dynamic rendering to avoid build-time API calls
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export default async function PromotionsPage() {
   let promotions: any[] = [];
 
   try {
-    const response = await promotionService.getPromotions({ active: true });
+    const response = await services.promotion.getPromotions({ active: true });
     promotions = response.promotions || [];
   } catch (error) {
     console.error('Error fetching promotions:', error);

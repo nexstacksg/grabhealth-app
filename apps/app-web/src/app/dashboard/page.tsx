@@ -8,9 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { dashboardService } from '@/services/dashboard.service';
 import services from '@/lib/services';
-import { partnerService } from '@/services/partner.service';
 
 // Force dynamic rendering to avoid build-time API calls
 export const dynamic = 'force-dynamic';
@@ -24,7 +22,7 @@ export default async function DashboardPage() {
   const recentClaims: any[] = [];
 
   try {
-    const stats = await dashboardService.getMembershipStats();
+    const stats = await services.dashboard.getMembershipStats();
     // Map the response to our expected format - use type assertion for now
     const statsData = stats as any;
     membershipStats = {
@@ -44,7 +42,7 @@ export default async function DashboardPage() {
   }
 
   try {
-    partners = await partnerService.getPartnerDashboard();
+    partners = await services.partner.getPartnerDashboard();
   } catch (error) {
     console.error('Error fetching partners:', error);
   }

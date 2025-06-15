@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { aiService } from '@/services/ai.service';
+import services from '@/lib/services';
 import { IProduct } from '@app/shared-types';
 
 export default function FeaturedProducts() {
@@ -20,7 +20,7 @@ export default function FeaturedProducts() {
       try {
         setLoading(true);
         // Use AI service for personalized recommendations instead of featured products
-        const recommendedProducts = await aiService.getPersonalizedRecommendations({
+        const recommendedProducts = await services.ai.getPersonalizedRecommendations({
           limit: 4,
           category: undefined
         });
@@ -91,7 +91,7 @@ function ProductCard({ product }: { product: IProduct }) {
       
       // Track user interaction for AI recommendations
       try {
-        await aiService.recordInteraction({
+        await services.ai.recordInteraction({
           userId: undefined, // Will be handled by the service if user is authenticated
           productId: product.id,
           interactionType: 'add_to_cart',

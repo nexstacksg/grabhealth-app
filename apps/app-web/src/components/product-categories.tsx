@@ -18,7 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import type { JSX } from 'react';
-import { categoryService } from '@/services/category.service';
+import services from '@/lib/services';
 import { ICategory } from '@app/shared-types';
 
 export default function ProductCategories() {
@@ -47,7 +47,7 @@ export default function ProductCategories() {
     async function fetchCategories() {
       try {
         setLoading(true);
-        const data = await categoryService.getCategories();
+        const data = await services.category.getCategories();
         setCategories(data);
         setError(null);
       } catch (err) {

@@ -1,4 +1,4 @@
-import { commissionService } from '@/services/commission.service';
+import services from '@/lib/services';
 
 /**
  * Initialize commission system on the client side
@@ -6,7 +6,7 @@ import { commissionService } from '@/services/commission.service';
  */
 export async function initializeCommissionSystem(): Promise<boolean> {
   try {
-    await commissionService.initializeCommissionSystem();
+    await services.commission.initializeCommissionSystem();
     return true;
   } catch (error) {
     console.error('Error initializing commission system:', error);

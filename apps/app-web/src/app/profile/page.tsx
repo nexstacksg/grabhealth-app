@@ -19,8 +19,7 @@ import { Loader2, User, Upload } from 'lucide-react';
 import { useMembership } from '@/hooks/use-membership';
 import { toast } from 'sonner';
 import { MembershipProfile } from '@/components/membership-profile';
-import { profileService } from '@/services/profile.service';
-import { membershipService } from '@/services/membership.service';
+import services from '@/lib/services';
 import { IUserPublic } from '@app/shared-types';
 
 interface UserProfile extends IUserPublic {
@@ -52,10 +51,10 @@ export default function ProfilePage() {
         setIsLoading(true);
 
         // Fetch user profile
-        const userProfile = await profileService.getProfile();
+        const userProfile = await services.profile.getProfile();
 
         // Fetch membership data
-        const membershipData = await membershipService.getCurrentMembership();
+        const membershipData = await services.membership.getCurrentMembership();
 
         const profileWithMembership: UserProfile = {
           ...userProfile,
@@ -112,7 +111,7 @@ export default function ProfilePage() {
         size: file.size,
       });
 
-      const result = await profileService.uploadProfileImage(file);
+      const result = await services.profile.uploadProfileImage(file);
 
       // Update the user's image URL in the local state
       setUser((prev) =>
@@ -150,7 +149,7 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      const updatedUser = await profileService.updateProfile({
+      const updatedUser = await services.profile.updateProfile({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -201,7 +200,7 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      await profileService.changePassword({
+      await services.profile.changePassword({
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });

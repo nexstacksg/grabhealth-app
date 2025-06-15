@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initializeCommissionSystem as initCommissionClient } from '../../lib/commission-client';
 import { useAuth } from '@/contexts/AuthContext';
-import { commissionService } from '@/services/commission.service';
+import services from '@/lib/services';
 import { ICommission } from '@app/shared-types';
 
 // Types for commission context
@@ -70,7 +70,7 @@ export function CommissionProvider({
   // Function to initialize commission system
   const initializeCommissionSystem = async () => {
     try {
-      await commissionService.initializeCommissionSystem();
+      await services.commission.initializeCommissionSystem();
       console.log('Commission system initialized successfully');
     } catch (err) {
       console.error('Error initializing commission system:', err);
@@ -101,7 +101,7 @@ export function CommissionProvider({
 
       // Then fetch the commission data
       try {
-        const data = await commissionService.getCommissionData();
+        const data = await services.commission.getCommissionData();
 
         // Use data with fallbacks
         setUpline(data.upline || null);

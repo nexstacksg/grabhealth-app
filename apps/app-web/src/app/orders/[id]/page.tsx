@@ -32,7 +32,7 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react';
-import { orderService } from '@/services/order.service';
+import services from '@/lib/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
 import { formatPrice } from '@/lib/utils';
@@ -72,7 +72,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
           throw new Error('Invalid order ID');
         }
 
-        const orderData = await orderService.getOrder(orderId);
+        const orderData = await services.order.getOrder(orderId);
         setOrder(orderData as IOrderWithItems);
       } catch (error) {
         console.error('Error fetching order details:', error);

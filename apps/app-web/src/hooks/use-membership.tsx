@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
-import { membershipService } from '@/services/membership.service';
+import services from '@/lib/services';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface Membership {
@@ -133,7 +133,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       setIsLoading(true);
-      const membershipData = await membershipService.getCurrentMembership();
+      const membershipData = await services.membership.getCurrentMembership();
 
       if (membershipData) {
         // Convert IMembership to local Membership type

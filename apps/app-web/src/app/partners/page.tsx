@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Phone, Clock, Gift } from 'lucide-react';
-import { partnerService } from '@/services/partner.service';
+import services from '@/lib/services';
 
 // Force dynamic rendering to avoid build-time API calls
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export default async function PartnersPage() {
   let giftItems: any[] = [];
 
   try {
-    const partnerData = await partnerService.getPartnerDashboard();
+    const partnerData = await services.partner.getPartnerDashboard();
     // Since we don't have a getPartners function, we'll use sample data or the dashboard data
     partners = partnerData.recentPartners || [];
   } catch (error) {

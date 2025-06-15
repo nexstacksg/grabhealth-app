@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { aiService } from '@/services/ai.service';
+import services from '@/lib/services';
 import { IProduct } from '@app/shared-types';
 
 export function useAIRecommendations() {
@@ -12,8 +12,8 @@ export function useAIRecommendations() {
       try {
         setLoading(true);
         const [personalizedRecs, trendingProds] = await Promise.all([
-          aiService.getPersonalizedRecommendations({ limit: 4 }),
-          aiService.getTrendingProducts({ limit: 4 })
+          services.ai.getPersonalizedRecommendations({ limit: 4 }),
+          services.ai.getTrendingProducts({ limit: 4 })
         ]);
         setRecommendations(personalizedRecs);
         setTrending(trendingProds);

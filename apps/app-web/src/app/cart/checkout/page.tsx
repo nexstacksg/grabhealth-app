@@ -44,7 +44,7 @@ import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { orderService } from '@/services/order.service';
+import services from '@/lib/services';
 
 // Form validation schema
 const checkoutFormSchema = z.object({
@@ -138,7 +138,7 @@ export default function CheckoutPage() {
       const billingAddress = shippingAddress; // Using same as shipping for now
 
       // Process the order through backend
-      const order = await orderService.checkoutFromCart(
+      const order = await services.order.checkoutFromCart(
         data.paymentMethod,
         shippingAddress,
         billingAddress
