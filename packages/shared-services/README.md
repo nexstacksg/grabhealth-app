@@ -170,6 +170,92 @@ describe('AuthService', () => {
 });
 ```
 
+## Build Configuration
+
+### TypeScript Compilation Issue
+
+Due to the monorepo structure and TypeScript's handling of external dependencies, the standard `tsc` command creates nested folder structures in the `dist` directory when importing from `@app/shared-types`. 
+
+**Problem**: TypeScript outputs files to `dist/shared-services/src/` instead of `dist/` directly.
+
+**Solution**: We use a custom build script that automatically fixes the directory structure after compilation.
+
+### Build Script
+
+The build process is handled by `scripts/build.js`, which:
+
+1. Runs TypeScript compilation (`tsc`)
+2. Detects nested folder structure
+3. Automatically moves files to the correct location
+4. Cleans up temporary directories
+
+```bash
+# Standard build command (automatically uses the build script)
+bun run build
+
+# Manual TypeScript compilation (creates nested structure)
+bun run build:tsc
+```
+
+### Build Script Details
+
+Located at `scripts/build.js`, the script performs these steps:
+
+```javascript
+#!/usr/bin/env node
+
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+console.log('Building shared-services...');
+
+// Run TypeScript compiler
+execSync('tsc', { stdio: 'inherit' });
+
+// Fix dist structure by moving files from nested folders
+const distDir = path.join(__dirname, '..', 'dist');
+const nestedSrcDir = path.join(distDir, 'shared-services', 'src');
+
+if (fs.existsSync(nestedSrcDir)) {
+  console.log('Fixing dist structure...');
+  
+  // Copy all files from nested src to dist root
+  execSync(`cp -r "${nestedSrcDir}"/* "${distDir}"/`, { stdio: 'inherit' });
+  
+  // Remove nested folders
+  execSync(`rm -rf "${distDir}/shared-services" "${distDir}/shared-types"`, { stdio: 'inherit' });
+  
+  console.log('Dist structure fixed!');
+}
+
+console.log('Build complete!');
+```
+
+This ensures a clean `dist/` structure:
+```
+dist/
+├── index.js
+├── index.d.ts
+├── services/
+├── adapters/
+├── interfaces/
+├── types/
+└── utils/
+```
+
+Instead of the problematic nested structure:
+```
+dist/
+├── shared-services/
+│   └── src/
+│       ├── services/
+│       └── ...
+└── shared-types/
+    └── src/
+        └── ...
+```
+
 ## Available Services
 
 ### AuthService
@@ -186,6 +272,63 @@ Handles authentication and user management:
 - `verifyEmail(email)` - Send verification code
 - `verifyEmailCode(email, code)` - Verify email with code
 - `resendVerificationCode(email)` - Resend verification
+
+### ProductService
+
+Handles product catalog operations:
+
+- `searchProducts(params)` - Search products with filters
+- `getProduct(id)` - Get product by ID
+- `getProductsByCategory(categoryId)` - Get products in category
+- `getCategories()` - Get all product categories
+- `getFeaturedProducts(limit)` - Get featured products
+
+### CartService
+
+Manages shopping cart operations:
+
+- `getCart()` - Get current user's cart
+- `addToCart(productId, quantity)` - Add item to cart
+- `updateCartItem(productId, quantity)` - Update item quantity
+- `removeFromCart(productId)` - Remove item from cart
+- `clearCart()` - Empty the cart
+
+### OrderService
+
+Handles order processing:
+
+- `createOrder(data)` - Create new order
+- `getMyOrders(page, limit)` - Get user's orders with pagination
+- `getOrder(id)` - Get order by ID
+- `cancelOrder(id)` - Cancel an order
+- `getOrderStats()` - Get order statistics
+- `checkoutFromCart(paymentMethod, shippingAddress, billingAddress)` - Checkout
+
+### CommissionService
+
+Manages MLM commission system:
+
+- `getMyCommissions()` - Get user's commissions
+- `getCommissionStats()` - Get commission statistics
+- `getNetwork()` - Get MLM network structure
+- `getNetworkStats()` - Get network statistics
+- `getCommission(id)` - Get commission by ID
+- `initializeCommissionSystem()` - Initialize commission system
+- `getCommissionData()` - Get full commission data (upline, downlines, etc.)
+- `getCommissionStructure()` - Get commission structure configuration
+
+### UserService
+
+Handles user profile and management:
+
+- `getMyProfile()` - Get current user profile
+- `updateMyProfile(data)` - Update user profile
+- `uploadProfilePhoto(file)` - Upload profile photo
+- `changePassword(data)` - Change user password
+- `getUserById(userId)` - Get user by ID (admin)
+- `listUsers(params)` - List users with search (admin)
+- `updateUser(userId, data)` - Update user (admin)
+- `deleteUser(userId)` - Delete user (admin)
 
 ### Authorization Helpers
 
@@ -244,28 +387,80 @@ try {
 # Install dependencies
 bun install
 
-# Build the package
+# Build the package (uses custom build script)
 bun run build
+
+# Build with TypeScript only (creates nested structure)
+bun run build:tsc
+
+# Clean build directory
+bun run clean
 
 # Run tests
 bun run test
 
-# Watch mode for development
+# Run tests in watch mode
+bun run test:watch
+
+# Generate test coverage report
+bun run test:coverage
+
+# Watch mode for development (TypeScript compiler)
 bun run dev
 ```
 
-## Future Services
+### Build Process Details
 
-Planned services to be added:
+The build process uses a custom script to handle TypeScript compilation issues in the monorepo:
 
-- `ProductService` - Product catalog management
-- `CartService` - Shopping cart operations
-- `OrderService` - Order processing
-- `CommissionService` - MLM commission calculations
+1. **`bun run build`** - Recommended build command
+   - Runs TypeScript compiler
+   - Automatically fixes dist directory structure
+   - Outputs clean, ready-to-use files
+
+2. **`bun run build:tsc`** - Direct TypeScript compilation
+   - Only runs `tsc` command
+   - Creates nested directory structure
+   - Requires manual cleanup
+
+3. **`bun run clean`** - Cleanup command
+   - Removes entire `dist` directory
+   - Useful before fresh builds
+
+The custom build script ensures compatibility with Next.js and other consuming applications by maintaining the expected `dist/` structure.
+
+## Services In Development
+
+The following services are being migrated from the existing app-web implementation:
+
 - `MembershipService` - Membership tier management
+- `DashboardService` - Analytics and reporting  
 - `PromotionService` - Promotions and coupons
-- `DashboardService` - Analytics and reporting
+- `PartnerService` - Partner/referral management
+- `ProfileService` - Extended profile functionality
+- `CategoryService` - Product category management
 - `AIService` - AI recommendations and chat
+
+## Migration Status
+
+✅ **Completed Services:**
+- AuthService - Authentication and user management
+- ProductService - Product catalog operations  
+- CartService - Shopping cart functionality
+- OrderService - Order processing and management
+- CommissionService - MLM commission system
+- UserService - User profile and admin operations
+
+🔄 **In Progress:**
+- Remaining 7 services from app-web
+- Service provider integration
+- Cross-platform testing
+
+📋 **Next Steps:**
+- Complete service migration
+- Add Prisma adapters for backend use
+- Enhanced error handling
+- Performance optimizations
 
 ## Contributing
 

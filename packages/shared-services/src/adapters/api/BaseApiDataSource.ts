@@ -20,10 +20,12 @@ export abstract class BaseApiDataSource {
     return queryString ? `?${queryString}` : '';
   }
 
-  protected async buildHeaders(): Promise<HeadersInit> {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    };
+  protected async buildHeaders(skipContentType = false): Promise<HeadersInit> {
+    const headers: HeadersInit = {};
+
+    if (!skipContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (this.getToken) {
       const token = await this.getToken();
