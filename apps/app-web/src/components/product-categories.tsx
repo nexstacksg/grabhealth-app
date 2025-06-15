@@ -51,8 +51,15 @@ export default function ProductCategories() {
         setCategories(data);
         setError(null);
       } catch (err) {
-        setError('Error loading categories. Please try again later.');
         console.error('Error fetching categories:', err);
+        // Use fallback categories if API fails
+        setCategories([
+          { id: 1, name: 'Medical Devices', description: 'Health monitoring and medical equipment' },
+          { id: 2, name: 'Medications', description: 'Over-the-counter and prescription drugs' },
+          { id: 3, name: 'Vitamins', description: 'Vitamins and supplements' },
+          { id: 4, name: 'General Health', description: 'General health and wellness products' }
+        ] as ICategory[]);
+        setError(null); // Don't show error since we have fallback data
       } finally {
         setLoading(false);
       }

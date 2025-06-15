@@ -59,9 +59,9 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string): Promise<void> {
-    assertNotEmpty(userId, 'User ID');
-    await this.dataSource.logout(userId);
+  async logout(userId?: string): Promise<void> {
+    // userId is optional for API-based auth that uses cookies/tokens
+    await this.dataSource.logout(userId || '');
   }
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
@@ -74,9 +74,9 @@ export class AuthService {
     }
   }
 
-  async getProfile(userId: string): Promise<IUserPublic> {
-    assertNotEmpty(userId, 'User ID');
-    return await this.dataSource.getProfile(userId);
+  async getProfile(userId?: string): Promise<IUserPublic> {
+    // userId is optional for API-based auth that uses cookies/tokens
+    return await this.dataSource.getProfile(userId || '');
   }
 
   async requestPasswordReset(email: string): Promise<{ message: string }> {

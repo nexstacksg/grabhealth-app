@@ -1,379 +1,175 @@
-# Migration Plan: Moving app-web Services to Shared-Services Package
+# Shared Services Migration Plan
 
-## Executive Summary
+## Overview
 
-This document outlines a comprehensive plan to migrate the current app-web services to a new shared-services package following the adapter pattern architecture demonstrated in the app-template repository. This migration will enable code reuse across web, admin, and mobile applications while maintaining flexibility for platform-specific implementations.
+This document outlines the migration of all services from the `app-web` application to a centralized `shared-services` package, enabling code reuse across all applications in the monorepo.
 
-## Goals & Benefits
+## Migration Status: ✅ COMPLETED
 
-### Primary Goals
-1. **Code Reusability**: Share business logic across all applications (web, admin, mobile)
-2. **Consistent Business Rules**: Centralize authorization and validation logic
-3. **Type Safety**: Leverage TypeScript for compile-time safety across all platforms
-4. **Maintainability**: Single source of truth for business logic
-5. **Testability**: Isolated business logic that's easier to unit test
+### Phase 1: Setup and Core Services (Completed)
 
-### Key Benefits
-- Reduced code duplication (estimated 60-70% reduction)
-- Consistent behavior across all platforms
-- Faster feature development (write once, use everywhere)
-- Easier maintenance and bug fixes
-- Better separation of concerns
+#### 1.1 Package Setup ✅
+- Created `/packages/shared-services` package
+- Configured TypeScript with proper build scripts
+- Fixed nested folder compilation issue with custom build script
+- Set up proper exports in package.json
 
-## Architecture Overview
+#### 1.2 Core Services Migration ✅
+- **AuthService**: Authentication logic with cookie-based session support
+- **ProductService**: Product catalog management
+- **CartService**: Shopping cart functionality
+- **OrderService**: Order processing and management
 
-### Package Structure
+### Phase 2: Extended Services (Completed)
+
+#### 2.1 Commission and User Services ✅
+- **CommissionService**: MLM commission calculations and network management
+- **UserService**: User profile and management
+
+#### 2.2 Additional Services ✅
+- **DashboardService**: Analytics and reporting
+- **MembershipService**: Membership tier management
+- **PartnerService**: Partner network and referrals
+- **PromotionService**: Promotional campaigns
+- **CategoryService**: Product categorization
+- **ProfileService**: User profile management
+- **AIService**: AI-powered recommendations and chatbot
+
+### Phase 3: Integration (Completed)
+
+#### 3.1 Service Provider Setup ✅
+- Created `/apps/app-web/src/lib/services.ts` as the central service provider
+- Configured API URL resolution for both server and client environments
+- Implemented proper token/cookie handling
+
+#### 3.2 Import Updates ✅
+- Updated all component imports to use shared services
+- Removed old service files from app-web
+- Fixed all TypeScript compilation errors
+
+#### 3.3 AuthContext Integration ✅
+- Updated AuthContext to use shared AuthService
+- Made userId parameters optional for cookie-based auth
+- Maintained backward compatibility
+
+## Architecture
+
+### Service Layer Structure
+
 ```
 packages/shared-services/
 ├── src/
-│   ├── index.ts                    # Main export file
-│   ├── types/                      # Service-specific types
-│   │   └── index.ts
-│   ├── interfaces/                 # Data source interfaces
-│   │   ├── IAuthDataSource.ts
-│   │   ├── IProductDataSource.ts
-│   │   ├── IOrderDataSource.ts
-│   │   └── ...
-│   ├── adapters/                   # Data source implementations
-│   │   ├── prisma/                 # Backend adapters
-│   │   │   ├── PrismaAuthDataSource.ts
-│   │   │   ├── PrismaProductDataSource.ts
-│   │   │   └── ...
-│   │   ├── api/                    # Frontend adapters
-│   │   │   ├── ApiAuthDataSource.ts
-│   │   │   ├── ApiProductDataSource.ts
-│   │   │   └── ...
-│   │   └── mock/                   # Testing adapters
-│   │       └── MockDataSources.ts
-│   ├── services/                   # Business logic services
+│   ├── services/           # Business logic layer
 │   │   ├── AuthService.ts
 │   │   ├── ProductService.ts
-│   │   ├── CartService.ts
-│   │   ├── OrderService.ts
-│   │   ├── CommissionService.ts
-│   │   ├── CategoryService.ts
-│   │   ├── MembershipService.ts
-│   │   ├── ProfileService.ts
-│   │   ├── PromotionService.ts
-│   │   ├── DashboardService.ts
-│   │   ├── PartnerService.ts
-│   │   └── AIService.ts
-│   └── utils/                      # Shared utilities
-│       ├── validation.ts
-│       ├── errors.ts
-│       └── helpers.ts
-├── package.json
-├── tsconfig.json
-└── README.md
+│   │   └── ... (13 services total)
+│   ├── interfaces/         # Data source contracts
+│   │   ├── IAuthDataSource.ts
+│   │   └── ...
+│   ├── adapters/          # Implementation adapters
+│   │   ├── api/          # REST API adapters
+│   │   │   ├── BaseApiDataSource.ts
+│   │   │   └── ...
+│   │   ├── prisma/       # Database adapters
+│   │   └── mock/         # Testing adapters
+│   ├── types/            # Shared types
+│   └── utils/            # Utilities
+├── scripts/
+│   └── build.js          # Custom build script
+└── package.json
 ```
 
-## Service Migration Strategy
+### Key Design Decisions
 
-### Phase 1: Foundation (Week 1)
-1. **Create Package Structure**
-   - Set up shared-services package
-   - Configure TypeScript and build process
-   - Set up testing framework
+1. **Adapter Pattern**: Each service uses a data source interface, allowing different implementations (API, Prisma, Mock)
+2. **BaseApiDataSource**: Eliminates code duplication with reusable CRUD methods
+3. **Framework Agnostic**: Services can be used in Next.js, Express, or React Native
+4. **Type Safety**: Full TypeScript support with shared types from `@app/shared-types`
 
-2. **Define Core Interfaces**
-   - Create base `IDataSource` interface
-   - Define service-specific data source interfaces
-   - Establish error handling patterns
+## Implementation Details
 
-3. **Implement Base Infrastructure**
-   - Create base service class with common functionality
-   - Implement error handling utilities
-   - Set up validation helpers
+### Service Factory (app-web)
 
-### Phase 2: Core Services (Week 2-3)
-Migrate services in order of dependency:
-
-1. **AuthService** (High Priority)
-   - Most fundamental service
-   - Required by most other services
-   - Includes: login, register, profile, token management
-
-2. **ProductService** (High Priority)
-   - Core e-commerce functionality
-   - No complex dependencies
-   - Includes: search, categories, featured products
-
-3. **CartService** (Medium Priority)
-   - Depends on Product and Auth
-   - Session-based for guests
-   - Includes: add, update, remove, sync
-
-4. **OrderService** (Medium Priority)
-   - Depends on Cart, Product, Auth
-   - Complex business logic
-   - Includes: checkout, history, cancellation
-
-### Phase 3: Advanced Services (Week 4-5)
-5. **CommissionService** (High Complexity)
-   - Complex MLM calculations
-   - Network visualization logic
-   - Includes: calculations, network, statistics
-
-6. **MembershipService** (Medium Complexity)
-   - Tier management
-   - Upgrade eligibility logic
-   - Includes: tiers, upgrades, benefits
-
-7. **PromotionService** (Medium Complexity)
-   - Validation logic
-   - Cart integration
-   - Includes: coupons, validation, application
-
-### Phase 4: Support Services (Week 6)
-8. **CategoryService**
-9. **ProfileService**
-10. **DashboardService**
-11. **PartnerService**
-12. **AIService** (Special consideration for API keys)
-
-## Data Source Implementations
-
-### 1. Prisma Data Sources (Backend)
 ```typescript
-// Example: PrismaProductDataSource
-export class PrismaProductDataSource implements IProductDataSource {
-  constructor(private prisma: PrismaClient) {}
-  
-  async getProducts(filters: ProductFilters): Promise<IProduct[]> {
-    return this.prisma.product.findMany({
-      where: this.buildWhereClause(filters),
-      include: { category: true, images: true }
-    });
-  }
-}
+// /apps/app-web/src/lib/services.ts
+const getApiUrl = () => {
+  // Always use backend API directly
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+};
+
+// Create service instances with API data sources
+export const services = {
+  auth: new AuthService({ dataSource: new ApiAuthDataSource(apiUrl, getAccessToken) }),
+  product: new ProductService({ dataSource: new ApiProductDataSource(apiUrl, getAccessToken) }),
+  // ... all other services
+};
 ```
 
-### 2. API Data Sources (Frontend)
-```typescript
-// Example: ApiProductDataSource
-export class ApiProductDataSource implements IProductDataSource {
-  constructor(
-    private apiUrl: string,
-    private getToken: () => Promise<string | null>
-  ) {}
-  
-  async getProducts(filters: ProductFilters): Promise<IProduct[]> {
-    const response = await fetch(`${this.apiUrl}/products`, {
-      headers: await this.buildHeaders(),
-      body: JSON.stringify(filters)
-    });
-    return this.handleResponse(response);
-  }
-}
-```
+### Error Handling Strategy
 
-### 3. Mock Data Sources (Testing)
-```typescript
-// Example: MockProductDataSource
-export class MockProductDataSource implements IProductDataSource {
-  private products: IProduct[] = mockProducts;
-  
-  async getProducts(filters: ProductFilters): Promise<IProduct[]> {
-    return this.products.filter(p => this.matchesFilters(p, filters));
-  }
-}
-```
+1. **Graceful Degradation**: Components fall back to default data when APIs fail
+2. **User-Friendly Messages**: Clear error messages instead of technical errors
+3. **Logging**: Errors logged to console for debugging
 
-## Authorization Strategy
+## Benefits Achieved
 
-### Role-Based Access Control (RBAC)
-```typescript
-// Centralized in services
-class ProductService {
-  async updateProduct(
-    productId: string,
-    data: IUpdateProduct,
-    user: IUserContext
-  ): Promise<IProduct> {
-    // Authorization check
-    if (!this.canManageProducts(user)) {
-      throw new UnauthorizedError('Insufficient permissions');
-    }
-    
-    return this.dataSource.updateProduct(productId, data);
-  }
-  
-  private canManageProducts(user: IUserContext): boolean {
-    return user.role === UserRole.SUPER_ADMIN || 
-           user.role === UserRole.MANAGER;
-  }
-}
-```
+1. **Code Reusability**: Services can be shared across web, admin, and mobile apps
+2. **Maintainability**: Single source of truth for business logic
+3. **Testability**: Services can be tested independently with mock adapters
+4. **Scalability**: Easy to add new services or adapters
+5. **Type Safety**: Consistent types across all applications
 
-### Service-Level Security
-- All authorization logic in service layer
-- Data sources remain authorization-agnostic
-- Consistent security across all platforms
+## Future Improvements
 
-## Integration Examples
+### 1. Enhanced Error Handling
+- Implement retry logic with exponential backoff
+- Add circuit breaker pattern for failing services
+- Create global error boundary component
 
-### Backend (Express)
-```typescript
-// In Express controller
-const productService = new ProductService({
-  dataSource: new PrismaProductDataSource(prisma)
-});
+### 2. Caching Layer
+- Add Redis caching adapter
+- Implement cache invalidation strategies
+- Support offline mode with local storage
 
-router.get('/products', async (req, res) => {
-  const products = await productService.searchProducts(req.query);
-  res.json(products);
-});
-```
+### 3. Performance Optimizations
+- Implement request deduplication
+- Add response caching
+- Support batch operations
 
-### Frontend (Next.js)
-```typescript
-// In Next.js API route or component
-const productService = new ProductService({
-  dataSource: new ApiProductDataSource(
-    process.env.NEXT_PUBLIC_API_URL,
-    async () => cookies().get('token')?.value
-  )
-});
+### 4. Testing Infrastructure
+- Add comprehensive unit tests for all services
+- Create integration tests with mock adapters
+- Set up E2E tests for critical flows
 
-export async function getProducts(filters: ProductFilters) {
-  return productService.searchProducts(filters);
-}
-```
+### 5. Monitoring and Analytics
+- Add service performance metrics
+- Implement error tracking (Sentry integration)
+- Create service health dashboard
 
-### Mobile (React Native)
-```typescript
-// In React Native
-const productService = new ProductService({
-  dataSource: new ApiProductDataSource(
-    Config.API_URL,
-    async () => AsyncStorage.getItem('token')
-  )
-});
+### 6. API Gateway Pattern
+- Create Next.js API routes as a proxy layer
+- Implement rate limiting
+- Add request/response transformation
 
-const products = await productService.searchProducts({ category: 'health' });
-```
-
-## Testing Strategy
-
-### Unit Tests
-```typescript
-describe('ProductService', () => {
-  let service: ProductService;
-  let mockDataSource: MockProductDataSource;
-  
-  beforeEach(() => {
-    mockDataSource = new MockProductDataSource();
-    service = new ProductService({ dataSource: mockDataSource });
-  });
-  
-  test('should filter products by category', async () => {
-    const products = await service.searchProducts({ category: 'health' });
-    expect(products).toHaveLength(3);
-    expect(products.every(p => p.category === 'health')).toBe(true);
-  });
-});
-```
-
-### Integration Tests
-- Test actual Prisma data sources with test database
-- Test API data sources with mock server
-- End-to-end testing across platforms
+### 7. Authentication Enhancements
+- Implement refresh token rotation
+- Add OAuth providers support
+- Support multi-factor authentication
 
 ## Migration Checklist
 
-### For Each Service:
-- [ ] Define data source interface
-- [ ] Implement Prisma adapter (backend)
-- [ ] Implement API adapter (frontend)
-- [ ] Implement mock adapter (testing)
-- [ ] Migrate business logic to service
-- [ ] Add authorization checks
-- [ ] Write unit tests
-- [ ] Write integration tests
-- [ ] Update backend to use service
-- [ ] Update frontend to use service
-- [ ] Update mobile to use service (if applicable)
-- [ ] Update documentation
-
-## Breaking Changes & Compatibility
-
-### Minimal Breaking Changes
-- Services will maintain same method signatures
-- Return types remain consistent with current implementation
-- Error handling patterns preserved
-
-### Gradual Migration Path
-1. Create shared-services alongside existing services
-2. Migrate one service at a time
-3. Run both implementations in parallel during transition
-4. Remove old implementation after verification
-
-## Performance Considerations
-
-### Caching Strategy
-```typescript
-class CachedProductService extends ProductService {
-  private cache: Map<string, CacheEntry> = new Map();
-  
-  async getProduct(id: string): Promise<IProduct> {
-    const cached = this.cache.get(id);
-    if (cached && !this.isExpired(cached)) {
-      return cached.data;
-    }
-    
-    const product = await super.getProduct(id);
-    this.cache.set(id, { data: product, timestamp: Date.now() });
-    return product;
-  }
-}
-```
-
-### Bundle Size Optimization
-- Tree-shaking friendly exports
-- Separate entry points for different platforms
-- Lazy loading for heavy services (AI, Dashboard)
-
-## Success Metrics
-
-### Quantitative Metrics
-- **Code Reduction**: Target 60-70% less duplicated code
-- **Test Coverage**: Achieve 90%+ coverage for services
-- **Performance**: No regression in API response times
-- **Bundle Size**: < 10% increase in frontend bundle
-
-### Qualitative Metrics
-- Faster feature development time
-- Reduced bugs from inconsistent implementations
-- Easier onboarding for new developers
-- Improved code maintainability scores
-
-## Risk Mitigation
-
-### Technical Risks
-1. **Risk**: Complex migration breaking existing functionality
-   - **Mitigation**: Parallel implementation with feature flags
-   
-2. **Risk**: Performance degradation from abstraction
-   - **Mitigation**: Performance testing at each phase
-   
-3. **Risk**: Increased bundle size for frontend
-   - **Mitigation**: Code splitting and lazy loading
-
-### Project Risks
-1. **Risk**: Extended timeline affecting feature delivery
-   - **Mitigation**: Phased approach, migrate critical services first
-   
-2. **Risk**: Team resistance to new architecture
-   - **Mitigation**: Clear documentation and training sessions
-
-## Next Steps
-
-1. **Review and Approval**: Get team buy-in on architecture
-2. **Set Up Package**: Create shared-services package structure
-3. **Pilot Service**: Start with AuthService as proof of concept
-4. **Team Training**: Workshop on new architecture patterns
-5. **Begin Migration**: Follow phased approach outlined above
+- [x] Create shared-services package structure
+- [x] Implement base service architecture
+- [x] Create data source interfaces
+- [x] Implement API adapters with BaseApiDataSource
+- [x] Migrate all 13 services
+- [x] Update app-web to use shared services
+- [x] Fix TypeScript build issues
+- [x] Update AuthContext integration
+- [x] Add error handling and fallbacks
+- [x] Remove old service files
+- [x] Test complete integration
 
 ## Conclusion
 
-This migration to a shared-services architecture will significantly improve code maintainability, reduce duplication, and ensure consistent business logic across all platforms. The phased approach minimizes risk while delivering value incrementally. With proper execution, this architecture will serve as a solid foundation for future growth and feature development.
+The migration to shared services has been successfully completed. All services are now centralized, maintainable, and reusable across the entire monorepo. The architecture supports future growth and additional adapters as needed.

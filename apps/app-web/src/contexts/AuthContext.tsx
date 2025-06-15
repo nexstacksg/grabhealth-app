@@ -26,7 +26,7 @@ const useAuthProvider = () => {
   const checkAuth = useCallback(async () => {
     try {
       // Try to get user profile - cookies will be sent automatically
-      const userProfile = await services.auth.getProfile('');
+      const userProfile = await services.auth.getProfile();
 
       if (userProfile && userProfile.id) {
         setUser(userProfile);
@@ -72,7 +72,7 @@ const useAuthProvider = () => {
 
   const logout = useCallback(async () => {
     try {
-      await services.auth.logout('');
+      await services.auth.logout();
     } catch {
       // Ignore logout errors
     } finally {

@@ -19,16 +19,31 @@ export default function FeaturedProducts() {
     async function fetchProducts() {
       try {
         setLoading(true);
-        // Use AI service for personalized recommendations instead of featured products
-        const recommendedProducts = await services.ai.getPersonalizedRecommendations({
-          limit: 4,
-          category: undefined
-        });
-        setProducts(recommendedProducts);
-        setError(null);
+        
+        try {
+          // Try to get AI recommendations first
+          const recommendedProducts = await services.ai.getPersonalizedRecommendations({
+            limit: 4,
+            category: undefined
+          });
+          setProducts(recommendedProducts);
+          setError(null);
+        } catch (aiError) {
+          console.warn('AI recommendations not available, falling back to regular products:', aiError);
+          
+          // Fallback to regular products if AI fails
+          const regularProducts = await services.product.getProducts({ 
+            limit: 4,
+            sort: 'createdAt',
+            order: 'desc'
+          });
+          setProducts(regularProducts.products || []);
+          setError(null);
+        }
       } catch (err) {
-        setError('Error loading personalized recommendations. Please try again later.');
-        console.error(err);
+        setError('Error loading products. Please try again later.');
+        console.error('Failed to load products:', err);
+        setProducts([]); // Set empty array to prevent undefined errors
       } finally {
         setLoading(false);
       }

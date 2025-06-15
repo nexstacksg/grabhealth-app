@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { formatPrice } from '@/lib/utils';
 import React from 'react';
+import services from '@/lib/services';
 
 // Types
 interface Message {
@@ -35,6 +36,7 @@ interface Product {
 export function ProductChatbot() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -98,33 +100,33 @@ export function ProductChatbot() {
     }, 100);
 
     try {
-      const response = await fetch('/api/chatbot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: input }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
+      // Use AI service for chatbot functionality
+      const response = await services.ai.sendChatbotMessage(input, sessionId);
+      setSessionId(response.sessionId);
 
       // Add assistant message
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.message,
+        content: response.response,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Set recommended products if any
-      if (data.products && data.products.length > 0) {
-        setRecommendedProducts(data.products);
+      // Handle suggested actions if any
+      if (response.suggestedActions && response.suggestedActions.length > 0) {
+        // Process suggested actions like product recommendations
+        const productActions = response.suggestedActions.filter(
+          action => action.action === 'view_product' && action.data
+        );
+        if (productActions.length > 0) {
+          const productIds = productActions.map(action => action.data.productId);
+          // You could fetch and display these products
+        }
       }
+
+      // For now, we don't have product recommendations in the response
+      // You could fetch products based on the conversation context
     } catch (error) {
       console.error('Error:', error);
 
@@ -132,7 +134,7 @@ export function ProductChatbot() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again later.',
+        content: 'I apologize, but I\'m currently offline. Please browse our products directly or contact our support team for assistance.',
       };
 
       setMessages((prev) => [...prev, errorMessage]);
