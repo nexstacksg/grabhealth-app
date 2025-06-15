@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { dashboardService } from '@/services/dashboard.service';
-import { productService } from '@/services/product.service';
+import services from '@/lib/services';
 import { partnerService } from '@/services/partner.service';
 
 // Force dynamic rendering to avoid build-time API calls
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
   }
 
   try {
-    const productResponse = await productService.searchProducts({ limit: 6 });
+    const productResponse = await services.product.searchProducts({ limit: 6 });
     products = productResponse.products || [];
   } catch (error) {
     console.error('Error fetching products:', error);

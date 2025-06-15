@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { productService } from '@/services/product.service';
+import services from '@/lib/services';
 import { IProduct, ProductSearchParams } from '@app/shared-types';
 
 export function useProducts() {
@@ -57,7 +57,7 @@ export function useProducts() {
       if (filters.query) searchParams.query = filters.query;
       if (filters.inStock) searchParams.inStock = filters.inStock;
 
-      const response = await productService.searchProducts(searchParams);
+      const response = await services.product.searchProducts(searchParams);
 
       // Update state with response
       setProducts(response.products || []);

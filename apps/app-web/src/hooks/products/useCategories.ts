@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productService } from '@/services/product.service';
+import services from '@/lib/services';
 
 export function useCategories() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -7,7 +7,7 @@ export function useCategories() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const data = await productService.getCategories();
+        const data = await services.product.getCategories();
         setCategories(data);
       } catch (error) {
         console.error('Error fetching categories:', error);

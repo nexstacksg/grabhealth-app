@@ -3,31 +3,23 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CommissionDashboard from '@/components/commission/commission-dashboard';
-import { authService } from '@/services/auth.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function CommissionPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const userData = await authService.getProfile();
-
-        if (userData && userData.id) {
-          setIsLoading(false);
-        } else {
-          console.log('Invalid user data, redirecting to login');
-          router.push('/auth/login');
-        }
-      } catch (error) {
-        console.error('Authentication error:', error);
+    if (!authLoading) {
+      if (!user || !user.id) {
+        console.log('User not authenticated, redirecting to login');
         router.push('/auth/login');
+      } else {
+        setIsLoading(false);
       }
-    };
-
-    checkAuth();
-  }, [router]);
+    }
+  }, [user, authLoading, router]);
 
   if (isLoading) {
     return (

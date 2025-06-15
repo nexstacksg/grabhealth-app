@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import authService from '@/services/auth.service';
+import services from '@/lib/services';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -100,7 +100,7 @@ export default function VerifyPage() {
     setError(null);
 
     try {
-      await authService.verifyEmailCode(email, fullCode);
+      await services.auth.verifyEmailCode(email, fullCode);
       
       // Update user status in sessionStorage (client-side only)
       if (typeof window !== 'undefined') {
@@ -132,7 +132,7 @@ export default function VerifyPage() {
     setError(null);
 
     try {
-      await authService.resendVerificationCode(email);
+      await services.auth.resendVerificationCode(email);
       // Set 60 second cooldown
       setResendTimer(60);
       // Clear code

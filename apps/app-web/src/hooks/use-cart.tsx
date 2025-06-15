@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
-import { cartService } from '@/services/cart.service';
+import services from '@/lib/services';
 import { ICart, ICartItem } from '@app/shared-types';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -51,7 +51,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const fetchCart = async () => {
     try {
       setIsLoading(true);
-      const cartData = await cartService.getCart();
+      const cartData = await services.cart.getCart();
       setCart(cartData);
     } catch (error: any) {
       // Don't show error for PENDING_VERIFICATION users or 403 errors
@@ -95,7 +95,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const updatedCart = await cartService.addToCart(product.id, quantity);
+      const updatedCart = await services.cart.addToCart(product.id, quantity);
       setCart(updatedCart);
       toast.success(`${product.name} added to cart`);
     } catch (error) {
@@ -117,7 +117,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const updatedCart = await cartService.updateCartItem(productId, quantity);
+      const updatedCart = await services.cart.updateCartItem(productId, quantity);
       setCart(updatedCart);
       toast.success('Cart updated');
     } catch (error) {
@@ -134,7 +134,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const updatedCart = await cartService.removeFromCart(productId);
+      const updatedCart = await services.cart.removeFromCart(productId);
       setCart(updatedCart);
       toast.success('Item removed from cart');
     } catch (error) {
@@ -151,7 +151,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      await cartService.clearCart();
+      await services.cart.clearCart();
       setCart(null);
       toast.success('Cart cleared');
     } catch (error) {

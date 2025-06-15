@@ -12,7 +12,7 @@ import { AddToCartButton } from '@/components/add-to-cart-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMembership } from '@/hooks/use-membership';
 import { formatPrice } from '@/lib/utils';
-import { productService } from '@/services/product.service';
+import services from '@/lib/services';
 import { aiService } from '@/services/ai.service';
 import { IProduct } from '@app/shared-types';
 
@@ -52,7 +52,7 @@ export default function ProductDetailPage() {
           throw new Error('Invalid product ID');
         }
 
-        const productData = await productService.getProduct(productId);
+        const productData = await services.product.getProduct(productId);
 
         // Add demo data for features, usage, and ingredients
         const enhancedProduct = addDemoData(productData);
@@ -84,12 +84,12 @@ export default function ProductDetailPage() {
           // Fallback to category-based products if AI fails
           if (productData.categoryId) {
             try {
-              const categoryProducts = await productService.getProductsByCategory(
+              const categoryProducts = await services.product.getProductsByCategory(
                 productData.categoryId
               );
               setRelatedProducts(
                 categoryProducts
-                  .filter((p) => p.id !== productData.id)
+                  .filter((p: IProduct) => p.id !== productData.id)
                   .slice(0, 4)
               );
             } catch (fallbackErr) {

@@ -9,7 +9,7 @@ import React, {
   useMemo,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import authService from '@/services/auth.service';
+import services from '@/lib/services';
 import { IUserPublic, RegisterRequest } from '@app/shared-types';
 
 // Create context without explicit type definition to avoid unused warnings
@@ -26,7 +26,7 @@ const useAuthProvider = () => {
   const checkAuth = useCallback(async () => {
     try {
       // Try to get user profile - cookies will be sent automatically
-      const userProfile = await authService.getProfile();
+      const userProfile = await services.auth.getProfile('');
 
       if (userProfile && userProfile.id) {
         setUser(userProfile);
@@ -53,7 +53,7 @@ const useAuthProvider = () => {
   const login = useCallback(
     async (email: string, password: string) => {
       try {
-        const authData = await authService.login({ email, password });
+        const authData = await services.auth.login({ email, password });
         setUser(authData.user);
         
         // Check if email verification is needed
@@ -72,7 +72,7 @@ const useAuthProvider = () => {
 
   const logout = useCallback(async () => {
     try {
-      await authService.logout();
+      await services.auth.logout('');
     } catch {
       // Ignore logout errors
     } finally {
@@ -84,7 +84,12 @@ const useAuthProvider = () => {
   const register = useCallback(
     async (data: RegisterRequest) => {
       try {
-        const authData = await authService.register(data);
+        // Convert RegisterRequest to shared service format
+        const authData = await services.auth.register({
+          email: data.email,
+          password: data.password,
+          name: `${data.firstName} ${data.lastName}`.trim()
+        });
         setUser(authData.user);
         
         // Check if email verification is needed
