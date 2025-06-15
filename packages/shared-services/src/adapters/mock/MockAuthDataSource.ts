@@ -70,7 +70,10 @@ export class MockAuthDataSource implements IAuthDataSource {
     const { password, resetToken, verificationCode, ...sanitizedUser } = user;
 
     return {
-      user: sanitizedUser,
+      user: {
+        ...sanitizedUser,
+        emailVerified: !!user.emailVerifiedAt
+      },
       tokens,
     };
   }
@@ -114,7 +117,10 @@ export class MockAuthDataSource implements IAuthDataSource {
       newUser;
 
     return {
-      user: sanitizedUser,
+      user: {
+        ...sanitizedUser,
+        emailVerified: !!newUser.emailVerifiedAt
+      },
       tokens,
     };
   }
@@ -145,7 +151,10 @@ export class MockAuthDataSource implements IAuthDataSource {
 
     const { password, resetToken, verificationCode, ...sanitizedUser } = user;
 
-    return sanitizedUser;
+    return {
+      ...sanitizedUser,
+      emailVerified: !!user.emailVerifiedAt
+    };
   }
 
   async requestPasswordReset(
@@ -227,8 +236,10 @@ export class MockAuthDataSource implements IAuthDataSource {
 
   // Helper methods
   private generateMockTokens(userId: string): AuthTokens {
-    const accessToken = `access_${userId}_${Date.now()}`;
-    const refreshToken = `refresh_${userId}_${Date.now()}`;
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const accessToken = `access_${userId}_${timestamp}_${random}`;
+    const refreshToken = `refresh_${userId}_${timestamp}_${random}`;
 
     this.tokenToUserId.set(refreshToken, userId);
 
