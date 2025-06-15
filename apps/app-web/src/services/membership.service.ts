@@ -1,9 +1,17 @@
 import { apiClient } from './api-client';
 import {
-  IMembership,
   IMembershipTier,
   MembershipStats,
+  IUserMembership,
+  IUser
 } from '@app/shared-types';
+
+// Define the membership response type
+interface IMembership extends IUserMembership {
+  user?: IUser;
+  tier: string;
+  points?: number;
+}
 
 class MembershipService {
   private baseUrl = '/memberships';

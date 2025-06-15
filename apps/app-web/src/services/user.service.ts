@@ -14,31 +14,19 @@ class UserService {
    * Get current user profile
    */
   async getMyProfile(): Promise<IUserPublic> {
-    const response = await apiClient.get<IUserPublic>(
+    return await apiClient.get<IUserPublic>(
       `${this.baseUrl}/my-profile`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get profile');
-    }
-
-    return response.data;
   }
 
   /**
    * Update current user profile
    */
   async updateMyProfile(data: UpdateProfileRequest): Promise<IUserPublic> {
-    const response = await apiClient.put<IUserPublic>(
+    return await apiClient.put<IUserPublic>(
       `${this.baseUrl}/my-profile`,
       data
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to update profile');
-    }
-
-    return response.data;
   }
 
   /**
@@ -71,29 +59,19 @@ class UserService {
    * Change password
    */
   async changePassword(data: ChangePasswordRequest): Promise<void> {
-    const response = await apiClient.post<void>(
+    await apiClient.post<void>(
       `${this.baseUrl}/change-password`,
       data
     );
-
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Failed to change password');
-    }
   }
 
   /**
    * Get user by ID (admin only)
    */
   async getUserById(userId: string): Promise<IUserPublic> {
-    const response = await apiClient.get<IUserPublic>(
+    return await apiClient.get<IUserPublic>(
       `${this.baseUrl}/${userId}`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'User not found');
-    }
-
-    return response.data;
   }
 
   /**
@@ -111,15 +89,9 @@ class UserService {
       });
     }
 
-    const response = await apiClient.get<PaginatedResponse<IUserPublic>>(
+    return await apiClient.get<PaginatedResponse<IUserPublic>>(
       `${this.baseUrl}?${queryParams.toString()}`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get users');
-    }
-
-    return response.data;
   }
 
   /**
@@ -129,27 +101,17 @@ class UserService {
     userId: string,
     data: Partial<IUserPublic>
   ): Promise<IUserPublic> {
-    const response = await apiClient.put<IUserPublic>(
+    return await apiClient.put<IUserPublic>(
       `${this.baseUrl}/${userId}`,
       data
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to update user');
-    }
-
-    return response.data;
   }
 
   /**
    * Delete user by ID (admin only)
    */
   async deleteUser(userId: string): Promise<void> {
-    const response = await apiClient.delete<void>(`${this.baseUrl}/${userId}`);
-
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Failed to delete user');
-    }
+    await apiClient.delete<void>(`${this.baseUrl}/${userId}`);
   }
 }
 

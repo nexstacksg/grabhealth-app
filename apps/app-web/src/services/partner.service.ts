@@ -5,7 +5,6 @@ import {
   ICommissionStats,
   INetworkStats,
   INetwork,
-  ApiResponse
 } from '@app/shared-types';
 
 interface PartnerDashboard {
@@ -35,19 +34,11 @@ class PartnerService {
   async getPartnerDashboard(): Promise<PartnerDashboard> {
     try {
       // Fetch multiple endpoints in parallel for dashboard data
-      const [profileRes, networkRes, commissionStatsRes] = await Promise.all([
+      const [profile, network, commissionStats] = await Promise.all([
         apiClient.get<IUser>(`${this.baseUrl}/users/profile`),
         apiClient.get<INetwork>(`${this.baseUrl}/commissions/network`),
-        apiClient.get<ICommissionStats>(`${this.baseUrl}/commissions/stats`)
+        apiClient.get<ICommissionStats>(`${this.baseUrl}/commissions/stats`),
       ]);
-
-      if (!profileRes.success || !networkRes.success || !commissionStatsRes.success) {
-        throw new Error('Failed to fetch partner dashboard data');
-      }
-
-      const profile = profileRes.data!;
-      const network = networkRes.data!;
-      const commissionStats = commissionStatsRes.data!;
 
       // Calculate network metrics
       const totalPartners = this.countNetworkMembers(network.rootUser);
@@ -62,7 +53,7 @@ class PartnerService {
         pendingEarnings: commissionStats.totalPending,
         thisMonthEarnings: commissionStats.thisMonth,
         networkDepth: network.totalLevels,
-        recentPartners
+        recentPartners,
       };
     } catch (error: any) {
       throw new Error(error?.message || 'Failed to get partner dashboard');
@@ -73,38 +64,27 @@ class PartnerService {
    * Get user's referral/partner code
    */
   async getReferralCode(): Promise<string> {
-    const response = await apiClient.get<IUser>(`${this.baseUrl}/users/profile`);
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get referral code');
-    }
-    return response.data.referralCode || '';
+    const user = await apiClient.get<IUser>(`${this.baseUrl}/users/profile`);
+    return user.referralCode || '';
   }
 
   /**
    * Get partner network structure
    */
   async getPartnerNetwork(levels?: number): Promise<INetwork> {
-    const response = await apiClient.get<INetwork>(
+    return await apiClient.get<INetwork>(
       `${this.baseUrl}/commissions/network`,
       { params: levels ? { levels } : undefined }
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get partner network');
-    }
-    return response.data;
   }
 
   /**
    * Get network statistics
    */
   async getNetworkStats(): Promise<INetworkStats> {
-    const response = await apiClient.get<INetworkStats>(
+    return await apiClient.get<INetworkStats>(
       `${this.baseUrl}/commissions/network/stats`
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get network stats');
-    }
-    return response.data;
   }
 
   /**
@@ -120,30 +100,21 @@ class PartnerService {
     page: number;
     totalPages: number;
   }> {
-    const response = await apiClient.get<{
+    return await apiClient.get<{
       commissions: ICommission[];
       total: number;
       page: number;
       totalPages: number;
     }>(`${this.baseUrl}/commissions/my-commissions`, { params });
-    
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get partner commissions');
-    }
-    return response.data;
   }
 
   /**
    * Get commission statistics
    */
   async getCommissionStats(): Promise<ICommissionStats> {
-    const response = await apiClient.get<ICommissionStats>(
+    return await apiClient.get<ICommissionStats>(
       `${this.baseUrl}/commissions/stats`
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get commission stats');
-    }
-    return response.data;
   }
 
   /**
@@ -153,13 +124,7 @@ class PartnerService {
   async sendInvitation(invitation: PartnerInvitation): Promise<void> {
     // This endpoint doesn't exist yet in the backend
     // It would need to be implemented to send invitation emails
-    const response = await apiClient.post<void>(
-      `${this.baseUrl}/partners/invite`,
-      invitation
-    );
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Failed to send invitation');
-    }
+    await apiClient.post<void>(`${this.baseUrl}/partners/invite`, invitation);
   }
 
   /**
@@ -182,12 +147,12 @@ class PartnerService {
   } {
     const referralLink = this.getReferralLink(referralCode);
     const message = `Join me on GrabHealth and get amazing health products with great discounts! Use my referral code: ${referralCode}`;
-    
+
     return {
       whatsapp: `https://wa.me/?text=${encodeURIComponent(message + ' ' + referralLink)}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`,
       twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(referralLink)}`,
-      email: `mailto:?subject=${encodeURIComponent('Join GrabHealth with me!')}&body=${encodeURIComponent(message + '\n\n' + referralLink)}`
+      email: `mailto:?subject=${encodeURIComponent('Join GrabHealth with me!')}&body=${encodeURIComponent(message + '\n\n' + referralLink)}`,
     };
   }
 
@@ -218,7 +183,7 @@ class PartnerService {
 
   private getRecentPartners(node: any, limit: number = 5): IUser[] {
     const partners: IUser[] = [];
-    
+
     const collectPartners = (n: any) => {
       if (n.children && n.children.length > 0) {
         n.children.forEach((child: any) => {
@@ -230,15 +195,15 @@ class PartnerService {
             role: child.role,
             status: child.isActive ? 'ACTIVE' : 'INACTIVE',
             createdAt: new Date(child.joinedAt),
-            updatedAt: new Date(child.joinedAt)
+            updatedAt: new Date(child.joinedAt),
           } as IUser);
           collectPartners(child);
         });
       }
     };
-    
+
     collectPartners(node);
-    
+
     // Sort by most recent and return top N
     return partners
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
