@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { apiClient } from '@/services/api-client';
-import { RegisterRequest, WebAuthResponse as AuthResponse, ApiResponse } from '@app/shared-types';
+import { RegisterRequest, AuthResponse, ApiResponse } from '@app/shared-types';
 
 export async function POST(request: NextRequest) {
   try {

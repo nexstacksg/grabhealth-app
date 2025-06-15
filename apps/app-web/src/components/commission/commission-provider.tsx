@@ -105,7 +105,7 @@ export function CommissionProvider({
         // Use data with fallbacks
         setUpline(data.upline || null);
         setDownlines(data.downlines || []);
-        setCommissions(data.commissions || []);
+        setCommissions((data.commissions || []) as any);
         setPoints(data.points || 0);
         setReferralLink(
           data.referralLink ||

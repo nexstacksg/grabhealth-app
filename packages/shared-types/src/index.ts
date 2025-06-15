@@ -24,3 +24,6 @@ export {
 } from './models/commission';
 export * from './models/membership';
 export * from './models/stats';
+
+// Export frontend extensions
+export * from './extensions/frontend';

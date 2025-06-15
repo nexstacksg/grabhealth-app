@@ -1,19 +1,20 @@
 import { UserRole, UserStatus } from '../enums';
 
 // Core user fields
-interface User {
+export interface User {
   email: string;
   firstName: string;
   lastName: string;
 }
 
 // Profile fields
-interface UserProfile {
+export interface UserProfile {
   phone?: string;
   dateOfBirth?: string;
   address?: string;
   emergencyContact?: string;
   department?: string;
+  imageUrl?: string;
 }
 
 // Auth related fields

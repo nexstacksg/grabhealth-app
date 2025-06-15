@@ -148,7 +148,7 @@ export default function VerifyPage() {
 
   // Mask email for display
   const maskedEmail = email ? 
-    email.replace(/^(.{2})(.*)(@.*)$/, (_, a, b, c) => a + '*'.repeat(b.length) + c) : 
+    email.replace(/^(.{2})(.*)(@.*)$/, (_: string, a: string, b: string, c: string) => a + '*'.repeat(b.length) + c) : 
     '';
 
   return (
@@ -174,7 +174,7 @@ export default function VerifyPage() {
               {code.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => (inputRefs.current[index] = el)}
+                  ref={(el) => { inputRefs.current[index] = el; }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}

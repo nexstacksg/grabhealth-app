@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { adminService } from '@/services/admin.service';
-import { IAccountRequest } from '@app/shared-types';
+import { IAccountRequest, AccountRequestStatus } from '@app/shared-types';
 import {
   Pagination,
   PaginationContent,
@@ -278,7 +278,7 @@ export default function AccountRequestsPage() {
                         : 'N/A'}
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
-                      {request.status === 'pending' && (
+                      {request.status === AccountRequestStatus.PENDING && (
                         <div className="flex flex-col xs:flex-row gap-1">
                           <Button
                             variant="outline"

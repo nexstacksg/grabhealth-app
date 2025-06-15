@@ -75,98 +75,10 @@ function MembershipPage() {
     fetchMembershipTiers();
   }, []);
 
-  // Handle membership actions (join or upgrade)
-  const handleMembershipAction = async (tierName: string) => {
-    if (!tierName) return;
-
-    try {
-      if (tierName === 'level7') {
-        setIsJoining(true);
-
-        // Find the tier ID for level7
-        const tier = membershipTiers.find((t) => t.name === tierName);
-        if (!tier) {
-          throw new Error('Tier not found');
-        }
-
-        // Create new membership
-        await membershipService.joinMembership({ tierId: tier.id });
-
-        // Refresh membership data
-        await refreshMembership();
-
-        toast.success('Successfully joined Level 7 tier!');
-
-        // Redirect to profile
-        router.push('/profile');
-      } else if (tierName.startsWith('level')) {
-        setIsUpgrading(true);
-
-        // Check if user has a membership
-        if (!membership) {
-          toast.error('You need to join Level 7 tier first');
-          setIsUpgrading(false);
-          return;
-        }
-
-        // Check if eligible for upgrade based on current tier and points
-        let requiredPoints = 0;
-        let nextTier = '';
-
-        switch (membership.tier) {
-          case 'level7':
-            requiredPoints = 100;
-            nextTier = 'level6';
-            break;
-          case 'level6':
-            requiredPoints = 200;
-            nextTier = 'level5';
-            break;
-          case 'level5':
-            requiredPoints = 400;
-            nextTier = 'level4';
-            break;
-          case 'level4':
-            requiredPoints = 1000;
-            nextTier = 'level3';
-            break;
-          default:
-            // No automatic upgrades for level3 and above
-            toast.info('You have already reached a discount-based tier');
-            setIsUpgrading(false);
-            return;
-        }
-
-        if (membership.points < requiredPoints) {
-          toast.error(
-            `You need ${requiredPoints} points to upgrade to ${nextTier}`
-          );
-          setIsUpgrading(false);
-          return;
-        }
-
-        // Upgrade membership
-        await membershipService.upgradeTier(tierName);
-
-        // Refresh membership data
-        await refreshMembership();
-
-        toast.success(`Successfully upgraded to ${tierName}!`);
-
-        // Redirect to profile
-        router.push('/profile');
-      }
-    } catch (error) {
-      console.error('Error handling membership action:', error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to process membership action'
-      );
-    } finally {
-      setIsJoining(false);
-      setIsUpgrading(false);
-    }
+  // Since everyone who registers is automatically a member, no action needed
+  const handleMembershipAction = () => {
+    // Redirect to profile since user is already a member
+    router.push('/profile');
   };
 
   // If API fails, use default tiers

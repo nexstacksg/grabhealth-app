@@ -24,7 +24,14 @@ export default async function DashboardPage() {
   const recentClaims: any[] = [];
 
   try {
-    membershipStats = await dashboardService.getMembershipStats();
+    const stats = await dashboardService.getMembershipStats();
+    // Map the response to our expected format - use type assertion for now
+    const statsData = stats as any;
+    membershipStats = {
+      totalUsers: statsData.totalUsers || 0,
+      essentialUsers: statsData.essentialUsers || 0,
+      premiumUsers: statsData.premiumUsers || 0,
+    };
   } catch (error) {
     console.error('Error fetching membership stats:', error);
   }

@@ -95,7 +95,7 @@ function useProducts() {
       setIsLoading(false);
       setPageTransitioning(false);
     }
-  }, [pagination.page, pagination.limit, products.length, filters.query, filters.inStock]);
+  }, [pagination.page, pagination.limit, products, filters.query, filters.inStock]);
 
   // Helper function to convert price range string to min/max values
   const getPriceRangeValues = (
@@ -282,7 +282,7 @@ function AIRecommendationsSection() {
                         id: product.id,
                         name: product.name,
                         price: product.price,
-                        image_url: product.imageUrl,
+                        image_url: product.imageUrl || undefined,
                       }}
                       className="w-full"
                       disabled={!product.inStock}
@@ -335,7 +335,7 @@ function AIRecommendationsSection() {
                         id: product.id,
                         name: product.name,
                         price: product.price,
-                        image_url: product.imageUrl,
+                        image_url: product.imageUrl || undefined,
                       }}
                       className="w-full"
                       disabled={!product.inStock}
@@ -903,7 +903,7 @@ export default function ProductsPage() {
                             id: product.id,
                             name: product.name,
                             price: product.price,
-                            image_url: product.imageUrl,
+                            image_url: product.imageUrl || undefined,
                           }}
                           className="w-full"
                           disabled={!product.inStock}

@@ -1,4 +1,5 @@
 import { OrderStatus, PaymentStatus, PaymentMethod } from '../enums/order';
+import { IProduct } from './product';
 
 export interface IOrder {
   id: number;
@@ -53,7 +54,7 @@ export interface ICartItem {
   productId: number;
   quantity: number;
   price?: number;
-  product?: any;
+  product?: IProduct | null;
 }
 
 export interface ICart {
