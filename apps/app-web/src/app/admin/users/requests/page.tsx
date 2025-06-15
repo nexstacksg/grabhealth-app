@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -41,9 +41,21 @@ export default function AccountRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchRequests();
+  const fetchRequestsCallback = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminService.getAccountRequests();
+      setRequests(data.requests);
+    } catch (error) {
+      console.error('Error fetching account requests:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchRequestsCallback();
+  }, [fetchRequestsCallback]);
 
   async function fetchRequests() {
     setLoading(true);
@@ -68,7 +80,7 @@ export default function AccountRequestsPage() {
       setRequests(
         requests.map((request) =>
           request.id === requestId ? { ...request, status } : request
-        )
+        ) as any
       );
     } catch (error) {
       console.error(`Error ${status} account request:`, error);
@@ -80,8 +92,8 @@ export default function AccountRequestsPage() {
   const filteredRequests = requests.filter((request) => {
     const matchesSearch =
       searchTerm === '' ||
-      request.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.email.toLowerCase().includes(searchTerm.toLowerCase());
+      request.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (request.requestDetails && request.requestDetails.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus =
       statusFilter === 'all' || request.status === statusFilter;
@@ -146,7 +158,7 @@ export default function AccountRequestsPage() {
           Account Requests
         </h2>
         <Button
-          onClick={fetchRequests}
+          onClick={fetchRequestsCallback}
           variant="outline"
           size="sm"
           className="h-8 text-sm px-2 py-0 w-full sm:w-auto"
@@ -248,21 +260,21 @@ export default function AccountRequestsPage() {
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
                       <div>
-                        <div className="font-medium">{request.name}</div>
+                        <div className="font-medium">User {request.userId}</div>
                       </div>
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
-                      {request.email}
+                      {request.requestDetails || 'N/A'}
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
-                      {request.role}
+                      {request.requestType}
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
                       {getStatusBadge(request.status)}
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">
-                      {request.created_at
-                        ? new Date(request.created_at).toLocaleDateString()
+                      {request.createdAt
+                        ? new Date(request.createdAt).toLocaleDateString()
                         : 'N/A'}
                     </TableCell>
                     <TableCell className="py-2 px-3 align-middle">

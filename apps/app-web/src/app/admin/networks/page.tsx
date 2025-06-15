@@ -177,8 +177,12 @@ export default function NetworksPage() {
     setLoading(true);
     try {
       const data = await adminService.getNetworkData();
-      // Note: Assuming the service returns the data directly, might need adjustment based on actual backend response
-      setNetworks(data.networks || []);
+      // Handle the response based on actual structure - data might be an array or have a networks property
+      if (Array.isArray(data)) {
+        setNetworks(data);
+      } else {
+        setNetworks((data as any).networks || []);
+      }
     } catch (error) {
       console.error('Error fetching networks:', error);
     } finally {
@@ -209,7 +213,12 @@ export default function NetworksPage() {
   async function fetchUserDownline(userId: number) {
     try {
       const data = await adminService.getNetworkData(userId.toString());
-      setDownlineUsers(data.downline || []);
+      // Handle the response structure
+      if (Array.isArray(data)) {
+        setDownlineUsers(data);
+      } else {
+        setDownlineUsers((data as any).downline || []);
+      }
       resetTabPages(); // Reset all tab pages when loading new downline
 
       // Find and set the selected user

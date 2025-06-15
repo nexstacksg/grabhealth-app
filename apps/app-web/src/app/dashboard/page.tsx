@@ -6,20 +6,41 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { neon } from '@neondatabase/serverless';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { dashboardService } from '@/services/dashboard.service';
+import { productService } from '@/services/product.service';
+import { partnerService } from '@/services/partner.service';
 
-// Initialize database connection
-const sql = neon(process.env.DATABASE_URL!);
+// Force dynamic rendering to avoid build-time API calls
+export const dynamic = 'force-dynamic';
 
 // Dashboard page component
 export default async function DashboardPage() {
-  // Fetch data from database
-  const membershipStats = await getMembershipStats();
-  const products = await getProducts();
-  const partners = await getPartners();
-  const recentClaims = await getRecentClaims();
+  // Fetch data from services with error handling
+  let membershipStats = { totalUsers: 0, essentialUsers: 0, premiumUsers: 0 };
+  let products: any[] = [];
+  let partners: any = { totalPartners: 0, activePartners: 0 };
+  const recentClaims: any[] = [];
+
+  try {
+    membershipStats = await dashboardService.getMembershipStats();
+  } catch (error) {
+    console.error('Error fetching membership stats:', error);
+  }
+
+  try {
+    const productResponse = await productService.searchProducts({ limit: 6 });
+    products = productResponse.products || [];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  }
+
+  try {
+    partners = await partnerService.getPartnerDashboard();
+  } catch (error) {
+    console.error('Error fetching partners:', error);
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -33,7 +54,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {membershipStats.totalUsers}
+              {membershipStats.totalUsers || 0}
             </div>
           </CardContent>
         </Card>
@@ -45,7 +66,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {membershipStats.essentialUsers}
+              {membershipStats.essentialUsers || 0}
             </div>
           </CardContent>
         </Card>
@@ -57,7 +78,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {membershipStats.premiumUsers}
+              {membershipStats.premiumUsers || 0}
             </div>
           </CardContent>
         </Card>
@@ -90,7 +111,7 @@ export default async function DashboardPage() {
                 <div className="aspect-video relative bg-gray-100">
                   <Image
                     src={
-                      product.image_url ||
+                      product.imageUrl ||
                       '/placeholder.svg?height=200&width=300'
                     }
                     alt={product.name}
@@ -101,149 +122,114 @@ export default async function DashboardPage() {
                 <CardHeader className="p-4 pb-0">
                   <div className="flex justify-between items-start">
                     <div>
-                      <Badge className="mb-2 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-                        {product.category_name}
-                      </Badge>
                       <CardTitle className="text-lg">{product.name}</CardTitle>
+                      <CardDescription className="text-sm mt-1">
+                        {product.description?.substring(0, 100)}...
+                      </CardDescription>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold">
-                        ${Number.parseFloat(product.price).toFixed(2)}
-                      </div>
-                      <div className="text-sm text-emerald-600">
-                        Premium: $
-                        {(
-                          Number.parseFloat(product.price) *
-                          (1 - Number.parseFloat(product.discount_premium))
-                        ).toFixed(2)}
-                      </div>
-                    </div>
+                    <Badge variant={product.inStock ? 'default' : 'secondary'}>
+                      {product.inStock ? 'In Stock' : 'Out of Stock'}
+                    </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <CardDescription className="line-clamp-2">
-                    {product.description}
-                  </CardDescription>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-2xl font-bold text-green-600">
+                      ${product.price}
+                    </span>
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                      View Details
+                    </button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+          {products.length === 0 && (
+            <p className="text-center text-gray-500 py-8">
+              No products available at the moment.
+            </p>
+          )}
         </TabsContent>
 
         {/* Partners Tab */}
         <TabsContent value="partners" className="space-y-4">
-          <h2 className="text-xl font-semibold mb-4">Partner Locations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {partners.map((partner) => (
-              <Card key={partner.id}>
-                <CardHeader>
-                  <CardTitle>{partner.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-2">{partner.address}</p>
-                  <div className="text-sm text-gray-500">
-                    <span>Lat: {partner.latitude}</span>
-                    <span className="mx-2">|</span>
-                    <span>Long: {partner.longitude}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <h2 className="text-xl font-semibold mb-4">Partner Network</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Partners</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {partners.totalPartners || 0}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Partners</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {partners.activePartners || 0}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Earnings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">
+                  ${partners.totalEarnings || 0}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
-        {/* Claims Tab */}
+        {/* Recent Claims Tab */}
         <TabsContent value="claims" className="space-y-4">
           <h2 className="text-xl font-semibold mb-4">Recent Gift Claims</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="text-left p-3 border">User</th>
-                  <th className="text-left p-3 border">Gift</th>
-                  <th className="text-left p-3 border">Partner</th>
-                  <th className="text-left p-3 border">Claimed At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentClaims.map((claim) => (
-                  <tr key={claim.id} className="border-b">
-                    <td className="p-3 border">{claim.user_name}</td>
-                    <td className="p-3 border">{claim.gift_name}</td>
-                    <td className="p-3 border">{claim.partner_name}</td>
-                    <td className="p-3 border">
-                      {new Date(claim.claimed_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </td>
+          {recentClaims.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-left p-3 border">User</th>
+                    <th className="text-left p-3 border">Gift</th>
+                    <th className="text-left p-3 border">Partner</th>
+                    <th className="text-left p-3 border">Claimed At</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recentClaims.map((claim) => (
+                    <tr key={claim.id} className="border-b">
+                      <td className="p-3 border">{claim.user_name}</td>
+                      <td className="p-3 border">{claim.gift_name}</td>
+                      <td className="p-3 border">{claim.partner_name}</td>
+                      <td className="p-3 border">
+                        {new Date(claim.claimed_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500">No recent gift claims found.</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
   );
-}
-
-// Data fetching functions
-async function getMembershipStats() {
-  const totalUsers = await sql`SELECT COUNT(*) as count FROM users`;
-  const essentialUsers = await sql`
-    SELECT COUNT(*) as count 
-    FROM user_memberships um 
-    JOIN membership_tiers mt ON um.tier_id = mt.id 
-    WHERE mt.name = 'Essential'
-  `;
-  const premiumUsers = await sql`
-    SELECT COUNT(*) as count 
-    FROM user_memberships um 
-    JOIN membership_tiers mt ON um.tier_id = mt.id 
-    WHERE mt.name = 'Premium'
-  `;
-
-  return {
-    totalUsers: Number.parseInt(totalUsers[0].count),
-    essentialUsers: Number.parseInt(essentialUsers[0].count),
-    premiumUsers: Number.parseInt(premiumUsers[0].count),
-  };
-}
-
-async function getProducts() {
-  const products = await sql`
-    SELECT p.*, pc.name as category_name 
-    FROM products p
-    JOIN product_categories pc ON p.category_id = pc.id
-    ORDER BY p.name
-  `;
-  return products;
-}
-
-async function getPartners() {
-  const partners = await sql`
-    SELECT * FROM partners
-    ORDER BY name
-  `;
-  return partners;
-}
-
-async function getRecentClaims() {
-  const claims = await sql`
-    SELECT 
-      gc.id,
-      gc.claimed_at,
-      u.name as user_name,
-      gi.name as gift_name,
-      p.name as partner_name
-    FROM gift_claims gc
-    JOIN users u ON gc.user_id = u.id
-    JOIN gift_items gi ON gc.gift_id = gi.id
-    JOIN partners p ON gc.partner_id = p.id
-    ORDER BY gc.claimed_at DESC
-    LIMIT 10
-  `;
-  return claims;
 }

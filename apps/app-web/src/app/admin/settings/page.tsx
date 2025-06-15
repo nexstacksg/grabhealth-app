@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,22 +30,23 @@ export default function AdminSettingsPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Load settings on mount
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  async function fetchSettings() {
+  const fetchSettings = useCallback(async () => {
     try {
       const data = await adminService.getSettings();
-      setSiteName(data.siteName);
-      setContactEmail(data.contactEmail);
-      setAdminName(data.adminName);
-      setAdminEmail(data.adminEmail);
+      const settings = data as any; // Type assertion to handle interface mismatch
+      setSiteName(settings.siteName || '');
+      setContactEmail(settings.contactEmail || '');
+      setAdminName(settings.adminName || '');
+      setAdminEmail(settings.adminEmail || '');
     } catch (err) {
       console.error('Error fetching settings:', err);
     }
-  }
+  }, []);
+
+  // Load settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   async function runDatabaseMigrations() {
     setIsLoading(true);
@@ -73,7 +74,7 @@ export default function AdminSettingsPage() {
       await adminService.updateSettings({
         siteName,
         contactEmail,
-      });
+      } as any);
 
       setSuccess('Settings saved successfully');
     } catch (err) {

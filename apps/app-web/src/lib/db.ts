@@ -1,32 +1,22 @@
-import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+// API client utility for frontend-backend communication
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-// Initialize database connection with proper error handling
-let sql: NeonQueryFunction<false, false>;
+export async function apiCall(endpoint: string, options: RequestInit = {}) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  });
 
-try {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not defined');
+  if (!response.ok) {
+    throw new Error(`API call failed: ${response.statusText}`);
   }
-  sql = neon(process.env.DATABASE_URL);
-} catch (error) {
-  console.error('Failed to initialize database connection:', error);
-  // Provide a fallback to prevent the app from crashing in development
-  sql = neon(
-    process.env.DATABASE_URL ||
-      'postgresql://user:password@localhost:5432/dbname'
-  );
+
+  return response.json();
 }
 
-// Helper function for typed queries
-export async function query<T = any>(
-  strings: TemplateStringsArray,
-  ...values: any[]
-): Promise<T[]> {
-  const result = await sql(strings, ...values);
-  return result as T[];
-}
-
-// Export the SQL client
-export { sql };
-
-export default sql;
+export default apiCall;

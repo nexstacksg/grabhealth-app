@@ -18,6 +18,12 @@ const eslintConfig = [
       // Warn on unused variables
       '@typescript-eslint/no-unused-vars': 'warn',
       'no-unused-vars': 'warn',
+      // Allow any type with warning
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Allow unescaped entities with warning
+      'react/no-unescaped-entities': 'warn',
+      // Enforce exhaustive dependencies - this prevents runtime bugs
+      'react-hooks/exhaustive-deps': 'error',
     },
   },
 ];

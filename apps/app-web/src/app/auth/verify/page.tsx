@@ -26,8 +26,8 @@ export default function VerifyPage() {
   const [resendTimer, setResendTimer] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Get email from user or sessionStorage
-  const email = user?.email || JSON.parse(sessionStorage.getItem('user') || '{}').email;
+  // Get email from user or sessionStorage (client-side only)
+  const email = user?.email || (typeof window !== 'undefined' ? JSON.parse(sessionStorage.getItem('user') || '{}').email : '');
 
   useEffect(() => {
     // Redirect if no user or already verified
@@ -102,11 +102,13 @@ export default function VerifyPage() {
     try {
       await authService.verifyEmailCode(email, fullCode);
       
-      // Update user status in sessionStorage
-      const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (storedUser.email) {
-        storedUser.status = 'ACTIVE';
-        sessionStorage.setItem('user', JSON.stringify(storedUser));
+      // Update user status in sessionStorage (client-side only)
+      if (typeof window !== 'undefined') {
+        const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+        if (storedUser.email) {
+          storedUser.status = 'ACTIVE';
+          sessionStorage.setItem('user', JSON.stringify(storedUser));
+        }
       }
       
       // Refresh auth state

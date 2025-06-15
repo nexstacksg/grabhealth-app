@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -64,9 +64,26 @@ export default function UserDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const fetchUserDetails = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await adminService.getUser(id as string);
+      setUser(data as any); // Type assertion to handle interface mismatch
+    } catch (err) {
+      console.error('Error fetching user details:', err);
+      setError(
+        err instanceof Error ? err.message : 'Failed to load user details'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchUserDetails();
-  }, [id]);
+  }, [fetchUserDetails]);
 
   useEffect(() => {
     if (user) {
@@ -79,23 +96,6 @@ export default function UserDetailPage() {
       });
     }
   }, [user]);
-
-  async function fetchUserDetails() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await adminService.getUser(id as string);
-      setUser(data);
-    } catch (err) {
-      console.error('Error fetching user details:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to load user details'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSaveUser() {
     setIsSaving(true);
@@ -116,7 +116,7 @@ export default function UserDetailPage() {
         email: editFormData.email,
         role: editFormData.role as any,
         user_points: parseInt(editFormData.user_points) || 0,
-      });
+      } as any);
 
       // Update the user data in state
       setUser((prev) =>

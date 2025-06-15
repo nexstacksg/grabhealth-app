@@ -9,23 +9,21 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { neon } from '@neondatabase/serverless';
 import { CalendarIcon } from 'lucide-react';
+import { promotionService } from '@/services/promotion.service';
 
-// Initialize database connection
-const sql = neon(process.env.DATABASE_URL!);
-
-// Fetch promotions from database
-async function getPromotions() {
-  const promotions = await sql`
-    SELECT * FROM promotions
-    ORDER BY start_date DESC
-  `;
-  return promotions;
-}
+// Force dynamic rendering to avoid build-time API calls
+export const dynamic = 'force-dynamic';
 
 export default async function PromotionsPage() {
-  const promotions = await getPromotions();
+  let promotions: any[] = [];
+
+  try {
+    const response = await promotionService.getPromotions({ active: true });
+    promotions = response.promotions || [];
+  } catch (error) {
+    console.error('Error fetching promotions:', error);
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-16 md:px-6">

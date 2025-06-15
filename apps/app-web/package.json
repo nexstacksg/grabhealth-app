@@ -11,20 +11,12 @@
     "lint:check": "next lint && prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "lint:fix": "next lint --fix && prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css}\""
   },
   "dependencies": {
     "@ai-sdk/openai": "latest",
     "@app/shared-types": "*",
     "@hookform/resolvers": "^3.9.1",
-    "@neondatabase/serverless": "latest",
-    "@prisma/client": "^6.8.2",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,7 @@ function useProducts() {
     maxPrice: undefined,
   });
 
-  const fetchProducts = async (
+  const fetchProducts = useCallback(async (
     page = 1,
     category?: string,
     priceRange?: string
@@ -95,7 +95,7 @@ function useProducts() {
       setIsLoading(false);
       setPageTransitioning(false);
     }
-  };
+  }, [pagination.page, pagination.limit, products.length, filters.query, filters.inStock]);
 
   // Helper function to convert price range string to min/max values
   const getPriceRangeValues = (
@@ -142,7 +142,7 @@ function useProducts() {
   // Initial fetch
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   return {
     products,
