@@ -20,17 +20,12 @@ import {
   ShoppingBag,
   CreditCard,
   Users,
-  Clock,
   ChevronRight,
   Star,
-  DollarSign,
-  QrCode,
-  Download,
   Share2,
   CopyIcon,
 } from 'lucide-react';
 import { useMembership } from '@/hooks/use-membership';
-import { membershipService } from '@/services/membership.service';
 import QRCode from 'react-qr-code';
 import { toast } from 'sonner';
 
@@ -38,18 +33,14 @@ interface MembershipProfileProps {
   showTitle?: boolean;
 }
 
-export function MembershipProfile({
-  showTitle = true,
-}: MembershipProfileProps) {
+export function MembershipProfile({}: MembershipProfileProps) {
   const {
     membership,
     isLoading,
     tierDiscount,
     pointsToNextTier,
-    isEligibleForUpgrade,
   } = useMembership();
 
-  const [upgrading, setUpgrading] = useState(false);
   const [copied, setCopied] = useState(false);
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
@@ -105,24 +96,6 @@ export function MembershipProfile({
     }
   };
 
-  // Handle upgrade request
-  const handleUpgrade = async () => {
-    if (!membership || !isEligibleForUpgrade) return;
-
-    try {
-      setUpgrading(true);
-
-      await membershipService.upgradeTier('premium');
-
-      // Refresh the page to show updated membership
-      window.location.reload();
-    } catch (error) {
-      console.error('Error upgrading membership:', error);
-      toast.error('Failed to upgrade membership');
-    } finally {
-      setUpgrading(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -470,40 +443,6 @@ export function MembershipProfile({
             </div>
           </div>
 
-          {/* Upgrade Section */}
-          {(membership.tier === 'level4' ||
-            membership.tier === 'level5' ||
-            membership.tier === 'level6' ||
-            membership.tier === 'level7') && (
-            <>
-              <Separator />
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="text-sm font-medium mb-2">Upgrade to Premium</h4>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Earn points by making purchases, inviting friends, or
-                  participating in health surveys.
-                </p>
-                <Button
-                  size="sm"
-                  className="w-full"
-                  disabled={!isEligibleForUpgrade || upgrading}
-                  onClick={handleUpgrade}
-                >
-                  {upgrading ? (
-                    <>
-                      <Clock className="mr-2 h-4 w-4 animate-spin" />
-                      Upgrading...
-                    </>
-                  ) : isEligibleForUpgrade ? (
-                    'Upgrade Now'
-                  ) : (
-                    'Earn More Points to Upgrade'
-                  )}
-                </Button>
-              </div>
-            </>
-          )}
         </div>
       </CardContent>
       <CardFooter className="pt-1 pb-4 px-6">

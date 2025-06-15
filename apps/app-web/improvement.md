@@ -1,0 +1,502 @@
+# Frontend Improvement Plan
+
+This document outlines the improvements needed for the app-web frontend codebase, organized by priority and category.
+
+## 🔴 Critical Issues (High Priority)
+
+### 1. Component Size and Organization
+
+#### Problem: Large Components
+
+Several components exceed 500 lines and handle too many responsibilities:
+
+Line Number, File Path
+926 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/app/products/page.tsx
+763 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/components/ui/sidebar.tsx
+740 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/components/commission/commission-network.tsx
+608 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-be/prisma/seed.ts
+589 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/app/cart/checkout/page.tsx
+583 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/components/rank-rewards/rank-rewards-content.tsx
+582 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/app/admin/networks/page.tsx
+541 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-be/src/services/auth/authService.ts
+536 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/app/products/[id]/page.tsx
+527 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/app/admin/users/[id]/page.tsx
+526 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/components/rank-rewards/rank-visualization.tsx
+520 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/components/membership-profile.tsx
+505 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-be/src/services/commission.service.ts
+504 /Users/kenling/Documents/GitHub/grabhealth-app/apps/app-web/src/components/product-chatbot.tsx
+
+- **`product-chatbot.tsx`** (504 lines)
+- **`membership-profile.tsx`** (520 lines)
+- **`header.tsx`** (256 lines with duplicate logic)
+
+#### Solution: Component Decomposition
+
+Break down large components into smaller, focused components:
+
+```tsx
+// Example: product-chatbot.tsx should be split into:
+components / chatbot / ChatbotButton.tsx;
+ChatbotContainer.tsx;
+ChatMessage.tsx;
+ProductRecommendationCard.tsx;
+ChatSuggestions.tsx;
+ChatInput.tsx;
+useChatbot.hook.ts; // Extract logic into custom hook
+```
+
+### 2. Security Vulnerabilities
+
+#### Problem: Dangerous HTML Rendering
+
+```tsx
+// product-chatbot.tsx line 199
+<div dangerouslySetInnerHTML={{ __html: formattedContent }} />
+```
+
+#### Solution: Use DOMPurify or Markdown Renderer
+
+```tsx
+import DOMPurify from 'isomorphic-dompurify';
+
+// Sanitize HTML before rendering
+const sanitizedContent = DOMPurify.sanitize(formattedContent);
+<div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />;
+
+// Or better: use a markdown renderer
+import ReactMarkdown from 'react-markdown';
+<ReactMarkdown>{content}</ReactMarkdown>;
+```
+
+### 3. Type Safety Issues
+
+#### Problem: Type Assertions and 'any' Usage
+
+```tsx
+// cart-dropdown.tsx
+key={(item as any).id || item.productId}
+src={(item as any).image_url}
+```
+
+#### Solution: Define Proper Interfaces
+
+```tsx
+// types/cart.types.ts
+interface CartItem {
+  id: string;
+  productId: number;
+  quantity: number;
+  price: number;
+  image_url: string;
+  name: string;
+}
+
+// Use proper types
+key={item.id || `product-${item.productId}`}
+src={item.image_url}
+```
+
+## 🟡 Performance Optimizations (Medium Priority)
+
+### 1. Missing React.memo for Pure Components
+
+#### Problem: Unnecessary Re-renders
+
+Components re-render when parent updates, even if props haven't changed.
+
+#### Solution: Implement React.memo
+
+```tsx
+// components/ProductCard.tsx
+export const ProductCard = React.memo(({ product }: { product: IProduct }) => {
+  return (
+    // component JSX
+  );
+}, (prevProps, nextProps) => {
+  // Optional custom comparison
+  return prevProps.product.id === nextProps.product.id;
+});
+
+// Also memoize:
+- CartItem in cart-dropdown.tsx
+- NetworkNode in commission-network.tsx
+- TestimonialCard in testimonials.tsx
+```
+
+### 2. Image Optimization
+
+#### Problem: Missing Next.js Image Optimizations
+
+```tsx
+// Current implementation lacks priority and placeholders
+<Image src={product.imageUrl} alt={product.name} width={300} height={300} />
+```
+
+#### Solution: Implement Full Image Optimization
+
+```tsx
+<Image
+  src={product.imageUrl}
+  alt={product.name}
+  width={300}
+  height={300}
+  priority={index < 4} // Above-the-fold images
+  placeholder="blur"
+  blurDataURL={product.blurDataURL || generateBlurDataURL()}
+  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+  loading={index < 4 ? 'eager' : 'lazy'}
+/>
+```
+
+### 3. Bundle Size Reduction
+
+#### Problem: Inline Styles and Unused Code
+
+- Inline CSS in product-chatbot.tsx (lines 231-274)
+- 37 console.log statements in production
+- Unused imports
+
+#### Solution: Code Cleanup
+
+```tsx
+// Move inline styles to CSS modules or Tailwind
+// Remove all console statements or use proper logging
+// Run unused import cleanup
+```
+
+## 🟢 Best Practices (Lower Priority)
+
+### 1. Error Boundaries
+
+#### Problem: No Error Boundaries
+
+Application crashes on component errors.
+
+#### Solution: Implement Error Boundaries
+
+```tsx
+// components/ErrorBoundary.tsx
+import React from 'react';
+
+interface Props {
+  children: React.ReactNode;
+  fallback?: React.ComponentType<{ error: Error }>;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+    // Send to error tracking service
+  }
+
+  render() {
+    if (this.state.hasError) {
+      const Fallback = this.props.fallback || DefaultErrorFallback;
+      return <Fallback error={this.state.error!} />;
+    }
+
+    return this.props.children;
+  }
+}
+
+// Wrap app sections
+<ErrorBoundary>
+  <ProductSection />
+</ErrorBoundary>;
+```
+
+### 2. Loading States
+
+#### Problem: Inconsistent Loading States
+
+Different components handle loading differently.
+
+#### Solution: Create Reusable Loading Components
+
+```tsx
+// components/ui/LoadingSpinner.tsx
+export const LoadingSpinner = ({ text = 'Loading...' }) => (
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <span className="ml-2">{text}</span>
+  </div>
+);
+
+// components/ui/LoadingSkeleton.tsx
+export const ProductSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-48 bg-gray-200 rounded-lg mb-4" />
+    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+    <div className="h-4 bg-gray-200 rounded w-1/2" />
+  </div>
+);
+```
+
+### 3. Constants Management
+
+#### Problem: Hardcoded Values Throughout Codebase
+
+- URLs: `http://localhost:3000`
+- Magic numbers: `3`, `20`, `1000`
+- Repeated strings
+
+#### Solution: Create Constants File
+
+```tsx
+// constants/index.ts
+export const APP_CONFIG = {
+  APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+  APP_NAME: 'GrabHealth AI',
+};
+
+export const LIMITS = {
+  MAX_CART_DISPLAY: 3,
+  PRODUCTS_PER_PAGE: 20,
+  DEBOUNCE_DELAY: 300,
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+};
+
+export const ROUTES = {
+  HOME: '/',
+  PRODUCTS: '/products',
+  CART: '/cart',
+  CHECKOUT: '/cart/checkout',
+  PROFILE: '/profile',
+  COMMISSION: '/commission',
+} as const;
+
+export const MESSAGES = {
+  ERROR: {
+    GENERIC: 'Something went wrong. Please try again.',
+    NETWORK: 'Network error. Please check your connection.',
+    AUTH: 'Please login to continue.',
+  },
+  SUCCESS: {
+    CART_ADD: 'Item added to cart!',
+    PROFILE_UPDATE: 'Profile updated successfully!',
+  },
+} as const;
+```
+
+### 4. Code Duplication
+
+#### Problem: Duplicate Navigation Logic in Header
+
+Mobile and desktop navigation have separate but similar implementations.
+
+#### Solution: Extract Shared Components
+
+```tsx
+// components/navigation/NavigationItems.tsx
+interface NavigationItemsProps {
+  items: NavItem[];
+  onItemClick?: () => void;
+  className?: string;
+}
+
+export const NavigationItems = ({
+  items,
+  onItemClick,
+  className,
+}: NavigationItemsProps) => {
+  return (
+    <nav className={className}>
+      {items.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={onItemClick}
+          className="nav-link"
+        >
+          {item.icon && <item.icon className="h-4 w-4" />}
+          <span>{item.label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+};
+
+// Use in both mobile and desktop navigation
+<NavigationItems
+  items={navItems}
+  onItemClick={() => setMobileMenuOpen(false)}
+/>;
+```
+
+### 5. Accessibility Improvements
+
+#### Problem: Missing ARIA Labels and Keyboard Navigation
+
+- Icon-only buttons lack labels
+- Chatbot lacks keyboard navigation
+- Form inputs missing labels
+
+#### Solution: Add Proper Accessibility Attributes
+
+```tsx
+// Icon buttons need aria-labels
+<Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Close cart">
+  <X className="h-4 w-4" />
+</Button>
+
+// Add keyboard navigation
+<div
+  role="button"
+  tabIndex={0}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handleClick();
+    }
+  }}
+  aria-label="Open chat"
+>
+
+// Form inputs need labels
+<Label htmlFor="email" className="sr-only">Email Address</Label>
+<Input id="email" type="email" placeholder="Email" aria-label="Email Address" />
+```
+
+### 6. API Error Handling
+
+#### Problem: Inconsistent Error Types
+
+```tsx
+catch (error: any) {
+  // Inconsistent error handling
+}
+```
+
+#### Solution: Create Typed Error Handler
+
+```tsx
+// types/api.types.ts
+export interface ApiError {
+  status: number;
+  message: string;
+  code?: string;
+  details?: Record<string, any>;
+}
+
+// utils/error-handler.ts
+export function handleApiError(error: unknown): ApiError {
+  if (axios.isAxiosError(error)) {
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.error?.message || error.message,
+      code: error.response?.data?.error?.code,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      status: 500,
+      message: error.message,
+    };
+  }
+
+  return {
+    status: 500,
+    message: 'An unexpected error occurred',
+  };
+}
+```
+
+## 📁 File Organization Improvements
+
+### Current Issues:
+
+1. Empty `/components/products/` directory
+2. Product components in root components folder
+3. No clear feature-based organization
+
+### Proposed Structure:
+
+```
+components/
+├── common/           # Shared components
+│   ├── LoadingSpinner.tsx
+│   ├── ErrorBoundary.tsx
+│   └── EmptyState.tsx
+├── layout/          # Layout components
+│   ├── Header/
+│   ├── Footer/
+│   └── Sidebar/
+├── features/        # Feature-based organization
+│   ├── products/
+│   │   ├── ProductCard.tsx
+│   │   ├── ProductGrid.tsx
+│   │   ├── ProductFilters.tsx
+│   │   └── ProductSearch.tsx
+│   ├── cart/
+│   │   ├── CartDropdown.tsx
+│   │   ├── CartItem.tsx
+│   │   └── CartSummary.tsx
+│   ├── chatbot/
+│   │   └── [chatbot components]
+│   └── commission/
+│       └── [commission components]
+└── ui/              # Base UI components (keep as is)
+```
+
+## 🔧 Implementation Plan
+
+### Phase 1: Critical Issues (Week 1)
+
+1. Split large components
+2. Fix security vulnerabilities
+3. Fix type safety issues
+
+### Phase 2: Performance (Week 2)
+
+1. Implement React.memo
+2. Optimize images
+3. Reduce bundle size
+
+### Phase 3: Best Practices (Week 3-4)
+
+1. Add error boundaries
+2. Create reusable components
+3. Implement constants
+4. Improve accessibility
+
+### Phase 4: Organization (Week 5)
+
+1. Reorganize file structure
+2. Remove code duplication
+3. Add proper documentation
+
+## 📊 Success Metrics
+
+- [ ] All components < 300 lines
+- [ ] Zero TypeScript errors
+- [ ] Bundle size reduced by 20%
+- [ ] Lighthouse performance score > 90
+- [ ] Zero accessibility violations
+- [ ] 100% critical path test coverage
+
+## 🛠️ Tools to Help
+
+1. **Bundle Analysis**: `npm run analyze`
+2. **Type Coverage**: `npx type-coverage`
+3. **Accessibility**: `npm install --save-dev @axe-core/react`
+4. **Performance**: React DevTools Profiler
+5. **Code Quality**: ESLint, Prettier
+
+---
+
+Remember to test thoroughly after each change and commit frequently!

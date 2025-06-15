@@ -19,16 +19,10 @@ class AIService {
     message: string,
     conversationHistory?: ChatMessage[]
   ): Promise<ChatResponse> {
-    const response = await apiClient.post<ChatResponse>(this.chatBaseUrl, {
+    return await apiClient.post<ChatResponse>(this.chatBaseUrl, {
       message,
       history: conversationHistory,
     });
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to send chat message');
-    }
-
-    return response.data;
   }
 
   /**
@@ -37,18 +31,10 @@ class AIService {
   async getRecommendations(
     request: RecommendationRequest
   ): Promise<RecommendationResponse> {
-    const response = await apiClient.post<RecommendationResponse>(
+    return await apiClient.post<RecommendationResponse>(
       this.recommendBaseUrl,
       request
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get recommendations'
-      );
-    }
-
-    return response.data;
   }
 
   /**
@@ -58,18 +44,10 @@ class AIService {
     limit?: number;
     category?: string;
   }): Promise<IProduct[]> {
-    const response = await apiClient.get<IProduct[]>(
+    return await apiClient.get<IProduct[]>(
       `${this.recommendBaseUrl}/recommend`,
       { params }
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get personalized recommendations'
-      );
-    }
-
-    return response.data;
   }
 
   /**
@@ -79,36 +57,20 @@ class AIService {
     productId: number,
     params?: { limit?: number }
   ): Promise<IProduct[]> {
-    const response = await apiClient.get<IProduct[]>(
+    return await apiClient.get<IProduct[]>(
       `${this.recommendBaseUrl}/similar/${productId}`,
       { params }
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get similar products'
-      );
-    }
-
-    return response.data;
   }
 
   /**
    * Get trending products
    */
   async getTrendingProducts(params?: { limit?: number }): Promise<IProduct[]> {
-    const response = await apiClient.get<IProduct[]>(
+    return await apiClient.get<IProduct[]>(
       `${this.recommendBaseUrl}/trending`,
       { params }
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get trending products'
-      );
-    }
-
-    return response.data;
   }
 
   /**
@@ -126,7 +88,7 @@ class AIService {
       data?: any;
     }>;
   }> {
-    const response = await apiClient.post<{
+    return await apiClient.post<{
       response: string;
       sessionId: string;
       suggestedActions?: Array<{
@@ -138,62 +100,34 @@ class AIService {
       message,
       sessionId,
     });
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to send message');
-    }
-
-    return response.data;
   }
 
   /**
    * Get chatbot conversation history
    */
   async getChatHistory(sessionId: string): Promise<ChatMessage[]> {
-    const response = await apiClient.get<ChatMessage[]>(
+    return await apiClient.get<ChatMessage[]>(
       `${this.chatbotBaseUrl}/history/${sessionId}`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get chat history'
-      );
-    }
-
-    return response.data;
   }
 
   /**
    * Clear chatbot conversation
    */
   async clearChatHistory(sessionId: string): Promise<void> {
-    const response = await apiClient.delete<void>(
+    return await apiClient.delete<void>(
       `${this.chatbotBaseUrl}/history/${sessionId}`
     );
-
-    if (!response.success) {
-      throw new Error(
-        response.error?.message || 'Failed to clear chat history'
-      );
-    }
   }
 
   /**
    * Get product search suggestions
    */
   async getSearchSuggestions(query: string): Promise<string[]> {
-    const response = await apiClient.post<string[]>(
+    return await apiClient.post<string[]>(
       `${this.recommendBaseUrl}/search-suggestions`,
       { query, limit: 5 }
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get search suggestions'
-      );
-    }
-
-    return response.data;
   }
 
   /**

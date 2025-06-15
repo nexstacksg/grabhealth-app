@@ -178,30 +178,9 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     try {
       const newPoints = membership.points + points;
 
-      const updatedMembership = await membershipService.updatePoints(newPoints);
-
-      // Check if tier changed
-      if (updatedMembership.tier !== membership.tier) {
-        toast.success(
-          `Congratulations! You've been upgraded to ${updatedMembership.tier} tier!`
-        );
-      } else {
-        toast.success(`Added ${points} points to your membership!`);
-      }
-
-      // Update local state - convert IMembership to local Membership type
-      setMembership({
-        id: updatedMembership.id,
-        tier: updatedMembership.tier as any,
-        points: updatedMembership.points || 0,
-        created_at: updatedMembership.createdAt.toString(),
-        updated_at: updatedMembership.updatedAt.toString(),
-        name:
-          updatedMembership.user?.firstName +
-            ' ' +
-            updatedMembership.user?.lastName || '',
-        email: updatedMembership.user?.email || '',
-      });
+      // Points system is not active - users are automatically members
+      console.log('Points system is not active', points);
+      toast.info('Thank you for your activity!');
     } catch (error) {
       console.error('Error adding points:', error);
       toast.error('Failed to update membership points');

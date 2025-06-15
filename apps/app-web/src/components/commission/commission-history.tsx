@@ -18,24 +18,20 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
+import { ICommission } from '@app/shared-types';
 
-type Commission = {
-  id: number;
-  order_id: number;
-  user_id: number;
-  recipient_id: number;
-  amount: number;
-  commission_rate: number;
-  relationship_level: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  order_total?: number;
+// Extended commission type with additional display properties
+type CommissionWithDetails = ICommission & {
+  order_id?: number;
+  user_id?: number;
+  created_at?: string;
+  commission_rate?: number;
+  relationship_level?: number;
   buyer_name?: string;
 };
 
 type CommissionHistoryProps = {
-  commissions: Commission[];
+  commissions: (ICommission | CommissionWithDetails)[];
 };
 
 export default function CommissionHistory({
@@ -90,29 +86,38 @@ export default function CommissionHistory({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {commissions.map((commission) => (
-                <TableRow key={commission.id}>
-                  <TableCell className="font-medium">
-                    {formatDate(commission.created_at)}
-                  </TableCell>
-                  <TableCell>#{commission.order_id}</TableCell>
-                  <TableCell>
-                    {commission.buyer_name || `User #${commission.user_id}`}
-                  </TableCell>
-                  <TableCell>Tier {commission.relationship_level}</TableCell>
-                  <TableCell>
-                    {(commission.commission_rate * 100).toFixed(0)}%
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {formatPrice(commission.amount)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(commission.status)}>
-                      {commission.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {commissions.map((commission) => {
+                const c = commission as CommissionWithDetails;
+                const dateStr = c.created_at || (c.createdAt instanceof Date ? c.createdAt.toISOString() : c.createdAt);
+                const orderId = c.order_id ?? c.orderId;
+                const userId = c.user_id ?? c.userId;
+                const relationshipLevel = c.relationship_level ?? c.relationshipLevel;
+                const commissionRate = c.commission_rate ?? c.commissionRate;
+                
+                return (
+                  <TableRow key={commission.id}>
+                    <TableCell className="font-medium">
+                      {formatDate(dateStr || '')}
+                    </TableCell>
+                    <TableCell>#{orderId}</TableCell>
+                    <TableCell>
+                      {c.buyer_name || `User #${userId}`}
+                    </TableCell>
+                    <TableCell>Tier {relationshipLevel}</TableCell>
+                    <TableCell>
+                      {(commissionRate * 100).toFixed(0)}%
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatPrice(commission.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(commission.status)}>
+                        {commission.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         ) : (

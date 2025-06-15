@@ -18,67 +18,41 @@ class ProductService extends BaseService {
     params?: ProductSearchParams
   ): Promise<ProductSearchResponse> {
     const queryString = this.buildQueryString(params);
-    const response = await apiClient.get<ProductSearchResponse>(
+    return await apiClient.get<ProductSearchResponse>(
       `${this.baseUrl}/search${queryString}`
     );
-
-    return this.extractData(response);
   }
 
   /**
    * Get product by ID
    */
   async getProduct(id: number): Promise<IProduct> {
-    const response = await apiClient.get<IProduct>(`${this.baseUrl}/${id}`);
-
-    return this.extractData(response);
+    return await apiClient.get<IProduct>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Get featured products
    */
   async getFeaturedProducts(): Promise<IProduct[]> {
-    const response = await apiClient.get<IProduct[]>(
+    return await apiClient.get<IProduct[]>(
       `${this.baseUrl}/featured`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get featured products'
-      );
-    }
-
-    return response.data;
   }
 
   /**
    * Get products by category
    */
   async getProductsByCategory(categoryId: number): Promise<IProduct[]> {
-    const response = await apiClient.get<IProduct[]>(
+    return await apiClient.get<IProduct[]>(
       `${this.baseUrl}/category/${categoryId}`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to get products by category'
-      );
-    }
-
-    return response.data;
   }
 
   /**
    * Get all categories
    */
   async getCategories(): Promise<any[]> {
-    const response = await apiClient.get<any[]>(`${this.baseUrl}/categories`);
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get categories');
-    }
-
-    return response.data;
+    return await apiClient.get<any[]>(`${this.baseUrl}/categories`);
   }
 }
 

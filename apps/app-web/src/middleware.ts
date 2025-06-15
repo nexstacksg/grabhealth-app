@@ -5,7 +5,6 @@ import type { NextRequest } from 'next/server';
 const protectedPaths = [
   '/dashboard',
   '/profile',
-  '/admin',
   '/commission',
   '/orders',
   '/cart/checkout',

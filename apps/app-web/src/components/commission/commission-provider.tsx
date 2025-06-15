@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initializeCommissionSystem as initCommissionClient } from '../../lib/commission-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { commissionService } from '@/services/commission.service';
+import { ICommission } from '@app/shared-types';
 
 // Types for commission context
 type UserRelationship = {
@@ -35,7 +36,7 @@ type Commission = {
 type CommissionContextType = {
   upline: UserRelationship | null;
   downlines: UserRelationship[];
-  commissions: Commission[];
+  commissions: ICommission[];
   points: number;
   referralLink: string;
   totalEarnings: number;
@@ -59,7 +60,7 @@ export function CommissionProvider({
   // State for commission data
   const [upline, setUpline] = useState<UserRelationship | null>(null);
   const [downlines, setDownlines] = useState<UserRelationship[]>([]);
-  const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [commissions, setCommissions] = useState<ICommission[]>([]);
   const [points, setPoints] = useState<number>(0);
   const [referralLink, setReferralLink] = useState<string>('');
   const [totalEarnings, setTotalEarnings] = useState<number>(0);
@@ -105,7 +106,7 @@ export function CommissionProvider({
         // Use data with fallbacks
         setUpline(data.upline || null);
         setDownlines(data.downlines || []);
-        setCommissions((data.commissions || []) as any);
+        setCommissions(data.commissions || []);
         setPoints(data.points || 0);
         setReferralLink(
           data.referralLink ||
@@ -113,12 +114,15 @@ export function CommissionProvider({
         );
 
         // Use total earnings from service or calculate if not provided
-        setTotalEarnings(data.totalEarnings || (data.commissions || []).reduce(
-          (sum: number, commission: Commission) => {
-            return sum + (commission.amount || 0);
-          },
-          0
-        ));
+        const earnings = typeof data.totalEarnings === 'number' 
+          ? data.totalEarnings 
+          : (data.commissions || []).reduce(
+              (sum: number, commission: ICommission) => {
+                return sum + (commission.amount || 0);
+              },
+              0
+            );
+        setTotalEarnings(earnings);
       } catch (fetchError: any) {
         // Don't log error for PENDING_VERIFICATION users
         if (fetchError?.response?.status !== 403) {

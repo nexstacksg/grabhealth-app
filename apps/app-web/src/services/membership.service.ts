@@ -12,97 +12,61 @@ class MembershipService {
    * Get all membership tiers
    */
   async getMembershipTiers(): Promise<IMembershipTier[]> {
-    const response = await apiClient.get<IMembershipTier[]>(
+    return await apiClient.get<IMembershipTier[]>(
       `${this.baseUrl}/tiers`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to fetch membership tiers'
-      );
-    }
-
-    return response.data;
   }
 
   /**
    * Get current user's membership
    */
   async getCurrentMembership(): Promise<IMembership | null> {
-    const response = await apiClient.get<IMembership>(
-      `${this.baseUrl}/my-membership`
-    );
-
-    if (!response.success) {
-      if (response.error?.message?.includes('No membership found')) {
+    try {
+      return await apiClient.get<IMembership>(
+        `${this.baseUrl}/my-membership`
+      );
+    } catch (error: any) {
+      if (error.message?.includes('No membership found')) {
         return null;
       }
-      throw new Error(response.error?.message || 'Failed to fetch membership');
+      throw error;
     }
-
-    return response.data || null;
   }
 
   /**
    * Join a membership tier (subscribe)
    */
   async joinMembership(data: { tierId: number }): Promise<IMembership> {
-    const response = await apiClient.post<IMembership>(
+    return await apiClient.post<IMembership>(
       `${this.baseUrl}/subscribe`,
       data
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to join membership');
-    }
-
-    return response.data;
   }
 
   /**
    * Upgrade membership tier
    */
   async upgradeMembership(newTier: string): Promise<IMembership> {
-    const response = await apiClient.put<IMembership>(
+    return await apiClient.put<IMembership>(
       `${this.baseUrl}/upgrade`,
       { tier: newTier }
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to upgrade membership'
-      );
-    }
-
-    return response.data;
   }
 
   /**
    * Cancel membership
    */
   async cancelMembership(): Promise<void> {
-    const response = await apiClient.delete<void>(`${this.baseUrl}/cancel`);
-
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Failed to cancel membership');
-    }
+    await apiClient.delete<void>(`${this.baseUrl}/cancel`);
   }
 
   /**
    * Get membership statistics
    */
   async getMembershipStats(): Promise<MembershipStats> {
-    const response = await apiClient.get<MembershipStats>(
+    return await apiClient.get<MembershipStats>(
       `${this.baseUrl}/stats`
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.error?.message || 'Failed to fetch membership stats'
-      );
-    }
-
-    return response.data;
   }
 
   /**
@@ -114,18 +78,12 @@ class MembershipService {
     currentPoints?: number;
     message?: string;
   }> {
-    const response = await apiClient.get<{
+    return await apiClient.get<{
       eligible: boolean;
       requiredPoints?: number;
       currentPoints?: number;
       message?: string;
     }>(`${this.baseUrl}/upgrade-eligibility/${targetTier}`);
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to check eligibility');
-    }
-
-    return response.data;
   }
 }
 

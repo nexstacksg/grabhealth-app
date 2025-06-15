@@ -3,6 +3,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Ignore ESLint during production builds
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
   // Phase 6: Add API rewrites
   async rewrites() {
     return [

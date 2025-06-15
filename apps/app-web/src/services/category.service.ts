@@ -8,26 +8,14 @@ class CategoryService {
    * Get all categories
    */
   async getCategories(): Promise<ICategory[]> {
-    const response = await apiClient.get<ICategory[]>(this.baseUrl);
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch categories');
-    }
-
-    return response.data;
+    return await apiClient.get<ICategory[]>(this.baseUrl);
   }
 
   /**
    * Get category by ID
    */
   async getCategory(id: number): Promise<ICategory> {
-    const response = await apiClient.get<ICategory>(`${this.baseUrl}/${id}`);
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Category not found');
-    }
-
-    return response.data;
+    return await apiClient.get<ICategory>(`${this.baseUrl}/${id}`);
   }
 
   /**
@@ -37,13 +25,7 @@ class CategoryService {
     name: string;
     description?: string;
   }): Promise<ICategory> {
-    const response = await apiClient.post<ICategory>(this.baseUrl, data);
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to create category');
-    }
-
-    return response.data;
+    return await apiClient.post<ICategory>(this.baseUrl, data);
   }
 
   /**
@@ -56,27 +38,17 @@ class CategoryService {
       description?: string;
     }
   ): Promise<ICategory> {
-    const response = await apiClient.put<ICategory>(
+    return await apiClient.put<ICategory>(
       `${this.baseUrl}/${id}`,
       data
     );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to update category');
-    }
-
-    return response.data;
   }
 
   /**
    * Delete category (admin only)
    */
   async deleteCategory(id: number): Promise<void> {
-    const response = await apiClient.delete<void>(`${this.baseUrl}/${id}`);
-
-    if (!response.success) {
-      throw new Error(response.error?.message || 'Failed to delete category');
-    }
+    await apiClient.delete<void>(`${this.baseUrl}/${id}`);
   }
 }
 

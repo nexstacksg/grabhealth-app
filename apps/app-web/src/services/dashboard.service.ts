@@ -13,68 +13,44 @@ class DashboardService {
   private baseUrl = '/api/v1';
 
   async getOrderStats(): Promise<IOrderStats> {
-    const response = await apiClient.get<IOrderStats>(
+    return await apiClient.get<IOrderStats>(
       `${this.baseUrl}/orders/stats`
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch order stats');
-    }
-    return response.data;
   }
 
   async getCommissionStats(): Promise<ICommissionStats> {
-    const response = await apiClient.get<ICommissionStats>(
+    return await apiClient.get<ICommissionStats>(
       `${this.baseUrl}/commissions/stats`
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch commission stats');
-    }
-    return response.data;
   }
 
   async getNetworkStats(): Promise<INetworkStats> {
-    const response = await apiClient.get<INetworkStats>(
+    return await apiClient.get<INetworkStats>(
       `${this.baseUrl}/commissions/network/stats`
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch network stats');
-    }
-    return response.data;
   }
 
   async getCommissionSummary(params?: {
     startDate?: string;
     endDate?: string;
   }): Promise<ICommissionSummary> {
-    const response = await apiClient.get<ICommissionSummary>(
+    return await apiClient.get<ICommissionSummary>(
       `${this.baseUrl}/commissions/summary/all`,
       { params }
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch commission summary');
-    }
-    return response.data;
   }
 
   async getMembershipStats(): Promise<IMembershipStats> {
-    const response = await apiClient.get<IMembershipStats>(
+    return await apiClient.get<IMembershipStats>(
       `${this.baseUrl}/memberships/stats`
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch membership stats');
-    }
-    return response.data;
   }
 
   async getNetworkVisualization(levels?: number): Promise<INetwork> {
-    const response = await apiClient.get<INetwork>(
+    return await apiClient.get<INetwork>(
       `${this.baseUrl}/commissions/network`,
       { params: levels ? { levels } : undefined }
     );
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch network visualization');
-    }
-    return response.data;
   }
 
   async getDashboardOverview(): Promise<{
