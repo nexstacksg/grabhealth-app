@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { IUserPublic } from '@app/shared-types';
 import { Sidebar } from '@/components/admin/sidebar';
 import authService from '@/services/auth.service';

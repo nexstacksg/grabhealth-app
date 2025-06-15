@@ -2,14 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CommissionProvider } from '@/components/commission/commission-provider';
 import CommissionDashboard from '@/components/commission/commission-dashboard';
 import { authService } from '@/services/auth.service';
-import { IUserPublic } from '@app/shared-types';
 
 export default function CommissionPage() {
   const router = useRouter();
-  const [user, setUser] = useState<IUserPublic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +15,6 @@ export default function CommissionPage() {
         const userData = await authService.getProfile();
 
         if (userData && userData.id) {
-          setUser(userData);
           setIsLoading(false);
         } else {
           console.log('Invalid user data, redirecting to login');
@@ -50,9 +46,7 @@ export default function CommissionPage() {
         </p>
       </div>
 
-      <CommissionProvider>
-        <CommissionDashboard />
-      </CommissionProvider>
+      <CommissionDashboard />
     </div>
   );
 }

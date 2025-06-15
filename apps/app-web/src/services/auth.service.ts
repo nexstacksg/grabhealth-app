@@ -5,9 +5,12 @@ import {
   IUserPublic,
   AuthResponse,
 } from '@app/shared-types';
+import { BaseService } from './base.service';
 
-class AuthService {
-  private baseUrl = '/auth';
+class AuthService extends BaseService {
+  constructor() {
+    super('/auth');
+  }
 
   /**
    * Login user - sets httpOnly cookies
@@ -18,15 +21,9 @@ class AuthService {
         `${this.baseUrl}/login`,
         data
       );
-
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message || 'Login failed');
-      }
-
-      return response.data;
+      return this.extractData(response);
     } catch (error: any) {
-      // Throw the error object to preserve response data
-      throw error;
+      throw this.handleError(error);
     }
   }
 
@@ -39,11 +36,7 @@ class AuthService {
       data
     );
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Registration failed');
-    }
-
-    return response.data;
+    return this.extractData(response);
   }
 
   /**
@@ -61,11 +54,7 @@ class AuthService {
       `${this.baseUrl}/profile`
     );
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to get profile');
-    }
-
-    return response.data;
+    return this.extractData(response);
   }
 
   /**
@@ -76,11 +65,7 @@ class AuthService {
       `${this.baseUrl}/refresh`
     );
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to refresh token');
-    }
-
-    return response.data;
+    return this.extractData(response);
   }
 
   /**

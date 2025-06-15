@@ -4,9 +4,12 @@ import {
   ProductSearchParams,
   ProductSearchResponse,
 } from '@app/shared-types';
+import { BaseService } from './base.service';
 
-class ProductService {
-  private baseUrl = '/products';
+class ProductService extends BaseService {
+  constructor() {
+    super('/products');
+  }
 
   /**
    * Search products with filters
@@ -14,25 +17,12 @@ class ProductService {
   async searchProducts(
     params?: ProductSearchParams
   ): Promise<ProductSearchResponse> {
-    const queryParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
+    const queryString = this.buildQueryString(params);
     const response = await apiClient.get<ProductSearchResponse>(
-      `${this.baseUrl}/search?${queryParams.toString()}`
+      `${this.baseUrl}/search${queryString}`
     );
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to search products');
-    }
-
-    return response.data;
+    return this.extractData(response);
   }
 
   /**
@@ -41,11 +31,7 @@ class ProductService {
   async getProduct(id: number): Promise<IProduct> {
     const response = await apiClient.get<IProduct>(`${this.baseUrl}/${id}`);
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Product not found');
-    }
-
-    return response.data;
+    return this.extractData(response);
   }
 
   /**

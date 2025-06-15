@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ResponsiveTableWrapper } from '@/components/ui/responsive-table-wrapper';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,11 +20,8 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   RefreshCw,
-  Search,
-  ChevronRight,
   Users,
   User,
-  Network,
   ArrowLeft,
   ArrowRight,
 } from 'lucide-react';
@@ -40,7 +36,6 @@ import {
 } from '@/components/ui/pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminService } from '@/services/admin.service';
-import { INetworkNode } from '@app/shared-types';
 
 interface NetworkUser {
   id: number;
@@ -449,7 +444,7 @@ export default function NetworksPage() {
             <CardHeader className="flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
-                  <CardTitle>{selectedUser.name}'s Network</CardTitle>
+                  <CardTitle>{selectedUser.name}&apos;s Network</CardTitle>
                   <CardDescription className="mt-1">
                     {selectedUser.downline_count} total members in network
                   </CardDescription>

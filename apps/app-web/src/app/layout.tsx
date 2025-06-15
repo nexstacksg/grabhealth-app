@@ -2,10 +2,7 @@ import type React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/components/theme-provider';
-import { CartProvider } from '@/hooks/use-cart';
-import { MembershipProvider } from '@/hooks/use-membership';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { RootProvider } from '@/providers/root-provider';
 import { Toaster } from 'sonner';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 
@@ -30,23 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <MembershipProvider>
-              <CartProvider>
-                <LayoutWrapper>
-                  <main className="min-h-screen pb-4 md:pb-8">{children}</main>
-                </LayoutWrapper>
-                <Toaster position="top-right" richColors />
-              </CartProvider>
-            </MembershipProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <RootProvider>
+          <LayoutWrapper>
+            <main className="min-h-screen pb-4 md:pb-8">{children}</main>
+          </LayoutWrapper>
+          <Toaster position="top-right" richColors />
+        </RootProvider>
       </body>
     </html>
   );

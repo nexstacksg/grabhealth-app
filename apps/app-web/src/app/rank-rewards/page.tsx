@@ -2,7 +2,6 @@
 
 import React from 'react';
 import RankRewardsContent from '@/components/rank-rewards/rank-rewards-content';
-import { CommissionProvider } from '@/components/commission/commission-provider';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -39,9 +38,7 @@ export default function RankRewardsPage() {
         </p>
       </div>
 
-      <CommissionProvider>
-        <RankRewardsContent />
-      </CommissionProvider>
+      <RankRewardsContent />
     </div>
   );
 }
