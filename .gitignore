@@ -129,3 +129,24 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .turbo/
+
+# Compiled TypeScript files in src directories (should not be there!)
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+apps/*/src/**/*.js
+apps/*/src/**/*.js.map
+apps/*/src/**/*.d.ts
+apps/*/src/**/*.d.ts.map
+
+# IDE
+.idea/
+.vscode/
+
+# Mobile
+apps/app-mobile/.expo/
+
+# Uploads
+uploads/
+public/uploads/
