@@ -36,13 +36,9 @@ import {
 
 // Helper to determine API URL based on environment
 const getApiUrl = () => {
-  if (typeof window === 'undefined') {
-    // Server-side: call backend directly
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
-  } else {
-    // Client-side: use Next.js API routes
-    return '/api';
-  }
+  // Always use the backend API directly
+  // The NEXT_PUBLIC_ prefix makes it available on both server and client
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 };
 
 // Helper to get access token for server-side requests
