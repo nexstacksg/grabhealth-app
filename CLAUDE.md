@@ -19,10 +19,10 @@ The platform supports web, admin, and mobile applications sharing a common backe
 ```
 grabhealth-app/              # Turborepo monorepo root
 ├── apps/
-│   ├── app-be/             # Backend API (Express.js + TypeScript + Prisma)
-│   ├── app-web/            # Customer web portal (Next.js 15 + AI features)
-│   ├── app-admin/          # Admin dashboard (Next.js)
-│   └── app-mobile/         # Mobile app (React Native/Expo)
+│   ├── app-be/             # Backend API (Express.js 5.1.0 + TypeScript + Prisma)
+│   ├── app-web/            # Customer web portal (Next.js 15.3.2 + React 19 + AI)
+│   ├── app-admin/          # Admin dashboard (Next.js 15.3.2)
+│   └── app-mobile/         # Mobile app (React Native/Expo ~53.0.9)
 ├── packages/
 │   └── shared-types/       # Shared TypeScript types for all apps
 └── turbo.json             # Turborepo configuration
@@ -123,34 +123,50 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 
 ## Architecture Notes
 
-### Backend Architecture
+### Backend Architecture (app-be)
 
 - RESTful API built with Express.js 5.1.0 and TypeScript
-- Prisma ORM for database operations with PostgreSQL/SQLite
-- JWT authentication with refresh tokens and role-based access control
+- Prisma ORM 6.8.2 for database operations with PostgreSQL/SQLite
+- Bcrypt for password hashing and JWT for authentication
 - Modular structure: controllers, services, models, middleware
 - API versioning (v1) with Swagger documentation at `/api-docs`
-- Redis caching for improved performance
-- Multer for file uploads with validation
+- Redis (ioredis) caching for session management and performance
+- Multer 2.0 for file uploads with validation
+- Winston logging with Morgan for HTTP request logging
+- Jest testing framework with unit and integration tests
+- Docker support for PostgreSQL and Redis services
 
 ### Frontend Architecture (app-web)
 
 - Next.js 15.3.2 with App Router and React 19
 - Server-side rendering with streaming
-- Tailwind CSS + shadcn/ui components
-- AI integration using Vercel AI SDK and OpenAI
-- React Hook Form + Zod for form validation
+- Tailwind CSS 3.4.17 + shadcn/ui components (@radix-ui)
+- AI integration using Vercel AI SDK and OpenAI 4.98.0
+- React Hook Form 7.54.1 + Zod 3.24.1 for form validation
 - Context providers for Auth, Cart, Membership, and Commission
-- Cloudinary integration for image uploads
-- Database: Migrating from Neon PostgreSQL to Prisma ORM
+- Cloudinary 2.6.1 integration for image uploads
+- Dual database setup: Neon PostgreSQL + Prisma 6.8.2
+- QR code generation with react-qr-code
+- Charts and data visualization with Recharts
 
-### Mobile Architecture
+### Admin Dashboard (app-admin)
 
-- Expo SDK with React Native
-- Expo Router for file-based navigation
-- Tab-based navigation with themed components
-- Platform-specific code handling (iOS/Android)
-- Shared authentication with backend API
+- Next.js 15.3.2 with React 19 and TypeScript
+- Tailwind CSS 4.0 for styling
+- Runs on port 3100 to avoid conflicts
+- Minimal dependencies focused on admin functionality
+- Shares types with @app/shared-types package
+
+### Mobile Architecture (app-mobile)
+
+- Expo SDK ~53.0.9 with React Native 0.79.2
+- Expo Router 5.0.6 for file-based navigation
+- React Navigation 7.x for bottom tabs and stack navigation
+- Expo managed workflow with web support
+- AsyncStorage for local data persistence
+- React Hook Form for form handling
+- Axios for API communication with backend
+- Platform-specific code handling (iOS/Android/Web)
 
 ### Key Integration Points
 
