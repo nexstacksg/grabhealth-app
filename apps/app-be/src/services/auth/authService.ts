@@ -37,7 +37,7 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      profilePhoto: user.profilePhoto || null,
+      profileImage: user.profileImage || null,
       role: user.role as UserRole,
       status: user.status,
       emailVerified: !!user.emailVerifiedAt,

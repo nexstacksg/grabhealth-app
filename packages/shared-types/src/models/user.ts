@@ -31,6 +31,7 @@ export interface IUserPublic {
   profileImage?: string | null;
   role: string;
   status: string;
+  emailVerified?: boolean; // Computed from emailVerifiedAt
   emailVerifiedAt?: Date | null;
   createdAt: Date;
 }
