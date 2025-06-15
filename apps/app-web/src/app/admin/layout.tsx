@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { IUserPublic } from '@app/shared-types';
 import { Sidebar } from '@/components/admin/sidebar';
-import { authService } from '@/services/auth.service';
+import authService from '@/services/auth.service';
 import { Menu, X } from 'lucide-react';
 import './styles/admin-styles.css';
 import './styles/mobile-table.css';
@@ -34,7 +34,7 @@ export default function AdminLayout({
 
         // Check if we have a user and if they have admin role
 
-        if (!userData || userData.role !== 'admin') {
+        if (!userData || userData.role !== 'SUPER_ADMIN') {
           console.log('Not an admin user:', userData);
           // Not an admin, redirect to home
           router.push('/');

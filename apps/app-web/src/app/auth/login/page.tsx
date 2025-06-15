@@ -39,7 +39,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,9 +58,10 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       // The AuthContext handles the redirect after successful login
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle error with backend's error structure
-      setError(error.response?.data?.error?.message || error.message || 'Login failed');
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      setError(err.response?.data?.error?.message || err.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

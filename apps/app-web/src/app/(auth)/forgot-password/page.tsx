@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { authService } from '@/services/auth.service';
+import authService from '@/services/auth.service';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      await authService.forgotPassword(email);
+      await authService.requestPasswordReset(email);
       setSubmitted(true);
     } catch (err) {
       const error = err as { message?: string };

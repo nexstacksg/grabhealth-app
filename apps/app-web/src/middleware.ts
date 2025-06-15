@@ -1,11 +1,33 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Add paths that require authentication
-const protectedPaths = ['/dashboard', '/profile', '/settings'];
+// Paths that require authentication
+const protectedPaths = [
+  '/dashboard',
+  '/profile',
+  '/admin',
+  '/commission',
+  '/orders',
+  '/cart/checkout',
+  '/membership',
+  '/rank-rewards'
+];
 
-// Add paths that should redirect to dashboard if already authenticated
-const authPaths = ['/login', '/register', '/forgot-password'];
+// Auth pages that should redirect to home if already authenticated
+const authPaths = ['/auth/login', '/auth/register', '/auth/forgot-password'];
+
+// Public paths that don't require authentication
+const publicPaths = [
+  '/',
+  '/products',
+  '/faq',
+  '/terms',
+  '/privacy',
+  '/shipping-policy',
+  '/refund-policy',
+  '/partners',
+  '/promotions'
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,15 +38,18 @@ export function middleware(request: NextRequest) {
     pathname.startsWith(path)
   );
   const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
+  const isPublicPath = publicPaths.some((path) => 
+    pathname === path || pathname.startsWith(`${path}/`)
+  );
 
   // Redirect to login if accessing protected path without token
   if (isProtectedPath && !accessToken) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect to dashboard if accessing auth pages while authenticated
+  // Redirect to home if accessing auth pages while authenticated
   if (isAuthPath && accessToken) {
     return NextResponse.redirect(new URL('/', request.url));
   }

@@ -19,8 +19,7 @@ export * from './models/product';
 export * from './models/order';
 export { 
   ICommission, 
-  ICommissionTier, 
-  IProductCommissionTier,
+  ICommissionTier,
   IUserRelationship
 } from './models/commission';
 export * from './models/membership';

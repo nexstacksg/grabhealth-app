@@ -25,49 +25,17 @@ const useAuthProvider = () => {
 
   const checkAuth = useCallback(async () => {
     try {
-      // First check if we have user data in sessionStorage (for PENDING_VERIFICATION users)
-      const storedUser = sessionStorage.getItem('user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        
-        // If user is ACTIVE, try to get fresh data from profile
-        if (parsedUser.status === 'ACTIVE') {
-          try {
-            const userProfile = await authService.getProfile();
-            if (userProfile && userProfile.id) {
-              setUser(userProfile);
-              sessionStorage.setItem('user', JSON.stringify(userProfile));
-            }
-          } catch {
-            // If profile fails, keep using stored data
-          }
-        }
+      // Try to get user profile - cookies will be sent automatically
+      const userProfile = await authService.getProfile();
+
+      if (userProfile && userProfile.id) {
+        setUser(userProfile);
       } else {
-        // No stored user, try to get profile (for ACTIVE users)
-        try {
-          const userProfile = await authService.getProfile();
-          if (userProfile && userProfile.id) {
-            setUser(userProfile);
-            sessionStorage.setItem('user', JSON.stringify(userProfile));
-          } else {
-            setUser(null);
-          }
-        } catch (error: any) {
-          // If 401, user is not authenticated - this is expected
-          if (error?.response?.status === 401) {
-            setUser(null);
-          } else {
-            // Log other errors
-            console.error('Error fetching profile:', error);
-            setUser(null);
-          }
-        }
+        setUser(null);
       }
     } catch {
-      // If all fails, clear user
+      // User is not authenticated
       setUser(null);
-      sessionStorage.removeItem('user');
     } finally {
       setIsLoading(false);
     }
@@ -87,8 +55,6 @@ const useAuthProvider = () => {
       try {
         const authData = await authService.login({ email, password });
         setUser(authData.user);
-        // Store user data for persistence across refreshes
-        sessionStorage.setItem('user', JSON.stringify(authData.user));
         
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {
@@ -97,8 +63,8 @@ const useAuthProvider = () => {
           router.push('/');
         }
       } catch (error: any) {
-        // Handle error like in example.md
-        throw error;
+        const err = error as { message?: string };
+        throw new Error(err.message || 'Invalid email or password');
       }
     },
     [router]
@@ -111,8 +77,7 @@ const useAuthProvider = () => {
       // Ignore logout errors
     } finally {
       setUser(null);
-      sessionStorage.removeItem('user');
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [router]);
 
@@ -121,8 +86,6 @@ const useAuthProvider = () => {
       try {
         const authData = await authService.register(data);
         setUser(authData.user);
-        // Store user data for persistence across refreshes
-        sessionStorage.setItem('user', JSON.stringify(authData.user));
         
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {

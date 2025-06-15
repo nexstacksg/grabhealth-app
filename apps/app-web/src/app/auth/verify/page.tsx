@@ -114,8 +114,9 @@ export default function VerifyPage() {
       
       // Redirect to home
       router.push('/');
-    } catch (error: any) {
-      setError(error.response?.data?.error?.message || error.message || 'Invalid code');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      setError(err.response?.data?.error?.message || err.message || 'Invalid code');
       // Clear code on error
       setCode(['', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -135,8 +136,9 @@ export default function VerifyPage() {
       // Clear code
       setCode(['', '', '', '']);
       inputRefs.current[0]?.focus();
-    } catch (error: any) {
-      setError(error.response?.data?.error?.message || error.message || 'Failed to resend code');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      setError(err.response?.data?.error?.message || err.message || 'Failed to resend code');
     } finally {
       setIsResending(false);
     }

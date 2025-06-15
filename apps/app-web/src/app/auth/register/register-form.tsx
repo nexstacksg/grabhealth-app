@@ -75,9 +75,10 @@ export default function RegisterForm({ referrerId }: RegisterFormProps) {
 
       // The AuthContext handles the redirect after successful registration
       // TODO: Handle referrerId for MLM referral tracking
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle error like in login page
-      setError(error.response?.data?.error?.message || error.message || 'Registration failed');
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      setError(err.response?.data?.error?.message || err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
