@@ -22,7 +22,7 @@ import {
 export class AuthService {
   private dataSource: IAuthDataSource;
 
-  constructor(options: AuthServiceOptions) {
+  constructor(options: AuthServiceOptions & { dataSource: IAuthDataSource }) {
     this.dataSource = options.dataSource;
   }
 
