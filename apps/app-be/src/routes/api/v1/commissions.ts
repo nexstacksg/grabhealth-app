@@ -31,6 +31,15 @@ const processPendingValidation = [
 // All commission routes require authentication
 router.use(authenticate);
 
+// Initialize commission system (creates user relationship if not exists)
+router.post('/init', commissionController.initializeCommissionSystem);
+
+// Get commission data (combined endpoint for upline, downlines, commissions, etc.)
+router.get('/', commissionController.getCommissionData);
+
+// Get commission structure (product tiers, role types, volume bonus tiers)
+router.get('/structure', commissionController.getCommissionStructure);
+
 // User routes
 router.get(
   '/my-commissions',

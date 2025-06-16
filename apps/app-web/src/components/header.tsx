@@ -250,6 +250,9 @@ export default function Header() {
                                 variant="outline"
                                 className="w-full justify-start text-base font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
                               
+                              
+                              
+                              
                               >
                                 Register
                               </Button>

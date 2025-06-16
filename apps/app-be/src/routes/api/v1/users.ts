@@ -94,6 +94,22 @@ router.get('/', userController.getUserList);
 
 /**
  * @swagger
+ * /users/profile:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/profile', userController.getProfile);
+
+/**
+ * @swagger
  * /users/my-profile:
  *   put:
  *     summary: Update current user's profile

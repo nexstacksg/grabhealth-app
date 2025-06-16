@@ -12,21 +12,22 @@ export const promotionController = {
     try {
       const filters = {
         isActive:
-          req.query.isActive === 'true'
+          req.query.active === 'true'
             ? true
-            : req.query.isActive === 'false'
+            : req.query.active === 'false'
               ? false
-              : undefined,
+              : req.query.isActive === 'true'
+                ? true
+                : req.query.isActive === 'false'
+                  ? false
+                  : undefined,
         includeExpired: req.query.includeExpired === 'true',
         page: req.query.page ? Number(req.query.page) : 1,
         limit: req.query.limit ? Number(req.query.limit) : 10,
       };
 
       const result = await promotionService.getAllPromotions(filters);
-      res.json({
-        success: true,
-        data: result,
-      });
+      res.json(result);
     } catch (error) {
       next(error);
     }
@@ -36,10 +37,7 @@ export const promotionController = {
   async getActivePromotions(_req: Request, res: Response, next: NextFunction) {
     try {
       const promotions = await promotionService.getActivePromotions();
-      res.json({
-        success: true,
-        data: promotions,
-      });
+      res.json(promotions);
     } catch (error) {
       next(error);
     }
@@ -55,10 +53,7 @@ export const promotionController = {
         throw new AppError('Promotion not found', 404);
       }
 
-      res.json({
-        success: true,
-        data: promotion,
-      });
+      res.json(promotion);
     } catch (error) {
       next(error);
     }
@@ -69,10 +64,7 @@ export const promotionController = {
     try {
       const promotionData: IPromotionCreate = req.body;
       const promotion = await promotionService.createPromotion(promotionData);
-      res.status(201).json({
-        success: true,
-        data: promotion,
-      });
+      res.status(201).json(promotion);
     } catch (error) {
       next(error);
     }
@@ -87,10 +79,7 @@ export const promotionController = {
         Number(id),
         updateData
       );
-      res.json({
-        success: true,
-        data: promotion,
-      });
+      res.json(promotion);
     } catch (error) {
       next(error);
     }
@@ -102,7 +91,6 @@ export const promotionController = {
       const { id } = req.params;
       await promotionService.deletePromotion(Number(id));
       res.json({
-        success: true,
         message: 'Promotion deleted successfully',
       });
     } catch (error) {
@@ -117,10 +105,7 @@ export const promotionController = {
       const promotion = await promotionService.togglePromotionStatus(
         Number(id)
       );
-      res.json({
-        success: true,
-        data: promotion,
-      });
+      res.json(promotion);
     } catch (error) {
       next(error);
     }
@@ -136,10 +121,7 @@ export const promotionController = {
       }
 
       const result = await promotionService.validatePromotion(code, orderTotal);
-      res.json({
-        success: true,
-        data: result,
-      });
+      res.json(result);
     } catch (error) {
       next(error);
     }
@@ -149,10 +131,7 @@ export const promotionController = {
   async getPromotionStats(_req: Request, res: Response, next: NextFunction) {
     try {
       const stats = await promotionService.getPromotionStats();
-      res.json({
-        success: true,
-        data: stats,
-      });
+      res.json(stats);
     } catch (error) {
       next(error);
     }

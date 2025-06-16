@@ -3,6 +3,7 @@ import {
   CommissionStatus,
   CommissionType,
   INetworkNode,
+  INetwork,
 } from '@app/shared-types';
 import { AppError } from '../middleware/error/errorHandler';
 
@@ -196,7 +197,7 @@ export class CommissionService {
     }
   }
 
-  async getUserNetwork(userId: string): Promise<INetworkNode> {
+  async getUserNetwork(userId: string): Promise<INetwork> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -212,7 +213,7 @@ export class CommissionService {
 
       const network = await this.buildNetworkTree(userId, 1, 5);
 
-      return {
+      const rootUser: INetworkNode = {
         id: parseInt(user.id), // Convert string ID to number for INetworkNode
         username: user.email,
         firstName: user.firstName,
@@ -228,6 +229,29 @@ export class CommissionService {
         isActive: user.status === 'ACTIVE',
         joinedAt: user.createdAt.toISOString(),
         children: network,
+      };
+
+      // Calculate total members and levels
+      let totalMembers = 1; // Include root user
+      let maxLevel = 0;
+
+      const countMembersAndLevels = (node: INetworkNode, currentLevel: number) => {
+        if (node.children && node.children.length > 0) {
+          for (const child of node.children) {
+            totalMembers++;
+            maxLevel = Math.max(maxLevel, currentLevel);
+            countMembersAndLevels(child, currentLevel + 1);
+          }
+        }
+      };
+
+      countMembersAndLevels(rootUser, 1);
+
+      return {
+        rootUser,
+        totalLevels: maxLevel,
+        totalMembers,
+        maxLevels: 5, // We're limiting to 5 levels in buildNetworkTree
       };
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
@@ -398,7 +422,7 @@ export class CommissionService {
         }
       };
 
-      collectMembers(network, 1);
+      collectMembers(network.rootUser, 1);
       totalMembers = allMembers.size;
 
       // Get total sales

@@ -41,6 +41,7 @@ export class AuthService {
       role: user.role as UserRole,
       status: user.status,
       emailVerified: !!user.emailVerifiedAt,
+      referralCode: user.referralCode,
       createdAt: user.createdAt,
     };
   }

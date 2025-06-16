@@ -14,6 +14,199 @@ interface AuthRequest extends Request {
 }
 
 export const commissionController = {
+  // Initialize commission system for a user
+  async initializeCommissionSystem(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      if (!req.user) {
+        throw new AppError('Unauthorized', 401);
+      }
+
+      // Check if user already has a relationship entry
+      const existingRelationship = await prisma.userRelationship.findFirst({
+        where: { userId: req.user.id },
+      });
+
+      if (!existingRelationship) {
+        // Create a root relationship entry for the user
+        await prisma.userRelationship.create({
+          data: {
+            userId: req.user.id,
+            uplineId: null,
+            relationshipLevel: 0,
+          },
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Commission system initialized',
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get combined commission data
+  async getCommissionData(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      if (!req.user) {
+        throw new AppError('Unauthorized', 401);
+      }
+
+      // Get user's relationship data (upline and downlines)
+      const userRelationship = await prisma.userRelationship.findFirst({
+        where: { userId: req.user.id },
+        include: {
+          upline: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+
+      // Get downlines
+      const downlines = await prisma.userRelationship.findMany({
+        where: { uplineId: req.user.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+
+      // Get user's commissions
+      const commissions = await prisma.commission.findMany({
+        where: { recipientId: req.user.id },
+        include: {
+          order: {
+            select: {
+              total: true,
+              user: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 100, // Limit to last 100 commissions
+      });
+
+      // Calculate total earnings
+      const totalEarnings = commissions.reduce(
+        (sum, commission) => sum + commission.amount,
+        0
+      );
+
+      // Generate referral link
+      const referralLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/register?referrer=${req.user.id}`;
+
+      res.json({
+        success: true,
+        data: {
+          upline: userRelationship?.upline ? {
+            id: userRelationship.id,
+            user_id: userRelationship.userId,
+            upline_id: userRelationship.uplineId,
+            relationship_level: userRelationship.relationshipLevel,
+            created_at: userRelationship.createdAt,
+            updated_at: userRelationship.updatedAt,
+            name: `${userRelationship.upline.firstName} ${userRelationship.upline.lastName}`,
+            email: userRelationship.upline.email,
+          } : null,
+          downlines: downlines.map((d) => ({
+            id: d.id,
+            user_id: d.userId,
+            upline_id: d.uplineId,
+            relationship_level: d.relationshipLevel,
+            created_at: d.createdAt,
+            updated_at: d.updatedAt,
+            name: `${d.user.firstName} ${d.user.lastName}`,
+            email: d.user.email,
+          })),
+          commissions: commissions.map((c) => ({
+            id: c.id,
+            order_id: c.orderId,
+            user_id: c.userId,
+            recipient_id: c.recipientId,
+            amount: c.amount,
+            commission_rate: c.commissionRate,
+            relationship_level: c.relationshipLevel,
+            status: c.status,
+            created_at: c.createdAt,
+            updated_at: c.updatedAt,
+            order_total: c.order?.total,
+            buyer_name: c.order?.user
+              ? `${c.order.user.firstName} ${c.order.user.lastName}`
+              : 'Unknown',
+          })),
+          points: 0, // Points are tracked separately in UserPoints table
+          referralLink,
+          totalEarnings,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get commission structure
+  async getCommissionStructure(
+    _req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      // Return commission structure
+      // TODO: Move this data to database tables as per business requirements
+      const structure = {
+        productTiers: [
+          { id: 1, name: 'Standard', priceMultiplier: 1.0 },
+          { id: 2, name: 'Premium', priceMultiplier: 0.9 },
+          { id: 3, name: 'Elite', priceMultiplier: 0.8 },
+        ],
+        roleTypes: [
+          { id: 1, name: 'Sales', commissionRate: 0.05 },
+          { id: 2, name: 'Leader', commissionRate: 0.10 },
+          { id: 3, name: 'Manager', commissionRate: 0.15 },
+          { id: 4, name: 'Company', commissionRate: 0.20 },
+        ],
+        volumeBonusTiers: [
+          { id: 1, minVolume: 0, maxVolume: 1000, bonusRate: 0.0 },
+          { id: 2, minVolume: 1000, maxVolume: 5000, bonusRate: 0.02 },
+          { id: 3, minVolume: 5000, maxVolume: 10000, bonusRate: 0.05 },
+          { id: 4, minVolume: 10000, maxVolume: null, bonusRate: 0.10 },
+        ],
+      };
+
+      res.json({
+        success: true,
+        data: structure,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Get user commissions
   async getUserCommissions(
     req: AuthRequest,
@@ -32,10 +225,7 @@ export const commissionController = {
         status as 'earned' | 'generated' | undefined
       );
 
-      res.json({
-        success: true,
-        data: result,
-      });
+      res.json(result);
     } catch (error) {
       next(error);
     }
@@ -65,10 +255,7 @@ export const commissionController = {
         throw new AppError('Unauthorized access', 403);
       }
 
-      res.json({
-        success: true,
-        data: commission,
-      });
+      res.json(commission);
     } catch (error) {
       next(error);
     }
@@ -86,10 +273,7 @@ export const commissionController = {
       }
 
       const stats = await commissionService.getCommissionStats(req.user.id);
-      res.json({
-        success: true,
-        data: stats,
-      });
+      res.json(stats);
     } catch (error) {
       next(error);
     }
@@ -103,10 +287,7 @@ export const commissionController = {
       }
 
       const network = await commissionService.getUserNetwork(req.user.id);
-      res.json({
-        success: true,
-        data: network,
-      });
+      res.json(network);
     } catch (error) {
       next(error);
     }
@@ -120,10 +301,7 @@ export const commissionController = {
       }
 
       const stats = await commissionService.getNetworkStats(req.user.id);
-      res.json({
-        success: true,
-        data: stats,
-      });
+      res.json(stats);
     } catch (error) {
       next(error);
     }

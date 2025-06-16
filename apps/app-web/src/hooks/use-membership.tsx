@@ -141,12 +141,12 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
           id: membershipData.id,
           tier: membershipData.tier as any,
           points: membershipData.points || 0,
-          created_at: membershipData.createdAt.toString(),
-          updated_at: membershipData.updatedAt.toString(),
+          created_at: membershipData.createdAt ? membershipData.createdAt.toString() : new Date().toISOString(),
+          updated_at: membershipData.updatedAt ? membershipData.updatedAt.toString() : new Date().toISOString(),
           name:
-            membershipData.user?.firstName +
-              ' ' +
-              membershipData.user?.lastName || '',
+            membershipData.user?.firstName && membershipData.user?.lastName
+              ? `${membershipData.user.firstName} ${membershipData.user.lastName}`
+              : '',
           email: membershipData.user?.email || '',
         });
       } else {

@@ -186,12 +186,7 @@ export const getProfile = async (
 
     const user = await authService.getCurrentUser(req.user.id);
 
-    const response: ApiResponse = {
-      success: true,
-      data: user,
-    };
-
-    res.json(response);
+    res.json({ success: true, data: user });
   } catch (error) {
     next(error);
   }

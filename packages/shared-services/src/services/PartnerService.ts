@@ -27,10 +27,10 @@ export class PartnerService {
         this.dataSource.getCommissionStats(),
       ]);
 
-      // Calculate network metrics
-      const totalPartners = this.countNetworkMembers(network.rootUser);
-      const activePartners = this.countActiveMembers(network.rootUser);
-      const recentPartners = this.getRecentPartners(network.rootUser);
+      // Calculate network metrics with defensive checks
+      const totalPartners = network.rootUser ? this.countNetworkMembers(network.rootUser) : 0;
+      const activePartners = network.rootUser ? this.countActiveMembers(network.rootUser) : 0;
+      const recentPartners = network.rootUser ? this.getRecentPartners(network.rootUser) : [];
 
       return {
         referralCode: profile.referralCode || '',
@@ -107,7 +107,7 @@ export class PartnerService {
   // Helper methods for network calculations
   private countNetworkMembers(node: any): number {
     let count = 0;
-    if (node.children && node.children.length > 0) {
+    if (node && node.children && node.children.length > 0) {
       count += node.children.length;
       node.children.forEach((child: any) => {
         count += this.countNetworkMembers(child);
@@ -118,7 +118,7 @@ export class PartnerService {
 
   private countActiveMembers(node: any): number {
     let count = 0;
-    if (node.children && node.children.length > 0) {
+    if (node && node.children && node.children.length > 0) {
       node.children.forEach((child: any) => {
         if (child.isActive) count++;
         count += this.countActiveMembers(child);
@@ -131,7 +131,7 @@ export class PartnerService {
     const partners: IUser[] = [];
 
     const collectPartners = (n: any) => {
-      if (n.children && n.children.length > 0) {
+      if (n && n.children && n.children.length > 0) {
         n.children.forEach((child: any) => {
           partners.push({
             id: child.id,
@@ -148,7 +148,9 @@ export class PartnerService {
       }
     };
 
-    collectPartners(node);
+    if (node) {
+      collectPartners(node);
+    }
 
     // Sort by most recent and return top N
     return partners

@@ -19,8 +19,7 @@ export default async function PromotionsPage() {
   let promotions: any[] = [];
 
   try {
-    const response = await services.promotion.getPromotions({ active: true });
-    promotions = response.promotions || [];
+    promotions = await services.promotion.getActivePromotions();
   } catch (error) {
     console.error('Error fetching promotions:', error);
   }

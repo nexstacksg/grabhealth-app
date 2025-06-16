@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../../config/jwt';
 import { extractBearerToken } from '../../utils/auth';
 import { ApiError } from '../error/errorHandler';

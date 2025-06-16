@@ -252,6 +252,28 @@ export const updateMyProfile = async (
   }
 };
 
+export const getProfile = async (
+  req: AuthRequest,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new ApiError(
+        'Authentication required',
+        HttpStatus.UNAUTHORIZED,
+        ErrorCode.AUTH_REQUIRED
+      );
+    }
+
+    const user = await userService.getUserById(req.user.id);
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const changePassword = async (
   req: AuthRequest,
   res: Response<ApiResponse>,

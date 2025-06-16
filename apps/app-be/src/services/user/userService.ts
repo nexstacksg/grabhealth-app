@@ -132,6 +132,7 @@ export class UserService {
         lastName: true,
         role: true,
         status: true,
+        referralCode: true,
         lastLoginAt: true,
         emailVerifiedAt: true,
         createdAt: true,
