@@ -1,5 +1,6 @@
-import { ICart } from '@app/shared-types';
+import { ICart, ICartItem } from '@app/shared-types';
 import { AppError } from '../middleware/error/errorHandler';
+import prisma from '../database/client';
 
 interface CartStore {
   [userId: string]: ICart;
@@ -18,7 +19,43 @@ export class CartService {
         discount: 0,
       };
     }
-    return CartService.carts[userId];
+    
+    // Populate product details for each cart item
+    const cart = CartService.carts[userId];
+    const itemsWithProducts = await Promise.all(
+      cart.items.map(async (item: any) => {
+        const product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          include: { category: true }
+        });
+        
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price: product?.price || 0,
+          product: product ? {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            image_url: product.imageUrl,
+            imageUrl: product.imageUrl,
+            product_name: product.name,
+            categoryId: product.categoryId,
+            category: product.category,
+            inStock: product.inStock,
+            status: product.status,
+            createdAt: product.createdAt,
+            updatedAt: product.updatedAt
+          } : null
+        };
+      })
+    );
+    
+    return {
+      ...cart,
+      items: itemsWithProducts
+    };
   }
 
   async addToCart(
@@ -26,6 +63,20 @@ export class CartService {
     productId: number,
     quantity: number
   ): Promise<ICart> {
+    // Fetch product details first
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { category: true }
+    });
+
+    if (!product) {
+      throw new AppError('Product not found', 404);
+    }
+
+    if (!product.inStock) {
+      throw new AppError('Product is out of stock', 400);
+    }
+
     const cart = await this.getCart(userId);
 
     const existingItemIndex = cart.items.findIndex(
@@ -33,12 +84,18 @@ export class CartService {
     );
 
     if (existingItemIndex > -1) {
-      cart.items[existingItemIndex].quantity += quantity;
+      // Update quantity for existing item
+      CartService.carts[userId].items[existingItemIndex].quantity += quantity;
     } else {
-      cart.items.push({ productId, quantity });
+      // Add new item with price
+      CartService.carts[userId].items.push({ 
+        productId, 
+        quantity,
+        price: product.price
+      });
     }
 
-    return this.updateCartTotals(cart);
+    return this.updateCartTotalsAndFetchProducts(userId);
   }
 
   async updateCartItem(
@@ -57,20 +114,22 @@ export class CartService {
     }
 
     if (quantity <= 0) {
-      cart.items.splice(itemIndex, 1);
+      CartService.carts[userId].items.splice(itemIndex, 1);
     } else {
-      cart.items[itemIndex].quantity = quantity;
+      CartService.carts[userId].items[itemIndex].quantity = quantity;
     }
 
-    return this.updateCartTotals(cart);
+    return this.updateCartTotalsAndFetchProducts(userId);
   }
 
   async removeFromCart(userId: string, productId: number): Promise<ICart> {
     const cart = await this.getCart(userId);
 
-    cart.items = cart.items.filter((item) => item.productId !== productId);
+    CartService.carts[userId].items = CartService.carts[userId].items.filter(
+      (item: any) => item.productId !== productId
+    );
 
-    return this.updateCartTotals(cart);
+    return this.updateCartTotalsAndFetchProducts(userId);
   }
 
   async clearCart(userId: string): Promise<void> {
@@ -82,29 +141,56 @@ export class CartService {
 
     // Merge items from client with existing cart
     for (const newItem of items) {
-      const existingIndex = cart.items.findIndex(
-        (item) => item.productId === newItem.productId
+      const existingIndex = CartService.carts[userId].items.findIndex(
+        (item: any) => item.productId === newItem.productId
       );
 
       if (existingIndex >= 0) {
         // Update quantity if item exists
-        cart.items[existingIndex].quantity += newItem.quantity;
+        CartService.carts[userId].items[existingIndex].quantity += newItem.quantity;
       } else {
+        // Fetch product price if not provided
+        let price = newItem.price;
+        if (!price) {
+          const product = await prisma.product.findUnique({
+            where: { id: newItem.productId }
+          });
+          price = product?.price || 0;
+        }
+        
         // Add new item
-        cart.items.push({
+        CartService.carts[userId].items.push({
           productId: newItem.productId,
           quantity: newItem.quantity,
-          price: newItem.price || 0,
+          price: price,
         });
       }
     }
 
-    return this.updateCartTotals(cart);
+    return this.updateCartTotalsAndFetchProducts(userId);
+  }
+
+  private async updateCartTotalsAndFetchProducts(userId: string): Promise<ICart> {
+    const cart = await this.getCart(userId);
+    
+    cart.subtotal = cart.items.reduce(
+      (sum: number, item: any) => sum + item.quantity * (item.price || 0),
+      0
+    );
+    cart.discount = 0; // Discounts from promotions only, no membership discounts
+    cart.total = cart.subtotal - cart.discount;
+
+    CartService.carts[userId] = {
+      ...CartService.carts[userId],
+      total: cart.total,
+      subtotal: cart.subtotal,
+      discount: cart.discount
+    };
+
+    return cart;
   }
 
   private updateCartTotals(cart: ICart): ICart {
-    // In a real implementation, this would fetch product prices from database
-    // For now, we'll just update the structure
     cart.subtotal = cart.items.reduce(
       (sum: number, item: any) => sum + item.quantity * (item.price || 0),
       0
