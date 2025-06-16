@@ -106,8 +106,8 @@ export default function Header() {
               </nav>
 
               <div className="hidden md:flex items-center space-x-4">
-                {!isLoading &&
-                  (user ? (
+                {!isLoading && (
+                  user ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="gap-2">
@@ -148,7 +148,8 @@ export default function Header() {
                         </Button>
                       </Link>
                     </>
-                  ))}
+                  )
+                )}
                 <CartDropdown />
               </div>
             </>
@@ -177,8 +178,8 @@ export default function Header() {
                       </SheetClose>
                     ))}
                     <div className="h-px bg-gray-200 my-2"></div>
-                    {!isLoading &&
-                      (user ? (
+                    {!isLoading && (
+                      user ? (
                         <>
                           <div className="flex items-center space-x-2 mb-4">
                             <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -243,7 +244,8 @@ export default function Header() {
                             </Link>
                           </SheetClose>
                         </>
-                      ))}
+                      )
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>
