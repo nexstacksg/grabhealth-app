@@ -14,11 +14,29 @@ import { BaseApiDataSource } from './BaseApiDataSource';
 export class ApiAuthDataSource extends BaseApiDataSource implements IAuthDataSource {
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    return this.post<AuthResponse>('/auth/login', credentials);
+    const response = await this.post<any>('/auth/login', credentials);
+    
+    // Transform backend response to match AuthResponse interface
+    return {
+      user: response.user,
+      tokens: {
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken
+      }
+    };
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    return this.post<AuthResponse>('/auth/register', data);
+    const response = await this.post<any>('/auth/register', data);
+    
+    // Transform backend response to match AuthResponse interface
+    return {
+      user: response.user,
+      tokens: {
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken
+      }
+    };
   }
 
   async logout(_userId: string): Promise<void> {

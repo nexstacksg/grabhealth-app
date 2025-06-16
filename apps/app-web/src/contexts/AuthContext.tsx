@@ -84,11 +84,12 @@ const useAuthProvider = () => {
   const register = useCallback(
     async (data: RegisterRequest) => {
       try {
-        // Convert RegisterRequest to shared service format
+        // Pass the data directly as shared-services now expects firstName and lastName
         const authData = await services.auth.register({
           email: data.email,
           password: data.password,
-          name: `${data.firstName} ${data.lastName}`.trim()
+          firstName: data.firstName,
+          lastName: data.lastName
         });
         setUser(authData.user);
         

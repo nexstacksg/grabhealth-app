@@ -88,8 +88,8 @@ export class PrismaAuthDataSource implements IAuthDataSource {
       data: {
         email: data.email.toLowerCase(),
         password: hashedPassword,
-        firstName: data.name.split(' ')[0] || data.name,
-        lastName: data.name.split(' ').slice(1).join(' ') || '',
+        firstName: data.firstName,
+        lastName: data.lastName,
         role: UserRole.USER,
         status: UserStatus.PENDING_VERIFICATION,
         referralCode: this.generateReferralCode(),

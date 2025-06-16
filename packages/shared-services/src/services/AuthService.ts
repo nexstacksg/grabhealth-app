@@ -46,7 +46,8 @@ export class AuthService {
     // Validate input
     assertValidEmail(data.email);
     assertValidPassword(data.password);
-    assertNotEmpty(data.name, 'Name');
+    assertNotEmpty(data.firstName, 'First name');
+    assertNotEmpty(data.lastName, 'Last name');
 
     try {
       const response = await this.dataSource.register(data);

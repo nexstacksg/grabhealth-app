@@ -19,8 +19,18 @@ if (fs.existsSync(nestedSrcDir)) {
   // Copy all files from nested src to dist root
   execSync(`cp -r "${nestedSrcDir}"/* "${distDir}"/`, { stdio: 'inherit' });
   
-  // Remove nested folders
-  execSync(`rm -rf "${distDir}/shared-services" "${distDir}/shared-types"`, { stdio: 'inherit' });
+  // Remove nested folders with force
+  try {
+    execSync(`rm -rf "${distDir}/shared-services"`, { stdio: 'inherit' });
+  } catch (e) {
+    console.log('Note: Could not remove shared-services folder, continuing...');
+  }
+  
+  try {
+    execSync(`rm -rf "${distDir}/shared-types"`, { stdio: 'inherit' });
+  } catch (e) {
+    console.log('Note: Could not remove shared-types folder, continuing...');
+  }
   
   console.log('Dist structure fixed!');
 }
