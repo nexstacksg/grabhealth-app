@@ -73,11 +73,19 @@ const incentiveStructure = [
 ];
 
 // Format volume range for display
-function formatVolumeRange(min: number, max: number | null): string {
-  if (max === null) {
-    return `$${min.toLocaleString()}+`;
+function formatVolumeRange(min: number | undefined | null, max: number | undefined | null): string {
+  // Handle cases where min or max might be undefined
+  const minValue = min ?? 0;
+  const maxValue = max;
+  
+  if (!minValue && minValue !== 0) {
+    return 'N/A';
   }
-  return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
+  
+  if (maxValue === null || maxValue === undefined) {
+    return `$${minValue.toLocaleString()}+`;
+  }
+  return `$${minValue.toLocaleString()} - $${maxValue.toLocaleString()}`;
 }
 
 function CommissionStructure() {
@@ -167,7 +175,16 @@ function CommissionStructure() {
         if (!data.volumeBonusTiers || data.volumeBonusTiers.length === 0) {
           setVolumeBonusTiers(defaultVolumeBonusTiers);
         } else {
-          setVolumeBonusTiers(data.volumeBonusTiers);
+          // Validate and ensure all required fields are present
+          const validatedTiers = data.volumeBonusTiers.map((tier: any) => ({
+            id: tier.id || Math.random(),
+            min_volume: tier.min_volume ?? tier.minVolume ?? 0,
+            max_volume: tier.max_volume ?? tier.maxVolume ?? null,
+            bonus_percentage: tier.bonus_percentage ?? tier.bonusPercentage ?? 0,
+            created_at: tier.created_at ?? tier.createdAt ?? new Date().toISOString(),
+            updated_at: tier.updated_at ?? tier.updatedAt ?? new Date().toISOString(),
+          }));
+          setVolumeBonusTiers(validatedTiers);
         }
       } catch (err) {
         console.error('Error fetching commission structure:', err);
