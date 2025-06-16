@@ -57,7 +57,7 @@ async function main() {
         name: "Vitamins & Supplements",
         slug: "vitamins-supplements",
         description: "Essential vitamins and dietary supplements",
-        imageUrl: "https://via.placeholder.com/400x300?text=Vitamins",
+        imageUrl: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400&h=300&fit=crop",
       },
     }),
     prisma.category.create({
@@ -65,7 +65,7 @@ async function main() {
         name: "Personal Care",
         slug: "personal-care",
         description: "Personal hygiene and care products",
-        imageUrl: "https://via.placeholder.com/400x300?text=Personal+Care",
+        imageUrl: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=300&fit=crop",
       },
     }),
     prisma.category.create({
@@ -73,7 +73,7 @@ async function main() {
         name: "Fitness & Sports",
         slug: "fitness-sports",
         description: "Sports nutrition and fitness supplements",
-        imageUrl: "https://via.placeholder.com/400x300?text=Fitness",
+        imageUrl: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&h=300&fit=crop",
       },
     }),
     prisma.category.create({
@@ -81,7 +81,7 @@ async function main() {
         name: "Herbal Products",
         slug: "herbal-products",
         description: "Natural and herbal health products",
-        imageUrl: "https://via.placeholder.com/400x300?text=Herbal",
+        imageUrl: "https://images.unsplash.com/photo-1509130298739-651801c76e96?w=400&h=300&fit=crop",
       },
     }),
   ]);
@@ -330,71 +330,135 @@ async function main() {
       name: "Vitamin C 1000mg",
       description: "High-potency Vitamin C supplement for immune support",
       categoryId: categories[0].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Vitamin+C",
+      imageUrl: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
       price: 29.99,
     },
     {
       name: "Multivitamin Complex",
       description: "Complete daily multivitamin with essential nutrients",
       categoryId: categories[0].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Multivitamin",
+      imageUrl: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=300&fit=crop",
       price: 39.99,
     },
     {
       name: "Omega-3 Fish Oil",
       description: "Premium fish oil supplement for heart health",
       categoryId: categories[0].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Omega-3",
+      imageUrl: "https://images.unsplash.com/photo-1585435557343-3b092031a831?w=400&h=300&fit=crop",
       price: 34.99,
     },
     {
       name: "Organic Shampoo",
       description: "Natural organic shampoo for all hair types",
       categoryId: categories[1].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Shampoo",
+      imageUrl: "https://images.unsplash.com/photo-1629256926539-82164ff8f4c7?w=400&h=300&fit=crop",
       price: 19.99,
     },
     {
       name: "Hand Sanitizer Pack",
       description: "Antibacterial hand sanitizer 3-pack",
       categoryId: categories[1].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Sanitizer",
+      imageUrl: "https://images.unsplash.com/photo-1584483766114-2cea6facdf57?w=400&h=300&fit=crop",
       price: 14.99,
     },
     {
       name: "Protein Powder - Vanilla",
       description: "Premium whey protein powder for muscle building",
       categoryId: categories[2].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Protein",
+      imageUrl: "https://images.unsplash.com/photo-1609045567763-79fc7d1ba2ad?w=400&h=300&fit=crop",
       price: 49.99,
     },
     {
       name: "Pre-Workout Energy",
       description: "Advanced pre-workout formula for intense training",
       categoryId: categories[2].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Pre-Workout",
+      imageUrl: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=300&fit=crop",
       price: 39.99,
     },
     {
       name: "Herbal Tea Collection",
       description: "Assorted organic herbal teas for wellness",
       categoryId: categories[3].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Herbal+Tea",
+      imageUrl: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=300&fit=crop",
       price: 24.99,
     },
     {
       name: "Turmeric Capsules",
       description: "Natural turmeric supplement for inflammation support",
       categoryId: categories[3].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Turmeric",
+      imageUrl: "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=400&h=300&fit=crop",
       price: 29.99,
     },
     {
       name: "Ginseng Extract",
       description: "Premium ginseng extract for energy and vitality",
       categoryId: categories[3].id,
-      imageUrl: "https://via.placeholder.com/400x300?text=Ginseng",
+      imageUrl: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=300&fit=crop",
       price: 44.99,
+    },
+    // Additional products for better variety
+    {
+      name: "Vitamin D3 5000 IU",
+      description: "High-strength Vitamin D supplement for bone health",
+      categoryId: categories[0].id,
+      imageUrl: "https://images.unsplash.com/photo-1614961908836-2f1c3f1cf514?w=400&h=300&fit=crop",
+      price: 24.99,
+    },
+    {
+      name: "Probiotic Complex",
+      description: "Advanced probiotic formula with 50 billion CFU",
+      categoryId: categories[0].id,
+      imageUrl: "https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=400&h=300&fit=crop",
+      price: 45.99,
+    },
+    {
+      name: "Collagen Peptides",
+      description: "Hydrolyzed collagen for skin, hair, and joint health",
+      categoryId: categories[0].id,
+      imageUrl: "https://images.unsplash.com/photo-1609902726285-00668009f004?w=400&h=300&fit=crop",
+      price: 39.99,
+    },
+    {
+      name: "Natural Face Cream",
+      description: "Organic moisturizing face cream with SPF 30",
+      categoryId: categories[1].id,
+      imageUrl: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&h=300&fit=crop",
+      price: 34.99,
+    },
+    {
+      name: "Essential Oil Set",
+      description: "Premium essential oils collection for aromatherapy",
+      categoryId: categories[1].id,
+      imageUrl: "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=400&h=300&fit=crop",
+      price: 49.99,
+    },
+    {
+      name: "BCAA Powder",
+      description: "Branched-chain amino acids for muscle recovery",
+      categoryId: categories[2].id,
+      imageUrl: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&h=300&fit=crop",
+      price: 35.99,
+    },
+    {
+      name: "Creatine Monohydrate",
+      description: "Pure creatine powder for strength and power",
+      categoryId: categories[2].id,
+      imageUrl: "https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=400&h=300&fit=crop",
+      price: 29.99,
+    },
+    {
+      name: "Ashwagandha Root",
+      description: "Adaptogenic herb for stress relief and energy",
+      categoryId: categories[3].id,
+      imageUrl: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=300&fit=crop",
+      price: 32.99,
+    },
+    {
+      name: "Green Superfood Blend",
+      description: "Nutrient-dense powder with spirulina and chlorella",
+      categoryId: categories[3].id,
+      imageUrl: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=300&fit=crop",
+      price: 54.99,
     },
   ];
 
@@ -592,7 +656,7 @@ async function main() {
   console.log("Users: user1@example.com, user2@example.com, user3@example.com");
   console.log("\nMLM Structure:");
   console.log("Company -> Managers -> Leaders -> Sales -> Users");
-  console.log("\nProducts: 10 products created across 4 categories");
+  console.log("\nProducts: 19 products created across 4 categories");
   console.log("Orders: 3 sample orders with different statuses");
   console.log("Commissions: Sample commission structure for order1");
 }
