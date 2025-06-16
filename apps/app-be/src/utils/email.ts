@@ -4,17 +4,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
   try {
     const mailOptions = {
-      from: `"${process.env.APP_NAME || 'App Template'}" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"${process.env.APP_NAME || 'GrabHealth'}" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
