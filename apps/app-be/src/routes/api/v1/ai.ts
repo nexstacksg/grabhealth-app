@@ -11,6 +11,9 @@ const router = Router();
 // GET /api/v1/ai/recommend - Get personalized recommendations
 router.get('/recommend', aiController.getPersonalizedRecommendations);
 
+// GET /api/v1/ai/recommendations - Alias for personalized recommendations (for compatibility)
+router.get('/recommendations', aiController.getPersonalizedRecommendations);
+
 // GET /api/v1/ai/similar/:productId - Get similar products
 router.get('/similar/:productId', aiController.getSimilarProducts);
 

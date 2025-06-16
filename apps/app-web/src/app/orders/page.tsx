@@ -30,30 +30,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import services from '@/lib/services';
+import { useAuth } from '@/contexts/AuthContext';
+import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
+import { formatPrice } from '@/lib/utils';
 
-// Order data types
-interface OrderItem {
-  id: number;
-  order_id: number;
-  product_id: number;
-  product_name: string;
-  quantity: number;
-  price: number;
-  created_at?: string;
-}
-
-interface Order {
-  id: number;
-  user_id: number;
-  status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  total: number;
-  created_at: string;
-  items?: OrderItem[];
+interface IOrderWithItems extends IOrder {
+  items?: (IOrderItem & { product?: { name: string } })[];
 }
 
 export default function OrdersPage() {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [orders, setOrders] = useState<IOrderWithItems[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,27 +50,20 @@ export default function OrdersPage() {
 
   useEffect(() => {
     async function fetchOrders() {
+      // Don't fetch if auth is still loading
+      if (isAuthLoading) return;
+
+      // Redirect if not authenticated
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
+
       try {
         setIsLoading(true);
-
-        // Check if user is authenticated
-        const userResponse = await fetch('/api/auth/user');
-        if (!userResponse.ok) {
-          if (userResponse.status === 401) {
-            router.push('/auth/login');
-            return;
-          }
-          throw new Error('Failed to authenticate');
-        }
-
-        // Fetch orders from the API
-        const response = await fetch('/api/orders');
-        if (!response.ok) {
-          throw new Error('Failed to fetch orders');
-        }
-
-        const data = await response.json();
-        setOrders(data.orders || []);
+        // Fetch all orders (using a high limit)
+        const response = await services.order.getMyOrders(1, 100);
+        setOrders(response.data);
       } catch (error) {
         console.error('Error fetching orders:', error);
         setError('Failed to load orders. Please try again later.');
@@ -91,7 +73,7 @@ export default function OrdersPage() {
     }
 
     fetchOrders();
-  }, [router]);
+  }, [user, isAuthLoading, router]);
 
   // Filter orders based on search term and status
   const filteredOrders = orders.filter((order) => {
@@ -108,29 +90,31 @@ export default function OrdersPage() {
   };
 
   // Calculate number of items for each order
-  const getItemCount = (order: Order) => {
+  const getItemCount = (order: IOrderWithItems) => {
     if (order.items && order.items.length > 0) {
       return order.items.length;
     }
     return 0; // Default if items are not loaded
   };
 
-  const getStatusBadgeColor = (status: Order['status']) => {
+  const getStatusBadgeColor = (status: OrderStatus) => {
     switch (status) {
-      case 'processing':
+      case OrderStatus.PENDING:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+      case OrderStatus.PROCESSING:
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-      case 'shipped':
-        return 'bg-amber-100 text-amber-800 hover:bg-amber-100';
-      case 'delivered':
+      case OrderStatus.COMPLETED:
         return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'cancelled':
+      case OrderStatus.CANCELLED:
         return 'bg-red-100 text-red-800 hover:bg-red-100';
+      case OrderStatus.REFUNDED:
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-100';
       default:
         return '';
     }
   };
 
-  if (isLoading && orders.length === 0) {
+  if (isAuthLoading || (isLoading && orders.length === 0)) {
     return (
       <div className="container max-w-4xl py-16 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
@@ -171,10 +155,11 @@ export default function OrdersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Orders</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="shipped">Shipped</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value={OrderStatus.PENDING}>Pending</SelectItem>
+                  <SelectItem value={OrderStatus.PROCESSING}>Processing</SelectItem>
+                  <SelectItem value={OrderStatus.COMPLETED}>Completed</SelectItem>
+                  <SelectItem value={OrderStatus.CANCELLED}>Cancelled</SelectItem>
+                  <SelectItem value={OrderStatus.REFUNDED}>Refunded</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -210,17 +195,16 @@ export default function OrdersPage() {
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.id}</TableCell>
                       <TableCell>
-                        {new Date(order.created_at).toLocaleDateString()}
+                        {new Date(order.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusBadgeColor(order.status)}>
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1)}
+                          {order.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
                         </Badge>
                       </TableCell>
                       <TableCell>{getItemCount(order)}</TableCell>
                       <TableCell className="text-right">
-                        ${order.total.toFixed(2)}
+                        {formatPrice(order.total)}
                       </TableCell>
                       <TableCell>
                         <Button

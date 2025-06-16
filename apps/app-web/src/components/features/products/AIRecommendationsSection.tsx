@@ -9,7 +9,7 @@ import { formatPrice } from '@/lib/utils';
 import { useAIRecommendations } from '@/hooks/products/useAIRecommendations';
 
 export const AIRecommendationsSection = React.memo(() => {
-  const { recommendations, trending, loading } = useAIRecommendations();
+  const { recommendations, trending, loading, error } = useAIRecommendations();
 
   if (loading) {
     return (
@@ -28,6 +28,18 @@ export const AIRecommendationsSection = React.memo(() => {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mb-8">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <p className="text-red-600 text-sm">{error}</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -153,3 +165,5 @@ export const AIRecommendationsSection = React.memo(() => {
     </div>
   );
 });
+
+AIRecommendationsSection.displayName = 'AIRecommendationsSection';

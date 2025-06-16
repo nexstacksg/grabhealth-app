@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { ErrorCode, HttpStatus, ApiErrorResponse } from '@app/shared-types';
 
 export class ApiError extends Error {
@@ -26,7 +26,8 @@ export const AppError = ApiError;
 export const errorHandler = (
   error: ApiError,
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): void => {
   const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
   const message = error.message || 'Internal Server Error';
