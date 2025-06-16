@@ -22,11 +22,16 @@ import { Loader2 } from 'lucide-react';
 // Define the schema here to avoid circular dependencies
 const registerSchema = z
   .object({
-    name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+    firstName: z.string().min(1, { message: 'First name is required' }),
+    lastName: z.string().min(1, { message: 'Last name is required' }),
     email: z.string().email({ message: 'Please enter a valid email address' }),
     password: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters' }),
+      .min(8, { message: 'Password must be at least 8 characters' })
+      .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
+      .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
+      .regex(/\d/, { message: 'Password must contain at least one number' })
+      .regex(/[@$!%*?&]/, { message: 'Password must contain at least one special character (@$!%*?&)' }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -49,7 +54,8 @@ export default function RegisterForm({ referrerId }: RegisterFormProps) {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -61,16 +67,11 @@ export default function RegisterForm({ referrerId }: RegisterFormProps) {
     setError(null);
 
     try {
-      // Split the name into firstName and lastName
-      const nameParts = data.name.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
       await register({
         email: data.email,
         password: data.password,
-        firstName,
-        lastName,
+        firstName: data.firstName,
+        lastName: data.lastName,
       });
 
       // The AuthContext handles the redirect after successful registration
@@ -95,12 +96,25 @@ export default function RegisterForm({ referrerId }: RegisterFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="name"
+            name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Full Name</FormLabel>
+                <FormLabel>First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

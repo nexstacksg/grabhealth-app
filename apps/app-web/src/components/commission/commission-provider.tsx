@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initializeCommissionSystem as initCommissionClient } from '../../lib/commission-client';
 import { useAuth } from '@/contexts/AuthContext';
 import services from '@/lib/services';
 import { ICommission } from '@app/shared-types';
@@ -67,15 +66,6 @@ export function CommissionProvider({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to initialize commission system
-  const initializeCommissionSystem = async () => {
-    try {
-      await services.commission.initializeCommissionSystem();
-      console.log('Commission system initialized successfully');
-    } catch (err) {
-      console.error('Error initializing commission system:', err);
-    }
-  };
 
   // Function to fetch commission data
   const fetchCommissionData = async () => {
@@ -90,7 +80,7 @@ export function CommissionProvider({
 
       // Try to initialize the commission system first
       try {
-        await initCommissionClient();
+        await services.commission.initializeCommissionSystem();
       } catch (initError) {
         console.error(
           'Error initializing commission system, but continuing:',
