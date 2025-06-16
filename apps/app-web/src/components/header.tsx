@@ -60,13 +60,27 @@ export default function Header() {
     { label: 'Rank & Rewards', href: '/rank-rewards' },
   ];
 
+  // Return a consistent structure during SSR and initial client render
   if (!isMounted) {
     return (
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="w-8"></div>
-          <div className="animate-pulse h-8 w-24 bg-gray-200 rounded"></div>
-          <div className="w-8"></div>
+      <header className="border-b bg-white sticky top-0 z-50">
+        <div className="container mx-auto px-3 md:px-6">
+          <div className="flex items-center justify-between h-14 md:h-20">
+            <div className="flex items-center">
+              <div className="pl-0 md:pl-4">
+                <Link href="/" className="flex items-center">
+                  <Image
+                    src="/freepik__background__83849 2.svg"
+                    alt="GrabHealth AI Logo"
+                    width={120}
+                    height={50}
+                    priority
+                    className="h-10 md:h-12 w-auto"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
     );
@@ -106,8 +120,7 @@ export default function Header() {
               </nav>
 
               <div className="hidden md:flex items-center space-x-4">
-                {!isLoading && (
-                  user ? (
+                {isMounted && !isLoading && user ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="gap-2">
@@ -132,8 +145,8 @@ export default function Header() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  ) : (
-                    <>
+                ) : isMounted && !isLoading ? (
+                  <>
                       <Link href="/auth/login">
                         <Button variant="ghost" className="text-sm font-medium">
                           Login
@@ -148,8 +161,7 @@ export default function Header() {
                         </Button>
                       </Link>
                     </>
-                  )
-                )}
+                ) : null}
                 <CartDropdown />
               </div>
             </>
@@ -178,8 +190,7 @@ export default function Header() {
                       </SheetClose>
                     ))}
                     <div className="h-px bg-gray-200 my-2"></div>
-                    {!isLoading && (
-                      user ? (
+                    {isMounted && !isLoading && user ? (
                         <>
                           <div className="flex items-center space-x-2 mb-4">
                             <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -221,8 +232,8 @@ export default function Header() {
                             Logout
                           </Button>
                         </>
-                      ) : (
-                        <>
+                    ) : isMounted && !isLoading ? (
+                      <>
                           <SheetClose asChild>
                             <Link href="/auth/login">
                               <Button
@@ -238,14 +249,14 @@ export default function Header() {
                               <Button
                                 variant="outline"
                                 className="w-full justify-start text-base font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
+                              
                               >
                                 Register
                               </Button>
                             </Link>
                           </SheetClose>
                         </>
-                      )
-                    )}
+                    ) : null}
                   </div>
                 </SheetContent>
               </Sheet>

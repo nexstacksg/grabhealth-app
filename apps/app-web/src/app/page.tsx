@@ -17,9 +17,11 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
             <div>
-              <Badge className="mb-4 bg-[#c5edf3] text-[#0C99B4] hover:bg-[#9adde9]">
-                Health First
-              </Badge>
+              <div suppressHydrationWarning>
+                <Badge className="mb-4 bg-[#c5edf3] text-[#0C99B4] hover:bg-[#9adde9]">
+                  Health First
+                </Badge>
+              </div>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-3 md:mb-4">
                 Your Trusted
                 <br />
