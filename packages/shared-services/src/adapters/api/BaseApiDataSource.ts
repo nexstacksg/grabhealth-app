@@ -38,12 +38,23 @@ export abstract class BaseApiDataSource {
   }
 
   protected async handleResponse<T>(response: Response): Promise<T> {
-    const data = await response.json() as any;
+    let data: any;
+    
+    try {
+      data = await response.json();
+    } catch (error) {
+      // If response is not JSON (e.g., HTML error page), throw a proper error
+      throw new ServiceError(
+        'Invalid response format from server',
+        'INVALID_RESPONSE',
+        response.status
+      );
+    }
 
     if (!response.ok) {
       throw new ServiceError(
-        data.message || 'Request failed',
-        data.code || 'API_ERROR',
+        data?.message || data?.error?.message || 'Request failed',
+        data?.code || 'API_ERROR',
         response.status
       );
     }

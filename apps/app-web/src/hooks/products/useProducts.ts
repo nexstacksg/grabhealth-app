@@ -83,7 +83,7 @@ export function useProducts() {
       setIsLoading(false);
       setPageTransitioning(false);
     }
-  }, [pagination.page, pagination.limit, products, filters.query, filters.inStock]);
+  }, [pagination.limit, filters.query, filters.inStock]);
 
   // Helper function to convert price range string to min/max values
   const getPriceRangeValues = (
@@ -127,10 +127,11 @@ export function useProducts() {
     fetchProducts(1, updatedFilters.category, priceRange);
   };
 
-  // Initial fetch
+  // Initial fetch - only run once on mount
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     products,
