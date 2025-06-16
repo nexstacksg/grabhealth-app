@@ -63,7 +63,7 @@ export default function OrdersPage() {
         setIsLoading(true);
         // Fetch all orders (using a high limit)
         const response = await services.order.getMyOrders(1, 100);
-        setOrders(response.data);
+        setOrders(response.data || []);
       } catch (error) {
         console.error('Error fetching orders:', error);
         setError('Failed to load orders. Please try again later.');
@@ -76,13 +76,13 @@ export default function OrdersPage() {
   }, [user, isAuthLoading, router]);
 
   // Filter orders based on search term and status
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = orders && Array.isArray(orders) ? orders.filter((order) => {
     const orderIdString = order.id.toString();
     const matchesSearch = orderIdString.includes(searchTerm);
     const matchesStatus =
       statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }) : [];
 
   const handleViewOrder = (orderId: number) => {
     // Navigate to the order details page

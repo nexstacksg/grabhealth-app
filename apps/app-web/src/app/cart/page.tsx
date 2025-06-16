@@ -188,7 +188,7 @@ export default function CartPage() {
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
 
-                {membership && (
+                {membership && membership.tier && (
                   <div className="flex justify-between items-center text-emerald-600">
                     <div className="flex items-center">
                       <BadgePercent className="h-4 w-4 mr-1.5" />

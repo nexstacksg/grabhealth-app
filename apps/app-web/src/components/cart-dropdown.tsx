@@ -145,20 +145,25 @@ export function CartDropdown() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <Link href="/cart" legacyBehavior passHref>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => setOpen(false)}
-                      >
-                        View Cart
-                      </Button>
-                    </Link>
-                    <Link href="/cart/checkout" legacyBehavior passHref>
-                      <Button className="w-full" onClick={() => setOpen(false)}>
-                        Checkout
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setOpen(false);
+                        router.push('/cart');
+                      }}
+                    >
+                      View Cart
+                    </Button>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => {
+                        setOpen(false);
+                        router.push('/cart/checkout');
+                      }}
+                    >
+                      Checkout
+                    </Button>
                   </div>
                 </div>
               </>
