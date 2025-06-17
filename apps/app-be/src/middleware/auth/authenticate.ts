@@ -5,7 +5,7 @@ import { ApiError } from '../error/errorHandler';
 import logger from '../../utils/logger';
 import prisma from '../../database/client';
 import { UserRole, UserStatus } from '@app/shared-types';
-import cacheService from '../../services/cache';
+import cacheService from '../../services/cache/cacheService';
 
 export interface AuthRequest<
   P = any,

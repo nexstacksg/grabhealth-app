@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
-import { config } from '../config/env';
-import logger from '../utils/logger';
+import { config } from '../../config/env';
+import logger from '../../utils/logger';
 import memoryCacheService from './memoryCache';
 
 type CacheBackend = 'redis' | 'memory';

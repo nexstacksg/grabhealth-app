@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { CommissionService } from '../../services/commission.service';
+import { CommissionService } from '../../services/commission/commissionService';
 import prisma from '../../database/client';
 import { AppError } from '../../middleware/error/errorHandler';
 

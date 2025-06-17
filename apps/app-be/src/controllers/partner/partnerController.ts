@@ -42,13 +42,14 @@ class PartnerController {
       const partner = await partnerService.getPartnerById(id);
 
       if (!partner) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: {
             code: 'NOT_FOUND',
             message: 'Partner not found'
           }
         });
+        return;
       }
 
       const response: ApiResponse = {

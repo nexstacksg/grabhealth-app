@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth/authenticate';
-import { AIService } from '../../services/ai.service';
+import { AIService } from '../../services/ai/aiService';
 import prisma from '../../database/client';
 
 const aiService = new AIService(prisma);

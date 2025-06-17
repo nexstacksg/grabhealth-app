@@ -28,7 +28,7 @@ import {
 } from '../../utils/email';
 import crypto from 'crypto';
 import logger from '../../utils/logger';
-import cacheService from '../cache';
+import cacheService from '../cache/cacheService';
 
 export class AuthService {
   private createUserPublic(user: any): IUserPublic {

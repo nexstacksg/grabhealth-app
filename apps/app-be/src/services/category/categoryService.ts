@@ -1,6 +1,6 @@
 import { PrismaClient, Category, Prisma } from '@prisma/client';
 import { ICategoryCreate, ICategoryUpdate } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
+import { AppError } from '../../middleware/error/errorHandler';
 
 export class CategoryService {
   constructor(private prisma: PrismaClient) {}

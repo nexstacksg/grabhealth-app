@@ -5,7 +5,7 @@ import {
   INetworkNode,
   INetwork,
 } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
+import { AppError } from '../../middleware/error/errorHandler';
 
 export class CommissionService {
   constructor(private prisma: PrismaClient) {}

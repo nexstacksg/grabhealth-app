@@ -1,6 +1,6 @@
 import { PrismaClient, Promotion, Prisma } from '@prisma/client';
 import { IPromotionCreate } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
+import { AppError } from '../../middleware/error/errorHandler';
 
 export class PromotionService {
   constructor(private prisma: PrismaClient) {}

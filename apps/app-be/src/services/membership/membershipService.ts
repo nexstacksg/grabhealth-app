@@ -4,7 +4,7 @@ import {
   MembershipStatus,
   MembershipTier as MembershipTierEnum,
 } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
+import { AppError } from '../../middleware/error/errorHandler';
 
 export class MembershipService {
   constructor(private prisma: PrismaClient) {}

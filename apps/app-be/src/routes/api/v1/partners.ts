@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { partnerController } from '../../../controllers/partner/partnerController';
 import { validateRequest } from '../../../middleware/validation/validationMiddleware';
-import { authenticate } from '../../../middleware/auth/authenticate';
 import { query, param } from 'express-validator';
 
 const router = Router();

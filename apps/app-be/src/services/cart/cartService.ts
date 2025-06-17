@@ -1,6 +1,6 @@
-import { ICart, ICartItem } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
-import prisma from '../database/client';
+import { ICart, ICartItem, ProductStatus } from '@app/shared-types';
+import { AppError } from '../../middleware/error/errorHandler';
+import prisma from '../../database/client';
 
 interface CartStore {
   [userId: string]: ICart;
@@ -44,7 +44,7 @@ export class CartService {
             categoryId: product.categoryId,
             category: product.category,
             inStock: product.inStock,
-            status: product.status,
+            status: product.status as ProductStatus,
             createdAt: product.createdAt,
             updatedAt: product.updatedAt
           } : null
@@ -54,7 +54,7 @@ export class CartService {
     
     return {
       ...cart,
-      items: itemsWithProducts
+      items: itemsWithProducts as ICartItem[]
     };
   }
 
@@ -123,7 +123,7 @@ export class CartService {
   }
 
   async removeFromCart(userId: string, productId: number): Promise<ICart> {
-    const cart = await this.getCart(userId);
+    await this.getCart(userId);
 
     CartService.carts[userId].items = CartService.carts[userId].items.filter(
       (item: any) => item.productId !== productId
@@ -137,7 +137,7 @@ export class CartService {
   }
 
   async syncCart(userId: string, items: any[]): Promise<ICart> {
-    const cart = await this.getCart(userId);
+    await this.getCart(userId);
 
     // Merge items from client with existing cart
     for (const newItem of items) {
@@ -190,14 +190,4 @@ export class CartService {
     return cart;
   }
 
-  private updateCartTotals(cart: ICart): ICart {
-    cart.subtotal = cart.items.reduce(
-      (sum: number, item: any) => sum + item.quantity * (item.price || 0),
-      0
-    );
-    cart.discount = 0; // Discounts from promotions only, no membership discounts
-    cart.total = cart.subtotal - cart.discount;
-
-    return cart;
-  }
 }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ProductService } from '../../services/product.service';
+import { ProductService } from '../../services/product/productService';
 import prisma from '../../database/client';
 import { AppError } from '../../middleware/error/errorHandler';
 import {

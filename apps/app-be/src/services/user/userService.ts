@@ -400,7 +400,7 @@ export class UserService {
       throw new ApiError(
         existingClaim.status === 'ACTIVE' ? 'Free checkup already claimed' : 'Free checkup already used',
         HttpStatus.BAD_REQUEST,
-        ErrorCode.INVALID_REQUEST
+        ErrorCode.BAD_REQUEST
       );
     }
 

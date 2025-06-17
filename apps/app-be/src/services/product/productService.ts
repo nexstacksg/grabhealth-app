@@ -7,7 +7,7 @@ import {
   ProductSearchResponse,
   ProductStatus,
 } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
+import { AppError } from '../../middleware/error/errorHandler';
 
 export class ProductService {
   constructor(private prisma: PrismaClient) {}

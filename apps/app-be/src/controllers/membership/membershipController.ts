@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { MembershipService } from '../../services/membership.service';
+import { MembershipService } from '../../services/membership/membershipService';
 import prisma from '../../database/client';
 import { AppError } from '../../middleware/error/errorHandler';
 import { IMembershipCreate, MembershipStatus } from '@app/shared-types';

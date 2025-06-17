@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { IBooking, ICreateBookingRequest, BookingStatus } from '@app/shared-types';
-import { addMinutes, parseISO } from 'date-fns';
+import { IBooking, ICreateBookingRequest } from '@app/shared-types';
+import { addMinutes } from 'date-fns';
 
 const prisma = new PrismaClient();
 
@@ -84,7 +84,20 @@ class BookingService {
       }
     });
 
-    return booking as IBooking;
+    // Parse operatingHours if it's a string
+    const transformedBooking = {
+      ...booking,
+      partner: booking.partner ? {
+        ...booking.partner,
+        operatingHours: booking.partner.operatingHours ? 
+          (typeof booking.partner.operatingHours === 'string' ? 
+            JSON.parse(booking.partner.operatingHours) : 
+            booking.partner.operatingHours) : 
+          undefined
+      } : undefined
+    };
+
+    return transformedBooking as unknown as IBooking;
   }
 
   async getBookings(filters: BookingFilters, page: number, limit: number) {
@@ -145,7 +158,22 @@ class BookingService {
       }
     });
 
-    return booking as IBooking | null;
+    if (!booking) return null;
+
+    // Parse operatingHours if it's a string
+    const transformedBooking = {
+      ...booking,
+      partner: booking.partner ? {
+        ...booking.partner,
+        operatingHours: booking.partner.operatingHours ? 
+          (typeof booking.partner.operatingHours === 'string' ? 
+            JSON.parse(booking.partner.operatingHours) : 
+            booking.partner.operatingHours) : 
+          undefined
+      } : undefined
+    };
+
+    return transformedBooking as unknown as IBooking;
   }
 
   async updateBookingStatus(id: string, status: string, cancellationReason?: string): Promise<IBooking> {
@@ -165,7 +193,20 @@ class BookingService {
       }
     });
 
-    return booking as IBooking;
+    // Parse operatingHours if it's a string
+    const transformedBooking = {
+      ...booking,
+      partner: booking.partner ? {
+        ...booking.partner,
+        operatingHours: booking.partner.operatingHours ? 
+          (typeof booking.partner.operatingHours === 'string' ? 
+            JSON.parse(booking.partner.operatingHours) : 
+            booking.partner.operatingHours) : 
+          undefined
+      } : undefined
+    };
+
+    return transformedBooking as unknown as IBooking;
   }
 }
 

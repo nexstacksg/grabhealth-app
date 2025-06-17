@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { CartService } from '../../services/cart.service';
+import { CartService } from '../../services/cart/cartService';
 import { AppError } from '../../middleware/error/errorHandler';
 
 const cartService = new CartService();

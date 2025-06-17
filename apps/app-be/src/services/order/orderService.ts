@@ -6,9 +6,9 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
-import { CartService } from './cart.service';
-import { CommissionService } from './commission.service';
+import { AppError } from '../../middleware/error/errorHandler';
+import { CartService } from '../cart/cartService';
+import { CommissionService } from '../commission/commissionService';
 
 export class OrderService {
   private cartService: CartService;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PromotionService } from '../../services/promotion.service';
+import { PromotionService } from '../../services/promotion/promotionService';
 import prisma from '../../database/client';
 import { AppError } from '../../middleware/error/errorHandler';
 import { IPromotionCreate } from '@app/shared-types';

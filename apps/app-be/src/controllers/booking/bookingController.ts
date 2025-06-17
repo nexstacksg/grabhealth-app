@@ -24,7 +24,7 @@ class BookingController {
       console.error('Create booking error:', error);
       
       if (error.message === 'Service not found' || error.message === 'Partner not found') {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: {
             code: 'NOT_FOUND',
@@ -34,7 +34,7 @@ class BookingController {
       }
 
       if (error.message === 'Time slot not available') {
-        return res.status(409).json({
+        res.status(409).json({
           success: false,
           error: {
             code: 'CONFLICT',
@@ -94,24 +94,26 @@ class BookingController {
       const booking = await bookingService.getBookingById(id);
 
       if (!booking) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: {
             code: 'NOT_FOUND',
             message: 'Booking not found'
           }
         });
+        return;
       }
 
       // Check if user owns this booking
       if (booking.userId !== userId) {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           error: {
             code: 'FORBIDDEN',
             message: 'Access denied'
           }
         });
+        return;
       }
 
       const response: ApiResponse = {
@@ -141,24 +143,26 @@ class BookingController {
       const booking = await bookingService.getBookingById(id);
 
       if (!booking) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: {
             code: 'NOT_FOUND',
             message: 'Booking not found'
           }
         });
+        return;
       }
 
       // Check if user owns this booking
       if (booking.userId !== userId) {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           error: {
             code: 'FORBIDDEN',
             message: 'Access denied'
           }
         });
+        return;
       }
 
       const updatedBooking = await bookingService.updateBookingStatus(id, status, cancellationReason);

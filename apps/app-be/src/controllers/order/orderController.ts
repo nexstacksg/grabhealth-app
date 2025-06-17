@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { OrderService } from '../../services/order.service';
+import { OrderService } from '../../services/order/orderService';
 import prisma from '../../database/client';
 import { AppError } from '../../middleware/error/errorHandler';
 import {

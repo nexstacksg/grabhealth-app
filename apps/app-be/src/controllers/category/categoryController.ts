@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { CategoryService } from '../../services/category.service';
+import { CategoryService } from '../../services/category/categoryService';
 import prisma from '../../database/client';
 import { AppError } from '../../middleware/error/errorHandler';
 import { ICategoryCreate, ICategoryUpdate } from '@app/shared-types';

@@ -27,7 +27,7 @@ export const errorHandler = (
   error: ApiError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
   const message = error.message || 'Internal Server Error';

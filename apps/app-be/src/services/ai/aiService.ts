@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { IProduct } from '@app/shared-types';
-import { AppError } from '../middleware/error/errorHandler';
+import { AppError } from '../../middleware/error/errorHandler';
 
 interface RecommendationOptions {
   limit?: number;

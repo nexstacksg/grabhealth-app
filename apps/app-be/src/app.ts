@@ -12,7 +12,7 @@ import routes from './routes';
 import { config } from './config/env';
 import { apiLimiter } from './middleware/security/rateLimiter';
 import { stream } from './utils/logger';
-import cacheService from './services/cache';
+import cacheService from './services/cache/cacheService';
 
 const app: Application = express();
 
