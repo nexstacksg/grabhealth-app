@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { IBooking, ICreateBookingRequest } from '@app/shared-types';
 import { addMinutes } from 'date-fns';
-
-const prisma = new PrismaClient();
+import prisma from '../../database/client';
 
 interface BookingFilters {
   userId: string;
@@ -59,6 +57,29 @@ class BookingService {
 
     if (availability && existingBookings >= availability.maxBookingsPerSlot) {
       throw new Error('Time slot not available');
+    }
+
+    // Check daily booking limit for the service
+    const bookingDate = new Date(data.bookingDate);
+    bookingDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(bookingDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const dailyBookingsCount = await prisma.booking.count({
+      where: {
+        serviceId: data.serviceId,
+        bookingDate: {
+          gte: bookingDate,
+          lt: nextDay
+        },
+        status: {
+          notIn: ['CANCELLED']
+        }
+      }
+    });
+
+    if (dailyBookingsCount >= service.maxBookingsPerDay) {
+      throw new Error(`This service has reached its daily booking limit of ${service.maxBookingsPerDay} bookings`);
     }
 
     // Create the booking

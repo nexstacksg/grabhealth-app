@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, Users, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, Users, TrendingUp, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface DashboardStats {
   todayBookings: number;
@@ -21,6 +23,7 @@ export default function PartnerDashboardPage() {
   });
   const [todayBookings, setTodayBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch dashboard stats
@@ -29,15 +32,45 @@ export default function PartnerDashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      // This would be replaced with actual API calls
+      // Fetch dashboard stats
+      const statsResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/stats', {
+        credentials: 'include',
+      });
+      
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        if (statsData.success) {
+          setStats(statsData.data);
+        }
+      }
+
+      // Fetch today's schedule
+      const scheduleResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/schedule/today', {
+        credentials: 'include',
+      });
+      
+      if (scheduleResponse.ok) {
+        const scheduleData = await scheduleResponse.json();
+        if (scheduleData.success) {
+          setTodayBookings(scheduleData.data.map((booking: any) => ({
+            id: booking.id,
+            time: booking.startTime,
+            customerName: `${booking.user.firstName} ${booking.user.lastName}`,
+            service: booking.service.name,
+            status: booking.status,
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Fall back to mock data if API fails
       setStats({
         todayBookings: 5,
         weekBookings: 23,
         monthBookings: 87,
         upcomingToday: 3,
       });
-
-      // Mock today's bookings
+      
       setTodayBookings([
         {
           id: '1',
@@ -61,10 +94,40 @@ export default function PartnerDashboardPage() {
           status: 'PENDING',
         },
       ]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBookingAction = async (bookingId: string, action: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
+    setActionLoading(bookingId);
+    try {
+      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/bookings/${bookingId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: action }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          toast.success(`Booking ${action.toLowerCase()} successfully`);
+          // Refresh the data
+          await fetchDashboardData();
+        } else {
+          toast.error(data.error?.message || 'Failed to update booking');
+        }
+      } else {
+        toast.error('Failed to update booking status');
+      }
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      toast.error('An error occurred while updating the booking');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -167,12 +230,62 @@ export default function PartnerDashboardPage() {
                       <p className="text-sm text-gray-600">{booking.service}</p>
                     </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    booking.status === 'CONFIRMED' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {booking.status}
+                  <div className="flex items-center gap-2">
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      booking.status === 'CONFIRMED' 
+                        ? 'bg-green-100 text-green-800' 
+                        : booking.status === 'COMPLETED'
+                        ? 'bg-blue-100 text-blue-800'
+                        : booking.status === 'CANCELLED'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {booking.status}
+                    </div>
+                    {booking.status === 'PENDING' && (
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBookingAction(booking.id, 'CONFIRMED')}
+                          disabled={actionLoading === booking.id}
+                          className="h-8"
+                        >
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBookingAction(booking.id, 'CANCELLED')}
+                          disabled={actionLoading === booking.id}
+                          className="h-8"
+                        >
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    )}
+                    {booking.status === 'CONFIRMED' && (
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBookingAction(booking.id, 'COMPLETED')}
+                          disabled={actionLoading === booking.id}
+                          className="h-8"
+                        >
+                          <CheckCircle className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBookingAction(booking.id, 'CANCELLED')}
+                          disabled={actionLoading === booking.id}
+                          className="h-8"
+                        >
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

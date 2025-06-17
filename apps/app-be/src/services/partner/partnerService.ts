@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { IPartner, IService, IAvailableSlot, ICalendarDay } from '@app/shared-types';
-
-const prisma = new PrismaClient();
+import prisma from '../../database/client';
 
 interface PartnerFilters {
   city?: string;

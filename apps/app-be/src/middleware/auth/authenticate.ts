@@ -18,6 +18,7 @@ export interface AuthRequest<
     email: string;
     role: UserRole;
     status: UserStatus;
+    partnerId?: string;
   };
 }
 
@@ -58,6 +59,7 @@ export const authenticate = async (
           email: true,
           role: true,
           status: true,
+          partnerId: true,
         },
       });
 
@@ -81,6 +83,7 @@ export const authenticate = async (
       email: user.email,
       role: user.role as UserRole,
       status: user.status as UserStatus,
+      partnerId: user.partnerId || undefined,
     };
 
     next();

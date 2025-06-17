@@ -447,7 +447,7 @@ model Service {
   category         String    // e.g., "Body Check", "Consultation", "Therapy"
   isActive         Boolean   @default(true)
   requiresApproval Boolean   @default(false)
-  maxBookingsPerDay Int?     // Optional limit on daily bookings
+  maxBookingsPerDay Int      @default(10) // Maximum bookings per day (default: 10)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

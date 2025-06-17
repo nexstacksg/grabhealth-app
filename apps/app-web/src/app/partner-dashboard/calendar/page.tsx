@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameMonth, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface CalendarDay {
   date: string;
@@ -21,6 +22,9 @@ export default function PartnerCalendarPage() {
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCalendarData();
@@ -29,14 +33,43 @@ export default function PartnerCalendarPage() {
   const fetchCalendarData = async () => {
     try {
       setLoading(true);
-      // This would be replaced with actual API call
       const monthStr = format(currentMonth, 'yyyy-MM');
       
-      // Mock calendar data
-      const days = generateMockCalendarDays(currentMonth);
-      setCalendarDays(days);
+      // Fetch partner info first to get partner ID
+      const profileResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
+        credentials: 'include',
+      });
+      
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.success) {
+          const partnerIdValue = profileData.data.id;
+          setPartnerId(partnerIdValue);
+          
+          // Fetch calendar data using public API endpoint
+          const calendarResponse = await fetch(`http://localhost:4000/api/v1/partners/${partnerIdValue}/calendar/${monthStr}`, {
+            credentials: 'include',
+          });
+          
+          if (calendarResponse.ok) {
+            const calendarData = await calendarResponse.json();
+            if (calendarData.success) {
+              setCalendarDays(calendarData.data);
+            }
+          }
+        }
+      }
+      
+      // Fall back to mock data if API fails
+      if (calendarDays.length === 0) {
+        const days = generateMockCalendarDays(currentMonth);
+        setCalendarDays(days);
+      }
     } catch (error) {
       console.error('Error fetching calendar data:', error);
+      // Use mock data as fallback
+      const days = generateMockCalendarDays(currentMonth);
+      setCalendarDays(days);
     } finally {
       setLoading(false);
     }
@@ -73,6 +106,94 @@ export default function PartnerCalendarPage() {
 
   const handleDateClick = (day: CalendarDay) => {
     setSelectedDate(new Date(day.date));
+    setErrorMessage(null); // Clear any error messages when a date is selected
+  };
+
+  const handleManageTimeSlots = () => {
+    if (selectedDate) {
+      // Navigate to time slots management page
+      window.location.href = `/partner-dashboard/availability?date=${format(selectedDate, 'yyyy-MM-dd')}`;
+    }
+  };
+
+  const handleMarkDayOff = async () => {
+    if (!selectedDate) {
+      toast.error('Please select a date first');
+      return;
+    }
+    
+    setActionLoading(true);
+    
+    try {
+      // If partnerId is not set yet, try to fetch it
+      let currentPartnerId = partnerId;
+      if (!currentPartnerId) {
+        const profileResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
+          credentials: 'include',
+        });
+        
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.success) {
+            currentPartnerId = profileData.data.id;
+            setPartnerId(currentPartnerId);
+          } else {
+            toast.error('Unable to fetch partner information');
+            setActionLoading(false);
+            return;
+          }
+        } else {
+          toast.error('Please login as a partner to use this feature');
+          setActionLoading(false);
+          return;
+        }
+      }
+
+      const selectedDay = calendarDays.find(d => d.date === format(selectedDate, 'yyyy-MM-dd'));
+      
+      if (selectedDay?.isDayOff) {
+        toast.info('This day is already marked as a day off');
+        setActionLoading(false);
+        return;
+      }
+
+      // Create a day off via API
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      console.log('Marking day off for date:', dateString, 'Partner ID:', currentPartnerId);
+      
+      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/days-off', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          date: dateString,
+          reason: 'Day off'
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          toast.success('Day marked as off successfully');
+          // Refresh calendar data
+          await fetchCalendarData();
+        } else {
+          console.error('API Error:', data.error);
+          toast.error(data.error?.message || 'Failed to mark day as off');
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('Response error:', response.status, errorText);
+        toast.error(`Failed to mark day as off (${response.status})`);
+      }
+    } catch (error) {
+      console.error('Error marking day off:', error);
+      toast.error('An error occurred while marking day as off');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const firstDayOfMonth = startOfMonth(currentMonth);
@@ -217,10 +338,28 @@ export default function PartnerCalendarPage() {
             <CardTitle>Details for {format(selectedDate, 'EEEE, MMMM d, yyyy')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <Button>Manage Time Slots</Button>
-              <Button variant="outline">Mark as Day Off</Button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={handleManageTimeSlots}
+                disabled={actionLoading}
+                className="flex-1"
+              >
+                Manage Time Slots
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleMarkDayOff}
+                disabled={actionLoading}
+                className="flex-1"
+              >
+                {actionLoading ? 'Processing...' : 'Mark as Day Off'}
+              </Button>
             </div>
+            {calendarDays.find(d => d.date === format(selectedDate, 'yyyy-MM-dd'))?.isDayOff && (
+              <p className="mt-4 text-sm text-amber-600 bg-amber-50 p-3 rounded-md">
+                This day is already marked as a day off.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

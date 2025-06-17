@@ -347,6 +347,15 @@ export class UserService {
         'order:create',
         'product:view',
       ],
+      [UserRole.PARTNER]: [
+        'profile:view',
+        'profile:update',
+        'partner:dashboard',
+        'partner:bookings',
+        'partner:services',
+        'partner:availability',
+        'partner:settings',
+      ],
     };
 
     return permissions[user.role as UserRole] || [];
