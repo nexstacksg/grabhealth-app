@@ -302,3 +302,59 @@ export const changePassword = async (
     next(error);
   }
 };
+
+export const getFreeCheckupStatus = async (
+  req: AuthRequest,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new ApiError(
+        'Authentication required',
+        HttpStatus.UNAUTHORIZED,
+        ErrorCode.AUTH_REQUIRED
+      );
+    }
+
+    const { id } = req.params;
+    const status = await userService.getFreeCheckupStatus(id);
+
+    const response: ApiResponse = {
+      success: true,
+      data: status,
+    };
+
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const claimFreeCheckup = async (
+  req: AuthRequest,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new ApiError(
+        'Authentication required',
+        HttpStatus.UNAUTHORIZED,
+        ErrorCode.AUTH_REQUIRED
+      );
+    }
+
+    const { id } = req.params;
+    await userService.claimFreeCheckup(id);
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Free checkup claimed successfully',
+    };
+
+    res.status(HttpStatus.CREATED).json(response);
+  } catch (error) {
+    next(error);
+  }
+};

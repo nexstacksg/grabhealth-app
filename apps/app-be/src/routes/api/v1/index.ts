@@ -10,6 +10,8 @@ import commissionRoutes from './commissions';
 import membershipRoutes from './memberships';
 import promotionRoutes from './promotions';
 import aiRoutes from './ai';
+import partnerRoutes from './partners';
+import bookingRoutes from './bookings';
 
 const router = Router();
 
@@ -29,6 +31,8 @@ router.get('/', (_req, res) => {
       memberships: '/api/v1/memberships',
       promotions: '/api/v1/promotions',
       ai: '/api/v1/ai',
+      partners: '/api/v1/partners',
+      bookings: '/api/v1/bookings',
     },
   });
 });
@@ -45,5 +49,7 @@ router.use('/commissions', commissionRoutes);
 router.use('/memberships', membershipRoutes);
 router.use('/promotions', promotionRoutes);
 router.use('/ai', aiRoutes);
+router.use('/partners', partnerRoutes);
+router.use('/bookings', bookingRoutes);
 
 export default router;

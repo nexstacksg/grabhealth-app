@@ -31,7 +31,11 @@ import {
   ProfileService,
   ApiProfileDataSource,
   AIService,
-  ApiAIDataSource
+  ApiAIDataSource,
+  HealthcarePartnerService,
+  ApiHealthcarePartnerDataSource,
+  BookingService,
+  ApiBookingDataSource
 } from '@app/shared-services';
 
 // Helper to determine API URL based on environment
@@ -113,6 +117,14 @@ const createServices = () => {
     ai: new AIService({
       dataSource: new ApiAIDataSource(apiUrl, getAccessToken)
     }),
+    
+    partners: new HealthcarePartnerService({
+      dataSource: new ApiHealthcarePartnerDataSource(apiUrl, getAccessToken)
+    }),
+    
+    bookings: new BookingService({
+      dataSource: new ApiBookingDataSource(apiUrl, getAccessToken)
+    }),
   };
 };
 
@@ -134,5 +146,7 @@ export const {
   promotion,
   category,
   profile,
-  ai
+  ai,
+  partners,
+  bookings
 } = services;

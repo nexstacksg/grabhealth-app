@@ -351,6 +351,71 @@ export class UserService {
 
     return permissions[user.role as UserRole] || [];
   }
+
+  async getFreeCheckupStatus(userId: string): Promise<any> {
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new ApiError('User not found', HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
+    }
+
+    // Check if user has active free checkup claim
+    const activeClaim = await prisma.freeCheckupClaim.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE'
+      }
+    });
+
+    // Check if user has ever used a free checkup
+    const usedClaim = await prisma.freeCheckupClaim.findFirst({
+      where: {
+        userId,
+        status: 'USED'
+      }
+    });
+
+    return {
+      eligible: !activeClaim && !usedClaim,
+      hasClaim: !!activeClaim,
+      claim: activeClaim,
+      reason: usedClaim ? 'Free checkup already used' : (!activeClaim && !usedClaim ? 'Eligible for free checkup' : null)
+    };
+  }
+
+  async claimFreeCheckup(userId: string): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new ApiError('User not found', HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
+    }
+
+    // Check if already has active claim
+    const existingClaim = await prisma.freeCheckupClaim.findFirst({
+      where: {
+        userId,
+        status: { in: ['ACTIVE', 'USED'] }
+      }
+    });
+
+    if (existingClaim) {
+      throw new ApiError(
+        existingClaim.status === 'ACTIVE' ? 'Free checkup already claimed' : 'Free checkup already used',
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.INVALID_REQUEST
+      );
+    }
+
+    // Create new claim with 1 year expiry
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+    await prisma.freeCheckupClaim.create({
+      data: {
+        userId,
+        expiryDate,
+        status: 'ACTIVE'
+      }
+    });
+  }
 }
 
 export default new UserService();

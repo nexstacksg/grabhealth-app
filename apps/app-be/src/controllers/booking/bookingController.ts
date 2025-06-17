@@ -1,0 +1,185 @@
+import { Response } from 'express';
+import { AuthRequest } from '../../middleware/auth/authenticate';
+import { bookingService } from '../../services/booking/bookingService';
+import { ApiResponse } from '@app/shared-types';
+
+class BookingController {
+  async createBooking(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const bookingData = {
+        ...req.body,
+        userId
+      };
+
+      const booking = await bookingService.createBooking(bookingData);
+
+      const response: ApiResponse = {
+        success: true,
+        data: booking
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error('Create booking error:', error);
+      
+      if (error.message === 'Service not found' || error.message === 'Partner not found') {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: error.message
+          }
+        });
+      }
+
+      if (error.message === 'Time slot not available') {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: 'The selected time slot is no longer available'
+          }
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create booking'
+        }
+      });
+    }
+  }
+
+  async getBookings(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const filters = {
+        userId,
+        status: req.query.status as string,
+        fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
+        toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined
+      };
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const result = await bookingService.getBookings(filters, page, limit);
+
+      const response: ApiResponse = {
+        success: true,
+        data: result
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get bookings error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to fetch bookings'
+        }
+      });
+    }
+  }
+
+  async getBooking(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.id;
+
+      const booking = await bookingService.getBookingById(id);
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Booking not found'
+          }
+        });
+      }
+
+      // Check if user owns this booking
+      if (booking.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Access denied'
+          }
+        });
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: booking
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get booking error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to fetch booking'
+        }
+      });
+    }
+  }
+
+  async updateBookingStatus(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const { status, cancellationReason } = req.body;
+      const userId = req.user!.id;
+
+      const booking = await bookingService.getBookingById(id);
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Booking not found'
+          }
+        });
+      }
+
+      // Check if user owns this booking
+      if (booking.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Access denied'
+          }
+        });
+      }
+
+      const updatedBooking = await bookingService.updateBookingStatus(id, status, cancellationReason);
+
+      const response: ApiResponse = {
+        success: true,
+        data: updatedBooking
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Update booking status error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to update booking status'
+        }
+      });
+    }
+  }
+}
+
+export const bookingController = new BookingController();

@@ -284,4 +284,8 @@ router.patch(
  */
 router.delete('/:id', authorizeAdmin(), userController.deleteUser);
 
+// Free checkup endpoints
+router.get('/:id/free-checkup-status', authorizeSelfOrManager('id'), userController.getFreeCheckupStatus);
+router.post('/:id/claim-free-checkup', authorizeSelfOrManager('id'), userController.claimFreeCheckup);
+
 export default router;

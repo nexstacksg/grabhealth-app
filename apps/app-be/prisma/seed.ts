@@ -29,6 +29,14 @@ async function main() {
     await prisma.volumeBonusTier.deleteMany();
     await prisma.auditLog.deleteMany();
     
+    // Clear partner-related data
+    await prisma.freeCheckupClaim.deleteMany();
+    await prisma.booking.deleteMany();
+    await prisma.partnerDaysOff.deleteMany();
+    await prisma.partnerAvailability.deleteMany();
+    await prisma.service.deleteMany();
+    await prisma.partner.deleteMany();
+    
     // Finally, delete users
     await prisma.user.deleteMany();
     
@@ -639,6 +647,192 @@ async function main() {
   for (const tier of commissionTiers) {
     await prisma.commissionTier.create({ data: tier });
   }
+
+  // Create partners and services
+  console.log("🏥 Creating partners and services...");
+  
+  const partner1 = await prisma.partner.create({
+    data: {
+      id: 'cltest001',
+      name: 'GrabHealth Pharmacy - Downtown',
+      description: 'Your trusted health partner in downtown district',
+      address: '123 Main Street, Downtown District',
+      city: 'Singapore',
+      state: 'Singapore',
+      country: 'Singapore',
+      postalCode: '123456',
+      phone: '+65 1234 5678',
+      email: 'downtown@grabhealth.sg',
+      website: 'https://grabhealth.sg',
+      rating: 4.5,
+      totalReviews: 156,
+      operatingHours: JSON.stringify({
+        monday: { open: "09:00", close: "20:00" },
+        tuesday: { open: "09:00", close: "20:00" },
+        wednesday: { open: "09:00", close: "20:00" },
+        thursday: { open: "09:00", close: "20:00" },
+        friday: { open: "09:00", close: "20:00" },
+        saturday: { open: "09:00", close: "20:00" },
+        sunday: { open: "10:00", close: "18:00" }
+      }),
+      specializations: ['Pharmacy', 'Health Screening', 'Vaccination'],
+      services: {
+        create: [
+          {
+            name: 'Basic Health Screening',
+            description: 'Comprehensive health check including blood pressure, BMI, and basic blood tests',
+            duration: 60,
+            price: 80.00,
+            category: 'Body Check'
+          },
+          {
+            name: 'Premium Health Screening',
+            description: 'Advanced health screening with full blood panel and ECG',
+            duration: 90,
+            price: 150.00,
+            category: 'Body Check'
+          },
+          {
+            name: 'Vaccination Consultation',
+            description: 'Consultation and administration of vaccines',
+            duration: 30,
+            price: 50.00,
+            category: 'Consultation'
+          }
+        ]
+      },
+      availability: {
+        create: [
+          { dayOfWeek: 0, startTime: '10:00', endTime: '18:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 1, startTime: '09:00', endTime: '20:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 2, startTime: '09:00', endTime: '20:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 3, startTime: '09:00', endTime: '20:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 4, startTime: '09:00', endTime: '20:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 5, startTime: '09:00', endTime: '20:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 6, startTime: '09:00', endTime: '20:00', slotDuration: 30, maxBookingsPerSlot: 2 }
+        ]
+      }
+    }
+  });
+
+  const partner2 = await prisma.partner.create({
+    data: {
+      id: 'cltest002',
+      name: 'Wellness Clinic - Midtown',
+      description: 'Comprehensive healthcare services',
+      address: '456 Health Avenue, Midtown',
+      city: 'Singapore',
+      state: 'Singapore',
+      country: 'Singapore',
+      postalCode: '234567',
+      phone: '+65 2345 6789',
+      email: 'midtown@wellnessclinic.sg',
+      rating: 4.2,
+      totalReviews: 89,
+      operatingHours: JSON.stringify({
+        monday: { open: "08:00", close: "18:00" },
+        tuesday: { open: "08:00", close: "18:00" },
+        wednesday: { open: "08:00", close: "18:00" },
+        thursday: { open: "08:00", close: "18:00" },
+        friday: { open: "08:00", close: "18:00" },
+        saturday: { open: "09:00", close: "15:00" },
+        sunday: { open: "closed", close: "closed" }
+      }),
+      specializations: ['General Practice', 'Health Screening', 'Specialist Consultation'],
+      services: {
+        create: [
+          {
+            name: 'General Consultation',
+            description: 'Consultation with general practitioner',
+            duration: 30,
+            price: 60.00,
+            category: 'Consultation'
+          },
+          {
+            name: 'Executive Health Screening',
+            description: 'Comprehensive executive health package',
+            duration: 120,
+            price: 280.00,
+            category: 'Body Check',
+            requiresApproval: true,
+            maxBookingsPerDay: 5
+          }
+        ]
+      },
+      availability: {
+        create: [
+          { dayOfWeek: 1, startTime: '08:00', endTime: '18:00', slotDuration: 30, maxBookingsPerSlot: 1 },
+          { dayOfWeek: 2, startTime: '08:00', endTime: '18:00', slotDuration: 30, maxBookingsPerSlot: 1 },
+          { dayOfWeek: 3, startTime: '08:00', endTime: '18:00', slotDuration: 30, maxBookingsPerSlot: 1 },
+          { dayOfWeek: 4, startTime: '08:00', endTime: '18:00', slotDuration: 30, maxBookingsPerSlot: 1 },
+          { dayOfWeek: 5, startTime: '08:00', endTime: '18:00', slotDuration: 30, maxBookingsPerSlot: 1 },
+          { dayOfWeek: 6, startTime: '09:00', endTime: '15:00', slotDuration: 30, maxBookingsPerSlot: 1 }
+        ]
+      }
+    }
+  });
+
+  const partner3 = await prisma.partner.create({
+    data: {
+      id: 'cltest003',
+      name: 'GrabHealth Center - Eastside',
+      description: 'Premium health services and products',
+      address: '789 Wellness Road, East District',
+      city: 'Singapore',
+      state: 'Singapore',
+      country: 'Singapore',
+      postalCode: '345678',
+      phone: '+65 3456 7890',
+      email: 'eastside@grabhealth.sg',
+      rating: 4.7,
+      totalReviews: 234,
+      operatingHours: JSON.stringify({
+        monday: { open: "09:00", close: "19:00" },
+        tuesday: { open: "09:00", close: "19:00" },
+        wednesday: { open: "09:00", close: "19:00" },
+        thursday: { open: "09:00", close: "19:00" },
+        friday: { open: "09:00", close: "19:00" },
+        saturday: { open: "09:00", close: "19:00" },
+        sunday: { open: "closed", close: "closed" }
+      }),
+      specializations: ['Health Screening', 'Physiotherapy', 'Nutrition Counseling'],
+      services: {
+        create: [
+          {
+            name: 'Physiotherapy Session',
+            description: 'One-on-one physiotherapy treatment',
+            duration: 60,
+            price: 100.00,
+            category: 'Therapy'
+          },
+          {
+            name: 'Nutrition Counseling',
+            description: 'Personalized nutrition and diet consultation',
+            duration: 45,
+            price: 80.00,
+            category: 'Consultation'
+          },
+          {
+            name: 'Full Body Check',
+            description: 'Comprehensive full body health screening',
+            duration: 90,
+            price: 200.00,
+            category: 'Body Check'
+          }
+        ]
+      },
+      availability: {
+        create: [
+          { dayOfWeek: 1, startTime: '09:00', endTime: '19:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 2, startTime: '09:00', endTime: '19:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 3, startTime: '09:00', endTime: '19:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 4, startTime: '09:00', endTime: '19:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 5, startTime: '09:00', endTime: '19:00', slotDuration: 30, maxBookingsPerSlot: 2 },
+          { dayOfWeek: 6, startTime: '09:00', endTime: '19:00', slotDuration: 30, maxBookingsPerSlot: 2 }
+        ]
+      }
+    }
+  });
 
   console.log("Seed data created successfully!");
   console.log("\nTest Credentials:");

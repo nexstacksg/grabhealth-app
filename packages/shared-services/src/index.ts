@@ -12,6 +12,8 @@ export { PromotionService } from './services/PromotionService';
 export { CategoryService } from './services/CategoryService';
 export { ProfileService } from './services/ProfileService';
 export { AIService } from './services/AIService';
+export { HealthcarePartnerService } from './services/HealthcarePartnerService';
+export { BookingService } from './services/BookingService';
 
 // Data Sources
 export { BaseApiDataSource } from './adapters/api/BaseApiDataSource';
@@ -30,6 +32,8 @@ export { ApiPromotionDataSource } from './adapters/api/ApiPromotionDataSource';
 export { ApiCategoryDataSource } from './adapters/api/ApiCategoryDataSource';
 export { ApiProfileDataSource } from './adapters/api/ApiProfileDataSource';
 export { ApiAIDataSource } from './adapters/api/ApiAIDataSource';
+export { ApiHealthcarePartnerDataSource } from './adapters/api/ApiHealthcarePartnerDataSource';
+export { ApiBookingDataSource } from './adapters/api/ApiBookingDataSource';
 
 // Interfaces
 export { IAuthDataSource } from './interfaces/IAuthDataSource';
@@ -45,6 +49,8 @@ export { IPromotionDataSource } from './interfaces/IPromotionDataSource';
 export { ICategoryDataSource } from './interfaces/ICategoryDataSource';
 export { IProfileDataSource } from './interfaces/IProfileDataSource';
 export { IAIDataSource } from './interfaces/IAIDataSource';
+export { IHealthcarePartnerDataSource } from './interfaces/IHealthcarePartnerDataSource';
+export { IBookingDataSource } from './interfaces/IBookingDataSource';
 
 // Types
 export * from './types';

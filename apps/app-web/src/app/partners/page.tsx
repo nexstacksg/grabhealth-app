@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Card,
   CardContent,
@@ -8,59 +10,33 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Phone, Clock, Gift } from 'lucide-react';
-
-// Static page - no dynamic rendering needed
-export const dynamic = 'force-static';
+import { useRouter } from 'next/navigation';
 
 // Sample partner data - in production this would come from a public API endpoint
 const samplePartners = [
   {
-    id: 1,
+    id: 'cltest001',
     name: 'GrabHealth Pharmacy - Downtown',
     address: '123 Main Street, Downtown District',
-    phone: '+60 3-1234 5678',
+    phone: '+65 1234 5678',
     hours: 'Mon-Sat: 9AM-8PM, Sun: 10AM-6PM',
     gift_claims: 156,
   },
   {
-    id: 2,
+    id: 'cltest002',
     name: 'Wellness Clinic - Midtown',
     address: '456 Health Avenue, Midtown',
-    phone: '+60 3-2345 6789',
+    phone: '+65 2345 6789',
     hours: 'Mon-Fri: 8AM-6PM, Sat: 9AM-3PM',
     gift_claims: 89,
   },
   {
-    id: 3,
+    id: 'cltest003',
     name: 'GrabHealth Center - Eastside',
     address: '789 Wellness Road, East District',
-    phone: '+60 3-3456 7890',
+    phone: '+65 3456 7890',
     hours: 'Mon-Sat: 9AM-7PM, Sun: Closed',
     gift_claims: 234,
-  },
-  {
-    id: 4,
-    name: 'Partner Pharmacy - Westend',
-    address: '321 Care Street, West End',
-    phone: '+60 3-4567 8901',
-    hours: 'Mon-Fri: 9AM-8PM, Sat-Sun: 10AM-5PM',
-    gift_claims: 167,
-  },
-  {
-    id: 5,
-    name: 'Health & Wellness Store - North Point',
-    address: '654 Medical Plaza, North Point',
-    phone: '+60 3-5678 9012',
-    hours: 'Mon-Sat: 8:30AM-7:30PM, Sun: 10AM-4PM',
-    gift_claims: 198,
-  },
-  {
-    id: 6,
-    name: 'GrabHealth Express - South Bay',
-    address: '987 Health Boulevard, South Bay',
-    phone: '+60 3-6789 0123',
-    hours: 'Daily: 8AM-9PM',
-    gift_claims: 312,
   },
 ];
 
@@ -97,6 +73,7 @@ const giftItems = [
 ];
 
 export default function PartnersPage() {
+  const router = useRouter();
   const partners = samplePartners;
   const gifts = giftItems;
 
@@ -139,7 +116,12 @@ export default function PartnersPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full">View Details</Button>
+              <Button 
+                className="w-full" 
+                onClick={() => router.push(`/partners/${partner.id}`)}
+              >
+                View Details
+              </Button>
             </CardFooter>
           </Card>
         ))}

@@ -25,5 +25,9 @@ export {
 export * from './models/membership';
 export * from './models/stats';
 
+// Export partner and booking types
+export * from './types/partner';
+export * from './types/booking';
+
 // Export frontend extensions
 export * from './extensions/frontend';

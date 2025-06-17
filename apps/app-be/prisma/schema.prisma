@@ -49,6 +49,8 @@ model User {
   membership          UserMembership?
   upline              User?             @relation("UplineDownline", fields: [uplineId], references: [id])
   downlines           User[]            @relation("UplineDownline")
+  bookings            Booking[]
+  freeCheckupClaims   FreeCheckupClaim[]
 
   @@index([email])
   @@index([referralCode])
@@ -394,4 +396,150 @@ model EmailVerification {
   
   @@index([email, code])
   @@index([userId, type])
+}
+
+// ==================== PARTNER & BOOKING MODELS ====================
+
+// Partner Model - Healthcare service providers
+model Partner {
+  id               String    @id @default(cuid())
+  name             String
+  description      String?
+  address          String
+  city             String
+  state            String
+  country          String    @default("Singapore")
+  postalCode       String
+  phone            String
+  email            String    @unique
+  website          String?
+  imageUrl         String?
+  rating           Float     @default(0)
+  totalReviews     Int       @default(0)
+  isActive         Boolean   @default(true)
+  operatingHours   String?   // JSON data for operating hours by day
+  specializations  String[]  // Array of specializations
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  services         Service[]
+  availability     PartnerAvailability[]
+  daysOff          PartnerDaysOff[]
+  bookings         Booking[]
+
+  @@index([city])
+  @@index([isActive])
+}
+
+// Service Model - Services offered by partners
+model Service {
+  id               String    @id @default(cuid())
+  partnerId        String
+  name             String
+  description      String?
+  duration         Int       // Duration in minutes
+  price            Float
+  category         String    // e.g., "Body Check", "Consultation", "Therapy"
+  isActive         Boolean   @default(true)
+  requiresApproval Boolean   @default(false)
+  maxBookingsPerDay Int?     // Optional limit on daily bookings
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  partner          Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  bookings         Booking[]
+
+  @@index([partnerId])
+  @@index([category])
+  @@index([isActive])
+}
+
+// PartnerAvailability Model - Regular availability schedule
+model PartnerAvailability {
+  id               String    @id @default(cuid())
+  partnerId        String
+  dayOfWeek        Int       // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime        String    // HH:MM format (e.g., "09:00")
+  endTime          String    // HH:MM format (e.g., "17:00")
+  slotDuration     Int       @default(30) // Duration of each slot in minutes
+  maxBookingsPerSlot Int     @default(1)  // How many bookings allowed per slot
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  partner          Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, dayOfWeek])
+  @@index([partnerId])
+}
+
+// PartnerDaysOff Model - Special days off or holidays
+model PartnerDaysOff {
+  id               String    @id @default(cuid())
+  partnerId        String
+  date             DateTime  @db.Date
+  reason           String?
+  isRecurring      Boolean   @default(false) // For annual holidays
+  createdAt        DateTime  @default(now())
+
+  // Relations
+  partner          Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, date])
+  @@index([partnerId])
+  @@index([date])
+}
+
+// Booking Model - User appointments with partners
+model Booking {
+  id               String    @id @default(cuid())
+  userId           String
+  partnerId        String
+  serviceId        String
+  bookingDate      DateTime
+  startTime        String    // HH:MM format
+  endTime          String    // HH:MM format
+  status           String    @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW
+  notes            String?
+  cancellationReason String?
+  isFreeCheckup    Boolean   @default(false)
+  totalAmount      Float
+  paymentStatus    String    @default("PENDING") // PENDING, PAID, REFUNDED
+  paymentMethod    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partner          Partner   @relation(fields: [partnerId], references: [id])
+  service          Service   @relation(fields: [serviceId], references: [id])
+  freeCheckupClaim FreeCheckupClaim? @relation("BookingCheckupClaim")
+
+  @@index([userId])
+  @@index([partnerId])
+  @@index([bookingDate])
+  @@index([status])
+}
+
+// FreeCheckupClaim Model - Track free body check claims
+model FreeCheckupClaim {
+  id               String    @id @default(cuid())
+  userId           String
+  claimDate        DateTime  @default(now())
+  expiryDate       DateTime  // Usually 1 year from claim date
+  status           String    @default("ACTIVE") // ACTIVE, USED, EXPIRED
+  usedBookingId    String?   @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usedBooking      Booking?  @relation("BookingCheckupClaim", fields: [usedBookingId], references: [id])
+
+  @@unique([userId, status]) // Only one active claim per user
+  @@index([userId])
+  @@index([status])
+  @@index([expiryDate])
 }
