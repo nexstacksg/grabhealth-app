@@ -32,10 +32,9 @@ export default function FeaturedProducts() {
           console.warn('AI recommendations not available, falling back to regular products:', aiError);
           
           // Fallback to regular products if AI fails
-          const regularProducts = await services.product.getProducts({ 
+          const regularProducts = await services.product.searchProducts({ 
             limit: 4,
-            sort: 'createdAt',
-            order: 'desc'
+            page: 1
           });
           setProducts(regularProducts.products || []);
           setError(null);

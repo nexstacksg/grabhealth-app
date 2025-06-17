@@ -3,10 +3,16 @@ import rateLimit from 'express-rate-limit';
 // General rate limiter for API endpoints
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 200, // Limit each IP to 200 requests per windowMs (increased from 100)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for authenticated users on certain endpoints
+    const isAuthenticated = req.headers.authorization || req.cookies?.accessToken;
+    const isUserEndpoint = req.path.includes('/users/') || req.path.includes('/bookings');
+    return !!(isAuthenticated && isUserEndpoint);
+  }
 });
 
 // Strict rate limiter for authentication endpoints

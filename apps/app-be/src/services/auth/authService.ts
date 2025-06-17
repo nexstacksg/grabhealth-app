@@ -43,6 +43,12 @@ export class AuthService {
       emailVerified: !!user.emailVerifiedAt,
       referralCode: user.referralCode,
       createdAt: user.createdAt,
+      partnerId: user.partnerId || undefined,
+      partner: user.partner ? {
+        id: user.partner.id,
+        name: user.partner.name,
+        email: user.partner.email,
+      } : undefined,
     };
   }
 
@@ -125,9 +131,12 @@ export class AuthService {
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
-    // Find user by email
+    // Find user by email and include partner info
     const user = await prisma.user.findUnique({
       where: { email: data.email },
+      include: {
+        partner: true,
+      },
     });
 
     if (!user) {
@@ -384,6 +393,9 @@ export class AuthService {
   async getCurrentUser(userId: string): Promise<IUserPublic> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        partner: true,
+      },
     });
 
     if (!user) {

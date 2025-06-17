@@ -59,6 +59,9 @@ const useAuthProvider = () => {
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {
           router.push('/auth/verify');
+        } else if (authData.user.role === 'PARTNER' && authData.user.partnerId) {
+          // Redirect partner users to partner dashboard
+          router.push('/partner-dashboard');
         } else {
           router.push('/');
         }
@@ -88,14 +91,17 @@ const useAuthProvider = () => {
         const authData = await services.auth.register({
           email: data.email,
           password: data.password,
-          firstName: data.firstName,
-          lastName: data.lastName
+          firstName: data.firstName || '',
+          lastName: data.lastName || ''
         });
         setUser(authData.user);
         
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {
           router.push('/auth/verify');
+        } else if (authData.user.role === 'PARTNER' && authData.user.partnerId) {
+          // Redirect partner users to partner dashboard
+          router.push('/partner-dashboard');
         } else {
           router.push('/');
         }

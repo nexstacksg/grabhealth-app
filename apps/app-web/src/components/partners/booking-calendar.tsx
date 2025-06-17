@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Clock, Gift } from 'lucide-react';
 import { IService, IAvailableSlot, ICalendarDay } from '@app/shared-types';
 import services from '@/lib/services';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,9 +15,10 @@ interface BookingCalendarProps {
   partnerId: string;
   service: IService;
   onBookingComplete: () => void;
+  isFreeCheckup?: boolean;
 }
 
-export function BookingCalendar({ partnerId, service, onBookingComplete }: BookingCalendarProps) {
+export function BookingCalendar({ partnerId, service, onBookingComplete, isFreeCheckup = false }: BookingCalendarProps) {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -28,6 +29,23 @@ export function BookingCalendar({ partnerId, service, onBookingComplete }: Booki
   const [isBooking, setIsBooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [freeCheckupStatus, setFreeCheckupStatus] = useState<any>(null);
+
+  // Fetch free checkup status on mount
+  useEffect(() => {
+    const fetchFreeCheckupStatus = async () => {
+      if (user && service.category === 'Body Check') {
+        try {
+          const status = await services.bookings.getFreeCheckupStatus(user.id);
+          setFreeCheckupStatus(status);
+        } catch (error) {
+          console.error('Failed to fetch free checkup status:', error);
+        }
+      }
+    };
+
+    fetchFreeCheckupStatus();
+  }, [user, service.category]);
 
   // Fetch calendar data for the current month
   useEffect(() => {
@@ -84,7 +102,8 @@ export function BookingCalendar({ partnerId, service, onBookingComplete }: Booki
         bookingDate: format(selectedDate, 'yyyy-MM-dd'),
         startTime: selectedSlot,
         notes: `Booking for ${service.name}`,
-        paymentMethod: 'CREDIT_CARD'
+        paymentMethod: 'CREDIT_CARD',
+        isFreeCheckup: isFreeCheckup || (freeCheckupStatus?.eligible && service.category === 'Body Check')
       });
 
       onBookingComplete();
@@ -112,96 +131,160 @@ export function BookingCalendar({ partnerId, service, onBookingComplete }: Booki
   }
 
   return (
-    <div className="space-y-4">
-      {/* Calendar */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select a Date</CardTitle>
-          <CardDescription>Choose your preferred appointment date</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingCalendar ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="space-y-3">
+      {/* Combined Calendar and Time Slots */}
+      <Card className="overflow-hidden">
+        <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+          {/* Calendar Section */}
+          <div>
+            <div className="px-4 py-3 border-b bg-gray-50">
+              <h3 className="font-semibold text-sm">Select Date</h3>
+              <p className="text-xs text-gray-600 mt-0.5">Choose your appointment date</p>
             </div>
-          ) : (
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              onMonthChange={setCurrentMonth}
-              disabled={(date) => {
-                // Disable past dates
-                if (date < new Date()) return true;
-                // Disable unavailable dates
-                return disabledDays.some(d => d.toDateString() === date.toDateString());
-              }}
-              className="rounded-md border"
-            />
-          )}
-        </CardContent>
-      </Card>
+            <div className="p-3">
+              {isLoadingCalendar ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : (
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  onMonthChange={setCurrentMonth}
+                  disabled={(date) => {
+                    // Disable past dates
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (date < today) return true;
+                    // Disable unavailable dates
+                    return disabledDays.some(d => d.toDateString() === date.toDateString());
+                  }}
+                  className="rounded-md w-full mx-auto"
+                  classNames={{
+                    months: "space-y-1",
+                    month: "space-y-1",
+                    caption: "flex justify-center pt-1 relative items-center px-2",
+                    caption_label: "text-xs font-medium",
+                    nav: "space-x-1 flex items-center",
+                    nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100",
+                    nav_button_previous: "absolute left-0",
+                    nav_button_next: "absolute right-0",
+                    table: "w-full border-collapse",
+                    head_row: "flex justify-around",
+                    head_cell: "text-muted-foreground rounded-md w-7 font-normal text-[0.7rem]",
+                    row: "flex justify-around w-full mt-0.5",
+                    cell: "text-center text-xs p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-7 w-7 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
+                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                    day_today: "bg-accent text-accent-foreground font-semibold",
+                    day_outside: "text-muted-foreground opacity-40",
+                    day_disabled: "text-muted-foreground opacity-40 cursor-not-allowed",
+                    day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                    day_hidden: "invisible",
+                  }}
+                />
+              )}
+            </div>
+          </div>
 
-      {/* Time Slots */}
-      {selectedDate && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select a Time</CardTitle>
-            <CardDescription>
-              Available time slots for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSlots ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : availableSlots.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">
-                No available time slots for this date.
+          {/* Time Slots Section */}
+          <div>
+            <div className="px-4 py-3 border-b bg-gray-50">
+              <h3 className="font-semibold text-sm">Select Time</h3>
+              <p className="text-xs text-gray-600 mt-0.5">
+                {selectedDate ? format(selectedDate, 'EEE, MMM d') : 'Pick a date first'}
               </p>
-            ) : (
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                {availableSlots.map((slot) => (
-                  <Button
-                    key={slot.time}
-                    variant={selectedSlot === slot.time ? 'default' : 'outline'}
-                    size="sm"
-                    disabled={!slot.available}
-                    onClick={() => setSelectedSlot(slot.time)}
-                    className="w-full"
-                  >
-                    <Clock className="h-3 w-3 mr-1" />
-                    {slot.time}
-                  </Button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </div>
+            <div className="p-3 min-h-[280px] flex flex-col">
+              {!selectedDate ? (
+                <div className="flex-1 flex items-center justify-center text-gray-400">
+                  <div className="text-center">
+                    <CalendarIcon className="h-6 w-6 mx-auto mb-2" />
+                    <p className="text-xs">Select a date first</p>
+                  </div>
+                </div>
+              ) : isLoadingSlots ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                </div>
+              ) : availableSlots.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-gray-400">
+                  <p className="text-xs text-center">No available slots</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-1 max-h-[240px] overflow-y-auto pr-1">
+                  {availableSlots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      disabled={!slot.available}
+                      onClick={() => setSelectedSlot(slot.time)}
+                      className={`
+                        px-1 py-1.5 text-[11px] font-medium rounded transition-all
+                        ${selectedSlot === slot.time 
+                          ? 'bg-emerald-500 text-white shadow-sm' 
+                          : slot.available 
+                            ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' 
+                            : 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {slot.time}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Booking Summary and Confirm */}
       {selectedDate && selectedSlot && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Booking Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p><strong>Service:</strong> {service.name}</p>
-            <p><strong>Date:</strong> {format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-            <p><strong>Time:</strong> {selectedSlot}</p>
-            <p><strong>Duration:</strong> {service.duration} minutes</p>
-            <p><strong>Price:</strong> ${service.price.toFixed(2)}</p>
+        <Card className="bg-gray-50 border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="font-semibold text-sm mb-1">Booking Summary</h3>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <CalendarIcon className="h-3 w-3" />
+                    <span>{format(selectedDate, 'EEE, MMM d, yyyy')}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{selectedSlot} ({service.duration} min)</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-semibold">
+                  {(freeCheckupStatus?.eligible && service.category === 'Body Check') ? (
+                    <>
+                      <span className="line-through text-gray-400">${service.price.toFixed(2)}</span>
+                      <span className="ml-2 text-green-600">FREE</span>
+                    </>
+                  ) : (
+                    <span>${service.price.toFixed(2)}</span>
+                  )}
+                </div>
+                {freeCheckupStatus?.eligible && service.category === 'Body Check' && (
+                  <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+                    <Gift className="h-3 w-3" />
+                    <span>Annual checkup</span>
+                  </div>
+                )}
+              </div>
+            </div>
             
             {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertDescription>{error}</AlertDescription>
+              <Alert variant="destructive" className="mb-3">
+                <AlertDescription className="text-xs">{error}</AlertDescription>
               </Alert>
             )}
 
             <Button 
-              className="w-full mt-4" 
+              className="w-full h-9 text-sm" 
               onClick={handleBooking}
               disabled={isBooking}
             >

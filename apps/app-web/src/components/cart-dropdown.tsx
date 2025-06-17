@@ -98,10 +98,10 @@ export function CartDropdown() {
                   <div className="space-y-4 py-2">
                     {cartItems.slice(0, 3).map((item) => (
                       <div key={(item as any).id || item.productId} className="flex gap-3">
-                        {item.product?.imageUrl || item.product?.image_url ? (
+                        {item.product?.imageUrl ? (
                           <div className="h-16 w-16 rounded-md overflow-hidden relative bg-secondary">
                             <Image
-                              src={item.product?.imageUrl || item.product?.image_url || ''}
+                              src={item.product?.imageUrl || ''}
                               alt={item.product?.name || 'Product'}
                               fill
                               className="object-cover"
@@ -115,7 +115,7 @@ export function CartDropdown() {
 
                         <div className="flex-1 flex flex-col">
                           <h4 className="font-medium line-clamp-1">
-                            {item.product?.name || item.product?.product_name || 'Unknown Product'}
+                            {item.product?.name || 'Unknown Product'}
                           </h4>
                           <div className="text-sm text-muted-foreground">
                             {item.quantity} x {formatPrice(item.price || 0)}

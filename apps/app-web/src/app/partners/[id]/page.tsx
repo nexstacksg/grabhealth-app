@@ -22,6 +22,7 @@ export default function PartnerDetailPage() {
   const [selectedService, setSelectedService] = useState<IService | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [freeCheckupStatus, setFreeCheckupStatus] = useState<any>(null);
 
   useEffect(() => {
     const fetchPartnerDetails = async () => {
@@ -34,6 +35,19 @@ export default function PartnerDetailPage() {
         
         setPartner(partnerData);
         setPartnerServices(servicesData);
+
+        // Fetch free checkup status if user is logged in
+        if (user && user.id) {
+          try {
+            const status = await services.bookings.getFreeCheckupStatus(user.id);
+            setFreeCheckupStatus(status);
+          } catch (error: any) {
+            // Ignore rate limit errors and authentication errors
+            if (!error.message?.includes('429') && !error.message?.includes('401')) {
+              console.error('Failed to fetch free checkup status:', error);
+            }
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch partner details:', error);
         setError('Failed to load partner details');
@@ -45,7 +59,7 @@ export default function PartnerDetailPage() {
     if (params.id) {
       fetchPartnerDetails();
     }
-  }, [params.id]);
+  }, [params.id, user]);
 
   const handleServiceSelect = (service: IService) => {
     setSelectedService(service);
@@ -192,6 +206,7 @@ export default function PartnerDetailPage() {
                   service={service}
                   onSelect={handleServiceSelect}
                   isSelected={selectedService?.id === service.id}
+                  isEligibleForFreeCheckup={freeCheckupStatus?.eligible}
                 />
               ))}
             </div>

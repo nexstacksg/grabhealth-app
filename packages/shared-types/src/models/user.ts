@@ -35,6 +35,12 @@ export interface IUserPublic {
   emailVerified?: boolean; // Computed from emailVerifiedAt
   emailVerifiedAt?: Date | null;
   createdAt: Date;
+  partnerId?: string; // Link to partner organization
+  partner?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface IUserAuth {

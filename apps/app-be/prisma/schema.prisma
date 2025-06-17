@@ -19,11 +19,12 @@ model User {
   password               String
   firstName              String
   lastName               String
-  role                   String    @default("USER") // SUPER_ADMIN, MANAGER, USER
+  role                   String    @default("USER") // SUPER_ADMIN, MANAGER, USER, PARTNER
   status                 String    @default("PENDING_VERIFICATION") // ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION
   profileImage           String?
   referralCode           String?   @unique
   uplineId               String?
+  partnerId              String?   // Link to partner organization
   refreshToken           String?
   lastLoginAt            DateTime?
   emailVerificationToken String?
@@ -51,9 +52,11 @@ model User {
   downlines           User[]            @relation("UplineDownline")
   bookings            Booking[]
   freeCheckupClaims   FreeCheckupClaim[]
+  partner             Partner?          @relation(fields: [partnerId], references: [id])
 
   @@index([email])
   @@index([referralCode])
+  @@index([partnerId])
 }
 
 // Audit Log Model
@@ -427,6 +430,7 @@ model Partner {
   availability     PartnerAvailability[]
   daysOff          PartnerDaysOff[]
   bookings         Booking[]
+  users            User[]    // Partner staff/admin users
 
   @@index([city])
   @@index([isActive])

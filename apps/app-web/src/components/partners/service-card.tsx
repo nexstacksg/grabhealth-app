@@ -1,21 +1,30 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, DollarSign } from 'lucide-react';
+import { Clock, DollarSign, Gift } from 'lucide-react';
 import { IService } from '@app/shared-types';
 
 interface ServiceCardProps {
   service: IService;
   onSelect: (service: IService) => void;
   isSelected: boolean;
+  isEligibleForFreeCheckup?: boolean;
 }
 
-export function ServiceCard({ service, onSelect, isSelected }: ServiceCardProps) {
+export function ServiceCard({ service, onSelect, isSelected, isEligibleForFreeCheckup }: ServiceCardProps) {
   return (
     <Card className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">{service.name}</CardTitle>
+          <div>
+            <CardTitle className="text-lg">{service.name}</CardTitle>
+            {isEligibleForFreeCheckup && service.category === 'Body Check' && (
+              <div className="flex items-center gap-1 mt-1 text-green-600">
+                <Gift className="h-4 w-4" />
+                <span className="text-sm font-medium">Eligible for free checkup</span>
+              </div>
+            )}
+          </div>
           <Badge variant={service.category === 'Body Check' ? 'default' : 'secondary'}>
             {service.category}
           </Badge>
@@ -29,8 +38,19 @@ export function ServiceCard({ service, onSelect, isSelected }: ServiceCardProps)
             {service.duration} min
           </div>
           <div className="flex items-center font-semibold">
-            <DollarSign className="h-4 w-4" />
-            {service.price.toFixed(2)}
+            {isEligibleForFreeCheckup && service.category === 'Body Check' ? (
+              <>
+                <span className="line-through text-gray-500 mr-2">
+                  ${service.price.toFixed(2)}
+                </span>
+                <span className="text-green-600">FREE</span>
+              </>
+            ) : (
+              <>
+                <DollarSign className="h-4 w-4" />
+                {service.price.toFixed(2)}
+              </>
+            )}
           </div>
         </div>
         <Button 

@@ -135,6 +135,9 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                           <Link href="/orders">Orders</Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/bookings">My Bookings</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={handleLogout}
@@ -220,6 +223,16 @@ export default function Header() {
                                 className="w-full justify-start text-base font-medium"
                               >
                                 Orders
+                              </Button>
+                            </Link>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Link href="/bookings">
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start text-base font-medium"
+                              >
+                                My Bookings
                               </Button>
                             </Link>
                           </SheetClose>
