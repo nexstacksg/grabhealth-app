@@ -454,7 +454,7 @@ export default function SettingsPage() {
                 <CardTitle>Security Settings</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                <div className="space-y-4">
                   <div>
                     <Label htmlFor="currentPassword">Current Password</Label>
                     <div className="relative">
@@ -511,11 +511,11 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="pt-4">
-                    <Button type="submit" disabled={saving}>
+                    <Button type="button" onClick={handlePasswordUpdate} disabled={saving}>
                       {saving ? 'Updating...' : 'Update Password'}
                     </Button>
                   </div>
-                </form>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
