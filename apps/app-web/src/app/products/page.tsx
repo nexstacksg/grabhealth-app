@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useProducts } from '@/hooks/products/useProducts';
-import { useCategories } from '@/hooks/products/useCategories';
+import { useState, useEffect, useCallback } from 'react';
+import services from '@/lib/services';
+import { ICategory, IProduct, ProductSearchParams } from '@app/shared-types';
 import { ProductFilters } from '@/components/features/products/ProductFilters';
 import { ProductGrid } from '@/components/features/products/ProductGrid';
 import { Pagination } from '@/components/features/products/Pagination';
@@ -26,19 +26,165 @@ const getPriceRangeValues = (range: string): [number | null, number | null] => {
 };
 
 export default function ProductsPage() {
-  const {
-    products,
-    prevProducts,
-    loading,
-    pageTransitioning,
-    pagination,
-    fetchProducts,
-    filters,
-    updateFilters,
-  } = useProducts();
-  const categories = useCategories();
+  // Products state
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [prevProducts, setPrevProducts] = useState<IProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pageTransitioning, setPageTransitioning] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 8,
+    total: 0,
+    totalPages: 0,
+  });
+  const [filters, setFilters] = useState<ProductSearchParams>({
+    category: undefined,
+    query: undefined,
+    inStock: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+  });
+
+  // Categories state
+  const [categories, setCategories] = useState<ICategory[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [priceRange, setPriceRange] = useState('');
+
+  // Fetch products function
+  const fetchProducts = useCallback(async (
+    page = 1,
+    category?: string,
+    priceRange?: string
+  ) => {
+    // For page changes, use a transitioning state instead of full loading
+    if (page !== pagination.page && products.length > 0) {
+      setPageTransitioning(true);
+      // Keep previous products visible during transition
+      setPrevProducts(products);
+    } else {
+      setLoading(true);
+    }
+    
+    try {
+      // Build filters for API call
+      const searchParams: ProductSearchParams = {
+        page,
+        limit: pagination.limit,
+      };
+
+      // Add category filter
+      if (category && category !== 'all') {
+        searchParams.category = category;
+      }
+
+      // Add price range filter
+      if (priceRange) {
+        const [min, max] = getPriceRangeValues(priceRange);
+        if (min !== null) searchParams.minPrice = min;
+        if (max !== null) searchParams.maxPrice = max;
+      }
+
+      // Add other filters from state
+      if (filters.query) searchParams.query = filters.query;
+      if (filters.inStock) searchParams.inStock = filters.inStock;
+
+      const response = await services.product.searchProducts(searchParams);
+
+      // Update state with response
+      setProducts(response.products || []);
+      setPagination({
+        page: response.page || page,
+        limit: pagination.limit,
+        total: response.total || 0,
+        totalPages: response.totalPages || 0,
+      });
+
+      // Update filters state
+      setFilters({
+        category: category && category !== 'all' ? category : undefined,
+        query: filters.query,
+        inStock: filters.inStock,
+        minPrice: searchParams.minPrice,
+        maxPrice: searchParams.maxPrice,
+      });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+      setPageTransitioning(false);
+    }
+  }, [pagination.limit, pagination.page, products.length, filters.query, filters.inStock]);
+
+  // Update filters and refetch products
+  const updateFilters = useCallback((newFilters: Partial<ProductSearchParams>) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+
+    // Determine price range from min/max values
+    let priceRange: string | undefined;
+    if (
+      newFilters.minPrice !== undefined ||
+      newFilters.maxPrice !== undefined
+    ) {
+      if (newFilters.minPrice === 0 && newFilters.maxPrice === 25)
+        priceRange = 'under25';
+      else if (newFilters.minPrice === 25 && newFilters.maxPrice === 50)
+        priceRange = '25to50';
+      else if (newFilters.minPrice === 50 && newFilters.maxPrice === 100)
+        priceRange = '50to100';
+      else if (newFilters.minPrice === 100 && newFilters.maxPrice === undefined)
+        priceRange = 'over100';
+    }
+
+    fetchProducts(1, updatedFilters.category, priceRange);
+  }, [filters, fetchProducts]);
+
+  // Load categories using the shared service
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        // Fetch categories using the service from lib/services
+        const fetchedCategories = await services.category.getCategories();
+
+        // Add "All" category at the beginning
+        const allCategory: ICategory = {
+          id: 0,
+          name: 'All Products',
+          slug: 'all',
+          description: 'Browse all products',
+          isActive: true,
+          sortOrder: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        setCategories([allCategory, ...fetchedCategories]);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Set default categories on error
+        setCategories([
+          {
+            id: 0,
+            name: 'All Products',
+            slug: 'all',
+            description: 'Browse all products',
+            isActive: true,
+            sortOrder: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ]);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  // Initial fetch of products
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   // Handle category change
   const handleCategoryChange = (value: string) => {
@@ -103,10 +249,12 @@ export default function ProductsPage() {
         {/* Products display */}
         <div className="flex-1">
           {/* AI Recommendations Section - only show when no active filters */}
-          {activeCategory === 'all' && !filters.query && !filters.inStock && !filters.minPrice && !filters.maxPrice && (
-            <AIRecommendationsSection />
-          )}
-          
+          {activeCategory === 'all' &&
+            !filters.query &&
+            !filters.inStock &&
+            !filters.minPrice &&
+            !filters.maxPrice && <AIRecommendationsSection />}
+
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
