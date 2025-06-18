@@ -131,12 +131,9 @@ export class AuthService {
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
-    // Find user by email and include partner info
+    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: data.email },
-      include: {
-        partner: true,
-      },
     });
 
     if (!user) {
@@ -393,9 +390,6 @@ export class AuthService {
   async getCurrentUser(userId: string): Promise<IUserPublic> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        partner: true,
-      },
     });
 
     if (!user) {
