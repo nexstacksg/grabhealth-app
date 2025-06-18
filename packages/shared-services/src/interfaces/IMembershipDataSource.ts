@@ -1,16 +1,8 @@
 import {
   IMembershipTier,
   MembershipStats,
-  IUserMembership,
-  IUser
+  IMembership,
 } from '@app/shared-types';
-
-// Define the membership response type
-export interface IMembership extends IUserMembership {
-  user?: IUser;
-  tier: string;
-  points?: number;
-}
 
 export interface IMembershipDataSource {
   getMembershipTiers(): Promise<IMembershipTier[]>;

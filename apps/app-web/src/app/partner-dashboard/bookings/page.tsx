@@ -21,10 +21,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter, Eye, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Calendar,
+  Search,
+  Filter,
+  Eye,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { usePartnerAuth } from '@/hooks/usePartnerAuth';
+import { PartnerAuthService } from '@app/shared-services';
 
 interface Booking {
   id: string;
@@ -41,7 +50,9 @@ interface Booking {
 }
 
 export default function BookingsPage() {
-  const { isLoading: authLoading, isPartner } = usePartnerAuth();
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isPartner, setIsPartner] = useState(false);
+  const partnerAuthService = new PartnerAuthService();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +63,29 @@ export default function BookingsPage() {
     page: 1,
     limit: 8,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
+
+  useEffect(() => {
+    async function checkAuth() {
+      setAuthLoading(true);
+      const result = await partnerAuthService.checkPartnerAuth();
+      if (result.success) {
+        setIsPartner(true);
+      } else {
+        setIsPartner(false);
+        if (result.shouldRedirect && result.redirectPath) {
+          window.location.href = result.redirectPath;
+        }
+        if (result.error) {
+          toast.error(result.error);
+        }
+      }
+      setAuthLoading(false);
+    }
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (isPartner) {
@@ -68,17 +100,17 @@ export default function BookingsPage() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      
+
       // Build query parameters
       const params = new URLSearchParams();
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
       }
-      
+
       // Add date filters
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (dateFilter === 'today') {
         params.append('fromDate', today.toISOString());
         const tomorrow = new Date(today);
@@ -89,14 +121,17 @@ export default function BookingsPage() {
       } else if (dateFilter === 'past') {
         params.append('toDate', today.toISOString());
       }
-      
+
       params.append('page', pagination.page.toString());
       params.append('limit', pagination.limit.toString());
-      
+
       // Fetch bookings from API
-      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/bookings?${params.toString()}`, {
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `http://localhost:4000/api/v1/partner-dashboard/bookings?${params.toString()}`,
+        {
+          credentials: 'include',
+        }
+      );
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -108,30 +143,32 @@ export default function BookingsPage() {
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.data) {
         // Transform API data to match our Booking interface
-        const transformedBookings: Booking[] = data.data.bookings.map((booking: any) => ({
-          id: booking.id,
-          customerName: booking.user?.name || 'Unknown Customer',
-          customerEmail: booking.user?.email || 'No email',
-          service: booking.service?.name || 'Unknown Service',
-          bookingDate: new Date(booking.bookingDate),
-          startTime: booking.startTime,
-          endTime: booking.endTime,
-          status: booking.status,
-          notes: booking.notes,
-          isFreeCheckup: booking.isFreeCheckup || false,
-          totalAmount: booking.totalAmount || 0,
-        }));
-        
+        const transformedBookings: Booking[] = data.data.bookings.map(
+          (booking: any) => ({
+            id: booking.id,
+            customerName: booking.user?.name || 'Unknown Customer',
+            customerEmail: booking.user?.email || 'No email',
+            service: booking.service?.name || 'Unknown Service',
+            bookingDate: new Date(booking.bookingDate),
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            status: booking.status,
+            notes: booking.notes,
+            isFreeCheckup: booking.isFreeCheckup || false,
+            totalAmount: booking.totalAmount || 0,
+          })
+        );
+
         setBookings(transformedBookings);
-        
+
         // Update pagination info
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
           total: data.data.pagination?.total || transformedBookings.length,
-          totalPages: data.data.pagination?.totalPages || 1
+          totalPages: data.data.pagination?.totalPages || 1,
         }));
       }
     } catch (error) {
@@ -151,34 +188,41 @@ export default function BookingsPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (booking) =>
-          booking.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          booking.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.customerName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.customerEmail
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           booking.service.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Status and date filtering is now handled server-side
-    
+
     setFilteredBookings(filtered);
   };
 
   const handleStatusUpdate = async (bookingId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/bookings/${bookingId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await fetch(
+        `http://localhost:4000/api/v1/partner-dashboard/bookings/${bookingId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to update booking status: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Update local state optimistically
         setBookings(
@@ -229,7 +273,9 @@ export default function BookingsPage() {
   return (
     <div className="p-4 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Bookings Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Bookings Management
+        </h1>
         <p className="text-gray-600">Manage and track all your appointments</p>
       </div>
 
@@ -247,10 +293,13 @@ export default function BookingsPage() {
                   className="pl-10 w-full lg:w-64"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={(value) => {
-                setStatusFilter(value);
-                setPagination(prev => ({ ...prev, page: 1 }));
-              }}>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value);
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                }}
+              >
                 <SelectTrigger className="w-full lg:w-40">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -263,10 +312,13 @@ export default function BookingsPage() {
                   <SelectItem value="NO_SHOW">No Show</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={dateFilter} onValueChange={(value) => {
-                setDateFilter(value);
-                setPagination(prev => ({ ...prev, page: 1 }));
-              }}>
+              <Select
+                value={dateFilter}
+                onValueChange={(value) => {
+                  setDateFilter(value);
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                }}
+              >
                 <SelectTrigger className="w-full lg:w-40">
                   <SelectValue placeholder="Date" />
                 </SelectTrigger>
@@ -296,7 +348,10 @@ export default function BookingsPage() {
               <TableBody>
                 {filteredBookings.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-gray-500"
+                    >
                       No bookings found
                     </TableCell>
                   </TableRow>
@@ -315,8 +370,12 @@ export default function BookingsPage() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{booking.customerName}</div>
-                          <div className="text-sm text-gray-600">{booking.customerEmail}</div>
+                          <div className="font-medium">
+                            {booking.customerName}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {booking.customerEmail}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -329,9 +388,7 @@ export default function BookingsPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        ${booking.totalAmount.toFixed(2)}
-                      </TableCell>
+                      <TableCell>${booking.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -339,15 +396,22 @@ export default function BookingsPage() {
                             variant="ghost"
                             size="icon"
                             disabled={booking.status !== 'PENDING'}
-                            onClick={() => handleStatusUpdate(booking.id, 'CONFIRMED')}
+                            onClick={() =>
+                              handleStatusUpdate(booking.id, 'CONFIRMED')
+                            }
                           >
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            disabled={booking.status === 'CANCELLED' || booking.status === 'COMPLETED'}
-                            onClick={() => handleStatusUpdate(booking.id, 'CANCELLED')}
+                            disabled={
+                              booking.status === 'CANCELLED' ||
+                              booking.status === 'COMPLETED'
+                            }
+                            onClick={() =>
+                              handleStatusUpdate(booking.id, 'CANCELLED')
+                            }
                           >
                             <XCircle className="h-4 w-4 text-red-600" />
                           </Button>
@@ -362,26 +426,38 @@ export default function BookingsPage() {
               </TableBody>
             </Table>
           </div>
-          
+
           {/* Pagination Controls */}
           {(pagination.totalPages > 1 || pagination.total > 0) && (
             <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-4">
                 <div className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                  <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                  <span className="font-medium">{pagination.total}</span> bookings
+                  Showing{' '}
+                  <span className="font-medium">
+                    {(pagination.page - 1) * pagination.limit + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-medium">
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total
+                    )}
+                  </span>{' '}
+                  of <span className="font-medium">{pagination.total}</span>{' '}
+                  bookings
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="pageSize" className="text-sm text-gray-700">Per page:</Label>
-                  <Select 
-                    value={pagination.limit.toString()} 
+                  <Label htmlFor="pageSize" className="text-sm text-gray-700">
+                    Per page:
+                  </Label>
+                  <Select
+                    value={pagination.limit.toString()}
                     onValueChange={(value) => {
-                      setPagination(prev => ({ 
-                        ...prev, 
-                        limit: parseInt(value), 
+                      setPagination((prev) => ({
+                        ...prev,
+                        limit: parseInt(value),
                         page: 1,
-                        totalPages: Math.ceil(prev.total / parseInt(value))
+                        totalPages: Math.ceil(prev.total / parseInt(value)),
                       }));
                     }}
                   >
@@ -401,7 +477,9 @@ export default function BookingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination(prev => ({ ...prev, page: 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: 1 }))
+                  }
                   disabled={pagination.page === 1}
                   className="hidden sm:flex"
                 >
@@ -410,44 +488,59 @@ export default function BookingsPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+                  }
                   disabled={pagination.page === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1">
                   {/* Show page numbers */}
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (pagination.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (pagination.page <= 3) {
-                      pageNum = i + 1;
-                    } else if (pagination.page >= pagination.totalPages - 2) {
-                      pageNum = pagination.totalPages - 4 + i;
-                    } else {
-                      pageNum = pagination.page - 2 + i;
+                  {Array.from(
+                    { length: Math.min(5, pagination.totalPages) },
+                    (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+
+                      if (pageNum < 1 || pageNum > pagination.totalPages)
+                        return null;
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={
+                            pageNum === pagination.page ? 'default' : 'outline'
+                          }
+                          size="sm"
+                          onClick={() =>
+                            setPagination((prev) => ({
+                              ...prev,
+                              page: pageNum,
+                            }))
+                          }
+                          className="w-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
                     }
-                    
-                    if (pageNum < 1 || pageNum > pagination.totalPages) return null;
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={pageNum === pagination.page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-                        className="w-10"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+                  )}
                 </div>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+                  }
                   disabled={pagination.page === pagination.totalPages}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -455,7 +548,12 @@ export default function BookingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.totalPages }))}
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      page: prev.totalPages,
+                    }))
+                  }
                   disabled={pagination.page === pagination.totalPages}
                   className="hidden sm:flex"
                 >

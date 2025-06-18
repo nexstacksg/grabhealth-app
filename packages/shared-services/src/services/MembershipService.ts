@@ -1,32 +1,18 @@
-import { IMembershipTier, MembershipStats } from '@app/shared-types';
 import {
-  IMembershipDataSource,
+  IMembershipTier,
+  MembershipStats,
   IMembership,
-} from '../interfaces/IMembershipDataSource';
+  TierConfig,
+  ServiceMembershipTier,
+} from '@app/shared-types';
+import { IMembershipDataSource } from '../interfaces/IMembershipDataSource';
 
 export interface MembershipServiceOptions {
   dataSource: IMembershipDataSource;
 }
 
-// Tier configuration extracted from useMembership hook
-export interface TierConfig {
-  level7: number;
-  level6: number;
-  level5: number;
-  level4: number;
-  level3: number;
-  level2: number;
-  level1: number;
-}
-
-export type MembershipTier =
-  | 'level1'
-  | 'level2'
-  | 'level3'
-  | 'level4'
-  | 'level5'
-  | 'level6'
-  | 'level7';
+// Re-export for backward compatibility
+export type MembershipTier = ServiceMembershipTier;
 
 export class MembershipService {
   private dataSource: IMembershipDataSource;

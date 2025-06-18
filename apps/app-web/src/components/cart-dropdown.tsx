@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils';
 
 export function CartDropdown() {
@@ -97,7 +97,10 @@ export function CartDropdown() {
                 <ScrollArea className="max-h-[40vh]">
                   <div className="space-y-4 py-2">
                     {cartItems.slice(0, 3).map((item) => (
-                      <div key={(item as any).id || item.productId} className="flex gap-3">
+                      <div
+                        key={(item as any).id || item.productId}
+                        className="flex gap-3"
+                      >
                         {item.product?.imageUrl ? (
                           <div className="h-16 w-16 rounded-md overflow-hidden relative bg-secondary">
                             <Image
@@ -155,8 +158,8 @@ export function CartDropdown() {
                     >
                       View Cart
                     </Button>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       onClick={() => {
                         setOpen(false);
                         router.push('/cart/checkout');

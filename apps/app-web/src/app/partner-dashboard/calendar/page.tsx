@@ -4,10 +4,20 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameMonth, isToday } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  addMonths,
+  subMonths,
+  isSameMonth,
+  isToday,
+} from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { usePartnerAuth } from '@/hooks/usePartnerAuth';
+import { PartnerAuthService } from '@app/shared-services';
 
 interface CalendarDay {
   date: string;
@@ -19,7 +29,9 @@ interface CalendarDay {
 }
 
 export default function PartnerCalendarPage() {
-  const { isLoading: authLoading, isPartner, partnerInfo } = usePartnerAuth();
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isPartner, setIsPartner] = useState(false);
+  const [partnerInfo, setPartnerInfo] = useState<any>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -27,6 +39,31 @@ export default function PartnerCalendarPage() {
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const partnerAuthService = new PartnerAuthService();
+
+  useEffect(() => {
+    async function checkAuth() {
+      setAuthLoading(true);
+      const result = await partnerAuthService.checkPartnerAuth();
+      if (result.success && result.partnerInfo) {
+        setIsPartner(true);
+        setPartnerInfo(result.partnerInfo);
+        setPartnerId(result.partnerInfo.id);
+      } else {
+        setIsPartner(false);
+        if (result.shouldRedirect && result.redirectPath) {
+          window.location.href = result.redirectPath;
+        }
+        if (result.error) {
+          toast.error(result.error);
+        }
+      }
+      setAuthLoading(false);
+    }
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (isPartner && partnerInfo) {
@@ -40,26 +77,32 @@ export default function PartnerCalendarPage() {
       setLoading(true);
       // Clear existing calendar days to ensure fresh data
       setCalendarDays([]);
-      
+
       const monthStr = format(currentMonth, 'yyyy-MM');
       let fetchedSuccessfully = false;
-      
+
       // Fetch partner info first to get partner ID
-      const profileResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
-        credentials: 'include',
-      });
-      
+      const profileResponse = await fetch(
+        'http://localhost:4000/api/v1/partner-dashboard/profile',
+        {
+          credentials: 'include',
+        }
+      );
+
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
         if (profileData.success) {
           const partnerIdValue = profileData.data.id;
           setPartnerId(partnerIdValue);
-          
+
           // Fetch calendar data using public API endpoint
-          const calendarResponse = await fetch(`http://localhost:4000/api/v1/partners/${partnerIdValue}/calendar/${monthStr}`, {
-            credentials: 'include',
-          });
-          
+          const calendarResponse = await fetch(
+            `http://localhost:4000/api/v1/partners/${partnerIdValue}/calendar/${monthStr}`,
+            {
+              credentials: 'include',
+            }
+          );
+
           if (calendarResponse.ok) {
             const calendarData = await calendarResponse.json();
             if (calendarData.success && calendarData.data) {
@@ -70,7 +113,7 @@ export default function PartnerCalendarPage() {
           }
         }
       }
-      
+
       // Only fall back to mock data if we failed to fetch real data
       if (!fetchedSuccessfully) {
         console.log('Using mock data as fallback');
@@ -92,7 +135,7 @@ export default function PartnerCalendarPage() {
     const end = endOfMonth(month);
     const days = eachDayOfInterval({ start, end });
 
-    return days.map(day => {
+    return days.map((day) => {
       const dayOfWeek = getDay(day);
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const isDayOff = Math.random() > 0.9; // 10% chance of being a day off
@@ -102,7 +145,8 @@ export default function PartnerCalendarPage() {
         dayOfWeek,
         isAvailable: !isWeekend && !isDayOff,
         isDayOff,
-        availableSlots: isWeekend || isDayOff ? 0 : Math.floor(Math.random() * 10) + 5,
+        availableSlots:
+          isWeekend || isDayOff ? 0 : Math.floor(Math.random() * 10) + 5,
         totalSlots: isWeekend ? 0 : 15,
       };
     });
@@ -133,17 +177,20 @@ export default function PartnerCalendarPage() {
       toast.error('Please select a date first');
       return;
     }
-    
+
     setActionLoading(true);
-    
+
     try {
       // If partnerId is not set yet, try to fetch it
       let currentPartnerId = partnerId;
       if (!currentPartnerId) {
-        const profileResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
-          credentials: 'include',
-        });
-        
+        const profileResponse = await fetch(
+          'http://localhost:4000/api/v1/partner-dashboard/profile',
+          {
+            credentials: 'include',
+          }
+        );
+
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
           if (profileData.success) {
@@ -161,8 +208,10 @@ export default function PartnerCalendarPage() {
         }
       }
 
-      const selectedDay = calendarDays.find(d => d.date === format(selectedDate, 'yyyy-MM-dd'));
-      
+      const selectedDay = calendarDays.find(
+        (d) => d.date === format(selectedDate, 'yyyy-MM-dd')
+      );
+
       if (selectedDay?.isDayOff) {
         toast.info('This day is already marked as a day off');
         setActionLoading(false);
@@ -171,19 +220,27 @@ export default function PartnerCalendarPage() {
 
       // Create a day off via API
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      console.log('Marking day off for date:', dateString, 'Partner ID:', currentPartnerId);
-      
-      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/days-off', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          date: dateString,
-          reason: 'Day off'
-        }),
-      });
+      console.log(
+        'Marking day off for date:',
+        dateString,
+        'Partner ID:',
+        currentPartnerId
+      );
+
+      const response = await fetch(
+        'http://localhost:4000/api/v1/partner-dashboard/days-off',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            date: dateString,
+            reason: 'Day off',
+          }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -239,8 +296,12 @@ export default function PartnerCalendarPage() {
   return (
     <div className="p-4 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Calendar Management</h1>
-        <p className="text-gray-600">View and manage your availability calendar</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Calendar Management
+        </h1>
+        <p className="text-gray-600">
+          View and manage your availability calendar
+        </p>
       </div>
 
       <Card>
@@ -255,11 +316,7 @@ export default function PartnerCalendarPage() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNextMonth}
-              >
+              <Button variant="outline" size="icon" onClick={handleNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -269,20 +326,27 @@ export default function PartnerCalendarPage() {
           {loading ? (
             <div className="animate-pulse">
               <div className="grid grid-cols-7 gap-2">
-                {Array(35).fill(null).map((_, i) => (
-                  <div key={i} className="h-24 bg-gray-200 rounded"></div>
-                ))}
+                {Array(35)
+                  .fill(null)
+                  .map((_, i) => (
+                    <div key={i} className="h-24 bg-gray-200 rounded"></div>
+                  ))}
               </div>
             </div>
           ) : (
             <div>
               {/* Day headers */}
               <div className="grid grid-cols-7 gap-2 mb-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-center text-sm font-medium text-gray-700 py-2">
-                    {day}
-                  </div>
-                ))}
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                  (day) => (
+                    <div
+                      key={day}
+                      className="text-center text-sm font-medium text-gray-700 py-2"
+                    >
+                      {day}
+                    </div>
+                  )
+                )}
               </div>
 
               {/* Calendar grid */}
@@ -292,27 +356,33 @@ export default function PartnerCalendarPage() {
                 ))}
                 {calendarDays.map((day) => {
                   const date = new Date(day.date);
-                  const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === day.date;
-                  
+                  const isSelected =
+                    selectedDate &&
+                    format(selectedDate, 'yyyy-MM-dd') === day.date;
+
                   return (
                     <div
                       key={day.date}
                       onClick={() => handleDateClick(day)}
                       className={cn(
-                        "h-24 p-2 border rounded-lg cursor-pointer transition-colors",
-                        day.isAvailable ? "hover:bg-gray-50" : "",
-                        day.isDayOff ? "bg-red-50 border-red-200" : "",
-                        !day.isAvailable && !day.isDayOff ? "bg-gray-100" : "",
-                        isSelected ? "ring-2 ring-blue-500" : "",
-                        isToday(date) ? "border-blue-500 border-2" : ""
+                        'h-24 p-2 border rounded-lg cursor-pointer transition-colors',
+                        day.isAvailable ? 'hover:bg-gray-50' : '',
+                        day.isDayOff ? 'bg-red-50 border-red-200' : '',
+                        !day.isAvailable && !day.isDayOff ? 'bg-gray-100' : '',
+                        isSelected ? 'ring-2 ring-blue-500' : '',
+                        isToday(date) ? 'border-blue-500 border-2' : ''
                       )}
                     >
                       <div className="flex flex-col h-full">
-                        <div className={cn(
-                          "text-sm font-medium",
-                          !isSameMonth(date, currentMonth) ? "text-gray-400" : "",
-                          day.isDayOff ? "text-red-600" : ""
-                        )}>
+                        <div
+                          className={cn(
+                            'text-sm font-medium',
+                            !isSameMonth(date, currentMonth)
+                              ? 'text-gray-400'
+                              : '',
+                            day.isDayOff ? 'text-red-600' : ''
+                          )}
+                        >
                           {format(date, 'd')}
                         </div>
                         {day.isAvailable && (
@@ -324,7 +394,7 @@ export default function PartnerCalendarPage() {
                               <div
                                 className="h-full bg-green-500"
                                 style={{
-                                  width: `${(day.availableSlots / day.totalSlots) * 100}%`
+                                  width: `${(day.availableSlots / day.totalSlots) * 100}%`,
                                 }}
                               />
                             </div>
@@ -369,19 +439,21 @@ export default function PartnerCalendarPage() {
       {selectedDate && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Details for {format(selectedDate, 'EEEE, MMMM d, yyyy')}</CardTitle>
+            <CardTitle>
+              Details for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
+              <Button
                 onClick={handleManageTimeSlots}
                 disabled={actionLoading}
                 className="flex-1"
               >
                 Manage Time Slots
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleMarkDayOff}
                 disabled={actionLoading}
                 className="flex-1"
@@ -389,7 +461,9 @@ export default function PartnerCalendarPage() {
                 {actionLoading ? 'Processing...' : 'Mark as Day Off'}
               </Button>
             </div>
-            {calendarDays.find(d => d.date === format(selectedDate, 'yyyy-MM-dd'))?.isDayOff && (
+            {calendarDays.find(
+              (d) => d.date === format(selectedDate, 'yyyy-MM-dd')
+            )?.isDayOff && (
               <p className="mt-4 text-sm text-amber-600 bg-amber-50 p-3 rounded-md">
                 This day is already marked as a day off.
               </p>

@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useMembership } from '@/hooks/use-membership';
+import { useMembership } from '@/contexts/MembershipContext';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { format } from 'date-fns';

@@ -1,4 +1,9 @@
-import { MembershipTier, MembershipStatus, AccountRequestType, AccountRequestStatus } from '../enums/membership';
+import {
+  MembershipTier,
+  MembershipStatus,
+  AccountRequestType,
+  AccountRequestStatus,
+} from '../enums/membership';
 
 export interface IMembershipTier {
   id: number;
@@ -75,4 +80,16 @@ export interface IPromotionCreate {
   startDate: Date;
   endDate?: Date;
   isActive?: boolean;
+}
+
+// Membership response type for frontend contexts
+// Extends IUserMembership with additional fields needed by UI
+export interface IMembership extends IUserMembership {
+  user?: {
+    firstName?: string;
+    lastName?: string;
+    email: string;
+  };
+  tier: string;
+  points?: number;
 }

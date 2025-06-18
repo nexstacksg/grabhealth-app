@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, User, Upload } from 'lucide-react';
-import { useMembership } from '@/hooks/use-membership';
+import { useMembership } from '@/contexts/MembershipContext';
 import { toast } from 'sonner';
 import { MembershipProfile } from '@/components/membership-profile';
 import services from '@/lib/services';

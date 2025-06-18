@@ -66,3 +66,32 @@ export interface PasswordResetConfirmRequest {
   token: string;
   newPassword: string;
 }
+
+// Authentication Guard Types
+export interface AuthGuardOptions {
+  redirectTo?: string;
+  requiredRole?: UserRole;
+  allowedRoles?: UserRole[];
+}
+
+export interface AuthGuardResult {
+  isAuthorized: boolean;
+  redirectPath?: string;
+  reason?: 'not_authenticated' | 'insufficient_role' | 'role_not_allowed';
+}
+
+// Partner Authentication Types
+export interface PartnerInfo {
+  id: string;
+  name: string;
+  email: string;
+  isPartner: boolean;
+}
+
+export interface PartnerAuthResult {
+  success: boolean;
+  partnerInfo?: PartnerInfo;
+  error?: string;
+  shouldRedirect?: boolean;
+  redirectPath?: string;
+}

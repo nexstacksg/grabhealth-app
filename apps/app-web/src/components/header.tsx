@@ -15,7 +15,7 @@ import {
   SheetTitle,
   SheetHeader,
 } from '@/components/ui/sheet';
-import { useMediaQuery } from '@/hooks/use-media-query';
+// Removed useMediaQuery hook import - using inline media query instead
 import { CartDropdown } from '@/components/cart-dropdown';
 import {
   DropdownMenu,
@@ -32,12 +32,20 @@ export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  // This will be set to true only on the client side
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+
+    // Check if mobile on mount and listen for resize
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleLogout = async () => {
@@ -121,49 +129,53 @@ export default function Header() {
 
               <div className="hidden md:flex items-center space-x-4">
                 {isMounted && !isLoading && user ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="gap-2">
-                          <User className="h-4 w-4" />
-                          <span>{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href="/profile">Profile</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/orders">Orders</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/bookings">My Bookings</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={handleLogout}
-                          className="text-red-500 cursor-pointer"
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          <span>Logout</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <User className="h-4 w-4" />
+                        <span>
+                          {user.firstName && user.lastName
+                            ? `${user.firstName} ${user.lastName}`
+                            : user.email}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile">Profile</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/orders">Orders</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/bookings">My Bookings</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="text-red-500 cursor-pointer"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        <span>Logout</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : isMounted && !isLoading ? (
                   <>
-                      <Link href="/auth/login">
-                        <Button variant="ghost" className="text-sm font-medium">
-                          Login
-                        </Button>
-                      </Link>
-                      <Link href="/auth/register">
-                        <Button
-                          variant="outline"
-                          className="text-sm font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
-                        >
-                          Register
-                        </Button>
-                      </Link>
-                    </>
+                    <Link href="/auth/login">
+                      <Button variant="ghost" className="text-sm font-medium">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link href="/auth/register">
+                      <Button
+                        variant="outline"
+                        className="text-sm font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
+                      >
+                        Register
+                      </Button>
+                    </Link>
+                  </>
                 ) : null}
                 <CartDropdown />
               </div>
@@ -194,84 +206,84 @@ export default function Header() {
                     ))}
                     <div className="h-px bg-gray-200 my-2"></div>
                     {isMounted && !isLoading && user ? (
-                        <>
-                          <div className="flex items-center space-x-2 mb-4">
-                            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                              <User className="h-4 w-4 text-emerald-500" />
+                      <>
+                        <div className="flex items-center space-x-2 mb-4">
+                          <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <User className="h-4 w-4 text-emerald-500" />
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {user.firstName && user.lastName
+                                ? `${user.firstName} ${user.lastName}`
+                                : user.email}
                             </div>
-                            <div>
-                              <div className="font-medium">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}</div>
-                              <div className="text-sm text-gray-500">
-                                {user.email}
-                              </div>
+                            <div className="text-sm text-gray-500">
+                              {user.email}
                             </div>
                           </div>
-                          <SheetClose asChild>
-                            <Link href="/profile">
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start text-base font-medium"
-                              >
-                                Profile
-                              </Button>
-                            </Link>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Link href="/orders">
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start text-base font-medium"
-                              >
-                                Orders
-                              </Button>
-                            </Link>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Link href="/bookings">
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start text-base font-medium"
-                              >
-                                My Bookings
-                              </Button>
-                            </Link>
-                          </SheetClose>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-base font-medium text-red-500 border-red-200 hover:bg-red-50 mt-2"
-                            onClick={handleLogout}
-                          >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Logout
-                          </Button>
-                        </>
+                        </div>
+                        <SheetClose asChild>
+                          <Link href="/profile">
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-base font-medium"
+                            >
+                              Profile
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link href="/orders">
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-base font-medium"
+                            >
+                              Orders
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link href="/bookings">
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-base font-medium"
+                            >
+                              My Bookings
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-base font-medium text-red-500 border-red-200 hover:bg-red-50 mt-2"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </Button>
+                      </>
                     ) : isMounted && !isLoading ? (
                       <>
-                          <SheetClose asChild>
-                            <Link href="/auth/login">
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start text-base font-medium"
-                              >
-                                Login
-                              </Button>
-                            </Link>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Link href="/auth/register">
-                              <Button
-                                variant="outline"
-                                className="w-full justify-start text-base font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
-                              
-                              
-                              
-                              
-                              >
-                                Register
-                              </Button>
-                            </Link>
-                          </SheetClose>
-                        </>
+                        <SheetClose asChild>
+                          <Link href="/auth/login">
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-base font-medium"
+                            >
+                              Login
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link href="/auth/register">
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start text-base font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
+                            >
+                              Register
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                      </>
                     ) : null}
                   </div>
                 </SheetContent>

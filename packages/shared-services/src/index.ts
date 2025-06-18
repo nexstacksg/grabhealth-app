@@ -12,9 +12,17 @@ export { UserService } from './services/UserService';
 export { DashboardService } from './services/DashboardService';
 export {
   MembershipService,
-  type TierConfig,
   type MembershipTier,
 } from './services/MembershipService';
+
+// Re-export types from shared-types for convenience
+export type {
+  TierConfig,
+  ServiceMembershipTier,
+  IMembership,
+  MembershipContextState,
+  MembershipContextType,
+} from '@app/shared-types';
 export { PartnerService } from './services/PartnerService';
 export { PromotionService } from './services/PromotionService';
 export { CategoryService } from './services/CategoryService';
@@ -22,6 +30,16 @@ export { ProfileService } from './services/ProfileService';
 export { AIService } from './services/AIService';
 export { HealthcarePartnerService } from './services/HealthcarePartnerService';
 export { BookingService } from './services/BookingService';
+export { AuthGuardService } from './services/AuthGuardService';
+export { PartnerAuthService } from './services/PartnerAuthService';
+
+// Re-export types from shared-types for convenience
+export type {
+  AuthGuardOptions,
+  AuthGuardResult,
+  PartnerInfo,
+  PartnerAuthResult,
+} from '@app/shared-types';
 
 // Data Sources
 export { BaseApiDataSource } from './adapters/api/BaseApiDataSource';

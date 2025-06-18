@@ -3,8 +3,8 @@
 import React from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { MembershipProvider } from '@/hooks/use-membership';
-import { CartProvider } from '@/hooks/use-cart';
+import { MembershipProvider } from '@/contexts/MembershipContext';
+import { CartProvider } from '@/contexts/CartContext';
 import { CommissionProvider } from '@/components/commission/commission-provider';
 
 interface RootProviderProps {
@@ -26,9 +26,7 @@ export function RootProvider({ children }: RootProviderProps) {
       <AuthProvider>
         <MembershipProvider>
           <CartProvider>
-            <CommissionProvider>
-              {children}
-            </CommissionProvider>
+            <CommissionProvider>{children}</CommissionProvider>
           </CartProvider>
         </MembershipProvider>
       </AuthProvider>

@@ -10,7 +10,7 @@ import {
 import { toast } from 'sonner';
 import services from '@/lib/services';
 import { ICart, ICartItem } from '@app/shared-types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from './AuthContext';
 
 interface CartContextType {
   cart: ICart | null;
@@ -117,7 +117,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const updatedCart = await services.cart.updateCartItem(productId, quantity);
+      const updatedCart = await services.cart.updateCartItem(
+        productId,
+        quantity
+      );
       setCart(updatedCart);
       toast.success('Cart updated');
     } catch (error) {

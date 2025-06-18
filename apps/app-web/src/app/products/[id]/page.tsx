@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useMembership } from '@/hooks/use-membership';
+import { useMembership } from '@/contexts/MembershipContext';
 import { formatPrice } from '@/lib/utils';
 import services from '@/lib/services';
 import { IProduct } from '@app/shared-types';
@@ -65,8 +65,8 @@ export default function ProductDetailPage() {
             interactionType: 'view',
             metadata: {
               source: 'product_detail',
-              category: productData.categoryId
-            }
+              category: productData.categoryId,
+            },
           });
         } catch (trackingError) {
           console.warn('Failed to track product view:', trackingError);
@@ -74,25 +74,32 @@ export default function ProductDetailPage() {
 
         // Fetch AI-powered similar products
         try {
-          const similarProducts = await services.ai.getSimilarProducts(productData.id, {
-            limit: 4
-          });
+          const similarProducts = await services.ai.getSimilarProducts(
+            productData.id,
+            {
+              limit: 4,
+            }
+          );
           setRelatedProducts(similarProducts);
         } catch (err) {
           console.error('Error fetching similar products:', err);
           // Fallback to category-based products if AI fails
           if (productData.categoryId) {
             try {
-              const categoryProducts = await services.product.getProductsByCategory(
-                productData.categoryId
-              );
+              const categoryProducts =
+                await services.product.getProductsByCategory(
+                  productData.categoryId
+                );
               setRelatedProducts(
                 categoryProducts
                   .filter((p: IProduct) => p.id !== productData.id)
                   .slice(0, 4)
               );
             } catch (fallbackErr) {
-              console.error('Error fetching category products as fallback:', fallbackErr);
+              console.error(
+                'Error fetching category products as fallback:',
+                fallbackErr
+              );
             }
           }
         }

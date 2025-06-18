@@ -1,12 +1,15 @@
 import {
   IMembershipTier,
   MembershipStats,
+  IMembership,
 } from '@app/shared-types';
-import { IMembershipDataSource, IMembership } from '../../interfaces/IMembershipDataSource';
+import { IMembershipDataSource } from '../../interfaces/IMembershipDataSource';
 import { BaseApiDataSource } from './BaseApiDataSource';
 
-export class ApiMembershipDataSource extends BaseApiDataSource implements IMembershipDataSource {
-
+export class ApiMembershipDataSource
+  extends BaseApiDataSource
+  implements IMembershipDataSource
+{
   async getMembershipTiers(): Promise<IMembershipTier[]> {
     return this.get<IMembershipTier[]>('/memberships/tiers');
   }

@@ -25,7 +25,7 @@ import {
   Share2,
   CopyIcon,
 } from 'lucide-react';
-import { useMembership } from '@/hooks/use-membership';
+import { useMembership } from '@/contexts/MembershipContext';
 import QRCode from 'react-qr-code';
 import { toast } from 'sonner';
 
@@ -34,12 +34,8 @@ interface MembershipProfileProps {
 }
 
 export function MembershipProfile({}: MembershipProfileProps) {
-  const {
-    membership,
-    isLoading,
-    tierDiscount,
-    pointsToNextTier,
-  } = useMembership();
+  const { membership, isLoading, tierDiscount, pointsToNextTier } =
+    useMembership();
 
   const [copied, setCopied] = useState(false);
   const qrCodeRef = useRef<HTMLDivElement>(null);
@@ -95,7 +91,6 @@ export function MembershipProfile({}: MembershipProfileProps) {
       copyToClipboard();
     }
   };
-
 
   if (isLoading) {
     return (
@@ -442,7 +437,6 @@ export function MembershipProfile({}: MembershipProfileProps) {
               </div>
             </div>
           </div>
-
         </div>
       </CardContent>
       <CardFooter className="pt-1 pb-4 px-6">

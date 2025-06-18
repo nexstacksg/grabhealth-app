@@ -17,8 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useCart } from '@/hooks/use-cart';
-import { useMembership } from '@/hooks/use-membership';
+import { useCart } from '@/contexts/CartContext';
+import { useMembership } from '@/contexts/MembershipContext';
 import { formatPrice } from '@/lib/utils';
 
 export default function CartPage() {

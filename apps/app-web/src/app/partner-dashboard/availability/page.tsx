@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Clock, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { usePartnerAuth } from '@/hooks/usePartnerAuth';
+import { PartnerAuthService } from '@app/shared-services';
 
 interface DayAvailability {
   dayOfWeek: number;
@@ -38,11 +38,35 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function AvailabilityPage() {
-  const { isLoading: authLoading, isPartner } = usePartnerAuth();
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isPartner, setIsPartner] = useState(false);
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const partnerAuthService = new PartnerAuthService();
+
+  useEffect(() => {
+    async function checkAuth() {
+      setAuthLoading(true);
+      const result = await partnerAuthService.checkPartnerAuth();
+      if (result.success) {
+        setIsPartner(true);
+      } else {
+        setIsPartner(false);
+        if (result.shouldRedirect && result.redirectPath) {
+          window.location.href = result.redirectPath;
+        }
+        if (result.error) {
+          toast.error(result.error);
+        }
+      }
+      setAuthLoading(false);
+    }
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (isPartner) {
@@ -53,11 +77,14 @@ export default function AvailabilityPage() {
   const fetchAvailability = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch availability from API
-      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/availability', {
-        credentials: 'include',
-      });
+      const response = await fetch(
+        'http://localhost:4000/api/v1/partner-dashboard/availability',
+        {
+          credentials: 'include',
+        }
+      );
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -69,58 +96,63 @@ export default function AvailabilityPage() {
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.data) {
         // Create a map of existing availability
         const availabilityMap = new Map(
           data.data.map((item: any) => [item.dayOfWeek, item])
         );
-        
+
         // Build full week availability, using defaults for missing days
-        const fullWeekAvailability: DayAvailability[] = DAYS_OF_WEEK.map((day, index) => {
-          const existingAvailability = availabilityMap.get(index);
-          
-          if (existingAvailability) {
-            return {
-              dayOfWeek: index,
-              dayName: day,
-              isAvailable: true,
-              startTime: existingAvailability.startTime,
-              endTime: existingAvailability.endTime,
-              slotDuration: existingAvailability.slotDuration || 30,
-              maxBookingsPerSlot: existingAvailability.maxBookingsPerSlot || 1,
-            };
-          } else {
-            // Default for days without availability
-            return {
-              dayOfWeek: index,
-              dayName: day,
-              isAvailable: false,
-              startTime: '09:00',
-              endTime: '17:00',
-              slotDuration: 30,
-              maxBookingsPerSlot: 1,
-            };
+        const fullWeekAvailability: DayAvailability[] = DAYS_OF_WEEK.map(
+          (day, index) => {
+            const existingAvailability = availabilityMap.get(index) as any;
+
+            if (existingAvailability) {
+              return {
+                dayOfWeek: index,
+                dayName: day,
+                isAvailable: true,
+                startTime: existingAvailability.startTime || '09:00',
+                endTime: existingAvailability.endTime || '17:00',
+                slotDuration: existingAvailability.slotDuration || 30,
+                maxBookingsPerSlot:
+                  existingAvailability.maxBookingsPerSlot || 1,
+              };
+            } else {
+              // Default for days without availability
+              return {
+                dayOfWeek: index,
+                dayName: day,
+                isAvailable: false,
+                startTime: '09:00',
+                endTime: '17:00',
+                slotDuration: 30,
+                maxBookingsPerSlot: 1,
+              };
+            }
           }
-        });
-        
+        );
+
         setAvailability(fullWeekAvailability);
         setHasChanges(false);
       }
     } catch (error) {
       console.error('Error fetching availability:', error);
       toast.error('Failed to load availability');
-      
+
       // Use default availability as fallback
-      const defaultAvailability: DayAvailability[] = DAYS_OF_WEEK.map((day, index) => ({
-        dayOfWeek: index,
-        dayName: day,
-        isAvailable: false,
-        startTime: '09:00',
-        endTime: '17:00',
-        slotDuration: 30,
-        maxBookingsPerSlot: 1,
-      }));
+      const defaultAvailability: DayAvailability[] = DAYS_OF_WEEK.map(
+        (day, index) => ({
+          dayOfWeek: index,
+          dayName: day,
+          isAvailable: false,
+          startTime: '09:00',
+          endTime: '17:00',
+          slotDuration: 30,
+          maxBookingsPerSlot: 1,
+        })
+      );
       setAvailability(defaultAvailability);
     } finally {
       setLoading(false);
@@ -130,41 +162,46 @@ export default function AvailabilityPage() {
   const handleSaveAvailability = async () => {
     try {
       setSaving(true);
-      
+
       // Filter only available days and prepare data for API
       const availabilityData = availability
-        .filter(day => day.isAvailable)
-        .map(day => ({
+        .filter((day) => day.isAvailable)
+        .map((day) => ({
           dayOfWeek: day.dayOfWeek,
           startTime: day.startTime,
           endTime: day.endTime,
           slotDuration: day.slotDuration,
           maxBookingsPerSlot: day.maxBookingsPerSlot,
         }));
-      
+
       // Send to API
-      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/availability', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ availability: availabilityData }),
-      });
+      const response = await fetch(
+        'http://localhost:4000/api/v1/partner-dashboard/availability',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ availability: availabilityData }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to save availability: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success('Availability settings saved successfully');
         setHasChanges(false);
         // Refresh availability to ensure UI is in sync
         await fetchAvailability();
       } else {
-        toast.error(data.error?.message || 'Failed to save availability settings');
+        toast.error(
+          data.error?.message || 'Failed to save availability settings'
+        );
       }
     } catch (error) {
       console.error('Error saving availability:', error);
@@ -245,8 +282,12 @@ export default function AvailabilityPage() {
   return (
     <div className="p-4 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Availability Settings</h1>
-        <p className="text-gray-600">Configure your regular weekly availability</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Availability Settings
+        </h1>
+        <p className="text-gray-600">
+          Configure your regular weekly availability
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -271,7 +312,11 @@ export default function AvailabilityPage() {
                       type="time"
                       value={day.startTime}
                       onChange={(e) =>
-                        handleTimeChange(day.dayOfWeek, 'startTime', e.target.value)
+                        handleTimeChange(
+                          day.dayOfWeek,
+                          'startTime',
+                          e.target.value
+                        )
                       }
                     />
                   </div>
@@ -282,16 +327,26 @@ export default function AvailabilityPage() {
                       type="time"
                       value={day.endTime}
                       onChange={(e) =>
-                        handleTimeChange(day.dayOfWeek, 'endTime', e.target.value)
+                        handleTimeChange(
+                          day.dayOfWeek,
+                          'endTime',
+                          e.target.value
+                        )
                       }
                     />
                   </div>
                   <div>
-                    <Label htmlFor={`slot-${day.dayOfWeek}`}>Slot Duration</Label>
+                    <Label htmlFor={`slot-${day.dayOfWeek}`}>
+                      Slot Duration
+                    </Label>
                     <Select
                       value={day.slotDuration.toString()}
                       onValueChange={(value) =>
-                        handleSlotSettingChange(day.dayOfWeek, 'slotDuration', value)
+                        handleSlotSettingChange(
+                          day.dayOfWeek,
+                          'slotDuration',
+                          value
+                        )
                       }
                     >
                       <SelectTrigger id={`slot-${day.dayOfWeek}`}>
@@ -308,11 +363,17 @@ export default function AvailabilityPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor={`max-${day.dayOfWeek}`}>Max Bookings/Slot</Label>
+                    <Label htmlFor={`max-${day.dayOfWeek}`}>
+                      Max Bookings/Slot
+                    </Label>
                     <Select
                       value={day.maxBookingsPerSlot.toString()}
                       onValueChange={(value) =>
-                        handleSlotSettingChange(day.dayOfWeek, 'maxBookingsPerSlot', value)
+                        handleSlotSettingChange(
+                          day.dayOfWeek,
+                          'maxBookingsPerSlot',
+                          value
+                        )
                       }
                     >
                       <SelectTrigger id={`max-${day.dayOfWeek}`}>
@@ -343,8 +404,8 @@ export default function AvailabilityPage() {
         ))}
 
         <div className="flex justify-end">
-          <Button 
-            onClick={handleSaveAvailability} 
+          <Button
+            onClick={handleSaveAvailability}
             disabled={saving || !hasChanges}
             variant={hasChanges ? 'default' : 'outline'}
           >

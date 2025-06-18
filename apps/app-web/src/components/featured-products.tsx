@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import services from '@/lib/services';
@@ -19,22 +19,26 @@ export default function FeaturedProducts() {
     async function fetchProducts() {
       try {
         setLoading(true);
-        
+
         try {
           // Try to get AI recommendations first
-          const recommendedProducts = await services.ai.getPersonalizedRecommendations({
-            limit: 4,
-            category: undefined
-          });
+          const recommendedProducts =
+            await services.ai.getPersonalizedRecommendations({
+              limit: 4,
+              category: undefined,
+            });
           setProducts(recommendedProducts);
           setError(null);
         } catch (aiError) {
-          console.warn('AI recommendations not available, falling back to regular products:', aiError);
-          
+          console.warn(
+            'AI recommendations not available, falling back to regular products:',
+            aiError
+          );
+
           // Fallback to regular products if AI fails
-          const regularProducts = await services.product.searchProducts({ 
+          const regularProducts = await services.product.searchProducts({
             limit: 4,
-            page: 1
+            page: 1,
           });
           setProducts(regularProducts.products || []);
           setError(null);
@@ -102,7 +106,7 @@ function ProductCard({ product }: { product: IProduct }) {
         },
         1
       );
-      
+
       // Track user interaction for AI recommendations
       try {
         await services.ai.recordInteraction({
@@ -112,13 +116,13 @@ function ProductCard({ product }: { product: IProduct }) {
           metadata: {
             source: 'featured_products',
             price: discountedPrice,
-            category: product.categoryId
-          }
+            category: product.categoryId,
+          },
         });
       } catch (trackingError) {
         console.warn('Failed to track interaction:', trackingError);
       }
-      
+
       toast.success(`${product.name} added to cart`);
     } catch (error) {
       console.error('Error adding to cart:', error);

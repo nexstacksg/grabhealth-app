@@ -9,29 +9,14 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import services from '@/lib/services';
-import { useAuth } from '@/contexts/AuthContext';
-import { MembershipTier } from '@app/shared-services';
-
-export interface Membership {
-  id: number;
-  tier: MembershipTier;
-  points: number;
-  created_at: string;
-  updated_at: string;
-  name: string;
-  email: string;
-}
-
-interface MembershipContextType {
-  membership: Membership | null;
-  isLoading: boolean;
-  tierDiscount: number;
-  pointsToNextTier: number;
-  isEligibleForUpgrade: boolean;
-  nextTier: string | null;
-  addPoints: (points: number) => Promise<void>;
-  refreshMembership: () => Promise<void>;
-}
+import { useAuth } from './AuthContext';
+import {
+  IMembership,
+  ServiceMembershipTier,
+  MembershipStatus,
+  MembershipContextState,
+  MembershipContextType,
+} from '@app/shared-types';
 
 const MembershipContext = createContext<MembershipContextType | undefined>(
   undefined
@@ -39,26 +24,36 @@ const MembershipContext = createContext<MembershipContextType | undefined>(
 
 export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [membership, setMembership] = useState<Membership | null>(null);
+  const [membership, setMembership] = useState<MembershipContextState | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Use service for business logic calculations
-  const membershipAnalysis = services.membership.getMembershipAnalysis(
-    membership
-      ? {
-          id: membership.id,
-          tier: membership.tier,
-          points: membership.points,
-          createdAt: new Date(membership.created_at),
-          updatedAt: new Date(membership.updated_at),
-          user: {
-            firstName: membership.name.split(' ')[0] || '',
-            lastName: membership.name.split(' ')[1] || '',
-            email: membership.email,
-          },
-        }
-      : null
-  );
+  // Convert context state back to IMembership format for service
+  const membershipForService: IMembership | null = membership
+    ? {
+        id: membership.id,
+        userId: user?.id || '',
+        tierId: 1, // Default tier ID
+        status: MembershipStatus.ACTIVE,
+        startDate: new Date(membership.created_at),
+        endDate: undefined,
+        autoRenew: true,
+        createdAt: new Date(membership.created_at),
+        updatedAt: new Date(membership.updated_at),
+        tier: membership.tier,
+        points: membership.points,
+        user: {
+          firstName: membership.name.split(' ')[0] || '',
+          lastName: membership.name.split(' ')[1] || '',
+          email: membership.email,
+        },
+      }
+    : null;
+
+  const membershipAnalysis =
+    services.membership.getMembershipAnalysis(membershipForService);
 
   const { tierDiscount, pointsToNextTier, isEligibleForUpgrade, nextTier } =
     membershipAnalysis;
@@ -77,10 +72,10 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
       const membershipData = await services.membership.getCurrentMembership();
 
       if (membershipData) {
-        // Convert IMembership to local Membership type
+        // Convert IMembership to MembershipContextState for UI
         setMembership({
           id: membershipData.id,
-          tier: membershipData.tier as any,
+          tier: membershipData.tier as ServiceMembershipTier,
           points: membershipData.points || 0,
           created_at: membershipData.createdAt
             ? membershipData.createdAt.toString()
