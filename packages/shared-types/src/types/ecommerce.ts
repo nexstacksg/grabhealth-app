@@ -1,4 +1,4 @@
-import { IProduct, IOrder, ICart, IPromotion } from '../models';
+import { IProduct, IOrder, ICart, ICartItem, IPromotion } from '../models';
 
 export interface CheckoutRequest {
   cartItems: Array<{
@@ -74,4 +74,26 @@ export interface NetworkStats {
     memberCount: number;
     totalSales: number;
   }>;
+}
+
+// Cart Context Type for UI state management
+export interface CartContextType {
+  cart: ICart | null;
+  cartItems: ICartItem[];
+  isLoading: boolean;
+  cartCount: number;
+  cartTotal: number;
+  addToCart: (
+    product: {
+      id: number;
+      name: string;
+      price: number;
+      image_url?: string;
+    },
+    quantity?: number
+  ) => Promise<void>;
+  updateQuantity: (productId: number, quantity: number) => Promise<void>;
+  removeItem: (productId: number) => Promise<void>;
+  clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }

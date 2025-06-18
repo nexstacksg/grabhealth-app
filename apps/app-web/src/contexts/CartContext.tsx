@@ -9,29 +9,8 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import services from '@/lib/services';
-import { ICart, ICartItem } from '@app/shared-types';
+import { ICart, ICartItem, CartContextType } from '@app/shared-types';
 import { useAuth } from './AuthContext';
-
-interface CartContextType {
-  cart: ICart | null;
-  cartItems: ICartItem[];
-  isLoading: boolean;
-  cartCount: number;
-  cartTotal: number;
-  addToCart: (
-    product: {
-      id: number;
-      name: string;
-      price: number;
-      image_url?: string;
-    },
-    quantity?: number
-  ) => Promise<void>;
-  updateQuantity: (productId: number, quantity: number) => Promise<void>;
-  removeItem: (productId: number) => Promise<void>;
-  clearCart: () => Promise<void>;
-  refreshCart: () => Promise<void>;
-}
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
