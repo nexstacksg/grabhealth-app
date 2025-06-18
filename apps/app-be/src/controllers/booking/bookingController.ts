@@ -1,9 +1,17 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth/authenticate';
-import { bookingService } from '../../services/booking/bookingService';
-import { ApiResponse } from '@app/shared-types';
+import { ApiResponse, IBookingFilter } from '@app/shared-types';
+import { BookingService } from '@app/shared-services';
+import { BookingDataSource } from '@app/shared-services';
+import prisma from '../../database/client';
 
 class BookingController {
+  private bookingService: BookingService;
+
+  constructor() {
+    const dataSource = new BookingDataSource(prisma);
+    this.bookingService = new BookingService({ dataSource });
+  }
   async createBooking(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
@@ -12,7 +20,7 @@ class BookingController {
         userId
       };
 
-      const booking = await bookingService.createBooking(bookingData);
+      const booking = await this.bookingService.createBooking(bookingData);
 
       const response: ApiResponse = {
         success: true,
@@ -56,17 +64,17 @@ class BookingController {
   async getBookings(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
-      const filters = {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const filters: IBookingFilter = {
         userId,
         status: req.query.status as string,
         fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
         toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined
       };
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-
-      const result = await bookingService.getBookings(filters, page, limit);
+      const result = await this.bookingService.getBookings(filters, page, limit);
 
       const response: ApiResponse = {
         success: true,
@@ -91,7 +99,7 @@ class BookingController {
       const { id } = req.params;
       const userId = req.user!.id;
 
-      const booking = await bookingService.getBookingById(id);
+      const booking = await this.bookingService.getBooking(id);
 
       if (!booking) {
         res.status(404).json({
@@ -140,7 +148,7 @@ class BookingController {
       const { status, cancellationReason } = req.body;
       const userId = req.user!.id;
 
-      const booking = await bookingService.getBookingById(id);
+      const booking = await this.bookingService.getBooking(id);
 
       if (!booking) {
         res.status(404).json({
@@ -165,7 +173,7 @@ class BookingController {
         return;
       }
 
-      const updatedBooking = await bookingService.updateBookingStatus(id, status, cancellationReason);
+      const updatedBooking = await this.bookingService.updateBookingStatus(id, status, cancellationReason);
 
       const response: ApiResponse = {
         success: true,

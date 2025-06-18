@@ -32,6 +32,7 @@
   "description": "",
   "dependencies": {
     "@app/shared-types": "*",
+    "@app/shared-services": "*",
     "@prisma/client": "^6.8.2",
     "@types/cookie-parser": "^1.4.9",
     "@types/ioredis": "^5.0.0",

@@ -34,6 +34,8 @@ export { ApiProfileDataSource } from './adapters/api/ApiProfileDataSource';
 export { ApiAIDataSource } from './adapters/api/ApiAIDataSource';
 export { ApiHealthcarePartnerDataSource } from './adapters/api/ApiHealthcarePartnerDataSource';
 export { ApiBookingDataSource } from './adapters/api/ApiBookingDataSource';
+export { BookingDataSource } from './adapters/BookingDataSource';
+export { BaseDataSource } from './adapters/BaseDataSource';
 
 // Interfaces
 export { IAuthDataSource } from './interfaces/IAuthDataSource';

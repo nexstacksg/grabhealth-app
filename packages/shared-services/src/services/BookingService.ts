@@ -17,7 +17,7 @@ export class BookingService {
     this.dataSource = options.dataSource;
   }
 
-  async createBooking(booking: ICreateBookingRequest): Promise<IBooking> {
+  async createBooking(booking: ICreateBookingRequest & { userId: string }): Promise<IBooking> {
     return this.dataSource.createBooking(booking);
   }
 
