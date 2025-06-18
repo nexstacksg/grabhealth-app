@@ -86,7 +86,7 @@ class AuthService extends BaseService {
 
   async verifyEmailCode(email: string, code: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/verify-email/confirm', { email, code });
+      const response = await apiClient.post<ApiResponse>('/auth/verify-email-code', { email, code });
       this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -95,7 +95,7 @@ class AuthService extends BaseService {
 
   async resendVerificationCode(email: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/verify-email/resend', { email });
+      const response = await apiClient.post<ApiResponse>('/auth/resend-verification-code', { email });
       this.extractData(response);
     } catch (error) {
       this.handleError(error);

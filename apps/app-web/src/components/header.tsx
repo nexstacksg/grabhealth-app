@@ -87,6 +87,21 @@ export default function Header() {
                 </Link>
               </div>
             </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/auth/login">
+                <Button variant="ghost" className="text-sm font-medium">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button
+                  variant="outline"
+                  className="text-sm font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
+                >
+                  Register
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -159,7 +174,7 @@ export default function Header() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ) : isMounted && !isLoading ? (
+                ) : (
                   <>
                     <Link href="/auth/login">
                       <Button variant="ghost" className="text-sm font-medium">
@@ -175,7 +190,7 @@ export default function Header() {
                       </Button>
                     </Link>
                   </>
-                ) : null}
+                )}
                 <CartDropdown />
               </div>
             </>
@@ -260,7 +275,7 @@ export default function Header() {
                           Logout
                         </Button>
                       </>
-                    ) : isMounted && !isLoading ? (
+                    ) : (
                       <>
                         <SheetClose asChild>
                           <Link href="/auth/login">
@@ -283,7 +298,7 @@ export default function Header() {
                           </Link>
                         </SheetClose>
                       </>
-                    ) : null}
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>

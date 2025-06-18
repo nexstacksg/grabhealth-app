@@ -7,18 +7,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Forward to Express backend
-    const data = await apiClient.post<ApiResponse>('/auth/verify-email/confirm', body);
+    const data = await apiClient.post<ApiResponse>('/auth/resend-verification-code', body);
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Email verification error:', error);
+    console.error('Resend verification error:', error);
     
     const err = error as { message?: string; status?: number; code?: string; response?: any };
     
     // Handle axios errors properly
     if (err.response) {
       return NextResponse.json(
-        err.response.data || { error: { message: 'Email verification failed' } },
+        err.response.data || { error: { message: 'Failed to resend verification code' } },
         { status: err.response.status || 500 }
       );
     }
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: { 
-          message: err.message || 'Email verification failed',
+          message: err.message || 'Failed to resend verification code',
           code: err.code 
         } 
       },
