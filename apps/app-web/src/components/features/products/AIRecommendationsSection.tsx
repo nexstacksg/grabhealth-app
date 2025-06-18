@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,10 +6,29 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { formatPrice } from '@/lib/utils';
-import { useAIRecommendations } from '@/hooks/products/useAIRecommendations';
+import services from '@/lib/services';
+import { IProduct } from '@app/shared-types';
 
 export const AIRecommendationsSection = React.memo(() => {
-  const { recommendations, trending, loading, error } = useAIRecommendations();
+  const [recommendations, setRecommendations] = useState<IProduct[]>([]);
+  const [trending, setTrending] = useState<IProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchRecommendations() {
+      setLoading(true);
+      const result = await services.ai.getRecommendationsWithFallback({
+        limit: 4,
+      });
+      setRecommendations(result.recommendations);
+      setTrending(result.trending);
+      setError(result.error);
+      setLoading(false);
+    }
+
+    fetchRecommendations();
+  }, []);
 
   if (loading) {
     return (
@@ -55,7 +74,7 @@ export const AIRecommendationsSection = React.memo(() => {
           <TabsTrigger value="personalized">Recommended for You</TabsTrigger>
           <TabsTrigger value="trending">Trending Now</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="personalized">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {recommendations.map((product) => (
@@ -63,7 +82,10 @@ export const AIRecommendationsSection = React.memo(() => {
                 <Card className="overflow-hidden transition-all hover:shadow-md">
                   <div className="relative">
                     <Image
-                      src={product.imageUrl || '/placeholder.svg?height=200&width=200'}
+                      src={
+                        product.imageUrl ||
+                        '/placeholder.svg?height=200&width=200'
+                      }
                       alt={product.name}
                       width={200}
                       height={200}
@@ -74,7 +96,9 @@ export const AIRecommendationsSection = React.memo(() => {
                     </Badge>
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
+                    <h3 className="font-semibold text-lg mb-1">
+                      {product.name}
+                    </h3>
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                       {product.description}
                     </p>
@@ -83,11 +107,17 @@ export const AIRecommendationsSection = React.memo(() => {
                         {formatPrice(product.price)}
                       </span>
                       {product.inStock ? (
-                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                        >
                           In Stock
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-gray-50 text-gray-500 border-gray-200"
+                        >
                           Out of Stock
                         </Badge>
                       )}
@@ -108,7 +138,7 @@ export const AIRecommendationsSection = React.memo(() => {
             ))}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="trending">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {trending.map((product) => (
@@ -116,7 +146,10 @@ export const AIRecommendationsSection = React.memo(() => {
                 <Card className="overflow-hidden transition-all hover:shadow-md">
                   <div className="relative">
                     <Image
-                      src={product.imageUrl || '/placeholder.svg?height=200&width=200'}
+                      src={
+                        product.imageUrl ||
+                        '/placeholder.svg?height=200&width=200'
+                      }
                       alt={product.name}
                       width={200}
                       height={200}
@@ -127,7 +160,9 @@ export const AIRecommendationsSection = React.memo(() => {
                     </Badge>
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
+                    <h3 className="font-semibold text-lg mb-1">
+                      {product.name}
+                    </h3>
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                       {product.description}
                     </p>
@@ -136,11 +171,17 @@ export const AIRecommendationsSection = React.memo(() => {
                         {formatPrice(product.price)}
                       </span>
                       {product.inStock ? (
-                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                        >
                           In Stock
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-gray-50 text-gray-500 border-gray-200"
+                        >
                           Out of Stock
                         </Badge>
                       )}

@@ -1,12 +1,20 @@
 // Services
 export { AuthService } from './services/AuthService';
-export { ProductService } from './services/ProductService';
+export {
+  ProductService,
+  type PriceRange,
+  type EnhancedProductSearchParams,
+} from './services/ProductService';
 export { CartService } from './services/CartService';
 export { OrderService } from './services/OrderService';
 export { CommissionService } from './services/CommissionService';
 export { UserService } from './services/UserService';
 export { DashboardService } from './services/DashboardService';
-export { MembershipService } from './services/MembershipService';
+export {
+  MembershipService,
+  type TierConfig,
+  type MembershipTier,
+} from './services/MembershipService';
 export { PartnerService } from './services/PartnerService';
 export { PromotionService } from './services/PromotionService';
 export { CategoryService } from './services/CategoryService';
@@ -60,3 +68,4 @@ export * from './types';
 // Utils
 export * from './utils/errors';
 export * from './utils/validation';
+export * from './utils/apiStateManager';

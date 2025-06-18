@@ -17,10 +17,10 @@ export * from './types/dashboard';
 export * from './models/user';
 export * from './models/product';
 export * from './models/order';
-export { 
-  ICommission, 
+export {
+  ICommission,
   ICommissionTier,
-  IUserRelationship
+  IUserRelationship,
 } from './models/commission';
 export * from './models/membership';
 export * from './models/stats';

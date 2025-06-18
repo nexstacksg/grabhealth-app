@@ -10,17 +10,11 @@ import {
 import { toast } from 'sonner';
 import services from '@/lib/services';
 import { useAuth } from '@/contexts/AuthContext';
+import { MembershipTier } from '@app/shared-services';
 
 export interface Membership {
   id: number;
-  tier:
-    | 'level1'
-    | 'level2'
-    | 'level3'
-    | 'level4'
-    | 'level5'
-    | 'level6'
-    | 'level7';
+  tier: MembershipTier;
   points: number;
   created_at: string;
   updated_at: string;
@@ -48,79 +42,26 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   const [membership, setMembership] = useState<Membership | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Calculate tier discount based on level
-  const getTierDiscount = (tier: string | undefined) => {
-    switch (tier) {
-      case 'level1':
-        return 0.3; // 30% discount
-      case 'level2':
-        return 0.1; // 10% discount
-      case 'level3':
-        return 0.05; // 5% discount
-      default:
-        return 0;
-    }
-  };
-
-  const tierDiscount = getTierDiscount(membership?.tier);
-
-  // Define tier thresholds
-  const tierThresholds = {
-    level7: 100,
-    level6: 200,
-    level5: 400,
-    level4: 1000,
-    level3: 0, // Points not used for level3 and above (discount-based tiers)
-    level2: 0,
-    level1: 0,
-  };
-
-  // Determine next tier based on current tier and points
-  const getNextTier = (currentTier: string | undefined, points: number) => {
-    if (!currentTier) return null;
-
-    switch (currentTier) {
-      case 'level7':
-        return points >= tierThresholds.level6 ? 'level6' : null;
-      case 'level6':
-        return points >= tierThresholds.level5 ? 'level5' : null;
-      case 'level5':
-        return points >= tierThresholds.level4 ? 'level4' : null;
-      case 'level4':
-        return points >= tierThresholds.level3 ? 'level3' : null;
-      default:
-        return null; // No automatic upgrades for level3 and above
-    }
-  };
-
-  const nextTier = getNextTier(membership?.tier, membership?.points || 0);
-
-  // Calculate points to next tier
-  const getPointsToNextTier = (
-    currentTier: string | undefined,
-    points: number
-  ) => {
-    if (!currentTier) return 0;
-
-    switch (currentTier) {
-      case 'level7':
-        return Math.max(0, tierThresholds.level6 - points);
-      case 'level6':
-        return Math.max(0, tierThresholds.level5 - points);
-      case 'level5':
-        return Math.max(0, tierThresholds.level4 - points);
-      default:
-        return 0; // No point requirements for level4 and above
-    }
-  };
-
-  const pointsToNextTier = getPointsToNextTier(
-    membership?.tier,
-    membership?.points || 0
+  // Use service for business logic calculations
+  const membershipAnalysis = services.membership.getMembershipAnalysis(
+    membership
+      ? {
+          id: membership.id,
+          tier: membership.tier,
+          points: membership.points,
+          createdAt: new Date(membership.created_at),
+          updatedAt: new Date(membership.updated_at),
+          user: {
+            firstName: membership.name.split(' ')[0] || '',
+            lastName: membership.name.split(' ')[1] || '',
+            email: membership.email,
+          },
+        }
+      : null
   );
 
-  // Check if eligible for upgrade
-  const isEligibleForUpgrade = nextTier !== null;
+  const { tierDiscount, pointsToNextTier, isEligibleForUpgrade, nextTier } =
+    membershipAnalysis;
 
   // Fetch membership data
   const fetchMembership = async () => {
@@ -130,7 +71,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       return;
     }
-    
+
     try {
       setIsLoading(true);
       const membershipData = await services.membership.getCurrentMembership();
@@ -141,8 +82,12 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
           id: membershipData.id,
           tier: membershipData.tier as any,
           points: membershipData.points || 0,
-          created_at: membershipData.createdAt ? membershipData.createdAt.toString() : new Date().toISOString(),
-          updated_at: membershipData.updatedAt ? membershipData.updatedAt.toString() : new Date().toISOString(),
+          created_at: membershipData.createdAt
+            ? membershipData.createdAt.toString()
+            : new Date().toISOString(),
+          updated_at: membershipData.updatedAt
+            ? membershipData.updatedAt.toString()
+            : new Date().toISOString(),
           name:
             membershipData.user?.firstName && membershipData.user?.lastName
               ? `${membershipData.user.firstName} ${membershipData.user.lastName}`
