@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-
 export abstract class BaseDataSource {
-  protected prisma: PrismaClient;
+  protected prisma: any;
 
-  constructor(prisma: PrismaClient) {
+  constructor(prisma: any) {
     this.prisma = prisma;
   }
 

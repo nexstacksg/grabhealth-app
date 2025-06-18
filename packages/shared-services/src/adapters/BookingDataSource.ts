@@ -1,10 +1,8 @@
 import { IBooking, ICreateBookingRequest, IFreeCheckupStatus } from '@app/shared-types';
 import { IBookingDataSource } from '../interfaces/IBookingDataSource';
 import { BaseDataSource } from './BaseDataSource';
-import { PrismaClient } from '@prisma/client';
-
 export class BookingDataSource extends BaseDataSource implements IBookingDataSource {
-  constructor(prisma: PrismaClient) {
+  constructor(prisma: any) {
     super(prisma);
   }
 
