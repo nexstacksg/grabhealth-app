@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameMonth, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { usePartnerAuth } from '@/hooks/usePartnerAuth';
 
 interface CalendarDay {
   date: string;
@@ -18,6 +19,7 @@ interface CalendarDay {
 }
 
 export default function PartnerCalendarPage() {
+  const { isLoading: authLoading, isPartner, partnerInfo } = usePartnerAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -27,13 +29,20 @@ export default function PartnerCalendarPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCalendarData();
-  }, [currentMonth]);
+    if (isPartner && partnerInfo) {
+      setPartnerId(partnerInfo.id);
+      fetchCalendarData();
+    }
+  }, [isPartner, partnerInfo, currentMonth]);
 
   const fetchCalendarData = async () => {
     try {
       setLoading(true);
+      // Clear existing calendar days to ensure fresh data
+      setCalendarDays([]);
+      
       const monthStr = format(currentMonth, 'yyyy-MM');
+      let fetchedSuccessfully = false;
       
       // Fetch partner info first to get partner ID
       const profileResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
@@ -53,15 +62,18 @@ export default function PartnerCalendarPage() {
           
           if (calendarResponse.ok) {
             const calendarData = await calendarResponse.json();
-            if (calendarData.success) {
+            if (calendarData.success && calendarData.data) {
+              console.log('Calendar data fetched:', calendarData.data);
               setCalendarDays(calendarData.data);
+              fetchedSuccessfully = true;
             }
           }
         }
       }
       
-      // Fall back to mock data if API fails
-      if (calendarDays.length === 0) {
+      // Only fall back to mock data if we failed to fetch real data
+      if (!fetchedSuccessfully) {
+        console.log('Using mock data as fallback');
         const days = generateMockCalendarDays(currentMonth);
         setCalendarDays(days);
       }
@@ -183,6 +195,13 @@ export default function PartnerCalendarPage() {
           console.error('API Error:', data.error);
           toast.error(data.error?.message || 'Failed to mark day as off');
         }
+      } else if (response.status === 409) {
+        // Handle conflict - day is already marked as off
+        const errorData = await response.json();
+        console.log('Day already marked as off');
+        toast.info('This day is already marked as off');
+        // Still refresh calendar data to ensure UI is in sync
+        await fetchCalendarData();
       } else {
         const errorText = await response.text();
         console.error('Response error:', response.status, errorText);
@@ -201,6 +220,21 @@ export default function PartnerCalendarPage() {
 
   // Add empty cells for days before the first day of the month
   const emptyCells = Array(startingDayOfWeek).fill(null);
+
+  if (authLoading || loading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isPartner) {
+    return null; // Will redirect via hook
+  }
 
   return (
     <div className="p-4 lg:p-8">

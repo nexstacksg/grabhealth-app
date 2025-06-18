@@ -21,9 +21,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Search, Filter, Eye, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { usePartnerAuth } from '@/hooks/usePartnerAuth';
 
 interface Booking {
   id: string;
@@ -40,68 +41,104 @@ interface Booking {
 }
 
 export default function BookingsPage() {
+  const { isLoading: authLoading, isPartner } = usePartnerAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 8,
+    total: 0,
+    totalPages: 0
+  });
 
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    if (isPartner) {
+      fetchBookings();
+    }
+  }, [isPartner, statusFilter, dateFilter, pagination.page]);
 
   useEffect(() => {
     filterBookings();
-  }, [bookings, searchTerm, statusFilter, dateFilter]);
+  }, [bookings, searchTerm]);
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      // Mock data - replace with actual API call
-      const mockBookings: Booking[] = [
-        {
-          id: '1',
-          customerName: 'John Doe',
-          customerEmail: 'john@example.com',
-          service: 'Basic Health Screening',
-          bookingDate: new Date(),
-          startTime: '09:00',
-          endTime: '10:00',
-          status: 'CONFIRMED',
-          totalAmount: 80,
-          isFreeCheckup: false,
-        },
-        {
-          id: '2',
-          customerName: 'Jane Smith',
-          customerEmail: 'jane@example.com',
-          service: 'Premium Health Screening',
-          bookingDate: new Date(),
-          startTime: '10:30',
-          endTime: '12:00',
-          status: 'PENDING',
-          totalAmount: 150,
-          isFreeCheckup: false,
-        },
-        {
-          id: '3',
-          customerName: 'Bob Johnson',
-          customerEmail: 'bob@example.com',
-          service: 'Basic Health Screening',
-          bookingDate: new Date(Date.now() + 86400000), // Tomorrow
-          startTime: '14:00',
-          endTime: '15:00',
-          status: 'CONFIRMED',
-          totalAmount: 0,
-          isFreeCheckup: true,
-          notes: 'Annual free checkup',
-        },
-      ];
-      setBookings(mockBookings);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      
+      // Add date filters
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (dateFilter === 'today') {
+        params.append('fromDate', today.toISOString());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        params.append('toDate', tomorrow.toISOString());
+      } else if (dateFilter === 'upcoming') {
+        params.append('fromDate', new Date().toISOString());
+      } else if (dateFilter === 'past') {
+        params.append('toDate', today.toISOString());
+      }
+      
+      params.append('page', pagination.page.toString());
+      params.append('limit', pagination.limit.toString());
+      
+      // Fetch bookings from API
+      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/bookings?${params.toString()}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Please log in as a partner to access this page');
+          window.location.href = '/auth/login';
+          return;
+        }
+        throw new Error(`Failed to fetch bookings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Transform API data to match our Booking interface
+        const transformedBookings: Booking[] = data.data.bookings.map((booking: any) => ({
+          id: booking.id,
+          customerName: booking.user?.name || 'Unknown Customer',
+          customerEmail: booking.user?.email || 'No email',
+          service: booking.service?.name || 'Unknown Service',
+          bookingDate: new Date(booking.bookingDate),
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          status: booking.status,
+          notes: booking.notes,
+          isFreeCheckup: booking.isFreeCheckup || false,
+          totalAmount: booking.totalAmount || 0,
+        }));
+        
+        setBookings(transformedBookings);
+        
+        // Update pagination info
+        setPagination(prev => ({
+          ...prev,
+          total: data.data.pagination?.total || transformedBookings.length,
+          totalPages: data.data.pagination?.totalPages || 1
+        }));
+      }
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Failed to load bookings');
+      // Set empty array instead of keeping old data
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -110,7 +147,7 @@ export default function BookingsPage() {
   const filterBookings = () => {
     let filtered = [...bookings];
 
-    // Search filter
+    // Search filter (client-side only)
     if (searchTerm) {
       filtered = filtered.filter(
         (booking) =>
@@ -120,45 +157,41 @@ export default function BookingsPage() {
       );
     }
 
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((booking) => booking.status === statusFilter);
-    }
-
-    // Date filter
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Status and date filtering is now handled server-side
     
-    switch (dateFilter) {
-      case 'today':
-        filtered = filtered.filter((booking) => {
-          const bookingDate = new Date(booking.bookingDate);
-          bookingDate.setHours(0, 0, 0, 0);
-          return bookingDate.getTime() === today.getTime();
-        });
-        break;
-      case 'upcoming':
-        filtered = filtered.filter((booking) => new Date(booking.bookingDate) > today);
-        break;
-      case 'past':
-        filtered = filtered.filter((booking) => new Date(booking.bookingDate) < today);
-        break;
-    }
-
     setFilteredBookings(filtered);
   };
 
   const handleStatusUpdate = async (bookingId: string, newStatus: string) => {
     try {
-      // This would be replaced with actual API call
-      setBookings(
-        bookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: newStatus as Booking['status'] }
-            : booking
-        )
-      );
-      toast.success('Booking status updated');
+      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/bookings/${bookingId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update booking status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update local state optimistically
+        setBookings(
+          bookings.map((booking) =>
+            booking.id === bookingId
+              ? { ...booking, status: newStatus as Booking['status'] }
+              : booking
+          )
+        );
+        toast.success('Booking status updated');
+      } else {
+        toast.error(data.error?.message || 'Failed to update booking status');
+      }
     } catch (error) {
       console.error('Error updating booking status:', error);
       toast.error('Failed to update booking status');
@@ -178,7 +211,7 @@ export default function BookingsPage() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="p-8">
         <div className="animate-pulse space-y-4">
@@ -187,6 +220,10 @@ export default function BookingsPage() {
         </div>
       </div>
     );
+  }
+
+  if (!isPartner) {
+    return null; // Will redirect via hook
   }
 
   return (
@@ -210,7 +247,10 @@ export default function BookingsPage() {
                   className="pl-10 w-full lg:w-64"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}>
                 <SelectTrigger className="w-full lg:w-40">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -223,7 +263,10 @@ export default function BookingsPage() {
                   <SelectItem value="NO_SHOW">No Show</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
+              <Select value={dateFilter} onValueChange={(value) => {
+                setDateFilter(value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}>
                 <SelectTrigger className="w-full lg:w-40">
                   <SelectValue placeholder="Date" />
                 </SelectTrigger>
@@ -319,6 +362,108 @@ export default function BookingsPage() {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination Controls */}
+          {(pagination.totalPages > 1 || pagination.total > 0) && (
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                  <span className="font-medium">{pagination.total}</span> bookings
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="pageSize" className="text-sm text-gray-700">Per page:</Label>
+                  <Select 
+                    value={pagination.limit.toString()} 
+                    onValueChange={(value) => {
+                      setPagination(prev => ({ 
+                        ...prev, 
+                        limit: parseInt(value), 
+                        page: 1,
+                        totalPages: Math.ceil(prev.total / parseInt(value))
+                      }));
+                    }}
+                  >
+                    <SelectTrigger id="pageSize" className="w-20 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="8">8</SelectItem>
+                      <SelectItem value="12">12</SelectItem>
+                      <SelectItem value="16">16</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPagination(prev => ({ ...prev, page: 1 }))}
+                  disabled={pagination.page === 1}
+                  className="hidden sm:flex"
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                  disabled={pagination.page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {/* Show page numbers */}
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.page <= 3) {
+                      pageNum = i + 1;
+                    } else if (pagination.page >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = pagination.page - 2 + i;
+                    }
+                    
+                    if (pageNum < 1 || pageNum > pagination.totalPages) return null;
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === pagination.page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
+                        className="w-10"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                  disabled={pagination.page === pagination.totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.totalPages }))}
+                  disabled={pagination.page === pagination.totalPages}
+                  className="hidden sm:flex"
+                >
+                  Last
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
