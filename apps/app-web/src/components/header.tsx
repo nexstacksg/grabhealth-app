@@ -61,7 +61,6 @@ export default function Header() {
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Products', href: '/products' },
-    { label: 'Promotions', href: '/promotions' },
     { label: 'Partners', href: '/partners' },
     { label: 'Membership', href: '/membership' },
     { label: 'Commission', href: '/commission' },

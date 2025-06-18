@@ -24,8 +24,7 @@ const publicPaths = [
   '/privacy',
   '/shipping-policy',
   '/refund-policy',
-  '/partners',
-  '/promotions'
+  '/partners'
 ];
 
 export function middleware(request: NextRequest) {

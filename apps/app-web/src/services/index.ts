@@ -12,7 +12,6 @@ export { commissionService } from './commission.service';
 export { membershipService } from './membership.service';
 export { dashboardService } from './dashboard.service';
 export { profileService } from './profile.service';
-export { promotionService } from './promotion.service';
 export { aiService } from './ai.service';
 export { bookingsService } from './bookings.service';
 export { partnersService } from './partners.service';

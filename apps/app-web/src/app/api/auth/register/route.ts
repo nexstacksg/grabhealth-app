@@ -8,10 +8,9 @@ export async function POST(request: NextRequest) {
     const body: RegisterRequest = await request.json();
 
     // Use the same apiClient - it knows we're on server and will call backend directly
-    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', body);
+    const data = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', body);
 
-    // The interceptor returns response.data, so response is already ApiResponse<AuthResponse>
-    const data = response as unknown as ApiResponse<AuthResponse>;
+    // The interceptor returns response.data directly
 
     if (!data.success || !data.data) {
       return NextResponse.json(
@@ -51,7 +50,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Registration error:', error);
     
-    const err = error as { message?: string; status?: number; code?: string };
+    const err = error as { message?: string; status?: number; code?: string; response?: any };
+    
+    // Handle axios errors properly
+    if (err.response) {
+      return NextResponse.json(
+        err.response.data || { error: { message: 'Registration failed' } },
+        { status: err.response.status || 500 }
+      );
+    }
     
     return NextResponse.json(
       { 

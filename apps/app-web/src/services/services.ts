@@ -12,7 +12,6 @@ import { partnerService } from './partner.service';
 import { commissionService } from './commission.service';
 import { dashboardService } from './dashboard.service';
 import { profileService } from './profile.service';
-import { promotionService } from './promotion.service';
 import { aiService } from './ai.service';
 import { bookingsService } from './bookings.service';
 import { partnersService } from './partners.service';
@@ -27,7 +26,6 @@ const services = {
   commission: commissionService,
   dashboard: dashboardService,
   profile: profileService,
-  promotion: promotionService,
   ai: aiService,
   bookings: bookingsService,
   partners: partnersService,
