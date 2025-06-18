@@ -75,7 +75,7 @@ export default function ServicesPage() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/services', {
+      const response = await fetch('http://localhost:4000/api/v1/partner/services', {
         credentials: 'include',
       });
 
@@ -132,8 +132,8 @@ export default function ServicesPage() {
 
     try {
       const url = editingService
-        ? `http://localhost:4000/api/v1/partner-dashboard/services/${editingService.id}`
-        : 'http://localhost:4000/api/v1/partner-dashboard/services';
+        ? `http://localhost:4000/api/v1/partner/services/${editingService.id}`
+        : 'http://localhost:4000/api/v1/partner/services';
       
       const method = editingService ? 'PUT' : 'POST';
 
@@ -192,7 +192,7 @@ export default function ServicesPage() {
     if (!serviceToDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/services/${serviceToDelete.id}`, {
+      const response = await fetch(`http://localhost:4000/api/v1/partner/services/${serviceToDelete.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

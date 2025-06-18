@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth/authenticate';
-import { ApiResponse, IBookingFilter } from '@app/shared-types';
+import { ApiResponse, IBookingFilter, BookingStatus } from '@app/shared-types';
 import { BookingService } from '@app/shared-services';
 import { BookingDataSource } from '@app/shared-services';
 import prisma from '../../database/client';
@@ -17,27 +17,30 @@ class BookingController {
       const userId = req.user!.id;
       const bookingData = {
         ...req.body,
-        userId
+        userId,
       };
 
       const booking = await this.bookingService.createBooking(bookingData);
 
       const response: ApiResponse = {
         success: true,
-        data: booking
+        data: booking,
       };
 
       res.status(201).json(response);
     } catch (error: any) {
       console.error('Create booking error:', error);
-      
-      if (error.message === 'Service not found' || error.message === 'Partner not found') {
+
+      if (
+        error.message === 'Service not found' ||
+        error.message === 'Partner not found'
+      ) {
         res.status(404).json({
           success: false,
           error: {
             code: 'NOT_FOUND',
-            message: error.message
-          }
+            message: error.message,
+          },
         });
       }
 
@@ -46,8 +49,8 @@ class BookingController {
           success: false,
           error: {
             code: 'CONFLICT',
-            message: 'The selected time slot is no longer available'
-          }
+            message: 'The selected time slot is no longer available',
+          },
         });
       }
 
@@ -55,8 +58,8 @@ class BookingController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to create booking'
-        }
+          message: 'Failed to create booking',
+        },
       });
     }
   }
@@ -69,16 +72,24 @@ class BookingController {
 
       const filters: IBookingFilter = {
         userId,
-        status: req.query.status as string,
-        fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
-        toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined
+        status: req.query.status as BookingStatus | undefined,
+        fromDate: req.query.fromDate
+          ? new Date(req.query.fromDate as string)
+          : undefined,
+        toDate: req.query.toDate
+          ? new Date(req.query.toDate as string)
+          : undefined,
       };
 
-      const result = await this.bookingService.getBookings(filters, page, limit);
+      const result = await this.bookingService.getBookings(
+        filters,
+        page,
+        limit
+      );
 
       const response: ApiResponse = {
         success: true,
-        data: result
+        data: result,
       };
 
       res.json(response);
@@ -88,8 +99,8 @@ class BookingController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch bookings'
-        }
+          message: 'Failed to fetch bookings',
+        },
       });
     }
   }
@@ -106,8 +117,8 @@ class BookingController {
           success: false,
           error: {
             code: 'NOT_FOUND',
-            message: 'Booking not found'
-          }
+            message: 'Booking not found',
+          },
         });
         return;
       }
@@ -118,15 +129,15 @@ class BookingController {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'Access denied'
-          }
+            message: 'Access denied',
+          },
         });
         return;
       }
 
       const response: ApiResponse = {
         success: true,
-        data: booking
+        data: booking,
       };
 
       res.json(response);
@@ -136,8 +147,8 @@ class BookingController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch booking'
-        }
+          message: 'Failed to fetch booking',
+        },
       });
     }
   }
@@ -155,8 +166,8 @@ class BookingController {
           success: false,
           error: {
             code: 'NOT_FOUND',
-            message: 'Booking not found'
-          }
+            message: 'Booking not found',
+          },
         });
         return;
       }
@@ -167,17 +178,21 @@ class BookingController {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'Access denied'
-          }
+            message: 'Access denied',
+          },
         });
         return;
       }
 
-      const updatedBooking = await this.bookingService.updateBookingStatus(id, status, cancellationReason);
+      const updatedBooking = await this.bookingService.updateBookingStatus(
+        id,
+        status,
+        cancellationReason
+      );
 
       const response: ApiResponse = {
         success: true,
-        data: updatedBooking
+        data: updatedBooking,
       };
 
       res.json(response);
@@ -187,8 +202,8 @@ class BookingController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to update booking status'
-        }
+          message: 'Failed to update booking status',
+        },
       });
     }
   }

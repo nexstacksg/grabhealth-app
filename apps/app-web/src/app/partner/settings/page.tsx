@@ -65,7 +65,7 @@ export default function SettingsPage() {
 
   const fetchPartnerProfile = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
+      const response = await fetch('http://localhost:4000/api/v1/partner/profile', {
         credentials: 'include',
       });
 
@@ -127,7 +127,7 @@ export default function SettingsPage() {
         }
       });
 
-      const response = await fetch('http://localhost:4000/api/v1/partner-dashboard/profile', {
+      const response = await fetch('http://localhost:4000/api/v1/partner/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

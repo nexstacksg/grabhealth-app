@@ -54,10 +54,22 @@ export default function ProductCategories() {
         console.error('Error fetching categories:', err);
         // Use fallback categories if API fails
         setCategories([
-          { id: 1, name: 'Medical Devices', description: 'Health monitoring and medical equipment' },
-          { id: 2, name: 'Medications', description: 'Over-the-counter and prescription drugs' },
+          {
+            id: 1,
+            name: 'Medical Devices',
+            description: 'Health monitoring and medical equipment',
+          },
+          {
+            id: 2,
+            name: 'Medications',
+            description: 'Over-the-counter and prescription drugs',
+          },
           { id: 3, name: 'Vitamins', description: 'Vitamins and supplements' },
-          { id: 4, name: 'General Health', description: 'General health and wellness products' }
+          {
+            id: 4,
+            name: 'General Health',
+            description: 'General health and wellness products',
+          },
         ] as ICategory[]);
         setError(null); // Don't show error since we have fallback data
       } finally {
@@ -72,11 +84,11 @@ export default function ProductCategories() {
   const getIconForCategory = (categoryName: string) => {
     const iconMap: Record<string, JSX.Element> = {
       'Medical Devices': <Thermometer className="h-8 w-8 text-emerald-500" />,
-      'Medications': <Pill className="h-8 w-8 text-emerald-500" />,
-      'Vitamins': <Vitamins className="h-8 w-8 text-emerald-500" />,
-      'Supplements': <Vitamins className="h-8 w-8 text-emerald-500" />,
+      Medications: <Pill className="h-8 w-8 text-emerald-500" />,
+      Vitamins: <Vitamins className="h-8 w-8 text-emerald-500" />,
+      Supplements: <Vitamins className="h-8 w-8 text-emerald-500" />,
       'Health & Wellness': <Heart className="h-8 w-8 text-emerald-500" />,
-      'Diagnostics': <Stethoscope className="h-8 w-8 text-emerald-500" />,
+      Diagnostics: <Stethoscope className="h-8 w-8 text-emerald-500" />,
       'Mental Health': <Brain className="h-8 w-8 text-emerald-500" />,
       'Personal Care': <Droplet className="h-8 w-8 text-emerald-500" />,
       'First Aid': <Bandage className="h-8 w-8 text-emerald-500" />,
@@ -86,15 +98,17 @@ export default function ProductCategories() {
     if (iconMap[categoryName]) {
       return iconMap[categoryName];
     }
-    
+
     // Check for partial matches
     for (const [key, icon] of Object.entries(iconMap)) {
-      if (categoryName.toLowerCase().includes(key.toLowerCase()) || 
-          key.toLowerCase().includes(categoryName.toLowerCase())) {
+      if (
+        categoryName.toLowerCase().includes(key.toLowerCase()) ||
+        key.toLowerCase().includes(categoryName.toLowerCase())
+      ) {
         return icon;
       }
     }
-    
+
     return <Pill className="h-8 w-8 text-emerald-500" />; // Default icon
   };
 
@@ -127,7 +141,10 @@ export default function ProductCategories() {
             CATEGORIES
           </h2>
           <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
+            <Loader2
+              className="h-8 w-8 text-emerald-500 animate-spin"
+              suppressHydrationWarning
+            />
           </div>
         </div>
       </section>
@@ -219,7 +236,7 @@ export default function ProductCategories() {
                 className="rounded-full"
                 onClick={prevSlide}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" suppressHydrationWarning />
               </Button>
 
               <div className="flex gap-2">
@@ -241,7 +258,7 @@ export default function ProductCategories() {
                 className="rounded-full"
                 onClick={nextSlide}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" suppressHydrationWarning />
               </Button>
             </div>
           )}

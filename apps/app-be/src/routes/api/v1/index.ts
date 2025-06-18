@@ -12,7 +12,7 @@ import promotionRoutes from './promotions';
 import aiRoutes from './ai';
 import partnerRoutes from './partners';
 import bookingRoutes from './bookings';
-import partnerDashboardRoutes from './partner-dashboard';
+import partnerDashboardRoutes from './partner';
 
 const router = Router();
 
@@ -34,7 +34,7 @@ router.get('/', (_req, res) => {
       ai: '/api/v1/ai',
       partners: '/api/v1/partners',
       bookings: '/api/v1/bookings',
-      'partner-dashboard': '/api/v1/partner-dashboard',
+      partner: '/api/v1/partner',
     },
   });
 });
@@ -53,6 +53,6 @@ router.use('/promotions', promotionRoutes);
 router.use('/ai', aiRoutes);
 router.use('/partners', partnerRoutes);
 router.use('/bookings', bookingRoutes);
-router.use('/partner-dashboard', partnerDashboardRoutes);
+router.use('/partner', partnerDashboardRoutes);
 
 export default router;
