@@ -9,7 +9,7 @@ import { Calendar, Clock, MapPin, Phone, Gift } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import services from '@/lib/services';
+import services from '@/services';
 import { IBooking } from '@app/shared-types';
 
 export default function BookingsPage() {

@@ -231,4 +231,5 @@ class BookingService {
   }
 }
 
+export { BookingService };
 export const bookingService = new BookingService();

@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import services from '@/lib/services';
+import services from '@/services';
 
 // Force dynamic rendering to avoid build-time API calls
 export const dynamic = 'force-dynamic';

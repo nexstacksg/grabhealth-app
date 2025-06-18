@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
-import services from '@/lib/services';
+import { cartService } from '@/services';
 import { ICart, ICartItem, CartContextType } from '@app/shared-types';
 import { useAuth } from './AuthContext';
 
@@ -30,7 +30,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const fetchCart = async () => {
     try {
       setIsLoading(true);
-      const cartData = await services.cart.getCart();
+      const cartData = await cartService.getCart();
       setCart(cartData);
     } catch (error: any) {
       // Don't show error for PENDING_VERIFICATION users or 403 errors
@@ -74,7 +74,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const updatedCart = await services.cart.addToCart(product.id, quantity);
+      const updatedCart = await cartService.addToCart(product.id, quantity);
       setCart(updatedCart);
       toast.success(`${product.name} added to cart`);
     } catch (error) {
@@ -96,7 +96,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const updatedCart = await services.cart.updateCartItem(
+      const updatedCart = await cartService.updateCartItem(
         productId,
         quantity
       );
@@ -116,7 +116,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const updatedCart = await services.cart.removeFromCart(productId);
+      const updatedCart = await cartService.removeFromCart(productId);
       setCart(updatedCart);
       toast.success('Item removed from cart');
     } catch (error) {
@@ -133,7 +133,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      await services.cart.clearCart();
+      await cartService.clearCart();
       setCart(null);
       toast.success('Cart cleared');
     } catch (error) {

@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Calendar as CalendarIcon, Clock, Gift } from 'lucide-react';
 import { IService, IAvailableSlot, ICalendarDay } from '@app/shared-types';
-import services from '@/lib/services';
+import services from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 

@@ -32,7 +32,7 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react';
-import services from '@/lib/services';
+import services from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
 import { formatPrice } from '@/lib/utils';

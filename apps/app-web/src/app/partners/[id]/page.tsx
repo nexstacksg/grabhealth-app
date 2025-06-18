@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, Phone, Clock, Globe, Star, ArrowLeft } from 'lucide-react';
 import { IPartner, IService } from '@app/shared-types';
-import services from '@/lib/services';
+import services from '@/services';
 import { ServiceCard } from '@/components/partners/service-card';
 import { BookingCalendar } from '@/components/partners/booking-calendar';
 import { useAuth } from '@/contexts/AuthContext';

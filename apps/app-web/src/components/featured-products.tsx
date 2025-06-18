@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import services from '@/lib/services';
+import services from '@/services';
 import { IProduct } from '@app/shared-types';
 
 export default function FeaturedProducts() {

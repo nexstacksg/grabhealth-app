@@ -10,9 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useMembership } from '@/contexts/MembershipContext';
 import { formatPrice } from '@/lib/utils';
-import services from '@/lib/services';
+import services from '@/services';
 import { IProduct } from '@app/shared-types';
 
 interface ProductWithExtras extends IProduct {
@@ -23,23 +22,11 @@ interface ProductWithExtras extends IProduct {
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const { membership } = useMembership();
   const [product, setProduct] = useState<ProductWithExtras | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate tier discount percentage
-  const tierDiscount = useMemo(() => {
-    // Backend doesn't provide discount tiers, so we'll use a fixed discount
-    if (!product || !membership?.tier) return 0;
-
-    // For now, we'll give a fixed 10% discount for all tiers except level1
-    // This should be updated when backend provides tier-based pricing
-    if (membership.tier === 'level1') return 0;
-
-    return 10;
-  }, [product, membership]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -204,19 +191,6 @@ export default function ProductDetailPage() {
     return extendedProduct;
   };
 
-  // Calculate discounted price based on membership tier
-  const calculateDiscountedPrice = () => {
-    if (!product) return 0;
-
-    const regularPrice = product.price;
-
-    // Apply tier discount if available
-    if (tierDiscount > 0) {
-      return regularPrice * (1 - tierDiscount / 100);
-    }
-
-    return regularPrice;
-  };
 
   if (loading) {
     return (
@@ -251,8 +225,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  const discountedPrice = calculateDiscountedPrice();
-  const hasDiscount = discountedPrice < product.price;
 
   return (
     <div className="container max-w-6xl py-6 md:py-10 px-4 md:px-6">
@@ -302,15 +274,6 @@ export default function ProductDetailPage() {
             </Badge>
           )}
 
-          {/* Discount Badge */}
-          {tierDiscount > 0 && (
-            <Badge className="absolute bottom-4 left-4 bg-red-500 hover:bg-red-600 transition-all duration-200 px-3">
-              <div className="flex items-center">
-                <span className="mr-1">🔥</span>
-                {tierDiscount}% OFF
-              </div>
-            </Badge>
-          )}
         </div>
 
         {/* Product Details */}
@@ -344,23 +307,10 @@ export default function ProductDetailPage() {
             <div className="mb-4 md:mb-6 bg-gray-50 p-3 md:p-4 rounded-lg">
               <div className="flex flex-wrap items-baseline gap-3 mb-2">
                 <span className="text-2xl md:text-3xl font-bold text-emerald-600">
-                  {formatPrice(calculateDiscountedPrice())}
+                  {formatPrice(product.price)}
                 </span>
-                {calculateDiscountedPrice() < product.price && (
-                  <span className="text-gray-500 line-through text-base md:text-lg">
-                    {formatPrice(product.price)}
-                  </span>
-                )}
               </div>
 
-              {membership && tierDiscount > 0 && (
-                <div className="mt-2 bg-emerald-50 px-2 md:px-3 py-1.5 rounded-lg inline-flex items-center max-w-full overflow-hidden">
-                  <span className="text-xs md:text-sm text-emerald-700 font-medium truncate">
-                    {tierDiscount}% discount with your{' '}
-                    {membership.tier.replace('level', 'Level ')} membership
-                  </span>
-                </div>
-              )}
             </div>
 
             <div className="mb-4 md:mb-6 border-b border-gray-100 pb-4 md:pb-6">
@@ -374,7 +324,7 @@ export default function ProductDetailPage() {
                 product={{
                   id: product.id,
                   name: product.name,
-                  price: calculateDiscountedPrice(),
+                  price: product.price,
                   image_url: product.imageUrl || undefined,
                 }}
                 disabled={!product.inStock}

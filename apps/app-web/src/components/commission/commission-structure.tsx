@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import services from '@/lib/services';
+import services from '@/services';
 // Authentication is now handled at the page level
 
 // Types for commission structure data

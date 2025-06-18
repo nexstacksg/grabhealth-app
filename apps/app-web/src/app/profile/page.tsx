@@ -16,18 +16,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, User, Upload } from 'lucide-react';
-import { useMembership } from '@/contexts/MembershipContext';
 import { toast } from 'sonner';
-import { MembershipProfile } from '@/components/membership-profile';
-import services from '@/lib/services';
+import services from '@/services';
 import { IUserPublic } from '@app/shared-types';
 
-interface UserProfile extends IUserPublic {
-  membership?: {
-    tier: string;
-    points: number;
-  };
-}
+interface UserProfile extends IUserPublic {}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -53,20 +46,7 @@ export default function ProfilePage() {
         // Fetch user profile
         const userProfile = await services.profile.getProfile();
 
-        // Fetch membership data
-        const membershipData = await services.membership.getCurrentMembership();
-
-        const profileWithMembership: UserProfile = {
-          ...userProfile,
-          membership: membershipData
-            ? {
-                tier: membershipData.tier,
-                points: membershipData.points || 0,
-              }
-            : undefined,
-        };
-
-        setUser(profileWithMembership);
+        setUser(userProfile);
         setFormData((prev) => ({
           ...prev,
           firstName: userProfile.firstName || '',
@@ -265,12 +245,6 @@ export default function ProfilePage() {
         </Alert>
       )}
 
-      {user?.membership && (
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Your Membership</h3>
-          <MembershipProfile showTitle={false} />
-        </div>
-      )}
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="mb-6">

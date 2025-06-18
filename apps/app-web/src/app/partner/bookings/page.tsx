@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { PartnerAuthService } from '@app/shared-services';
+import { partnerService } from '@/services';
 
 interface Booking {
   id: string;
@@ -52,7 +52,6 @@ interface Booking {
 export default function BookingsPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [isPartner, setIsPartner] = useState(false);
-  const partnerAuthService = new PartnerAuthService();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +68,8 @@ export default function BookingsPage() {
   useEffect(() => {
     async function checkAuth() {
       setAuthLoading(true);
-      const result = await partnerAuthService.checkPartnerAuth();
+      const result = await partnerService.checkPartnerAuth();
+      
       if (result.success) {
         setIsPartner(true);
       } else {
@@ -102,9 +102,13 @@ export default function BookingsPage() {
       setLoading(true);
 
       // Build query parameters
-      const params = new URLSearchParams();
+      const params: any = {
+        page: pagination.page,
+        limit: pagination.limit,
+      };
+      
       if (statusFilter !== 'all') {
-        params.append('status', statusFilter);
+        params.status = statusFilter;
       }
 
       // Add date filters
@@ -112,37 +116,18 @@ export default function BookingsPage() {
       today.setHours(0, 0, 0, 0);
 
       if (dateFilter === 'today') {
-        params.append('fromDate', today.toISOString());
+        params.fromDate = today.toISOString();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        params.append('toDate', tomorrow.toISOString());
+        params.toDate = tomorrow.toISOString();
       } else if (dateFilter === 'upcoming') {
-        params.append('fromDate', new Date().toISOString());
+        params.fromDate = new Date().toISOString();
       } else if (dateFilter === 'past') {
-        params.append('toDate', today.toISOString());
+        params.toDate = today.toISOString();
       }
-
-      params.append('page', pagination.page.toString());
-      params.append('limit', pagination.limit.toString());
 
       // Fetch bookings from API
-      const response = await fetch(
-        `http://localhost:4000/api/v1/partner/bookings?${params.toString()}`,
-        {
-          credentials: 'include',
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('Please log in as a partner to access this page');
-          window.location.href = '/auth/login';
-          return;
-        }
-        throw new Error(`Failed to fetch bookings: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await partnerService.getBookings(params);
 
       if (data.success && data.data) {
         // Transform API data to match our Booking interface
@@ -205,23 +190,7 @@ export default function BookingsPage() {
 
   const handleStatusUpdate = async (bookingId: string, newStatus: string) => {
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/v1/partner/bookings/${bookingId}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to update booking status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await partnerService.updateBookingStatus(bookingId, newStatus);
 
       if (data.success) {
         // Update local state optimistically

@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import services from '@/lib/services';
+import { productService, categoryService, PriceRange } from '@/services';
 import { ICategory, IProduct, ProductSearchParams } from '@app/shared-types';
-import { PriceRange } from '@app/shared-services';
 import { ProductFilters } from '@/components/features/products/ProductFilters';
 import { ProductGrid } from '@/components/features/products/ProductGrid';
 import { Pagination } from '@/components/features/products/Pagination';
@@ -53,7 +52,7 @@ export default function ProductsPage() {
 
       try {
         // Use enhanced service method with business logic
-        const response = await services.product.searchProductsWithFilters({
+        const response = await productService.searchProductsWithFilters({
           page,
           limit: pagination.limit,
           category: category && category !== 'all' ? category : undefined,
@@ -125,7 +124,7 @@ export default function ProductsPage() {
     const loadCategories = async () => {
       try {
         // Fetch categories using the service from lib/services
-        const fetchedCategories = await services.category.getCategories();
+        const fetchedCategories = await categoryService.getCategories();
 
         // Add "All" category at the beginning
         const allCategory: ICategory = {

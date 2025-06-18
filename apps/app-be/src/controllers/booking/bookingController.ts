@@ -1,16 +1,13 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth/authenticate';
 import { ApiResponse, IBookingFilter, BookingStatus } from '@app/shared-types';
-import { BookingService } from '@app/shared-services';
-import { BookingDataSource } from '@app/shared-services';
-import prisma from '../../database/client';
+import { BookingService } from '../../services/booking/bookingService';
 
 class BookingController {
   private bookingService: BookingService;
 
   constructor() {
-    const dataSource = new BookingDataSource(prisma);
-    this.bookingService = new BookingService({ dataSource });
+    this.bookingService = new BookingService();
   }
   async createBooking(req: AuthRequest, res: Response) {
     try {

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { formatPrice } from '@/lib/utils';
-import services from '@/lib/services';
+import services from '@/services';
 import { IProduct } from '@app/shared-types';
 
 export const AIRecommendationsSection = React.memo(() => {

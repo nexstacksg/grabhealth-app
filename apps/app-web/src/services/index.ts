@@ -1,25 +1,26 @@
-// Re-export all services from lib/services
-export {
-  auth as authService,
-  product as productService,
-  cart as cartService,
-  order as orderService,
-  commission as commissionService,
-  user as userService,
-  dashboard as dashboardService,
-  membership as membershipService,
-  partner as partnerService,
-  promotion as promotionService,
-  category as categoryService,
-  profile as profileService,
-  ai as aiService,
-} from '@/lib/services';
+/**
+ * Services Index - Export all services
+ */
 
-// Export default services
-export { default as services } from '@/lib/services';
+export { authService } from './auth.service';
+export { partnerService } from './partner.service';
+export { productService, type PriceRange } from './product.service';
+export { categoryService } from './category.service';
+export { cartService } from './cart.service';
+export { orderService } from './order.service';
+export { commissionService } from './commission.service';
+export { membershipService } from './membership.service';
+export { dashboardService } from './dashboard.service';
+export { profileService } from './profile.service';
+export { promotionService } from './promotion.service';
+export { aiService } from './ai.service';
+export { bookingsService } from './bookings.service';
+export { partnersService } from './partners.service';
+export { apiClient } from './api-client';
 
-// Export auth service shared for backward compatibility
-export { auth as authServiceShared } from '@/lib/services';
+// Export base service for extending
+export { BaseService } from './base.service';
 
-// Note: Individual services are already exported above
-// No need for duplicate exports
+// Export default services object for backward compatibility
+export { default as services } from './services';
+export { default } from './services';

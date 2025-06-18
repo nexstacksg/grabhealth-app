@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { IPartner } from '@app/shared-types';
-import services from '@/lib/services';
+import services from '@/services';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 

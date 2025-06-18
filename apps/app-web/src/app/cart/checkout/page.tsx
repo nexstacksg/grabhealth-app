@@ -37,14 +37,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
-import { useMembership } from '@/contexts/MembershipContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice } from '@/lib/utils';
 import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import services from '@/lib/services';
+import services from '@/services';
 
 // Form validation schema
 const checkoutFormSchema = z.object({
@@ -89,14 +88,7 @@ export default function CheckoutPage() {
     clearCart,
   } = useCart();
 
-  const {
-    membership,
-    isLoading: membershipLoading,
-    tierDiscount,
-    addPoints,
-  } = useMembership();
-
-  const isLoading = cartLoading || membershipLoading;
+  const isLoading = cartLoading;
 
   // Initialize form with react-hook-form
   const form = useForm<CheckoutFormValues>({
@@ -147,14 +139,6 @@ export default function CheckoutPage() {
       // Clear the cart after successful order
       await clearCart();
 
-      // Add membership points for the purchase (10 points per $100 spent)
-      if (membership) {
-        const pointsToAdd = Math.floor(discountedSubtotal / 100) * 10;
-        if (pointsToAdd > 0) {
-          await addPoints(pointsToAdd);
-          toast.success(`Added ${pointsToAdd} membership points!`);
-        }
-      }
 
       // Show success message
       toast.success('Order placed successfully!');
@@ -169,12 +153,10 @@ export default function CheckoutPage() {
     }
   };
 
-  // Calculate totals with membership discount
+  // Calculate totals
   const subtotal = cartTotal;
-  const discount = membership ? subtotal * tierDiscount : 0;
-  const discountedSubtotal = subtotal - discount;
-  const tax = discountedSubtotal * 0.07;
-  const total = discountedSubtotal + tax;
+  const tax = subtotal * 0.07;
+  const total = subtotal + tax;
 
   // If cart is empty, redirect to cart page
   if (!isLoading && cartItems.length === 0) {
@@ -516,19 +498,6 @@ export default function CheckoutPage() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
-                {membership && discount > 0 && (
-                  <div className="flex justify-between items-center text-sm text-emerald-600">
-                    <div className="flex items-center">
-                      <BadgePercent className="h-3 w-3 mr-1" />
-                      <span>
-                        {membership.tier.charAt(0).toUpperCase() +
-                          membership.tier.slice(1)}{' '}
-                        Discount
-                      </span>
-                    </div>
-                    <span>-{formatPrice(discount)}</span>
-                  </div>
-                )}
 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax (7%)</span>
@@ -547,30 +516,6 @@ export default function CheckoutPage() {
                   <span>{formatPrice(total)}</span>
                 </div>
 
-                {membership && (
-                  <div className="mt-2 p-2 bg-emerald-50 rounded-md text-xs">
-                    <div className="flex items-start">
-                      <Award className="h-4 w-4 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium text-emerald-700">
-                          Membership Benefits
-                        </p>
-                        <p className="text-emerald-600 mt-0.5">
-                          {membership.tier === 'level7' ||
-                          membership.tier === 'level6'
-                            ? 'Premium'
-                            : 'Essential'}{' '}
-                          tier: {tierDiscount * 100}% discount
-                        </p>
-                        <p className="text-emerald-600 mt-0.5">
-                          You'll earn{' '}
-                          {Math.floor(discountedSubtotal / 100) * 10} points
-                          with this order
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
             <CardFooter>

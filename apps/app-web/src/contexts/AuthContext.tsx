@@ -9,7 +9,7 @@ import React, {
   useMemo,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import services from '@/lib/services';
+import { authService } from '@/services';
 import { IUserPublic, RegisterRequest } from '@app/shared-types';
 
 // Create context without explicit type definition to avoid unused warnings
@@ -26,13 +26,8 @@ const useAuthProvider = () => {
   const checkAuth = useCallback(async () => {
     try {
       // Try to get user profile - cookies will be sent automatically
-      const userProfile = await services.auth.getProfile();
-
-      if (userProfile && userProfile.id) {
-        setUser(userProfile);
-      } else {
-        setUser(null);
-      }
+      const userProfile = await authService.getProfile();
+      setUser(userProfile);
     } catch {
       // User is not authenticated
       setUser(null);
@@ -53,7 +48,7 @@ const useAuthProvider = () => {
   const login = useCallback(
     async (email: string, password: string) => {
       try {
-        const authData = await services.auth.login({ email, password });
+        const authData = await authService.login({ email, password });
         setUser(authData.user);
 
         // Check if email verification is needed
@@ -69,8 +64,7 @@ const useAuthProvider = () => {
           router.push('/');
         }
       } catch (error: any) {
-        const err = error as { message?: string };
-        throw new Error(err.message || 'Invalid email or password');
+        throw new Error(error.message || 'Invalid email or password');
       }
     },
     [router]
@@ -78,7 +72,7 @@ const useAuthProvider = () => {
 
   const logout = useCallback(async () => {
     try {
-      await services.auth.logout();
+      await authService.logout();
     } catch {
       // Ignore logout errors
     } finally {
@@ -90,8 +84,7 @@ const useAuthProvider = () => {
   const register = useCallback(
     async (data: RegisterRequest) => {
       try {
-        // Pass the data directly as shared-services now expects firstName and lastName
-        const authData = await services.auth.register({
+        const authData = await authService.register({
           email: data.email,
           password: data.password,
           firstName: data.firstName || '',
@@ -112,7 +105,6 @@ const useAuthProvider = () => {
           router.push('/');
         }
       } catch (error: any) {
-        // Pass through the full error structure including details
         throw error;
       }
     },

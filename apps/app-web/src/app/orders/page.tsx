@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import services from '@/lib/services';
+import services from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
 import { formatPrice } from '@/lib/utils';

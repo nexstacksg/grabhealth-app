@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { formatPrice } from '@/lib/utils';
 import React from 'react';
-import services from '@/lib/services';
+import services from '@/services';
 
 // Types
 interface Message {

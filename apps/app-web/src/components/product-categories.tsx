@@ -18,7 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import type { JSX } from 'react';
-import services from '@/lib/services';
+import services from '@/services';
 import { ICategory } from '@app/shared-types';
 
 export default function ProductCategories() {

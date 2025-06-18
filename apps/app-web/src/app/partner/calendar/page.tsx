@@ -17,7 +17,7 @@ import {
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PartnerAuthService } from '@app/shared-services';
+import { partnerService } from '@/services';
 
 interface CalendarDay {
   date: string;
@@ -40,12 +40,10 @@ export default function PartnerCalendarPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const partnerAuthService = new PartnerAuthService();
-
   useEffect(() => {
     async function checkAuth() {
       setAuthLoading(true);
-      const result = await partnerAuthService.checkPartnerAuth();
+      const result = await partnerService.checkPartnerAuth();
       if (result.success && result.partnerInfo) {
         setIsPartner(true);
         setPartnerInfo(result.partnerInfo);

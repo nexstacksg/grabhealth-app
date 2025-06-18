@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarIcon } from 'lucide-react';
-import services from '@/lib/services';
+import services from '@/services';
 
 // Force dynamic rendering to avoid build-time API calls
 export const dynamic = 'force-dynamic';

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Clock, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { PartnerAuthService } from '@app/shared-services';
+import { partnerService } from '@/services';
 
 interface DayAvailability {
   dayOfWeek: number;
@@ -45,12 +45,10 @@ export default function AvailabilityPage() {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const partnerAuthService = new PartnerAuthService();
-
   useEffect(() => {
     async function checkAuth() {
       setAuthLoading(true);
-      const result = await partnerAuthService.checkPartnerAuth();
+      const result = await partnerService.checkPartnerAuth();
       if (result.success) {
         setIsPartner(true);
       } else {
@@ -79,23 +77,7 @@ export default function AvailabilityPage() {
       setLoading(true);
 
       // Fetch availability from API
-      const response = await fetch(
-        'http://localhost:4000/api/v1/partner/availability',
-        {
-          credentials: 'include',
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('Please log in as a partner to access this page');
-          window.location.href = '/auth/login';
-          return;
-        }
-        throw new Error(`Failed to fetch availability: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await partnerService.getAvailability();
 
       if (data.success && data.data) {
         // Create a map of existing availability
