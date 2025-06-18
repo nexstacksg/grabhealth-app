@@ -87,7 +87,10 @@ export default function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <Card key={index} className="border-none shadow-sm">
               <CardContent className="p-6">
-                <QuoteIcon className="h-8 w-8 text-emerald-300 mb-4" />
+                <QuoteIcon
+                  className="h-8 w-8 text-emerald-300 mb-4"
+                  suppressHydrationWarning
+                />
                 <p className="text-gray-700 mb-6 italic">
                   "{testimonial.quote}"
                 </p>
@@ -122,7 +125,10 @@ export default function Testimonials() {
                 <div key={index} className="w-full flex-shrink-0">
                   <Card className="border-none shadow-sm mx-1">
                     <CardContent className="p-6">
-                      <QuoteIcon className="h-8 w-8 text-emerald-300 mb-4" />
+                      <QuoteIcon
+                        className="h-8 w-8 text-emerald-300 mb-4"
+                        suppressHydrationWarning
+                      />
                       <p className="text-gray-700 mb-6 italic">
                         "{testimonial.quote}"
                       </p>
@@ -158,7 +164,7 @@ export default function Testimonials() {
               className="rounded-full"
               onClick={prevSlide}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" suppressHydrationWarning />
             </Button>
 
             <div className="flex gap-2">
@@ -178,7 +184,7 @@ export default function Testimonials() {
               className="rounded-full"
               onClick={nextSlide}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" suppressHydrationWarning />
             </Button>
           </div>
         </div>

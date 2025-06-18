@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <RootProvider>
           <LayoutWrapper>
             <main className="min-h-screen pb-4 md:pb-8">{children}</main>

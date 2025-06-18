@@ -23,19 +23,19 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <Link href="#" className="text-gray-400 hover:text-emerald-400">
-                <Facebook className="h-5 w-5" />
+                <Facebook className="h-5 w-5" suppressHydrationWarning />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-emerald-400">
-                <Instagram className="h-5 w-5" />
+                <Instagram className="h-5 w-5" suppressHydrationWarning />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-emerald-400">
-                <Twitter className="h-5 w-5" />
+                <Twitter className="h-5 w-5" suppressHydrationWarning />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-emerald-400">
-                <Linkedin className="h-5 w-5" />
+                <Linkedin className="h-5 w-5" suppressHydrationWarning />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-emerald-400">
-                <Youtube className="h-5 w-5" />
+                <Youtube className="h-5 w-5" suppressHydrationWarning />
               </Link>
             </div>
           </div>

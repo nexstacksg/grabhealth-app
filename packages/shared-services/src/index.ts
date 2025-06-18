@@ -22,6 +22,7 @@ export type {
   IMembership,
   MembershipContextState,
   MembershipContextType,
+  CartContextType,
 } from '@app/shared-types';
 export { PartnerService } from './services/PartnerService';
 export { PromotionService } from './services/PromotionService';
