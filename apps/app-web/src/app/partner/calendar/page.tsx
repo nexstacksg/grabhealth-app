@@ -83,7 +83,7 @@ export default function PartnerCalendarPage() {
 
       // Fetch partner info first to get partner ID
       const profileResponse = await fetch(
-        'http://localhost:4000/api/v1/partner-dashboard/profile',
+        'http://localhost:4000/api/v1/partner/profile',
         {
           credentials: 'include',
         }
@@ -168,7 +168,7 @@ export default function PartnerCalendarPage() {
   const handleManageTimeSlots = () => {
     if (selectedDate) {
       // Navigate to time slots management page
-      window.location.href = `/partner-dashboard/availability?date=${format(selectedDate, 'yyyy-MM-dd')}`;
+      window.location.href = `/partner/availability?date=${format(selectedDate, 'yyyy-MM-dd')}`;
     }
   };
 
@@ -185,7 +185,7 @@ export default function PartnerCalendarPage() {
       let currentPartnerId = partnerId;
       if (!currentPartnerId) {
         const profileResponse = await fetch(
-          'http://localhost:4000/api/v1/partner-dashboard/profile',
+          'http://localhost:4000/api/v1/partner/profile',
           {
             credentials: 'include',
           }
@@ -228,7 +228,7 @@ export default function PartnerCalendarPage() {
       );
 
       const response = await fetch(
-        'http://localhost:4000/api/v1/partner-dashboard/days-off',
+        'http://localhost:4000/api/v1/partner/days-off',
         {
           method: 'POST',
           headers: {

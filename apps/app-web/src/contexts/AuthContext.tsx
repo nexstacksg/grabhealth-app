@@ -55,13 +55,16 @@ const useAuthProvider = () => {
       try {
         const authData = await services.auth.login({ email, password });
         setUser(authData.user);
-        
+
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {
           router.push('/auth/verify');
-        } else if (authData.user.role === 'PARTNER' && authData.user.partnerId) {
+        } else if (
+          authData.user.role === 'PARTNER' &&
+          authData.user.partnerId
+        ) {
           // Redirect partner users to partner dashboard
-          router.push('/partner-dashboard');
+          router.push('/partner');
         } else {
           router.push('/');
         }
@@ -92,16 +95,19 @@ const useAuthProvider = () => {
           email: data.email,
           password: data.password,
           firstName: data.firstName || '',
-          lastName: data.lastName || ''
+          lastName: data.lastName || '',
         });
         setUser(authData.user);
-        
+
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {
           router.push('/auth/verify');
-        } else if (authData.user.role === 'PARTNER' && authData.user.partnerId) {
+        } else if (
+          authData.user.role === 'PARTNER' &&
+          authData.user.partnerId
+        ) {
           // Redirect partner users to partner dashboard
-          router.push('/partner-dashboard');
+          router.push('/partner');
         } else {
           router.push('/');
         }

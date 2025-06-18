@@ -127,7 +127,7 @@ export default function BookingsPage() {
 
       // Fetch bookings from API
       const response = await fetch(
-        `http://localhost:4000/api/v1/partner-dashboard/bookings?${params.toString()}`,
+        `http://localhost:4000/api/v1/partner/bookings?${params.toString()}`,
         {
           credentials: 'include',
         }
@@ -206,7 +206,7 @@ export default function BookingsPage() {
   const handleStatusUpdate = async (bookingId: string, newStatus: string) => {
     try {
       const response = await fetch(
-        `http://localhost:4000/api/v1/partner-dashboard/bookings/${bookingId}/status`,
+        `http://localhost:4000/api/v1/partner/bookings/${bookingId}/status`,
         {
           method: 'PATCH',
           headers: {

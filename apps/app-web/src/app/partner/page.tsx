@@ -33,7 +33,7 @@ export default function PartnerDashboardPage() {
   const fetchDashboardData = async () => {
     try {
       // Fetch dashboard stats
-      const statsResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/stats', {
+      const statsResponse = await fetch('http://localhost:4000/api/v1/partner/stats', {
         credentials: 'include',
       });
       
@@ -45,7 +45,7 @@ export default function PartnerDashboardPage() {
       }
 
       // Fetch today's schedule
-      const scheduleResponse = await fetch('http://localhost:4000/api/v1/partner-dashboard/schedule/today', {
+      const scheduleResponse = await fetch('http://localhost:4000/api/v1/partner/schedule/today', {
         credentials: 'include',
       });
       
@@ -102,7 +102,7 @@ export default function PartnerDashboardPage() {
   const handleBookingAction = async (bookingId: string, action: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
     setActionLoading(bookingId);
     try {
-      const response = await fetch(`http://localhost:4000/api/v1/partner-dashboard/bookings/${bookingId}/status`, {
+      const response = await fetch(`http://localhost:4000/api/v1/partner/bookings/${bookingId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

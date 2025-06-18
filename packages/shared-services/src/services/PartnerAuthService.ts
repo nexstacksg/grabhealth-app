@@ -17,15 +17,12 @@ export class PartnerAuthService {
    */
   async checkPartnerAuth(): Promise<PartnerAuthResult> {
     try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/partner-dashboard/profile`,
-        {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${this.baseUrl}/api/v1/partner/profile`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         return this.handleAuthError(response.status);

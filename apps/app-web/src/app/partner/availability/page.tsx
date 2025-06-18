@@ -80,7 +80,7 @@ export default function AvailabilityPage() {
 
       // Fetch availability from API
       const response = await fetch(
-        'http://localhost:4000/api/v1/partner-dashboard/availability',
+        'http://localhost:4000/api/v1/partner/availability',
         {
           credentials: 'include',
         }
@@ -176,7 +176,7 @@ export default function AvailabilityPage() {
 
       // Send to API
       const response = await fetch(
-        'http://localhost:4000/api/v1/partner-dashboard/availability',
+        'http://localhost:4000/api/v1/partner/availability',
         {
           method: 'PUT',
           headers: {
