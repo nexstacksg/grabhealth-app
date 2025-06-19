@@ -40,7 +40,7 @@ export abstract class BaseService {
    * Extract data from API response or throw error
    */
   protected extractData<T>(response: ApiResponse<T>): T {
-    if (!response.success || !response.data) {
+    if (!response.success) {
       throw {
         status: response.error?.code || 500,
         error: {
@@ -48,7 +48,9 @@ export abstract class BaseService {
         },
       };
     }
-    return response.data;
+    // Some endpoints return success with message only (no data)
+    // Return empty object as T if no data is present
+    return response.data || ({} as T);
   }
 
   /**

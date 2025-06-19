@@ -28,8 +28,9 @@ const useAuthProvider = () => {
       // Try to get user profile - cookies will be sent automatically
       const userProfile = await authService.getProfile();
       setUser(userProfile);
-    } catch {
-      // User is not authenticated
+    } catch (error: any) {
+      // User is not authenticated or there was an error
+      console.log('Auth check failed:', error.message || 'Not authenticated');
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -37,13 +38,23 @@ const useAuthProvider = () => {
   }, []);
 
   useEffect(() => {
-    // Small delay to ensure cookies are available after hydration
-    const timer = setTimeout(() => {
-      checkAuth();
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [checkAuth]);
+    let mounted = true;
+    
+    // Only check auth once on mount
+    const checkAuthOnce = async () => {
+      if (mounted) {
+        // Small delay to ensure cookies are available after hydration
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await checkAuth();
+      }
+    };
+    
+    checkAuthOnce();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []); // Empty dependency array - only run once on mount
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -88,7 +99,9 @@ const useAuthProvider = () => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);
-      router.push('/auth/login');
+      
+      // Force a full page reload to clear any cached state
+      window.location.href = '/';
     }
   }, [router]);
 

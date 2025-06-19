@@ -72,14 +72,12 @@ export default function PartnersPage() {
   const fetchPartners = async () => {
     try {
       setIsLoading(true);
-      const response = await services.partners.getPartners(
-        {
-          search: searchTerm,
-          city: selectedCity,
-        },
-        1, // page
-        20 // limit
-      );
+      const response = await services.partners.getPartners({
+        search: searchTerm,
+        location: selectedCity,
+        page: 1,
+        limit: 20
+      });
       setPartners(response.partners);
     } catch (error) {
       console.error('Failed to fetch partners:', error);

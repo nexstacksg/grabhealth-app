@@ -35,7 +35,7 @@ interface UserProfile extends IUserPublic {
 class ProfileService extends BaseService {
   async getProfile(): Promise<UserProfile> {
     try {
-      const response = await apiClient.get<ApiResponse<UserProfile>>('/profile');
+      const response = await apiClient.get<ApiResponse<UserProfile>>('/auth/profile');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -44,7 +44,7 @@ class ProfileService extends BaseService {
 
   async updateProfile(data: UpdateProfileData): Promise<UserProfile> {
     try {
-      const response = await apiClient.put<ApiResponse<UserProfile>>('/profile', data);
+      const response = await apiClient.put<ApiResponse<UserProfile>>('/auth/profile', data);
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -53,7 +53,7 @@ class ProfileService extends BaseService {
 
   async changePassword(data: ChangePasswordData): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/profile/change-password', data);
+      const response = await apiClient.post<ApiResponse>('/auth/profile/change-password', data);
       this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -66,7 +66,7 @@ class ProfileService extends BaseService {
       formData.append('file', file);
       
       const response = await apiClient.post<ApiResponse<{ url: string }>>(
-        '/profile/upload-image',
+        '/auth/profile/upload-image',
         formData,
         {
           headers: {
@@ -82,7 +82,7 @@ class ProfileService extends BaseService {
 
   async deleteAccount(): Promise<void> {
     try {
-      await apiClient.delete('/profile');
+      await apiClient.delete('/auth/profile');
     } catch (error) {
       this.handleError(error);
     }
@@ -90,7 +90,7 @@ class ProfileService extends BaseService {
 
   async getReferralCode(): Promise<string> {
     try {
-      const response = await apiClient.get<ApiResponse<{ code: string }>>('/profile/referral-code');
+      const response = await apiClient.get<ApiResponse<{ code: string }>>('/auth/profile/referral-code');
       const data = this.extractData(response);
       return data.code;
     } catch (error) {
@@ -100,7 +100,7 @@ class ProfileService extends BaseService {
 
   async generateReferralCode(): Promise<string> {
     try {
-      const response = await apiClient.post<ApiResponse<{ code: string }>>('/profile/generate-referral-code');
+      const response = await apiClient.post<ApiResponse<{ code: string }>>('/auth/profile/generate-referral-code');
       const data = this.extractData(response);
       return data.code;
     } catch (error) {
@@ -109,4 +109,4 @@ class ProfileService extends BaseService {
   }
 }
 
-export const profileService = new ProfileService('/profile');
+export const profileService = new ProfileService('/auth/profile');

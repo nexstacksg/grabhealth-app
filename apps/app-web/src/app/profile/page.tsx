@@ -98,7 +98,7 @@ export default function ProfilePage() {
         prev
           ? {
               ...prev,
-              image_url: result.imageUrl,
+              image_url: result.url,
             }
           : null
       );

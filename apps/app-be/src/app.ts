@@ -19,11 +19,22 @@ const app: Application = express();
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration with explicit settings for cookies
 app.use(
   cors({
-    origin: config.cors.origin?.split(',') || '*',
+    origin: (origin, callback) => {
+      // Allow requests from configured origins or no origin (like Postman)
+      const allowedOrigins = config.cors.origin?.split(',') || [];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['set-cookie'],
   })
 );
 
@@ -39,6 +50,28 @@ app.use(express.urlencoded({ extended: true }));
 
 // Cookie parsing
 app.use(cookieParser());
+
+// Debug middleware to log cookies
+app.use((req, _res, next) => {
+  if (req.url.includes('/auth')) {
+    console.log('Request to:', req.method, req.url);
+    console.log('Cookies:', req.cookies);
+    console.log('Headers:', req.headers.cookie);
+  }
+  next();
+});
+
+// Clear empty or invalid cookies middleware
+app.use((req, res, next) => {
+  // Check if cookies exist and are empty
+  if (req.cookies.accessToken === '' || req.cookies.accessToken === undefined) {
+    res.clearCookie('accessToken');
+  }
+  if (req.cookies.refreshToken === '' || req.cookies.refreshToken === undefined) {
+    res.clearCookie('refreshToken');
+  }
+  next();
+});
 
 // Health check
 app.get('/health', (_req, res) => {

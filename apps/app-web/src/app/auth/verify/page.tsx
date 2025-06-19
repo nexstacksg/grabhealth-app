@@ -27,7 +27,11 @@ export default function VerifyPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Get email from user or sessionStorage (client-side only)
-  const email = user?.email || (typeof window !== 'undefined' ? JSON.parse(sessionStorage.getItem('user') || '{}').email : '');
+  const email =
+    user?.email ||
+    (typeof window !== 'undefined'
+      ? JSON.parse(sessionStorage.getItem('user') || '{}').email
+      : '');
 
   useEffect(() => {
     // Redirect if no user or already verified
@@ -49,7 +53,7 @@ export default function VerifyPage() {
   const handleCodeChange = (index: number, value: string) => {
     // Only allow digits
     const digit = value.replace(/\D/g, '').slice(-1);
-    
+
     const newCode = [...code];
     newCode[index] = digit;
     setCode(newCode);
@@ -69,7 +73,10 @@ export default function VerifyPage() {
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     // Handle backspace
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
@@ -78,8 +85,11 @@ export default function VerifyPage() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-    
+    const pastedData = e.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+      .slice(0, 4);
+
     if (pastedData.length === 4) {
       const newCode = pastedData.split('');
       setCode(newCode);
@@ -90,7 +100,7 @@ export default function VerifyPage() {
 
   const handleVerify = async (verificationCode?: string) => {
     const fullCode = verificationCode || code.join('');
-    
+
     if (fullCode.length !== 4) {
       setError('Please enter all 4 digits');
       return;
@@ -100,8 +110,10 @@ export default function VerifyPage() {
     setError(null);
 
     try {
+      console.log('Verifying email code for:', email, 'with code:', fullCode);
       await services.auth.verifyEmailCode(email, fullCode);
-      
+      console.log('Verification successful, updating session storage...');
+
       // Update user status in sessionStorage (client-side only)
       if (typeof window !== 'undefined') {
         const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -110,15 +122,28 @@ export default function VerifyPage() {
           sessionStorage.setItem('user', JSON.stringify(storedUser));
         }
       }
-      
-      // Refresh auth state
-      await refreshAuth();
-      
-      // Redirect to home
-      router.push('/');
+
+      // Clear any existing session data since user needs to login after verification
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('user');
+      }
+
+      // Redirect to login page with success message
+      console.log('Redirecting to login...');
+      router.push('/auth/login?verified=true');
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(err.response?.data?.error?.message || err.message || 'Invalid code');
+      console.error('Verification error:', error);
+      const err = error as {
+        response?: { data?: { error?: { message?: string } } };
+        error?: { message?: string };
+        message?: string;
+      };
+      // Check both response.data.error.message and error.message patterns
+      const errorMessage = err.response?.data?.error?.message || 
+                          err.error?.message || 
+                          err.message || 
+                          'Invalid code';
+      setError(errorMessage);
       // Clear code on error
       setCode(['', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -139,17 +164,28 @@ export default function VerifyPage() {
       setCode(['', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(err.response?.data?.error?.message || err.message || 'Failed to resend code');
+      const err = error as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+      setError(
+        err.response?.data?.error?.message ||
+          err.message ||
+          'Failed to resend code'
+      );
     } finally {
       setIsResending(false);
     }
   };
 
   // Mask email for display
-  const maskedEmail = email ? 
-    email.replace(/^(.{2})(.*)(@.*)$/, (_: string, a: string, b: string, c: string) => a + '*'.repeat(b.length) + c) : 
-    '';
+  const maskedEmail = email
+    ? email.replace(
+        /^(.{2})(.*)(@.*)$/,
+        (_: string, a: string, b: string, c: string) =>
+          a + '*'.repeat(b.length) + c
+      )
+    : '';
 
   return (
     <div className="container max-w-md py-16 mx-auto">
@@ -168,13 +204,15 @@ export default function VerifyPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="space-y-4">
             <div className="flex justify-center gap-2">
               {code.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => { inputRefs.current[index] = el; }}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
@@ -206,7 +244,7 @@ export default function VerifyPage() {
 
             <div className="text-center text-sm">
               <p className="text-gray-500 mb-2">
-                Didn't receive the code?
+                Didn&apos;t receive the code?
               </p>
               <Button
                 variant="link"

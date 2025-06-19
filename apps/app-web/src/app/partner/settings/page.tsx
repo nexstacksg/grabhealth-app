@@ -86,7 +86,7 @@ export default function SettingsPage() {
           }
           
           const parsedHours = DAYS_OF_WEEK.map(day => {
-            const dayHours = hours[day];
+            const dayHours = (hours as any)[day];
             if (!dayHours || dayHours.closed) {
               return { day, isOpen: false, openTime: '09:00', closeTime: '17:00' };
             }

@@ -25,7 +25,7 @@ import {
   Share2,
   CopyIcon,
 } from 'lucide-react';
-import { useMembership } from '@/contexts/MembershipContext';
+// import { useMembership } from '@/contexts/MembershipContext';
 import QRCode from 'react-qr-code';
 import { toast } from 'sonner';
 
@@ -34,8 +34,11 @@ interface MembershipProfileProps {
 }
 
 export function MembershipProfile({}: MembershipProfileProps) {
-  const { membership, isLoading, tierDiscount, pointsToNextTier } =
-    useMembership();
+  // Temporarily mock the membership data until MembershipContext is implemented
+  const membership = { id: 'user1', tier: 'ESSENTIAL', points: 100 };
+  const isLoading = false;
+  const tierDiscount = 10;
+  const pointsToNextTier = 400;
 
   const [copied, setCopied] = useState(false);
   const qrCodeRef = useRef<HTMLDivElement>(null);

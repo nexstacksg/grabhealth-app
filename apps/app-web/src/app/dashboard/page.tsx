@@ -42,7 +42,8 @@ export default async function DashboardPage() {
   }
 
   try {
-    partners = await services.partner.getPartnerDashboard();
+    const partnersData = await services.partners.getPartners({ limit: 10 });
+    partners = partnersData.partners;
   } catch (error) {
     console.error('Error fetching partners:', error);
   }

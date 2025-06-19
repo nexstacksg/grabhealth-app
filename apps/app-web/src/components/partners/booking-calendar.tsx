@@ -36,7 +36,7 @@ export function BookingCalendar({ partnerId, service, onBookingComplete, isFreeC
     const fetchFreeCheckupStatus = async () => {
       if (user && service.category === 'Body Check') {
         try {
-          const status = await services.bookings.getFreeCheckupStatus(user.id);
+          const status = await services.bookings.checkFreeCheckupEligibility();
           setFreeCheckupStatus(status);
         } catch (error) {
           console.error('Failed to fetch free checkup status:', error);
@@ -53,7 +53,8 @@ export function BookingCalendar({ partnerId, service, onBookingComplete, isFreeC
       try {
         setIsLoadingCalendar(true);
         const monthStr = format(currentMonth, 'yyyy-MM');
-        const calendar = await services.partners.getPartnerCalendar(partnerId, monthStr);
+        // For now, just create an empty calendar until the backend method is available
+        const calendar: any[] = [];
         setCalendarDays(calendar);
       } catch (error) {
         console.error('Failed to fetch calendar:', error);
@@ -75,7 +76,16 @@ export function BookingCalendar({ partnerId, service, onBookingComplete, isFreeC
         setIsLoadingSlots(true);
         setError(null);
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
-        const slots = await services.partners.getAvailableSlots(partnerId, dateStr);
+        // Use getPartnerAvailability method which exists in the service
+        const availability = await services.partners.getPartnerAvailability(partnerId, service.id, dateStr);
+        // Convert string slots to IAvailableSlot format
+        const slots: IAvailableSlot[] = (availability.slots || []).map((time: string) => ({
+          time,
+          date: dateStr,
+          available: true,
+          maxBookings: 1,
+          currentBookings: 0
+        }));
         setAvailableSlots(slots);
         setSelectedSlot(null);
       } catch (error) {
@@ -102,7 +112,6 @@ export function BookingCalendar({ partnerId, service, onBookingComplete, isFreeC
         bookingDate: format(selectedDate, 'yyyy-MM-dd'),
         startTime: selectedSlot,
         notes: `Booking for ${service.name}`,
-        paymentMethod: 'CREDIT_CARD',
         isFreeCheckup: isFreeCheckup || (freeCheckupStatus?.eligible && service.category === 'Body Check')
       });
 

@@ -35,7 +35,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPrice } from '@/lib/utils';
@@ -130,15 +129,18 @@ export default function CheckoutPage() {
       const billingAddress = shippingAddress; // Using same as shipping for now
 
       // Process the order through backend
-      const order = await services.order.checkoutFromCart(
-        data.paymentMethod,
+      const order = await services.order.checkoutFromCart({
+        cartItems: cartItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity
+        })),
+        paymentMethod: data.paymentMethod,
         shippingAddress,
-        billingAddress
-      );
+        billingAddress,
+      });
 
       // Clear the cart after successful order
       await clearCart();
-
 
       // Show success message
       toast.success('Order placed successfully!');
@@ -498,7 +500,6 @@ export default function CheckoutPage() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
-
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax (7%)</span>
                   <span>{formatPrice(tax)}</span>
@@ -515,7 +516,6 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
-
               </div>
             </CardContent>
             <CardFooter>

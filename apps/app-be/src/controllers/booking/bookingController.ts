@@ -68,7 +68,7 @@ class BookingController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const filters: IBookingFilter = {
-        userId,
+        userId: userId || '',
         status: req.query.status as BookingStatus | undefined,
         fromDate: req.query.fromDate
           ? new Date(req.query.fromDate as string)
@@ -79,7 +79,7 @@ class BookingController {
       };
 
       const result = await this.bookingService.getBookings(
-        filters,
+        filters as any,
         page,
         limit
       );

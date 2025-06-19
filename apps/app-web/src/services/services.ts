@@ -15,6 +15,7 @@ import { profileService } from './profile.service';
 import { aiService } from './ai.service';
 import { bookingsService } from './bookings.service';
 import { partnersService } from './partners.service';
+import { promotionService } from './promotion.service';
 
 const services = {
   auth: authService,
@@ -29,6 +30,7 @@ const services = {
   ai: aiService,
   bookings: bookingsService,
   partners: partnersService,
+  promotion: promotionService,
   // Note: 'user' service is not created as it seems to be handled by profile/auth
 };
 

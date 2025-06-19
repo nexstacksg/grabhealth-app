@@ -30,6 +30,7 @@ const publicPaths = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const accessToken = request.cookies.get('accessToken');
+  const refreshToken = request.cookies.get('refreshToken');
 
   // Check if the path requires authentication
   const isProtectedPath = protectedPaths.some((path) =>
@@ -41,15 +42,31 @@ export function middleware(request: NextRequest) {
   );
 
   // Redirect to login if accessing protected path without token
-  if (isProtectedPath && !accessToken) {
+  if (isProtectedPath && !accessToken && !refreshToken) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+    
+    // Create response with cache headers to prevent showing stale content
+    const response = NextResponse.redirect(loginUrl);
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    
+    return response;
   }
 
   // Redirect to home if accessing auth pages while authenticated
   if (isAuthPath && accessToken) {
     return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // For protected paths, add cache headers to prevent stale content
+  if (isProtectedPath) {
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    return response;
   }
 
   return NextResponse.next();

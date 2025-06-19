@@ -72,7 +72,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
           throw new Error('Invalid order ID');
         }
 
-        const orderData = await services.order.getOrder(orderId);
+        const orderData = await services.order.getOrder(orderId.toString());
         setOrder(orderData as IOrderWithItems);
       } catch (error) {
         console.error('Error fetching order details:', error);

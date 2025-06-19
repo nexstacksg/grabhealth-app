@@ -4,7 +4,11 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IOrder, ICreateOrder, ICheckoutRequest, ApiResponse } from '@app/shared-types';
+import {
+  IOrder,
+  IOrderCreate,
+  ApiResponse,
+} from '@app/shared-types';
 
 interface OrderStats {
   totalOrders: number;
@@ -13,26 +17,47 @@ interface OrderStats {
   completedOrders: number;
 }
 
+interface CheckoutRequest {
+  cartItems: {
+    productId: number;
+    quantity: number;
+  }[];
+  paymentMethod: string;
+  shippingAddress: string;
+  billingAddress: string;
+  notes?: string;
+}
+
 class OrderService extends BaseService {
-  async createOrder(data: ICreateOrder): Promise<IOrder> {
+  async createOrder(data: IOrderCreate): Promise<IOrder> {
     try {
-      const response = await apiClient.post<ApiResponse<IOrder>>('/orders', data);
+      const response = await apiClient.post<ApiResponse<IOrder>>(
+        '/orders',
+        data
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async getMyOrders(params?: { 
-    page?: number; 
-    limit?: number; 
-    status?: string 
-  }): Promise<{ orders: IOrder[]; total: number; page: number; totalPages: number }> {
+  async getMyOrders(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<{
+    orders: IOrder[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
     try {
       const queryString = this.buildQueryString(params);
-      const response = await apiClient.get<ApiResponse<{ orders: IOrder[]; pagination: any }>>(`/orders${queryString}`);
+      const response = await apiClient.get<
+        ApiResponse<{ orders: IOrder[]; pagination: any }>
+      >(`/orders/my-orders${queryString}`);
       const data = this.extractData(response);
-      
+
       return {
         orders: data.orders || [],
         total: data.pagination?.total || 0,
@@ -46,7 +71,9 @@ class OrderService extends BaseService {
 
   async getOrder(id: string): Promise<IOrder> {
     try {
-      const response = await apiClient.get<ApiResponse<IOrder>>(`/orders/${id}`);
+      const response = await apiClient.get<ApiResponse<IOrder>>(
+        `/orders/${id}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -55,7 +82,9 @@ class OrderService extends BaseService {
 
   async cancelOrder(id: string): Promise<IOrder> {
     try {
-      const response = await apiClient.post<ApiResponse<IOrder>>(`/orders/${id}/cancel`);
+      const response = await apiClient.post<ApiResponse<IOrder>>(
+        `/orders/${id}/cancel`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -64,16 +93,20 @@ class OrderService extends BaseService {
 
   async getOrderStats(): Promise<OrderStats> {
     try {
-      const response = await apiClient.get<ApiResponse<OrderStats>>('/orders/stats');
+      const response =
+        await apiClient.get<ApiResponse<OrderStats>>('/orders/stats');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async checkoutFromCart(data: ICheckoutRequest): Promise<IOrder> {
+  async checkoutFromCart(data: CheckoutRequest): Promise<IOrder> {
     try {
-      const response = await apiClient.post<ApiResponse<IOrder>>('/orders/checkout', data);
+      const response = await apiClient.post<ApiResponse<IOrder>>(
+        '/orders/checkout',
+        data
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);

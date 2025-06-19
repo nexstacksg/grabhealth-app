@@ -23,28 +23,19 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Create axios instance with different configs for server/client
+// Create axios instance
 const createApiClient = (): AxiosInstance => {
-  if (isServer) {
-    // Server-side: Call backend directly
-    return axios.create({
-      baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
-    });
-  } else {
-    // Client-side: Call Next.js API routes
-    return axios.create({
-      baseURL: '/api',
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
-    });
-  }
+  // Always call backend directly
+  const baseURL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1`;
+    
+  return axios.create({
+    baseURL,
+    withCredentials: true, // Important for cookie-based auth
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    timeout: 30000,
+  });
 };
 
 // Create the API client
@@ -65,15 +56,9 @@ export const getServerAuthHeaders = async (): Promise<Record<string, string>> =>
   }
 };
 
-// Request interceptor for logging and auth headers
+// Request interceptor for auth headers
 axiosInstance.interceptors.request.use(
   (config) => {
-    // For debugging
-    console.debug('API Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-    });
     return config;
   },
   (error) => {
@@ -85,20 +70,20 @@ axiosInstance.interceptors.request.use(
 // Response interceptor with automatic token refresh
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.debug('API Response:', {
-      method: response.config.method?.toUpperCase(),
-      url: response.config.url,
-      status: response.status,
-    });
-    
     // Return the data directly (unwrap the response)
     return response.data;
   },
   async (error: AxiosError<ApiResponse>) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as any;
+    
+    // Don't retry on certain endpoints to prevent infinite loops
+    const noRetryEndpoints = ['/auth/profile', '/auth/refresh', '/auth/login', '/auth/register'];
+    const shouldSkipRetry = noRetryEndpoints.some(endpoint => 
+      originalRequest?.url?.includes(endpoint)
+    );
     
     // If we get a 401 and we're on the client side, try to refresh token
-    if (error.response?.status === 401 && originalRequest && !isServer) {
+    if (error.response?.status === 401 && originalRequest && !isServer && !shouldSkipRetry && !originalRequest._retry) {
       if (isRefreshing) {
         // If already refreshing, queue the request
         return new Promise((resolve, reject) => {
@@ -110,10 +95,11 @@ axiosInstance.interceptors.response.use(
         });
       }
 
+      originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        // Attempt to refresh token
+        // Attempt to refresh token - calling backend directly
         await axiosInstance.post('/auth/refresh');
         
         processQueue(null);
@@ -125,12 +111,15 @@ axiosInstance.interceptors.response.use(
         processQueue(refreshError);
         isRefreshing = false;
         
-        // Refresh failed, redirect to login if we're on client side
-        if (!isServer && typeof window !== 'undefined') {
-          // Clear any stored user data
-          sessionStorage.removeItem('user');
-          // Redirect to login
-          window.location.href = '/auth/login';
+        // Don't redirect on profile check failures - just let them fail silently
+        if (!originalRequest?.url?.includes('/auth/profile')) {
+          // Refresh failed, redirect to login if we're on client side
+          if (!isServer && typeof window !== 'undefined') {
+            // Clear any stored user data
+            sessionStorage.removeItem('user');
+            // Redirect to login
+            window.location.href = '/auth/login';
+          }
         }
         
         return Promise.reject(refreshError);

@@ -24,6 +24,7 @@ export const ErrorCode = {
   INTERNAL_ERROR: "INTERNAL_ERROR",
   BAD_REQUEST: "BAD_REQUEST",
   CONFLICT: "CONFLICT",
+  ALREADY_EXISTS: "ALREADY_EXISTS",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

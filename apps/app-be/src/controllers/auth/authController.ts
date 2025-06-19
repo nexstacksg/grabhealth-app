@@ -14,6 +14,31 @@ import {
   ApiResponse,
 } from '@app/shared-types';
 
+// Cookie configuration
+const getCookieOptions = (maxAge?: number) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // For development with different ports, we need special handling
+  if (!isProduction) {
+    return {
+      httpOnly: true,
+      secure: false,
+      sameSite: false as any, // Disable SameSite in development
+      path: '/',
+      ...(maxAge !== undefined && { maxAge }),
+    };
+  }
+  
+  // Production settings
+  return {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    ...(maxAge !== undefined && { maxAge }),
+  };
+};
+
 export const register = async (
   req: Request<{}, {}, RegisterRequest>,
   res: Response<ApiResponse>,
@@ -23,27 +48,13 @@ export const register = async (
     const result = await authService.register(req.body);
 
     // Set httpOnly cookies for tokens
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
+    res.cookie('accessToken', result.accessToken, getCookieOptions(15 * 60 * 1000)); // 15 minutes
+    res.cookie('refreshToken', result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000)); // 7 days
 
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    // Don't send tokens in response body for security
+    // Include tokens in response for frontend compatibility
     const response: ApiResponse = {
       success: true,
-      data: {
-        user: result.user,
-        expiresIn: result.expiresIn,
-      },
+      data: result,
     };
 
     res.status(HttpStatus.CREATED).json(response);
@@ -61,19 +72,8 @@ export const login = async (
     const result = await authService.login(req.body);
 
     // Set httpOnly cookies for tokens
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie('accessToken', result.accessToken, getCookieOptions(15 * 60 * 1000)); // 15 minutes
+    res.cookie('refreshToken', result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000)); // 7 days
 
     // Send tokens in response body for frontend use (cookies are backup)
     const response: ApiResponse = {
@@ -112,19 +112,8 @@ export const refreshToken = async (
     const result = await authService.refreshToken(refreshToken);
 
     // Set new httpOnly cookies
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie('accessToken', result.accessToken, getCookieOptions(15 * 60 * 1000)); // 15 minutes
+    res.cookie('refreshToken', result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000)); // 7 days
 
     // Send tokens in response body for frontend use (cookies are backup)
     const response: ApiResponse = {
@@ -159,9 +148,11 @@ export const logout = async (
 
     await authService.logout(req.user.id);
 
-    // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    // Clear cookies with the same options used when setting them
+    const clearOptions = getCookieOptions(); // No maxAge for clearing
+    
+    res.clearCookie('accessToken', clearOptions);
+    res.clearCookie('refreshToken', clearOptions);
 
     const response: ApiResponse = {
       success: true,
@@ -264,6 +255,7 @@ export const verifyEmailCode = async (
     const response: ApiResponse = {
       success: true,
       message: 'Email verified successfully',
+      data: { verified: true }, // Include data to prevent frontend error
     };
 
     res.json(response);

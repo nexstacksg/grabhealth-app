@@ -101,29 +101,23 @@ export function ProductChatbot() {
 
     try {
       // Use AI service for chatbot functionality
-      const response = await services.ai.sendChatbotMessage(input, sessionId);
-      setSessionId(response.sessionId);
+      const response = await services.ai.sendChatbotMessage(input);
+      // Session ID is not returned by this method
 
       // Add assistant message
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.response,
+        content: response.message,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Handle suggested actions if any
-      if (response.suggestedActions && response.suggestedActions.length > 0) {
-        // Process suggested actions like product recommendations
-        const productActions = response.suggestedActions.filter(
-          action => action.action === 'view_product' && action.data
-        );
-        if (productActions.length > 0) {
-          const productIds = productActions.map(action => action.data.productId);
-          // You could fetch and display these products
-        }
-      }
+      // Handle suggestions if any
+      // TODO: Implement suggestions UI
+      // if (response.suggestions && response.suggestions.length > 0) {
+      //   // Add suggestions as quick actions
+      // }
 
       // For now, we don't have product recommendations in the response
       // You could fetch products based on the conversation context

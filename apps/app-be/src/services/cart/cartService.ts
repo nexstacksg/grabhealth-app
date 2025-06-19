@@ -26,18 +26,23 @@ export class CartService {
       cart.items.map(async (item: any) => {
         const product = await prisma.product.findUnique({
           where: { id: item.productId },
-          include: { category: true }
+          include: { 
+            category: true,
+            productPricing: true
+          }
         });
+        
+        const productPrice = product?.productPricing?.customerPrice || 0;
         
         return {
           productId: item.productId,
           quantity: item.quantity,
-          price: product?.price || 0,
+          price: productPrice,
           product: product ? {
             id: product.id,
             name: product.name,
             description: product.description,
-            price: product.price,
+            price: productPrice,
             image_url: product.imageUrl,
             imageUrl: product.imageUrl,
             product_name: product.name,
@@ -66,7 +71,10 @@ export class CartService {
     // Fetch product details first
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { category: true }
+      include: { 
+        category: true,
+        productPricing: true
+      }
     });
 
     if (!product) {
@@ -76,6 +84,8 @@ export class CartService {
     if (!product.inStock) {
       throw new AppError('Product is out of stock', 400);
     }
+
+    const productPrice = product.productPricing?.customerPrice || 0;
 
     const cart = await this.getCart(userId);
 
@@ -91,7 +101,7 @@ export class CartService {
       CartService.carts[userId].items.push({ 
         productId, 
         quantity,
-        price: product.price
+        price: productPrice
       });
     }
 
@@ -153,9 +163,10 @@ export class CartService {
         let price = newItem.price;
         if (!price) {
           const product = await prisma.product.findUnique({
-            where: { id: newItem.productId }
+            where: { id: newItem.productId },
+            include: { productPricing: true }
           });
-          price = product?.price || 0;
+          price = product?.productPricing?.customerPrice || 0;
         }
         
         // Add new item
