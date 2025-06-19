@@ -11,9 +11,14 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   // Check if we're on a partner dashboard route
   const isPartnerDashboard = pathname?.startsWith('/partner');
 
-  // Don't show header/footer/chatbot on partner dashboard pages
+  // For partner dashboard pages, show header but not footer/chatbot
   if (isPartnerDashboard) {
-    return <>{children}</>;
+    return (
+      <>
+        <Header />
+        {children}
+      </>
+    );
   }
 
   return (

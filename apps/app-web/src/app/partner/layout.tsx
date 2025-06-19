@@ -108,7 +108,7 @@ export default function PartnerDashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-14 md:pt-20">
       {/* Mobile sidebar */}
       <div
         className={cn(
@@ -166,7 +166,7 @@ export default function PartnerDashboardLayout({
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+      <div className="hidden lg:fixed lg:top-14 xl:top-20 lg:bottom-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-1 bg-white border-r border-gray-200">
           <div className="flex items-center h-16 px-6 border-b border-gray-200 bg-gray-50">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -205,7 +205,7 @@ export default function PartnerDashboardLayout({
 
       {/* Main content */}
       <div className="lg:pl-64 flex flex-col flex-1">
-        <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 bg-white border-b lg:px-8">
+        <div className="sticky top-14 md:top-20 z-10 flex items-center justify-between h-16 px-4 bg-white border-b lg:px-8">
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -215,16 +215,11 @@ export default function PartnerDashboardLayout({
             >
               <Menu className="h-6 w-6" />
             </Button>
-            <Link href="/partner" className="flex items-center ml-4 lg:ml-0">
-              <img
-                src="/freepik__background__83849 2.svg"
-                alt="GrabHealth AI"
-                className="h-8 w-auto"
-              />
-            </Link>
+            <span className="text-lg font-semibold text-gray-900 ml-4 lg:ml-0">
+              Partner Portal
+            </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Partner Portal</span>
             <PartnerUserMenu />
           </div>
         </div>
