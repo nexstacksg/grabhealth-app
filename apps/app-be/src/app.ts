@@ -40,6 +40,18 @@ app.use(express.urlencoded({ extended: true }));
 // Cookie parsing
 app.use(cookieParser());
 
+// Clear empty or invalid cookies middleware
+app.use((req, res, next) => {
+  // Check if cookies exist and are empty
+  if (req.cookies.accessToken === '' || req.cookies.accessToken === undefined) {
+    res.clearCookie('accessToken');
+  }
+  if (req.cookies.refreshToken === '' || req.cookies.refreshToken === undefined) {
+    res.clearCookie('refreshToken');
+  }
+  next();
+});
+
 // Health check
 app.get('/health', (_req, res) => {
   const cacheStats = cacheService.getStats();

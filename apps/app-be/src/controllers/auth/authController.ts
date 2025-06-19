@@ -37,13 +37,10 @@ export const register = async (
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Don't send tokens in response body for security
+    // Include tokens in response for frontend compatibility
     const response: ApiResponse = {
       success: true,
-      data: {
-        user: result.user,
-        expiresIn: result.expiresIn,
-      },
+      data: result,
     };
 
     res.status(HttpStatus.CREATED).json(response);

@@ -78,8 +78,12 @@ export class AuthService {
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationCode = this.generateVerificationCode();
     const emailVerificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    
+    console.log('Generated verification code:', emailVerificationCode);
+    console.log('Verification code expires at:', emailVerificationCodeExpires);
 
     // Create user
+    console.log('Creating user with status:', UserStatus.PENDING_VERIFICATION);
     const user = await prisma.user.create({
       data: {
         email: data.email,
@@ -92,6 +96,13 @@ export class AuthService {
         emailVerificationCode,
         emailVerificationCodeExpires,
       } as any, // Type assertion to bypass Prisma type issue
+    });
+    console.log('Created user:', {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      emailVerificationCode: user.emailVerificationCode,
+      emailVerificationCodeExpires: user.emailVerificationCodeExpires
     });
 
     // Generate tokens
