@@ -70,8 +70,8 @@ class PartnersService extends BaseService {
 
   async getPartnerAvailability(partnerId: string, serviceId: string, date: string): Promise<PartnerAvailability> {
     try {
-      const queryString = this.buildQueryString({ serviceId, date });
-      const response = await apiClient.get<ApiResponse<PartnerAvailability>>(`/partners/${partnerId}/availability${queryString}`);
+      // Note: serviceId is passed but not used in the current backend implementation
+      const response = await apiClient.get<ApiResponse<PartnerAvailability>>(`/partners/${partnerId}/available-slots/${date}`);
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);

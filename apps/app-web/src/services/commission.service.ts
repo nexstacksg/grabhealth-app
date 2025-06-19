@@ -100,7 +100,7 @@ class CommissionService extends BaseService {
 
   async initializeCommissionSystem(): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/admin/commissions/initialize');
+      const response = await apiClient.post<ApiResponse>('/commissions/init');
       this.extractData(response);
     } catch (error) {
       this.handleError(error);

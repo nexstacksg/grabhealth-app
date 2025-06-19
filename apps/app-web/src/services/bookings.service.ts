@@ -98,7 +98,41 @@ class BookingsService extends BaseService {
 
   async checkFreeCheckupEligibility(): Promise<{ eligible: boolean; reason?: string }> {
     try {
-      const response = await apiClient.get<ApiResponse<{ eligible: boolean; reason?: string }>>('/bookings/free-checkup/eligibility');
+      // Get current user's profile first to get their ID
+      const profileResponse = await apiClient.get('/auth/profile');
+      // Handle both wrapped and unwrapped response formats
+      const profileData = profileResponse.data?.data || profileResponse.data;
+      const userId = profileData?.id;
+      
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+      
+      const response = await apiClient.get<ApiResponse<{ eligible: boolean; reason?: string }>>(`/users/${userId}/free-checkup-status`);
+      return this.extractData(response);
+    } catch (error) {
+      // If it's a 500 error, it might be because the table doesn't exist
+      // Return a default response to avoid breaking the UI
+      if ((error as any)?.status === 500) {
+        return { eligible: false, reason: 'Free checkup system is currently unavailable' };
+      }
+      this.handleError(error);
+    }
+  }
+
+  async claimFreeCheckup(): Promise<{ success: boolean; message?: string }> {
+    try {
+      // Get current user's profile first to get their ID
+      const profileResponse = await apiClient.get('/auth/profile');
+      // Handle both wrapped and unwrapped response formats
+      const profileData = profileResponse.data?.data || profileResponse.data;
+      const userId = profileData?.id;
+      
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+      
+      const response = await apiClient.post<ApiResponse<{ success: boolean; message?: string }>>(`/users/${userId}/claim-free-checkup`, {});
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
