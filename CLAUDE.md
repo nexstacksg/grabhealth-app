@@ -157,7 +157,9 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 - React Hook Form 7.54.1 + Zod 3.24.1 for form validation
 - Context providers for Auth, Cart, Membership, and Commission
 - Cloudinary 2.6.1 integration for image uploads
-- Dual database setup: Neon PostgreSQL + Prisma 6.8.2
+- Direct API calls to Express.js backend (no Next.js API routes)
+- API requests proxied through Next.js rewrites to avoid CORS issues
+- Cookie-based authentication with httpOnly cookies
 - QR code generation with react-qr-code
 - Charts and data visualization with Recharts
 
@@ -182,12 +184,16 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 
 ### Key Integration Points
 
-- **Authentication**: JWT tokens with refresh token rotation
-- **API Communication**: All clients use app-be backend at port 4000
-- **Database**: SQLite (dev) / PostgreSQL (production)
+- **Authentication**: JWT tokens stored in httpOnly cookies with refresh token rotation
+- **API Communication**: 
+  - All clients communicate directly with Express.js backend at port 4000
+  - Frontend uses Next.js rewrites to proxy API calls through same origin
+  - No Next.js API routes - all API logic in Express.js backend
+- **Database**: PostgreSQL with Prisma ORM
 - **Shared Types**: All apps import from @app/shared-types
 - **File Storage**: Cloudinary for web, local storage for backend
 - **Caching**: Redis for session management and API responses
+- **CORS**: Configured for development with cookie support
 - **Real-time**: WebSocket support for future features
 
 ## Important Considerations
@@ -200,8 +206,8 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
    - See `.env.example` files in each app directory
 
 2. **Database Setup**:
-   - Backend uses Prisma with migrations
-   - Web app has its own database (migration in progress)
+   - Backend uses Prisma with PostgreSQL
+   - Single database shared by all apps
    - Run migrations before starting development
    - Seed data includes test users with MLM relationships
 
@@ -283,3 +289,22 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 - CORS configuration for production
 - Secure cookie settings with httpOnly flags
 - Role-based middleware protection
+
+### Authentication Flow
+
+1. **Frontend (app-web)**:
+   - Uses `/api` as base URL which proxies to backend through Next.js rewrites
+   - All API calls include `withCredentials: true` for cookie support
+   - AuthContext manages user state and authentication
+   - No Next.js API routes - all auth handled by Express.js backend
+
+2. **Backend (app-be)**:
+   - JWT tokens stored in httpOnly cookies (accessToken, refreshToken)
+   - Cookie configuration: `httpOnly: true`, `secure: production only`, `sameSite: 'lax'`
+   - Tokens extracted from cookies in authenticate middleware
+   - Email verification flow with 4-digit codes (10 min expiry)
+
+3. **API Proxy Setup**:
+   - Next.js rewrites: `/api/*` → `http://localhost:4000/api/v1/*`
+   - Avoids CORS issues between different ports
+   - Cookies work seamlessly as requests appear same-origin

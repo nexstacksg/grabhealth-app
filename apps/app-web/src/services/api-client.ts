@@ -23,11 +23,13 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Create axios instance to call backend directly
+// Create axios instance
 const createApiClient = (): AxiosInstance => {
-  // Always call backend directly from both server and client
+  // Always call backend directly
+  const baseURL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1`;
+    
   return axios.create({
-    baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1`,
+    baseURL,
     withCredentials: true, // Important for cookie-based auth
     headers: {
       'Content-Type': 'application/json',

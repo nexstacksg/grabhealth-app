@@ -109,7 +109,7 @@ class CommissionService extends BaseService {
 
   async getCommissionData(): Promise<CommissionData> {
     try {
-      const response = await apiClient.get<ApiResponse<CommissionData>>('/commissions/data');
+      const response = await apiClient.get<ApiResponse<CommissionData>>('/commissions');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
