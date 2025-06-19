@@ -40,6 +40,9 @@ export class OrderService {
         for (const item of data.items) {
           const product = await tx.product.findUnique({
             where: { id: item.productId },
+            include: {
+              productPricing: true,
+            },
           });
 
           if (!product) {
@@ -50,16 +53,27 @@ export class OrderService {
             throw new AppError(`Product ${product.name} is out of stock`, 400);
           }
 
-          // Use product price directly - no membership discounts
-          const itemPrice = product.price;
+          // Use customer price from product pricing (new 4-product model)
+          const customerPrice = product.productPricing?.customerPrice;
+          if (!customerPrice) {
+            throw new AppError(
+              `Product ${product.name} has no pricing configured`,
+              400
+            );
+          }
 
-          subtotal += item.quantity * product.price;
+          const itemPrice = customerPrice;
+          const totalPvPoints =
+            (product.productPricing?.pvValue || 0) * item.quantity;
+
+          subtotal += item.quantity * customerPrice;
 
           orderItems.push({
             productId: item.productId,
             quantity: item.quantity,
             price: itemPrice,
             discount: 0,
+            pvPoints: totalPvPoints,
           });
         }
 

@@ -24,21 +24,59 @@ export class ProductService {
         }
       }
 
-      const product = await this.prisma.product.create({
-        data: {
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          categoryId: data.categoryId,
-          imageUrl: data.imageUrl,
-          inStock: data.inStock ?? true,
-          status: data.status ?? ProductStatus.ACTIVE,
-        },
-        include: {
-          category: true,
-        },
+      // Create product and pricing in a transaction
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Create the product first
+        const product = await tx.product.create({
+          data: {
+            name: data.name,
+            description: data.description,
+            categoryId: data.categoryId,
+            imageUrl: data.imageUrl,
+            inStock: data.inStock ?? true,
+            status: data.status ?? ProductStatus.ACTIVE,
+          },
+        });
+
+        // Create the pricing record
+        await tx.productPricing.create({
+          data: {
+            productId: product.id,
+            customerPrice: data.price || 0,
+            costPrice: data.price ? data.price * 0.7 : 0, // Default cost price (70% of customer price)
+            pvValue: data.price ? Math.floor(data.price * 0.1) : 0, // Default PV (10% of price)
+          },
+        });
+
+        // Return product with all relations
+        return await tx.product.findUnique({
+          where: { id: product.id },
+          include: {
+            category: true,
+            productPricing: true,
+            productCommissions: true,
+          },
+        });
       });
-      return product as IProduct;
+
+      if (!result) {
+        throw new AppError('Failed to create product', 500);
+      }
+
+      // Transform product to include price from ProductPricing
+      return {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        price: result.productPricing?.customerPrice || 0,
+        categoryId: result.categoryId,
+        category: result.category,
+        imageUrl: result.imageUrl,
+        inStock: result.inStock,
+        status: result.status as ProductStatus,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      } as IProduct;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
       throw new AppError('Failed to create product', 500);
@@ -49,6 +87,9 @@ export class ProductService {
     try {
       const product = await this.prisma.product.findUnique({
         where: { id },
+        include: {
+          productPricing: true,
+        },
       });
 
       if (!product) {
@@ -65,24 +106,79 @@ export class ProductService {
         }
       }
 
-      const updatedProduct = await this.prisma.product.update({
-        where: { id },
-        data: {
-          ...(data.name && { name: data.name }),
-          ...(data.description !== undefined && {
-            description: data.description,
-          }),
-          ...(data.price !== undefined && { price: data.price }),
-          ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
-          ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
-          ...(data.inStock !== undefined && { inStock: data.inStock }),
-          ...(data.status && { status: data.status }),
-        },
-        include: {
-          category: true,
-        },
+      // Update product and pricing in a transaction
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Update the product
+        await tx.product.update({
+          where: { id },
+          data: {
+            ...(data.name && { name: data.name }),
+            ...(data.description !== undefined && {
+              description: data.description,
+            }),
+            ...(data.categoryId !== undefined && {
+              categoryId: data.categoryId,
+            }),
+            ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
+            ...(data.inStock !== undefined && { inStock: data.inStock }),
+            ...(data.status && { status: data.status }),
+          },
+        });
+
+        // Update pricing if price is provided
+        if (data.price !== undefined) {
+          if (product.productPricing) {
+            // Update existing pricing
+            await tx.productPricing.update({
+              where: { productId: id },
+              data: {
+                customerPrice: data.price,
+                costPrice: data.price * 0.7, // Update cost price (70% of customer price)
+                pvValue: Math.floor(data.price * 0.1), // Update PV (10% of price)
+              },
+            });
+          } else {
+            // Create new pricing record
+            await tx.productPricing.create({
+              data: {
+                productId: id,
+                customerPrice: data.price,
+                costPrice: data.price * 0.7,
+                pvValue: Math.floor(data.price * 0.1),
+              },
+            });
+          }
+        }
+
+        // Return updated product with all relations
+        return await tx.product.findUnique({
+          where: { id },
+          include: {
+            category: true,
+            productPricing: true,
+            productCommissions: true,
+          },
+        });
       });
-      return updatedProduct as any as IProduct;
+
+      if (!result) {
+        throw new AppError('Failed to update product', 500);
+      }
+
+      // Transform product to include price from ProductPricing
+      return {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        price: result.productPricing?.customerPrice || 0,
+        categoryId: result.categoryId,
+        category: result.category,
+        imageUrl: result.imageUrl,
+        inStock: result.inStock,
+        status: result.status as ProductStatus,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      } as IProduct;
     } catch (_error) {
       if (_error instanceof AppError) throw _error;
       throw new AppError('Failed to update product', 500);
@@ -95,10 +191,27 @@ export class ProductService {
         where: { id },
         include: {
           category: true,
+          productPricing: true,
           productCommissions: true,
         },
       });
-      return result as any as IProduct | null;
+
+      if (!result) return null;
+
+      // Transform product to include price from ProductPricing
+      return {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        price: result.productPricing?.customerPrice || 0,
+        categoryId: result.categoryId,
+        category: result.category,
+        imageUrl: result.imageUrl,
+        inStock: result.inStock,
+        status: result.status as ProductStatus,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      } as IProduct;
     } catch (_error) {
       throw new AppError('Failed to get product', 500);
     }
@@ -130,19 +243,26 @@ export class ProductService {
         }),
         ...(category && {
           category: {
-            name: { contains: category },
+            slug: category,
           },
         }),
         ...(categoryId && { categoryId }),
-        ...(minPrice !== undefined && { price: { gte: minPrice } }),
-        ...(maxPrice !== undefined && { price: { lte: maxPrice } }),
+        // Price filtering now uses ProductPricing relation
+        ...((minPrice !== undefined || maxPrice !== undefined) && {
+          productPricing: {
+            customerPrice: {
+              ...(minPrice !== undefined && { gte: minPrice }),
+              ...(maxPrice !== undefined && { lte: maxPrice }),
+            },
+          },
+        }),
         ...(inStock !== undefined && { inStock }),
         status: ProductStatus.ACTIVE,
       };
 
       const orderBy: Prisma.ProductOrderByWithRelationInput = {};
       if (sortBy === 'price') {
-        orderBy.price = sortOrder;
+        orderBy.productPricing = { customerPrice: sortOrder };
       } else if (sortBy === 'name') {
         orderBy.name = sortOrder;
       } else {
@@ -157,13 +277,30 @@ export class ProductService {
           take: limit,
           include: {
             category: true,
+            productPricing: true,
+            productCommissions: true,
           },
         }),
         this.prisma.product.count({ where }),
       ]);
 
+      // Transform products to include price from ProductPricing
+      const transformedProducts = products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.productPricing?.customerPrice || 0,
+        categoryId: product.categoryId,
+        category: product.category,
+        imageUrl: product.imageUrl,
+        inStock: product.inStock,
+        status: product.status as ProductStatus,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })) as IProduct[];
+
       return {
-        products: products as unknown as IProduct[],
+        products: transformedProducts,
         total,
         page,
         totalPages: Math.ceil(total / limit),
@@ -228,10 +365,26 @@ export class ProductService {
         },
         include: {
           category: true,
+          productPricing: true,
+          productCommissions: true,
         },
         orderBy: { createdAt: 'desc' },
       });
-      return products as any as IProduct[];
+
+      // Transform products to include price from ProductPricing
+      return products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.productPricing?.customerPrice || 0,
+        categoryId: product.categoryId,
+        category: product.category,
+        imageUrl: product.imageUrl,
+        inStock: product.inStock,
+        status: product.status as ProductStatus,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })) as IProduct[];
     } catch (_error) {
       throw new AppError('Failed to get products by category', 500);
     }
@@ -244,10 +397,29 @@ export class ProductService {
           status: ProductStatus.ACTIVE,
           inStock: true,
         },
+        include: {
+          category: true,
+          productPricing: true,
+          productCommissions: true,
+        },
         orderBy: { createdAt: 'desc' },
         take: limit,
       });
-      return products as any as IProduct[];
+
+      // Transform products to include price from ProductPricing
+      return products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.productPricing?.customerPrice || 0,
+        categoryId: product.categoryId,
+        category: product.category,
+        imageUrl: product.imageUrl,
+        inStock: product.inStock,
+        status: product.status as ProductStatus,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })) as IProduct[];
     } catch (_error) {
       throw new AppError('Failed to get featured products', 500);
     }
@@ -255,15 +427,44 @@ export class ProductService {
 
   async updateStock(id: number, inStock: boolean): Promise<IProduct> {
     try {
-      const updatedProduct = await this.prisma.product.update({
+      await this.prisma.product.update({
         where: { id },
         data: {
           inStock,
           status: inStock ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK,
         },
       });
-      return updatedProduct as any as IProduct;
+
+      // Return the updated product with proper transformation
+      const result = await this.prisma.product.findUnique({
+        where: { id },
+        include: {
+          category: true,
+          productPricing: true,
+          productCommissions: true,
+        },
+      });
+
+      if (!result) {
+        throw new AppError('Product not found after update', 404);
+      }
+
+      // Transform product to include price from ProductPricing
+      return {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        price: result.productPricing?.customerPrice || 0,
+        categoryId: result.categoryId,
+        category: result.category,
+        imageUrl: result.imageUrl,
+        inStock: result.inStock,
+        status: result.status as ProductStatus,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      } as IProduct;
     } catch (_error) {
+      if (_error instanceof AppError) throw _error;
       throw new AppError('Failed to update stock', 500);
     }
   }

@@ -23,10 +23,7 @@ export default function FeaturedProducts() {
         try {
           // Try to get AI recommendations first
           const recommendedProducts =
-            await services.ai.getPersonalizedRecommendations({
-              limit: 4,
-              category: undefined,
-            });
+            await services.ai.getPersonalizedRecommendations();
           setProducts(recommendedProducts);
           setError(null);
         } catch (aiError) {
@@ -89,7 +86,13 @@ export default function FeaturedProducts() {
 function ProductCard({ product }: { product: IProduct }) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
-  const regularPrice = product.price;
+
+  // Ensure product has valid data
+  if (!product || !product.id || !product.name) {
+    return null;
+  }
+
+  const regularPrice = product.price || 0;
   // For AI recommendations, we'll use the regular price (no discounts for now)
   const discountedPrice = regularPrice;
   const discount = 0; // No discount calculation for AI recommendations

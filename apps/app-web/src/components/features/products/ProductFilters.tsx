@@ -31,9 +31,12 @@ export const ProductFilters = React.memo(
       availability: true,
     });
 
-    // Filter categories based on search
-    const filteredCategories = categories.filter((category: any) =>
-      category.name.toLowerCase().includes(categorySearch.toLowerCase())
+    // Filter categories based on search and exclude Personal Care
+    const filteredCategories = categories.filter(
+      (category: any) =>
+        category.name.toLowerCase().includes(categorySearch.toLowerCase()) &&
+        category.name !== 'Personal Care' &&
+        category.slug !== 'personal-care'
     );
 
     // Display limited categories unless showAll is true
@@ -127,17 +130,11 @@ export const ProductFilters = React.memo(
                 />
               </div>
               <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
-                <div
-                  className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === 'all' ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
-                  onClick={() => onCategoryChange('all')}
-                >
-                  All Products
-                </div>
                 {displayedCategories.map((category: any) => (
                   <div
                     key={category.id}
-                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === category.name ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
-                    onClick={() => onCategoryChange(category.name)}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === category.slug || (category.slug === 'all' && activeCategory === 'all') ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
+                    onClick={() => onCategoryChange(category.slug)}
                   >
                     {category.name}
                   </div>

@@ -12,7 +12,7 @@ export class CommissionService {
 
   async processOrderCommission(orderId: number): Promise<Commission[]> {
     try {
-      // Get order with user and items
+      // Get order with user and items, including product pricing and commission tiers
       const order = await this.prisma.order.findUnique({
         where: { id: orderId },
         include: {
@@ -27,7 +27,12 @@ export class CommissionService {
           },
           items: {
             include: {
-              product: true,
+              product: {
+                include: {
+                  productPricing: true,
+                  productCommissions: true,
+                },
+              },
             },
           },
         },
@@ -39,29 +44,60 @@ export class CommissionService {
 
       const commissions: Commission[] = [];
 
-      // Get upline chain (up to 4 levels)
-      const uplineChain = await this.getUplineChain(order.userId, 4);
+      // Get upline chain (up to 3 levels: Sales, Leader, Manager)
+      const uplineChain = await this.getUplineChain(order.userId, 3);
 
-      // Calculate commission for each upline level
-      for (const [level, uplineUserId] of uplineChain.entries()) {
-        const commissionRate = this.getCommissionRateByLevel(level + 1);
-        const commissionAmount = order.total * commissionRate;
+      // Process commission for each order item
+      for (const orderItem of order.items) {
+        const product = orderItem.product;
+        const productCommission = product.productCommissions;
+        const productPricing = product.productPricing;
 
-        if (commissionAmount > 0) {
-          const commission = await this.prisma.commission.create({
-            data: {
-              orderId: order.id,
-              userId: order.userId,
-              recipientId: uplineUserId,
-              amount: commissionAmount,
-              commissionRate,
-              relationshipLevel: level + 1,
-              type:
-                level === 0 ? CommissionType.DIRECT : CommissionType.INDIRECT,
-              status: CommissionStatus.PENDING,
-            },
-          });
-          commissions.push(commission);
+        if (!productCommission || !productPricing) {
+          console.warn(
+            `No commission structure found for product: ${product.name}`
+          );
+          continue;
+        }
+
+        // Calculate total PV points for this item
+        const totalPvPoints = productPricing.pvValue * orderItem.quantity;
+
+        // Update order item with PV points
+        await this.prisma.orderItem.update({
+          where: { id: orderItem.id },
+          data: { pvPoints: totalPvPoints },
+        });
+
+        // Calculate commission for each upline level
+        for (const [level, uplineUserId] of uplineChain.entries()) {
+          const { commissionAmount, commissionRate, recipientRole } =
+            this.getCommissionByLevel(
+              level + 1,
+              productCommission,
+              orderItem.quantity
+            );
+
+          if (commissionAmount > 0) {
+            const commission = await this.prisma.commission.create({
+              data: {
+                orderId: order.id,
+                orderItemId: orderItem.id,
+                productId: product.id,
+                userId: order.userId,
+                recipientId: uplineUserId,
+                amount: commissionAmount,
+                commissionRate,
+                relationshipLevel: level + 1,
+                recipientRole,
+                type:
+                  level === 0 ? CommissionType.DIRECT : CommissionType.INDIRECT,
+                status: CommissionStatus.PENDING,
+                pvPoints: totalPvPoints,
+              },
+            });
+            commissions.push(commission);
+          }
         }
       }
 
@@ -72,15 +108,43 @@ export class CommissionService {
     }
   }
 
-  private getCommissionRateByLevel(level: number): number {
-    // Commission structure based on commission.md
-    const rates: { [key: number]: number } = {
-      1: 0.3, // 30% for Level 1 (Sales)
-      2: 0.1, // 10% for Level 2 (Leader)
-      3: 0.05, // 5% for Level 3 (Manager)
-      4: 0.05, // 5% for Level 4 (Company)
-    };
-    return rates[level] || 0;
+  private getCommissionByLevel(
+    level: number,
+    productCommission: any,
+    quantity: number
+  ): {
+    commissionAmount: number;
+    commissionRate: number;
+    recipientRole: string;
+  } {
+    // Role-based commission structure for the 4-product model
+    switch (level) {
+      case 1: // Sales level
+        return {
+          commissionAmount: productCommission.salesCommissionAmount * quantity,
+          commissionRate: productCommission.salesCommissionRate,
+          recipientRole: 'SALES',
+        };
+      case 2: // Leader level
+        return {
+          commissionAmount: productCommission.leaderCommissionAmount * quantity,
+          commissionRate: productCommission.leaderCommissionRate,
+          recipientRole: 'LEADER',
+        };
+      case 3: // Manager level
+        return {
+          commissionAmount:
+            productCommission.managerCommissionAmount * quantity,
+          commissionRate: productCommission.managerCommissionRate,
+          recipientRole: 'MANAGER',
+        };
+      default:
+        return {
+          commissionAmount: 0,
+          commissionRate: 0,
+          recipientRole: 'UNKNOWN',
+        };
+    }
   }
 
   async getUplineChain(userId: string, maxLevels: number): Promise<string[]> {
@@ -235,7 +299,10 @@ export class CommissionService {
       let totalMembers = 1; // Include root user
       let maxLevel = 0;
 
-      const countMembersAndLevels = (node: INetworkNode, currentLevel: number) => {
+      const countMembersAndLevels = (
+        node: INetworkNode,
+        currentLevel: number
+      ) => {
         if (node.children && node.children.length > 0) {
           for (const child of node.children) {
             totalMembers++;
@@ -524,6 +591,52 @@ export class CommissionService {
       };
     } catch (_error) {
       throw new AppError('Failed to get commission summary', 500);
+    }
+  }
+
+  // Get the 4-product commission structure for frontend display
+  async getProductCommissionStructure(): Promise<any> {
+    try {
+      const products = await this.prisma.product.findMany({
+        where: { status: 'ACTIVE' },
+        include: {
+          productPricing: true,
+          productCommissions: true,
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      return {
+        products: products.map((product) => {
+          const commission = product.productCommissions[0]; // Get first commission tier
+          return {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            sku: product.sku,
+            customerPrice: product.productPricing?.customerPrice || 0,
+            travelPackagePrice: product.productPricing?.travelPackagePrice,
+            pvValue: product.productPricing?.pvValue || 0,
+            commissionRates: {
+              sales: commission?.salesCommissionRate || 0,
+              leader: commission?.leaderCommissionRate || 0,
+              manager: commission?.managerCommissionRate || 0,
+            },
+            commissionAmounts: {
+              sales: commission?.salesCommissionAmount || 0,
+              leader: commission?.leaderCommissionAmount || 0,
+              manager: commission?.managerCommissionAmount || 0,
+            },
+          };
+        }),
+        roleTypes: [
+          { id: 1, name: 'Sales', commissionRate: 0.3, level: 1 },
+          { id: 2, name: 'Leader', commissionRate: 0.1, level: 2 },
+          { id: 3, name: 'Manager', commissionRate: 0.05, level: 3 },
+        ],
+      };
+    } catch (_error) {
+      throw new AppError('Failed to get product commission structure', 500);
     }
   }
 }

@@ -46,7 +46,10 @@ interface Interaction {
 class AIService extends BaseService {
   async sendChatMessage(message: string): Promise<ChatResponse> {
     try {
-      const response = await apiClient.post<ApiResponse<ChatResponse>>('/ai/chat', { message });
+      const response = await apiClient.post<ApiResponse<ChatResponse>>(
+        '/ai/chat',
+        { message }
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -57,7 +60,9 @@ class AIService extends BaseService {
     try {
       const params = userId ? { userId } : {};
       const queryString = this.buildQueryString(params);
-      const response = await apiClient.get<ApiResponse<IProduct[]>>(`/ai/recommendations${queryString}`);
+      const response = await apiClient.get<ApiResponse<IProduct[]>>(
+        `/ai/recommendations${queryString}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -66,17 +71,25 @@ class AIService extends BaseService {
 
   async getPersonalizedRecommendations(): Promise<IProduct[]> {
     try {
-      const response = await apiClient.get<ApiResponse<IProduct[]>>('/ai/recommendations/personalized');
+      const response = await apiClient.get<ApiResponse<IProduct[]>>(
+        '/ai/recommendations/personalized'
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async getSimilarProducts(productId: string, limit: number = 4): Promise<IProduct[]> {
+  async getSimilarProducts(
+    productId: number,
+    options: { limit?: number } = {}
+  ): Promise<IProduct[]> {
     try {
+      const { limit = 4 } = options;
       const queryString = this.buildQueryString({ limit });
-      const response = await apiClient.get<ApiResponse<IProduct[]>>(`/ai/similar-products/${productId}${queryString}`);
+      const response = await apiClient.get<ApiResponse<IProduct[]>>(
+        `/ai/similar/${productId}${queryString}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -86,16 +99,24 @@ class AIService extends BaseService {
   async getTrendingProducts(limit: number = 8): Promise<IProduct[]> {
     try {
       const queryString = this.buildQueryString({ limit });
-      const response = await apiClient.get<ApiResponse<IProduct[]>>(`/ai/trending${queryString}`);
+      const response = await apiClient.get<ApiResponse<IProduct[]>>(
+        `/ai/trending${queryString}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async sendChatbotMessage(message: string, context?: ChatContext): Promise<ChatbotResponse> {
+  async sendChatbotMessage(
+    message: string,
+    context?: ChatContext
+  ): Promise<ChatbotResponse> {
     try {
-      const response = await apiClient.post<ApiResponse<ChatbotResponse>>('/ai/chatbot', { message, context });
+      const response = await apiClient.post<ApiResponse<ChatbotResponse>>(
+        '/ai/chatbot',
+        { message, context }
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -104,7 +125,8 @@ class AIService extends BaseService {
 
   async getChatHistory(): Promise<ChatHistory> {
     try {
-      const response = await apiClient.get<ApiResponse<ChatHistory>>('/ai/chat-history');
+      const response =
+        await apiClient.get<ApiResponse<ChatHistory>>('/ai/chat-history');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -121,7 +143,9 @@ class AIService extends BaseService {
 
   async getSearchSuggestions(query: string): Promise<string[]> {
     try {
-      const response = await apiClient.get<ApiResponse<string[]>>(`/ai/search-suggestions?q=${encodeURIComponent(query)}`);
+      const response = await apiClient.get<ApiResponse<string[]>>(
+        `/ai/search-suggestions?q=${encodeURIComponent(query)}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -130,7 +154,7 @@ class AIService extends BaseService {
 
   async recordInteraction(data: Interaction): Promise<void> {
     try {
-      await apiClient.post('/ai/interactions', data);
+      await apiClient.post('/ai/track', data);
     } catch (error) {
       this.handleError(error);
     }

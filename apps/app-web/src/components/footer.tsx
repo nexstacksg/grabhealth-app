@@ -107,14 +107,6 @@ export default function Footer() {
                   Medical Devices
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/products/personal-care"
-                  className="text-gray-400 hover:text-emerald-400"
-                >
-                  Personal Care
-                </Link>
-              </li>
             </ul>
           </div>
 

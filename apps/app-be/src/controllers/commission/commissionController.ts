@@ -51,11 +51,7 @@ export const commissionController = {
   },
 
   // Get combined commission data
-  async getCommissionData(
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ) {
+  async getCommissionData(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
         throw new AppError('Unauthorized', 401);
@@ -123,16 +119,18 @@ export const commissionController = {
       res.json({
         success: true,
         data: {
-          upline: userRelationship?.upline ? {
-            id: userRelationship.id,
-            user_id: userRelationship.userId,
-            upline_id: userRelationship.uplineId,
-            relationship_level: userRelationship.relationshipLevel,
-            created_at: userRelationship.createdAt,
-            updated_at: userRelationship.updatedAt,
-            name: `${userRelationship.upline.firstName} ${userRelationship.upline.lastName}`,
-            email: userRelationship.upline.email,
-          } : null,
+          upline: userRelationship?.upline
+            ? {
+                id: userRelationship.id,
+                user_id: userRelationship.userId,
+                upline_id: userRelationship.uplineId,
+                relationship_level: userRelationship.relationshipLevel,
+                created_at: userRelationship.createdAt,
+                updated_at: userRelationship.updatedAt,
+                name: `${userRelationship.upline.firstName} ${userRelationship.upline.lastName}`,
+                email: userRelationship.upline.email,
+              }
+            : null,
           downlines: downlines.map((d) => ({
             id: d.id,
             user_id: d.userId,
@@ -169,34 +167,15 @@ export const commissionController = {
     }
   },
 
-  // Get commission structure
+  // Get commission structure - Updated for 4-product model
   async getCommissionStructure(
     _req: AuthRequest,
     res: Response,
     next: NextFunction
   ) {
     try {
-      // Return commission structure
-      // TODO: Move this data to database tables as per business requirements
-      const structure = {
-        productTiers: [
-          { id: 1, name: 'Standard', priceMultiplier: 1.0 },
-          { id: 2, name: 'Premium', priceMultiplier: 0.9 },
-          { id: 3, name: 'Elite', priceMultiplier: 0.8 },
-        ],
-        roleTypes: [
-          { id: 1, name: 'Sales', commissionRate: 0.05 },
-          { id: 2, name: 'Leader', commissionRate: 0.10 },
-          { id: 3, name: 'Manager', commissionRate: 0.15 },
-          { id: 4, name: 'Company', commissionRate: 0.20 },
-        ],
-        volumeBonusTiers: [
-          { id: 1, minVolume: 0, maxVolume: 1000, bonusRate: 0.0 },
-          { id: 2, minVolume: 1000, maxVolume: 5000, bonusRate: 0.02 },
-          { id: 3, minVolume: 5000, maxVolume: 10000, bonusRate: 0.05 },
-          { id: 4, minVolume: 10000, maxVolume: null, bonusRate: 0.10 },
-        ],
-      };
+      // Get the new 4-product commission structure from database
+      const structure = await commissionService.getProductCommissionStructure();
 
       res.json({
         success: true,
