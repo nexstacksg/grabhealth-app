@@ -43,6 +43,13 @@ interface Interaction {
   metadata?: Record<string, any>;
 }
 
+// Backend interface for interaction tracking
+interface BackendInteraction {
+  productId: number;
+  interactionType: 'view' | 'add_to_cart' | 'purchase' | 'share' | 'review';
+  metadata?: Record<string, any>;
+}
+
 class AIService extends BaseService {
   async sendChatMessage(message: string): Promise<ChatResponse> {
     try {
@@ -154,9 +161,24 @@ class AIService extends BaseService {
 
   async recordInteraction(data: Interaction): Promise<void> {
     try {
-      await apiClient.post('/ai/track', data);
+      // Convert frontend interface to backend interface
+      const backendData: BackendInteraction = {
+        productId: parseInt(data.productId || '0'),
+        interactionType:
+          data.type === 'view'
+            ? 'view'
+            : data.type === 'click'
+              ? 'view'
+              : data.type === 'purchase'
+                ? 'purchase'
+                : 'view',
+        metadata: data.metadata,
+      };
+
+      await apiClient.post('/ai/track', backendData);
     } catch (error) {
-      this.handleError(error);
+      // Don't throw errors for tracking - just log them
+      console.warn('Failed to record interaction:', error);
     }
   }
 }
