@@ -261,6 +261,7 @@ export const verifyEmailCode = async (
     const response: ApiResponse = {
       success: true,
       message: 'Email verified successfully',
+      data: { verified: true }, // Include data to prevent frontend error
     };
 
     res.json(response);

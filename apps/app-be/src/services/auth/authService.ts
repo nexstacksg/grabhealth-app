@@ -102,7 +102,19 @@ export class AuthService {
       email: user.email,
       status: user.status,
       emailVerificationCode: user.emailVerificationCode,
-      emailVerificationCodeExpires: user.emailVerificationCodeExpires
+      emailVerificationCodeExpires: user.emailVerificationCodeExpires,
+      emailVerifiedAt: user.emailVerifiedAt
+    });
+    
+    // Double-check by fetching the user again
+    const verifyUser = await prisma.user.findUnique({
+      where: { id: user.id }
+    });
+    console.log('Verification - user fetched again:', {
+      id: verifyUser?.id,
+      status: verifyUser?.status,
+      emailVerificationCode: verifyUser?.emailVerificationCode,
+      emailVerificationCodeExpires: verifyUser?.emailVerificationCodeExpires
     });
 
     // Generate tokens
@@ -435,11 +447,14 @@ export class AuthService {
 
   // Verify email with 4-digit code
   async verifyEmailCode(email: string, code: string): Promise<void> {
+    console.log('Verifying email code for:', email, 'with code:', code);
+    
     const user = await prisma.user.findUnique({
       where: { email },
     }) as any; // Type assertion for user with verification fields
 
     if (!user) {
+      console.log('User not found for email:', email);
       throw new ApiError(
         'User not found',
         HttpStatus.NOT_FOUND,
@@ -447,7 +462,27 @@ export class AuthService {
       );
     }
 
+    console.log('User found:', {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      emailVerificationCode: user.emailVerificationCode,
+      emailVerificationCodeExpires: user.emailVerificationCodeExpires,
+      emailVerifiedAt: user.emailVerifiedAt
+    });
+
+    // Check if user is already verified
+    if (user.status === UserStatus.ACTIVE || user.emailVerifiedAt) {
+      console.log('User is already verified');
+      throw new ApiError(
+        'Email is already verified',
+        HttpStatus.BAD_REQUEST,
+        ErrorCode.ALREADY_EXISTS
+      );
+    }
+
     if (!user.emailVerificationCode || !user.emailVerificationCodeExpires) {
+      console.log('No verification code found for user');
       throw new ApiError(
         'No verification code found',
         HttpStatus.BAD_REQUEST,
@@ -455,13 +490,26 @@ export class AuthService {
       );
     }
 
-    if (new Date() > user.emailVerificationCodeExpires) {
+    const now = new Date();
+    console.log('Checking expiration:', {
+      now: now.toISOString(),
+      expires: user.emailVerificationCodeExpires.toISOString(),
+      isExpired: now > user.emailVerificationCodeExpires
+    });
+    
+    if (now > user.emailVerificationCodeExpires) {
       throw new ApiError(
         'Verification code has expired',
         HttpStatus.BAD_REQUEST,
         ErrorCode.EXPIRED_TOKEN
       );
     }
+
+    console.log('Comparing codes:', {
+      stored: user.emailVerificationCode,
+      provided: code,
+      match: user.emailVerificationCode === code
+    });
 
     if (user.emailVerificationCode !== code) {
       // Increment failed attempts in cache

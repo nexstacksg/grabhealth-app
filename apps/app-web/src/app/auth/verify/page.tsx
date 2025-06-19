@@ -112,6 +112,7 @@ export default function VerifyPage() {
     try {
       console.log('Verifying email code for:', email, 'with code:', fullCode);
       await services.auth.verifyEmailCode(email, fullCode);
+      console.log('Verification successful, updating session storage...');
 
       // Update user status in sessionStorage (client-side only)
       if (typeof window !== 'undefined') {
@@ -122,19 +123,27 @@ export default function VerifyPage() {
         }
       }
 
-      // Refresh auth state
-      await refreshAuth();
+      // Clear any existing session data since user needs to login after verification
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('user');
+      }
 
-      // Redirect to home
-      router.push('/');
+      // Redirect to login page with success message
+      console.log('Redirecting to login...');
+      router.push('/auth/login?verified=true');
     } catch (error: unknown) {
+      console.error('Verification error:', error);
       const err = error as {
         response?: { data?: { error?: { message?: string } } };
+        error?: { message?: string };
         message?: string;
       };
-      setError(
-        err.response?.data?.error?.message || err.message || 'Invalid code'
-      );
+      // Check both response.data.error.message and error.message patterns
+      const errorMessage = err.response?.data?.error?.message || 
+                          err.error?.message || 
+                          err.message || 
+                          'Invalid code';
+      setError(errorMessage);
       // Clear code on error
       setCode(['', '', '', '']);
       inputRefs.current[0]?.focus();
