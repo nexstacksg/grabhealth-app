@@ -99,7 +99,9 @@ const useAuthProvider = () => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);
-      router.push('/auth/login');
+      
+      // Force a full page reload to clear any cached state
+      window.location.href = '/';
     }
   }, [router]);
 
