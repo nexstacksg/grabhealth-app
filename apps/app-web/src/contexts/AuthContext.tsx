@@ -51,6 +51,14 @@ const useAuthProvider = () => {
         const authData = await authService.login({ email, password });
         setUser(authData.user);
 
+        // Store tokens in localStorage as backup (cookies are primary)
+        if (authData.accessToken) {
+          localStorage.setItem('accessToken', authData.accessToken);
+        }
+        if (authData.refreshToken) {
+          localStorage.setItem('refreshToken', authData.refreshToken);
+        }
+
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {
           router.push('/auth/verify');
@@ -76,6 +84,9 @@ const useAuthProvider = () => {
     } catch {
       // Ignore logout errors
     } finally {
+      // Clear stored tokens
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       setUser(null);
       router.push('/auth/login');
     }
@@ -91,6 +102,14 @@ const useAuthProvider = () => {
           lastName: data.lastName || '',
         });
         setUser(authData.user);
+
+        // Store tokens in localStorage as backup (cookies are primary)
+        if (authData.accessToken) {
+          localStorage.setItem('accessToken', authData.accessToken);
+        }
+        if (authData.refreshToken) {
+          localStorage.setItem('refreshToken', authData.refreshToken);
+        }
 
         // Check if email verification is needed
         if (authData.user.status === 'PENDING_VERIFICATION') {

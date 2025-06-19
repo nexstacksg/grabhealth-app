@@ -8,10 +8,13 @@ export async function POST(request: NextRequest) {
     const body: LoginRequest = await request.json();
 
     // Use the same apiClient - it knows we're on server and will call backend directly
-    const data = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', body);
+    const data = await apiClient.post<ApiResponse<AuthResponse>>(
+      '/auth/login',
+      body
+    );
 
     // The interceptor returns response.data directly
-    
+
     if (!data.success || !data.data) {
       return NextResponse.json(
         { error: { message: 'Login failed' } },
@@ -22,9 +25,9 @@ export async function POST(request: NextRequest) {
     // Set secure HTTP-only cookies
     const cookieStore = await cookies();
 
-    // Access token - shorter expiry
+    // Access token - shorter expiry (make accessible to JS for API calls)
     cookieStore.set('accessToken', data.data.accessToken, {
-      httpOnly: true,
+      httpOnly: false, // Allow JS access for API calls
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 24 hours
@@ -49,15 +52,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Login error:', error);
-    
+
     const err = error as { message?: string; status?: number; code?: string };
-    
+
     return NextResponse.json(
-      { 
-        error: { 
+      {
+        error: {
           message: err.message || 'Login failed',
-          code: err.code 
-        } 
+          code: err.code,
+        },
       },
       { status: err.status || 500 }
     );

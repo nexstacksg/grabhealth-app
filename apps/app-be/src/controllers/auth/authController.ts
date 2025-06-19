@@ -75,11 +75,13 @@ export const login = async (
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Don't send tokens in response body for security
+    // Send tokens in response body for frontend use (cookies are backup)
     const response: ApiResponse = {
       success: true,
       data: {
         user: result.user,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
         expiresIn: result.expiresIn,
       },
     };
@@ -124,11 +126,13 @@ export const refreshToken = async (
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Don't send tokens in response body
+    // Send tokens in response body for frontend use (cookies are backup)
     const response: ApiResponse = {
       success: true,
       data: {
         user: result.user,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
         expiresIn: result.expiresIn,
       },
     };
