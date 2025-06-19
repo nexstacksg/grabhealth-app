@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2, Star, ChevronLeft, ShoppingBag } from 'lucide-react';
@@ -43,20 +43,8 @@ export default function ProductDetailPage() {
         const enhancedProduct = addDemoData(productData);
         setProduct(enhancedProduct);
 
-        // Track product view for AI recommendations
-        try {
-          await services.ai.recordInteraction({
-            userId: undefined, // Will be handled by the service if user is authenticated
-            productId: productData.id,
-            interactionType: 'view',
-            metadata: {
-              source: 'product_detail',
-              category: productData.categoryId,
-            },
-          });
-        } catch (trackingError) {
-          console.warn('Failed to track product view:', trackingError);
-        }
+        // Note: AI tracking removed as it's not essential for product viewing
+        // and was causing authentication errors for public users
 
         // Fetch AI-powered similar products
         try {
