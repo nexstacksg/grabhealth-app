@@ -4,8 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GrabHealth AI is a comprehensive e-commerce platform for health and wellness products with integrated multi-level marketing (MLM) capabilities. Built as a Turborepo monorepo, it features:
+GrabHealth AI is a comprehensive wellness ecosystem with integrated multi-level marketing (MLM) capabilities, built as a Turborepo monorepo. The platform combines traditional Chinese medicine (TCM) with modern technology to provide health products and services through e-commerce, MLM network marketing, AI-powered diagnostics, and blockchain technology.
 
+### Company Mission & Vision
+- **Wellness Focus**: Providing free medical checkups and health services
+- **AI Integration**: AI-powered patient database and product recommendations
+- **Modern TCM**: Integrating traditional Chinese medicine with modern technology
+- **Blockchain**: Implementing blockchain for health ecosystem transparency
+
+### Core Business Pillars
+1. **Wellness Products**: Premium TCM-based health supplements and beverages
+2. **NHSP TCM Clinics**: Physical clinics offering traditional and modern treatments
+3. **Blockchain Health Ecosystem**: Secure, transparent health data management
+
+### Platform Features
 - **E-commerce Platform**: Product catalog, shopping cart, and order management
 - **Multi-Level Marketing**: 4-level deep commission tracking with network visualization
 - **Free Membership**: Automatic membership upon registration (no discount tiers)
@@ -201,13 +213,38 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 ### Key Business Logic
 
 1. **Commission Structure**:
-   - **Database-Driven Configuration**: Commission rates, role tiers, and product pricing should be stored in database tables
-   - **Dynamic Role Tiers**: Support for multiple commission levels (Sales, Leader, Manager, Company, etc.) defined in database
-   - **Configurable Rates**: Commission percentages and price differentials managed through admin interface
-   - **Product-Specific Pricing**: Each product can have different prices per role tier
-   - **Multi-level Support**: Handles upline/downline relationships with configurable depth
-   - Network visualization in admin panel for tracking relationships
-   - See commission.md for current example structure (to be migrated to database)
+   
+   **Distribution Model** (Two Sales Channels):
+   - **Individual Sales Representatives**: Direct sales with multi-level commissions
+   - **Authorized Partner Companies**: Wholesale partners managing their own sales force
+   
+   **Commission Rates**:
+   - **Sales Representative**: 30% (first-level, direct sales commission)
+   - **Team Leader**: 10% (second-level, upline commission)
+   - **Manager**: 5% (third-level commission)
+   - **Platform Owner**: 5% (platform fee)
+   - **Partner Company**: 5% (for partner channel sales)
+   
+   **Role-Based Pricing Matrix** (All prices in SGD):
+   
+   | Role | Realman | Wild Ginseng Honey | Golden Ginseng Water | Travel Packages |
+   |------|---------|-------------------|---------------------|-----------------|
+   | Customer | $3,600 | $1,000 | $18.90 | $799 |
+   | Sales | $2,520 | $700 | $13.23 | $559.30 |
+   | Leader | $2,160 | $600 | $11.34 | $479.40 |
+   | Manager | $1,980 | $550 | $10.40 | $439.45 |
+   | Company | $1,800 | $500 | $9.45 | $399.50 |
+   
+   **Commission Calculation**:
+   - Based on price differential between role levels
+   - Example: Realman sold by Sales Rep = $3,600 - $2,520 = $1,080 commission (30%)
+   - Remaining margin covers product costs and operations
+   
+   **Implementation Details**:
+   - Commissions calculated on pre-tax sale price
+   - Monthly payouts with minimum thresholds
+   - Network visualization in admin panel
+   - See documents/commission.md for full details
 
 2. **Membership System**:
    - Free membership upon registration
@@ -218,6 +255,25 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
    - Admin can manage product catalog
    - AI-powered recommendations based on user behavior
    - Tiered pricing with membership discounts
+   
+### Current Product Catalog
+
+1. **Realman (真男人)**
+   - Premium herbal supplement for men's health and vitality
+   - Key ingredients: Wild Ginseng, Deer Jerky, Rehmannia, Turmeric, Goji Berry
+   - Benefits: Stamina, energy, reproductive health, immunity boost
+   - Packaging: 6 bottles per box, 3g per dose, 1 bottle every 10 days
+
+2. **Wild Ginseng Honey (蜜制人参)**
+   - Natural wellness blend for energy and vitality
+   - Target: Students, professionals, elderly, wellness enthusiasts
+   - Promotes wellness through traditional ingredients
+
+3. **Golden Ginseng Water (金参水)**
+   - Premium health beverage with visible ginseng root
+   - Ingredients: Ginseng, Chrysanthemum, Jasmine, Black Truffle, Wolfberry
+   - Benefits: Energy boost, mental focus, immunity, anti-aging
+   - Features: Luxurious golden hue, elegant packaging
 
 ### Security Features
 
