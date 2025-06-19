@@ -3,6 +3,7 @@ import authRoutes from './auth';
 import userRoutes from './users';
 import testRoutes from './test';
 import productRoutes from './products';
+import productManagementRoutes from './product-management';
 import categoryRoutes from './categories';
 import orderRoutes from './orders';
 import cartRoutes from './cart';
@@ -25,6 +26,7 @@ router.get('/', (_req, res) => {
       users: '/api/v1/users',
       test: '/api/v1/test',
       products: '/api/v1/products',
+      'product-management': '/api/v1/product-management',
       categories: '/api/v1/categories',
       orders: '/api/v1/orders',
       cart: '/api/v1/cart',
@@ -44,6 +46,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/test', testRoutes);
 router.use('/products', productRoutes);
+router.use('/product-management', productManagementRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/orders', orderRoutes);
 router.use('/cart', cartRoutes);

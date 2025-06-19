@@ -22,38 +22,32 @@ import { Loader2 } from 'lucide-react';
 import services from '@/services';
 // Authentication is now handled at the page level
 
-// Types for commission structure data
-type ProductCommissionTier = {
+// Types for the new 4-product commission structure
+type Product = {
   id: number;
-  product_id: number;
-  product_name: string;
-  retail_price: number;
-  trader_price: number;
-  distributor_price: number;
-  trader_commission_min: number;
-  trader_commission_max: number;
-  distributor_commission_min: number;
-  distributor_commission_max: number;
-  created_at: string;
-  updated_at: string;
-};
-
-type UserRoleType = {
-  id: number;
-  role_name: string;
+  name: string;
   description: string;
-  commission_multiplier: number;
-  created_at: string;
-  updated_at: string;
+  sku: string;
+  customerPrice: number;
+  travelPackagePrice?: number;
+  pvValue: number;
+  commissionRates: {
+    sales: number;
+    leader: number;
+    manager: number;
+  };
+  commissionAmounts: {
+    sales: number;
+    leader: number;
+    manager: number;
+  };
 };
 
-type VolumeBonus = {
+type RoleType = {
   id: number;
-  min_volume: number;
-  max_volume: number | null;
-  bonus_percentage: number;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  commissionRate: number;
+  level: number;
 };
 
 // Define incentive structure
@@ -72,86 +66,61 @@ const incentiveStructure = [
   },
 ];
 
-// Format volume range for display
-function formatVolumeRange(min: number | undefined | null, max: number | undefined | null): string {
-  // Handle cases where min or max might be undefined
-  const minValue = min ?? 0;
-  const maxValue = max;
-  
-  if (!minValue && minValue !== 0) {
-    return 'N/A';
-  }
-  
-  if (maxValue === null || maxValue === undefined) {
-    return `$${minValue.toLocaleString()}+`;
-  }
-  return `$${minValue.toLocaleString()} - $${maxValue.toLocaleString()}`;
-}
-
 function CommissionStructure() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [productTiers, setProductTiers] = useState<ProductCommissionTier[]>([]);
-  const [roleTypes, setRoleTypes] = useState<UserRoleType[]>([]);
-  const [volumeBonusTiers, setVolumeBonusTiers] = useState<VolumeBonus[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [roleTypes, setRoleTypes] = useState<RoleType[]>([]);
 
-  // Sample default data to use if API fails
-  const defaultProductTiers: ProductCommissionTier[] = [
+  // Default data for the 4-product commission model
+  const defaultProducts: Product[] = [
     {
       id: 1,
-      product_id: 1,
-      product_name: 'Health Supplement A',
-      retail_price: 49.99,
-      trader_price: 39.99,
-      distributor_price: 29.99,
-      trader_commission_min: 10,
-      trader_commission_max: 15,
-      distributor_commission_min: 20,
-      distributor_commission_max: 30,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      name: 'Real Man',
+      description: 'Premium health supplement for men',
+      sku: 'REAL_MAN_001',
+      customerPrice: 3600,
+      travelPackagePrice: 799,
+      pvValue: 600,
+      commissionRates: { sales: 0.3, leader: 0.1, manager: 0.05 },
+      commissionAmounts: { sales: 1080, leader: 360, manager: 180 },
     },
     {
       id: 2,
-      product_id: 2,
-      product_name: 'Wellness Package B',
-      retail_price: 99.99,
-      trader_price: 79.99,
-      distributor_price: 59.99,
-      trader_commission_min: 12,
-      trader_commission_max: 18,
-      distributor_commission_min: 22,
-      distributor_commission_max: 35,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ];
-
-  const defaultVolumeBonusTiers: VolumeBonus[] = [
-    {
-      id: 1,
-      min_volume: 0,
-      max_volume: 1000,
-      bonus_percentage: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      min_volume: 1000,
-      max_volume: 5000,
-      bonus_percentage: 5,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      name: 'Wild Ginseng Honey',
+      description: 'Premium wild ginseng honey blend',
+      sku: 'GINSENG_HONEY_001',
+      customerPrice: 1000,
+      pvValue: 700,
+      commissionRates: { sales: 0.3, leader: 0.1, manager: 0.05 },
+      commissionAmounts: { sales: 300, leader: 100, manager: 50 },
     },
     {
       id: 3,
-      min_volume: 5000,
-      max_volume: null,
-      bonus_percentage: 10,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      name: 'Golden Ginseng Water',
+      description: 'Premium golden ginseng infused water',
+      sku: 'GOLDEN_WATER_001',
+      customerPrice: 18.9,
+      pvValue: 2000,
+      commissionRates: { sales: 0.3, leader: 0.1, manager: 0.05 },
+      commissionAmounts: { sales: 5.67, leader: 1.89, manager: 0.95 },
     },
+    {
+      id: 4,
+      name: 'Travel Package',
+      description: 'Complete health and wellness travel package',
+      sku: 'TRAVEL_PKG_001',
+      customerPrice: 799,
+      pvValue: 500,
+      commissionRates: { sales: 0.3, leader: 0.1, manager: 0.05 },
+      commissionAmounts: { sales: 239.7, leader: 79.9, manager: 39.95 },
+    },
+  ];
+
+  const defaultRoleTypes: RoleType[] = [
+    { id: 1, name: 'Sales', commissionRate: 0.3, level: 1 },
+    { id: 2, name: 'Leader', commissionRate: 0.1, level: 2 },
+    { id: 3, name: 'Manager', commissionRate: 0.05, level: 3 },
   ];
 
   // Fetch commission structure data
@@ -163,35 +132,30 @@ function CommissionStructure() {
 
         const data = await services.commission.getCommissionStructure();
 
-        // If we got empty data from the API, use defaults
-        if (!data.productTiers || data.productTiers.length === 0) {
-          setProductTiers(defaultProductTiers);
-        } else {
-          setProductTiers(data.productTiers);
-        }
+        // The API returns the structure directly, not wrapped in success/data
+        if (data && typeof data === 'object') {
+          // Check if data has the expected structure
+          if ('products' in data && Array.isArray(data.products)) {
+            setProducts(data.products || defaultProducts);
+          } else {
+            setProducts(defaultProducts);
+          }
 
-        setRoleTypes(data.roleTypes || []);
-
-        if (!data.volumeBonusTiers || data.volumeBonusTiers.length === 0) {
-          setVolumeBonusTiers(defaultVolumeBonusTiers);
+          if ('roleTypes' in data && Array.isArray(data.roleTypes)) {
+            setRoleTypes(data.roleTypes || defaultRoleTypes);
+          } else {
+            setRoleTypes(defaultRoleTypes);
+          }
         } else {
-          // Validate and ensure all required fields are present
-          const validatedTiers = data.volumeBonusTiers.map((tier: any) => ({
-            id: tier.id || Math.random(),
-            min_volume: tier.min_volume ?? tier.minVolume ?? 0,
-            max_volume: tier.max_volume ?? tier.maxVolume ?? null,
-            bonus_percentage: tier.bonus_percentage ?? tier.bonusPercentage ?? 0,
-            created_at: tier.created_at ?? tier.createdAt ?? new Date().toISOString(),
-            updated_at: tier.updated_at ?? tier.updatedAt ?? new Date().toISOString(),
-          }));
-          setVolumeBonusTiers(validatedTiers);
+          // Use default data if API response is not in expected format
+          setProducts(defaultProducts);
+          setRoleTypes(defaultRoleTypes);
         }
       } catch (err) {
         console.error('Error fetching commission structure:', err);
         // Use default data on error
-        setProductTiers(defaultProductTiers);
-        setRoleTypes([]);
-        setVolumeBonusTiers(defaultVolumeBonusTiers);
+        setProducts(defaultProducts);
+        setRoleTypes(defaultRoleTypes);
         setError('Using default commission structure data due to error');
       } finally {
         setIsLoading(false);
@@ -223,45 +187,62 @@ function CommissionStructure() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Product Pricing & Commission Tiers</CardTitle>
+          <CardTitle>GrabHealth 4-Product Commission Structure</CardTitle>
           <CardDescription>
-            Commission rates vary by product and distributor tier
+            Fixed commission amounts for each role level across our 4 core
+            products
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[250px]">Product</TableHead>
-                <TableHead>Retail Price</TableHead>
-                <TableHead>Trader Price</TableHead>
-                <TableHead>Distributor Price</TableHead>
-                <TableHead>Trader Commission</TableHead>
-                <TableHead>Distributor Commission</TableHead>
+                <TableHead className="w-[200px]">Product</TableHead>
+                <TableHead>Customer Price</TableHead>
+                <TableHead>PV Points</TableHead>
+                <TableHead>Sales (30%)</TableHead>
+                <TableHead>Leader (10%)</TableHead>
+                <TableHead>Manager (5%)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {productTiers.length > 0 ? (
-                productTiers.map((product) => (
+              {products.length > 0 ? (
+                products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">
-                      {product.product_name}
+                      <div>
+                        <div className="font-semibold">{product.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {product.sku}
+                        </div>
+                        {product.travelPackagePrice && (
+                          <div className="text-xs text-blue-600">
+                            Travel: {formatPrice(product.travelPackagePrice)}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{formatPrice(product.retail_price)}</TableCell>
-                    <TableCell>{formatPrice(product.trader_price)}</TableCell>
-                    <TableCell>
-                      {formatPrice(product.distributor_price)}
+                    <TableCell className="font-semibold">
+                      {formatPrice(product.customerPrice)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-blue-50">
-                        {product.trader_commission_min}% -{' '}
-                        {product.trader_commission_max}%
+                      <Badge variant="outline" className="bg-purple-50">
+                        {product.pvValue} PV
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-green-50">
-                        {product.distributor_commission_min}% -{' '}
-                        {product.distributor_commission_max}%
+                        {formatPrice(product.commissionAmounts.sales)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-blue-50">
+                        {formatPrice(product.commissionAmounts.leader)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-orange-50">
+                        {formatPrice(product.commissionAmounts.manager)}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -269,7 +250,7 @@ function CommissionStructure() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-4">
-                    No product commission tiers found
+                    No products found
                   </TableCell>
                 </TableRow>
               )}
@@ -280,47 +261,101 @@ function CommissionStructure() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Volume-Based Bonus Tiers</CardTitle>
+          <CardTitle>Commission Role Structure</CardTitle>
           <CardDescription>
-            Higher sales volumes unlock higher commission percentages
+            Stepwise commission distribution across the upline hierarchy
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Sales Volume Range</TableHead>
-                <TableHead>Bonus Percentage</TableHead>
+                <TableHead>Role Level</TableHead>
+                <TableHead>Commission Rate</TableHead>
+                <TableHead>Description</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {volumeBonusTiers.length > 0 ? (
-                volumeBonusTiers.map((tier) => (
-                  <TableRow key={tier.id}>
-                    <TableCell>
-                      {formatVolumeRange(tier.min_volume, tier.max_volume)}
+              {roleTypes.length > 0 ? (
+                roleTypes.map((role) => (
+                  <TableRow key={role.id}>
+                    <TableCell className="font-medium">
+                      Level {role.level} - {role.name}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          tier.bonus_percentage > 0 ? 'bg-blue-50' : ''
-                        }
-                      >
-                        {tier.bonus_percentage}%
+                      <Badge variant="outline" className="bg-blue-50">
+                        {(role.commissionRate * 100).toFixed(0)}%
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {role.name === 'Sales' &&
+                        'Direct commission from personal sales'}
+                      {role.name === 'Leader' &&
+                        'Override commission from Sales level'}
+                      {role.name === 'Manager' &&
+                        'Override commission from Leader level'}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={2} className="text-center py-4">
-                    No volume bonus tiers found
+                  <TableCell colSpan={3} className="text-center py-4">
+                    No role types found
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Commission Calculation Example</CardTitle>
+          <CardDescription>
+            Total earnings for selling 1 unit of each product (Sales role)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <h4 className="font-semibold">Commission Breakdown:</h4>
+              {products.map((product) => (
+                <div key={product.id} className="flex justify-between text-sm">
+                  <span>{product.name}:</span>
+                  <span className="font-medium">
+                    {formatPrice(product.commissionAmounts.sales)}
+                  </span>
+                </div>
+              ))}
+              <div className="border-t pt-2 flex justify-between font-semibold">
+                <span>Total Commission:</span>
+                <span className="text-green-600">
+                  {formatPrice(
+                    products.reduce(
+                      (sum, p) => sum + p.commissionAmounts.sales,
+                      0
+                    )
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold">PV Points Breakdown:</h4>
+              {products.map((product) => (
+                <div key={product.id} className="flex justify-between text-sm">
+                  <span>{product.name}:</span>
+                  <span className="font-medium">{product.pvValue} PV</span>
+                </div>
+              ))}
+              <div className="border-t pt-2 flex justify-between font-semibold">
+                <span>Total PV Points:</span>
+                <span className="text-purple-600">
+                  {products.reduce((sum, p) => sum + p.pvValue, 0)} PV
+                </span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
