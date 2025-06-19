@@ -113,13 +113,13 @@ function ProductCard({ product }: { product: IProduct }) {
       // Track user interaction for AI recommendations
       try {
         await services.ai.recordInteraction({
-          userId: undefined, // Will be handled by the service if user is authenticated
-          productId: product.id,
-          interactionType: 'add_to_cart',
+          type: 'click',
+          productId: product.id.toString(),
+          categoryId: product.categoryId?.toString(),
           metadata: {
             source: 'featured_products',
             price: discountedPrice,
-            category: product.categoryId,
+            action: 'add_to_cart',
           },
         });
       } catch (trackingError) {

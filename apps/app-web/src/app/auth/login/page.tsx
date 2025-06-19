@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
@@ -38,7 +38,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { login } = useAuth();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -156,5 +156,13 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

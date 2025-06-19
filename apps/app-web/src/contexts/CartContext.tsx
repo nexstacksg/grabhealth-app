@@ -74,7 +74,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const updatedCart = await cartService.addToCart(product.id, quantity);
+      const updatedCart = await cartService.addToCart(product.id.toString(), quantity);
       setCart(updatedCart);
       toast.success(`${product.name} added to cart`);
     } catch (error) {
@@ -97,7 +97,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const updatedCart = await cartService.updateCartItem(
-        productId,
+        productId.toString(),
         quantity
       );
       setCart(updatedCart);
@@ -116,7 +116,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const updatedCart = await cartService.removeFromCart(productId);
+      const updatedCart = await cartService.removeFromCart(productId.toString());
       setCart(updatedCart);
       toast.success('Item removed from cart');
     } catch (error) {

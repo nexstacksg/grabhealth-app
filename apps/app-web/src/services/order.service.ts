@@ -6,8 +6,7 @@ import { apiClient } from './api-client';
 import { BaseService } from './base.service';
 import {
   IOrder,
-  CreateOrderRequest,
-  CheckoutRequest,
+  IOrderCreate,
   ApiResponse,
 } from '@app/shared-types';
 
@@ -18,8 +17,19 @@ interface OrderStats {
   completedOrders: number;
 }
 
+interface CheckoutRequest {
+  cartItems: {
+    productId: number;
+    quantity: number;
+  }[];
+  paymentMethod: string;
+  shippingAddress: string;
+  billingAddress: string;
+  notes?: string;
+}
+
 class OrderService extends BaseService {
-  async createOrder(data: CreateOrderRequest): Promise<IOrder> {
+  async createOrder(data: IOrderCreate): Promise<IOrder> {
     try {
       const response = await apiClient.post<ApiResponse<IOrder>>(
         '/orders',
