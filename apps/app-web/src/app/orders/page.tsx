@@ -62,8 +62,8 @@ export default function OrdersPage() {
       try {
         setIsLoading(true);
         // Fetch all orders (using a high limit)
-        const response = await services.order.getMyOrders(1, 100);
-        setOrders(response.data || []);
+        const response = await services.order.getMyOrders({ page: 1, limit: 100 });
+        setOrders(response.orders || []);
       } catch (error) {
         console.error('Error fetching orders:', error);
         setError('Failed to load orders. Please try again later.');

@@ -4,7 +4,7 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IOrder, ICreateOrder, ICheckoutRequest, ApiResponse } from '@app/shared-types';
+import { IOrder, CreateOrderRequest, CheckoutRequest, ApiResponse } from '@app/shared-types';
 
 interface OrderStats {
   totalOrders: number;
@@ -14,7 +14,7 @@ interface OrderStats {
 }
 
 class OrderService extends BaseService {
-  async createOrder(data: ICreateOrder): Promise<IOrder> {
+  async createOrder(data: CreateOrderRequest): Promise<IOrder> {
     try {
       const response = await apiClient.post<ApiResponse<IOrder>>('/orders', data);
       return this.extractData(response);
@@ -30,7 +30,7 @@ class OrderService extends BaseService {
   }): Promise<{ orders: IOrder[]; total: number; page: number; totalPages: number }> {
     try {
       const queryString = this.buildQueryString(params);
-      const response = await apiClient.get<ApiResponse<{ orders: IOrder[]; pagination: any }>>(`/orders${queryString}`);
+      const response = await apiClient.get<ApiResponse<{ orders: IOrder[]; pagination: any }>>(`/orders/my-orders${queryString}`);
       const data = this.extractData(response);
       
       return {
@@ -71,7 +71,7 @@ class OrderService extends BaseService {
     }
   }
 
-  async checkoutFromCart(data: ICheckoutRequest): Promise<IOrder> {
+  async checkoutFromCart(data: CheckoutRequest): Promise<IOrder> {
     try {
       const response = await apiClient.post<ApiResponse<IOrder>>('/orders/checkout', data);
       return this.extractData(response);
