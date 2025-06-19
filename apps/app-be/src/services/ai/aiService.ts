@@ -29,7 +29,7 @@ export class AIService {
 
       // For now, implement a simple recommendation algorithm
       // In a real-world scenario, this would use ML models, user behavior data, etc.
-      
+
       let whereClause: any = {
         inStock: true,
         status: 'ACTIVE',
@@ -57,10 +57,10 @@ export class AIService {
         });
 
         // Extract category preferences from user's order history
-        const userCategories = userOrders.flatMap(order =>
+        const userCategories = userOrders.flatMap((order) =>
           order.items
-            .filter(item => item.product?.categoryId)
-            .map(item => item.product!.categoryId)
+            .filter((item) => item.product?.categoryId)
+            .map((item) => item.product!.categoryId)
         );
 
         if (userCategories.length > 0) {
@@ -75,15 +75,30 @@ export class AIService {
         where: whereClause,
         include: {
           category: true,
+          productPricing: true,
+          productCommissions: true,
         },
         orderBy: [
           { createdAt: 'desc' }, // Newer products first
-          { id: 'desc' }
+          { id: 'desc' },
         ],
         take: limit,
       });
 
-      return products as IProduct[];
+      // Transform products to include price from ProductPricing
+      return products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.productPricing?.customerPrice || 0,
+        categoryId: product.categoryId,
+        category: product.category,
+        imageUrl: product.imageUrl,
+        inStock: product.inStock,
+        status: product.status as any,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })) as IProduct[];
     } catch (error) {
       console.error('Error getting personalized recommendations:', error);
       throw new AppError('Failed to get personalized recommendations', 500);
@@ -100,17 +115,22 @@ export class AIService {
       // Find the source product
       const sourceProduct = await this.prisma.product.findUnique({
         where: { id: productId },
-        include: { category: true },
+        include: {
+          category: true,
+          productPricing: true,
+        },
       });
 
       if (!sourceProduct) {
         throw new AppError('Product not found', 404);
       }
 
+      const sourcePrice = sourceProduct.productPricing?.customerPrice || 0;
+
       // Find similar products based on category and price range
-      const priceRange = sourceProduct.price * 0.5; // 50% price range
-      const minPrice = Math.max(0, sourceProduct.price - priceRange);
-      const maxPrice = sourceProduct.price + priceRange;
+      const priceRange = sourcePrice * 0.5; // 50% price range
+      const minPrice = Math.max(0, sourcePrice - priceRange);
+      const maxPrice = sourcePrice + priceRange;
 
       const similarProducts = await this.prisma.product.findMany({
         where: {
@@ -122,15 +142,19 @@ export class AIService {
               categoryId: sourceProduct.categoryId,
             },
             {
-              price: {
-                gte: minPrice,
-                lte: maxPrice,
+              productPricing: {
+                customerPrice: {
+                  gte: minPrice,
+                  lte: maxPrice,
+                },
               },
             },
           ],
         },
         include: {
           category: true,
+          productPricing: true,
+          productCommissions: true,
         },
         orderBy: [
           // Prioritize same category
@@ -140,7 +164,20 @@ export class AIService {
         take: limit,
       });
 
-      return similarProducts as IProduct[];
+      // Transform products to include price from ProductPricing
+      return similarProducts.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.productPricing?.customerPrice || 0,
+        categoryId: product.categoryId,
+        category: product.category,
+        imageUrl: product.imageUrl,
+        inStock: product.inStock,
+        status: product.status as any,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })) as IProduct[];
     } catch (error) {
       if (error instanceof AppError) throw error;
       console.error('Error getting similar products:', error);
@@ -179,7 +216,7 @@ export class AIService {
         take: limit * 2, // Get more to filter out inactive/out-of-stock
       });
 
-      const productIds = trendingProductIds.map(item => item.productId);
+      const productIds = trendingProductIds.map((item) => item.productId);
 
       if (productIds.length === 0) {
         // Fallback to newest products if no orders found
@@ -190,11 +227,27 @@ export class AIService {
           },
           include: {
             category: true,
+            productPricing: true,
+            productCommissions: true,
           },
           orderBy: { createdAt: 'desc' },
           take: limit,
         });
-        return fallbackProducts as IProduct[];
+
+        // Transform fallback products to include price from ProductPricing
+        return fallbackProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.productPricing?.customerPrice || 0,
+          categoryId: product.categoryId,
+          category: product.category,
+          imageUrl: product.imageUrl,
+          inStock: product.inStock,
+          status: product.status as any,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+        })) as IProduct[];
       }
 
       const trendingProducts = await this.prisma.product.findMany({
@@ -205,17 +258,34 @@ export class AIService {
         },
         include: {
           category: true,
+          productPricing: true,
+          productCommissions: true,
         },
         take: limit,
       });
 
+      // Transform products to include price from ProductPricing
+      const transformedProducts = trendingProducts.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.productPricing?.customerPrice || 0,
+        categoryId: product.categoryId,
+        category: product.category,
+        imageUrl: product.imageUrl,
+        inStock: product.inStock,
+        status: product.status as any,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })) as IProduct[];
+
       // Sort by the original trending order
       const sortedProducts = productIds
-        .map(id => trendingProducts.find(p => p.id === id))
+        .map((id) => transformedProducts.find((p) => p.id === id))
         .filter(Boolean)
         .slice(0, limit);
 
-      return sortedProducts as IProduct[];
+      return sortedProducts;
     } catch (error) {
       console.error('Error getting trending products:', error);
       throw new AppError('Failed to get trending products', 500);
@@ -229,7 +299,7 @@ export class AIService {
     try {
       // For now, we'll store interactions in a simple format
       // In a real AI system, this would feed into recommendation models
-      
+
       if (!userId) {
         // For anonymous users, we could still track for general trends
         // but for now, we'll just skip recording
@@ -260,7 +330,6 @@ export class AIService {
       // 2. Update user preference scores
       // 3. Feed into ML model training data
       // 4. Update product popularity scores
-      
     } catch (error) {
       if (error instanceof AppError) throw error;
       console.error('Error recording interaction:', error);
@@ -277,7 +346,7 @@ export class AIService {
 
       // Simple keyword-based search suggestions
       // In a real AI system, this would use NLP and search analytics
-      
+
       const products = await this.prisma.product.findMany({
         where: {
           OR: [
@@ -303,8 +372,8 @@ export class AIService {
 
       // Extract unique suggestions from product names
       const suggestions = products
-        .map(p => p.name)
-        .filter(name => name.toLowerCase().includes(query.toLowerCase()));
+        .map((p) => p.name)
+        .filter((name) => name.toLowerCase().includes(query.toLowerCase()));
 
       // Add some common health-related search suggestions
       const commonSuggestions = [
@@ -314,9 +383,10 @@ export class AIService {
         'cold medicine',
         'first aid',
         'health products',
-      ].filter(suggestion => 
-        suggestion.toLowerCase().includes(query.toLowerCase()) &&
-        !suggestions.includes(suggestion)
+      ].filter(
+        (suggestion) =>
+          suggestion.toLowerCase().includes(query.toLowerCase()) &&
+          !suggestions.includes(suggestion)
       );
 
       return [...suggestions, ...commonSuggestions].slice(0, limit);

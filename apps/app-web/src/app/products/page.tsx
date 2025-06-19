@@ -6,7 +6,7 @@ import { ICategory, IProduct, ProductSearchParams } from '@app/shared-types';
 import { ProductFilters } from '@/components/features/products/ProductFilters';
 import { ProductGrid } from '@/components/features/products/ProductGrid';
 import { Pagination } from '@/components/features/products/Pagination';
-import { AIRecommendationsSection } from '@/components/features/products/AIRecommendationsSection';
+
 import { ProductPageTransition } from '@/components/features/products/ProductSkeleton';
 
 export default function ProductsPage() {
@@ -126,6 +126,13 @@ export default function ProductsPage() {
         // Fetch categories using the service from lib/services
         const fetchedCategories = await categoryService.getCategories();
 
+        // Filter out Personal Care category if it exists
+        const filteredCategories = fetchedCategories.filter(
+          (category) =>
+            category.name !== 'Personal Care' &&
+            category.slug !== 'personal-care'
+        );
+
         // Add "All" category at the beginning
         const allCategory: ICategory = {
           id: 0,
@@ -138,7 +145,7 @@ export default function ProductsPage() {
           updatedAt: new Date(),
         };
 
-        setCategories([allCategory, ...fetchedCategories]);
+        setCategories([allCategory, ...filteredCategories]);
       } catch (error) {
         console.error('Error fetching categories:', error);
         // Set default categories on error
@@ -234,13 +241,6 @@ export default function ProductsPage() {
 
         {/* Products display */}
         <div className="flex-1">
-          {/* AI Recommendations Section - only show when no active filters */}
-          {activeCategory === 'all' &&
-            !filters.query &&
-            !filters.inStock &&
-            !filters.minPrice &&
-            !filters.maxPrice && <AIRecommendationsSection />}
-
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>

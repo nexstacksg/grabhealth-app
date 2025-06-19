@@ -27,7 +27,6 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -63,9 +62,7 @@ export default function ProductDetailPage() {
         try {
           const similarProducts = await services.ai.getSimilarProducts(
             productData.id,
-            {
-              limit: 4,
-            }
+            { limit: 4 }
           );
           setRelatedProducts(similarProducts);
         } catch (err) {
@@ -75,10 +72,11 @@ export default function ProductDetailPage() {
             try {
               const categoryProducts =
                 await services.product.getProductsByCategory(
-                  productData.categoryId
+                  productData.categoryId.toString(),
+                  { limit: 4 }
                 );
               setRelatedProducts(
-                categoryProducts
+                categoryProducts.products
                   .filter((p: IProduct) => p.id !== productData.id)
                   .slice(0, 4)
               );
@@ -191,7 +189,6 @@ export default function ProductDetailPage() {
     return extendedProduct;
   };
 
-
   if (loading) {
     return (
       <div className="container max-w-6xl py-20 flex items-center justify-center min-h-[60vh]">
@@ -225,7 +222,6 @@ export default function ProductDetailPage() {
     );
   }
 
-
   return (
     <div className="container max-w-6xl py-6 md:py-10 px-4 md:px-6">
       {/* Breadcrumb */}
@@ -246,7 +242,7 @@ export default function ProductDetailPage() {
         <div className="relative rounded-xl overflow-hidden bg-white border border-gray-100 h-[350px] md:h-[450px] group">
           <div className="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <Image
-            src={product.imageUrl || '/placeholder.svg'}
+            src={product.imageUrl || '/placeholder.svg?height=400&width=400'}
             alt={product.name}
             fill
             className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
@@ -273,7 +269,6 @@ export default function ProductDetailPage() {
               Out of Stock
             </Badge>
           )}
-
         </div>
 
         {/* Product Details */}
@@ -310,7 +305,6 @@ export default function ProductDetailPage() {
                   {formatPrice(product.price)}
                 </span>
               </div>
-
             </div>
 
             <div className="mb-4 md:mb-6 border-b border-gray-100 pb-4 md:pb-6">
@@ -453,7 +447,8 @@ export default function ProductDetailPage() {
                   <div className="aspect-square relative">
                     <Image
                       src={
-                        relatedProduct.imageUrl || '/placeholder-product.png'
+                        relatedProduct.imageUrl ||
+                        '/placeholder.svg?height=200&width=200'
                       }
                       alt={relatedProduct.name}
                       fill

@@ -48,7 +48,15 @@ export default function ProductCategories() {
       try {
         setLoading(true);
         const data = await services.category.getCategories();
-        setCategories(data);
+
+        // Filter out Personal Care category if it exists
+        const filteredData = data.filter(
+          (category) =>
+            category.name !== 'Personal Care' &&
+            category.slug !== 'personal-care'
+        );
+
+        setCategories(filteredData);
         setError(null);
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -90,7 +98,7 @@ export default function ProductCategories() {
       'Health & Wellness': <Heart className="h-8 w-8 text-emerald-500" />,
       Diagnostics: <Stethoscope className="h-8 w-8 text-emerald-500" />,
       'Mental Health': <Brain className="h-8 w-8 text-emerald-500" />,
-      'Personal Care': <Droplet className="h-8 w-8 text-emerald-500" />,
+
       'First Aid': <Bandage className="h-8 w-8 text-emerald-500" />,
     };
 

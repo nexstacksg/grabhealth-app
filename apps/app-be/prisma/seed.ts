@@ -75,15 +75,6 @@ async function main() {
     }),
     prisma.category.create({
       data: {
-        name: 'Personal Care',
-        slug: 'personal-care',
-        description: 'Personal hygiene and care products',
-        imageUrl:
-          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=300&fit=crop',
-      },
-    }),
-    prisma.category.create({
-      data: {
         name: 'Fitness & Sports',
         slug: 'fitness-sports',
         description: 'Sports nutrition and fitness supplements',
@@ -381,7 +372,7 @@ async function main() {
       name: 'Wild Ginseng Honey',
       description: 'Premium wild ginseng honey blend',
       sku: 'GINSENG_HONEY_001',
-      categoryId: categories[3].id, // Herbal Products
+      categoryId: categories[2].id, // Herbal Products
       imageUrl:
         'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=300&fit=crop',
       status: 'ACTIVE',
@@ -401,7 +392,7 @@ async function main() {
       name: 'Golden Ginseng Water',
       description: 'Premium golden ginseng infused water',
       sku: 'GOLDEN_WATER_001',
-      categoryId: categories[3].id, // Herbal Products
+      categoryId: categories[2].id, // Herbal Products
       imageUrl:
         'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=300&fit=crop',
       status: 'ACTIVE',
@@ -421,7 +412,7 @@ async function main() {
       name: 'Travel Package',
       description: 'Complete health and wellness travel package',
       sku: 'TRAVEL_PKG_001',
-      categoryId: categories[2].id, // Fitness & Sports
+      categoryId: categories[1].id, // Fitness & Sports
       imageUrl:
         'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&h=300&fit=crop',
       status: 'ACTIVE',

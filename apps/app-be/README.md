@@ -5,6 +5,7 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
 ## Features
 
 - **Authentication & Authorization**
+
   - JWT-based authentication with access and refresh tokens
   - Email verification
   - Password reset functionality
@@ -13,6 +14,7 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
   - Strong password policies
 
 - **User Management**
+
   - User registration and login
   - Profile management
   - User CRUD operations
@@ -20,6 +22,7 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
   - Referral system with upline tracking
 
 - **E-Commerce Core**
+
   - Product catalog with categories
   - Shopping cart management
   - Order processing and tracking
@@ -27,23 +30,27 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
   - Product search and filtering
 
 - **Category Management**
+
   - Hierarchical category structure
   - Category sorting and reordering
   - Product categorization
 
 - **Order Management**
+
   - Order creation and updates
   - Order status tracking
   - Payment status management
   - Order statistics and analytics
 
 - **Shopping Cart**
+
   - Add/remove items
   - Update quantities
   - Cart persistence
   - Guest cart to user cart sync
 
 - **Multi-Level Marketing (MLM)**
+
   - 4-level commission system
   - Network visualization
   - Commission tracking and processing
@@ -51,34 +58,40 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
   - Commission statistics and payouts
 
 - **Membership System**
+
   - Free membership upon registration
   - Membership tracking and management
   - Auto-renewal management (for future paid tiers)
   - Membership statistics
 
 - **Promotions & Discounts**
+
   - Percentage and fixed discounts
   - Date-based promotions
   - Minimum purchase requirements
   - Promotion code validation
 
 - **Email Service**
+
   - Email verification
   - Password reset emails
   - Order confirmation emails
   - Configurable SMTP settings
 
 - **Database**
+
   - Prisma ORM with SQLite (easily switchable to PostgreSQL, MySQL, etc.)
   - Database migrations
   - Type-safe database queries
   - Seed data for development
 
 - **API Documentation**
+
   - Swagger/OpenAPI documentation
   - Interactive API testing interface
 
 - **Security & Performance**
+
   - Password hashing with bcrypt
   - Hashed refresh tokens
   - Input validation with express-validator
@@ -89,6 +102,7 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
   - Redis caching for authentication and cart
 
 - **Testing**
+
   - Jest test framework
   - Unit and integration tests
   - Test coverage reporting
@@ -124,12 +138,14 @@ A comprehensive e-commerce backend API for GrabHealth.ai built with Node.js, Exp
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd app-be
 ```
 
 2. Install dependencies:
+
 ```bash
 bun install
 # or
@@ -137,11 +153,13 @@ npm install
 ```
 
 3. Set up environment variables:
+
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` with your configuration:
+
 ```env
 # Server
 NODE_ENV=development
@@ -171,6 +189,7 @@ CORS_ORIGIN=http://localhost:3001,http://localhost:3002
 ```
 
 4. Start Redis (optional but recommended):
+
 ```bash
 # Start Redis using Docker
 bun run docker:start
@@ -178,6 +197,7 @@ bun run docker:start
 ```
 
 5. Generate Prisma client:
+
 ```bash
 bun prisma generate
 # or
@@ -185,6 +205,7 @@ npx prisma generate
 ```
 
 6. Run database migrations:
+
 ```bash
 bun prisma migrate dev
 # or
@@ -192,6 +213,7 @@ npx prisma migrate dev
 ```
 
 7. Seed the database (optional):
+
 ```bash
 bun run prisma:seed
 # or
@@ -199,6 +221,7 @@ npm run prisma:seed
 ```
 
 8. Start the development server:
+
 ```bash
 bun dev
 # or
@@ -262,13 +285,14 @@ curl -X GET http://localhost:4000/api/v1/commissions/stats \
 
 After running `bun run prisma:seed`, the following test data is available:
 
-### Categories (4)
+### Categories (3)
+
 - Vitamins & Supplements
-- Personal Care
 - Fitness & Sports
 - Herbal Products
 
 ### Products (10)
+
 1. Vitamin C 1000mg - $29.99
 2. Multivitamin Complex - $39.99
 3. Omega-3 Fish Oil - $34.99
@@ -281,11 +305,13 @@ After running `bun run prisma:seed`, the following test data is available:
 10. Ginseng Extract - $44.99
 
 ### Sample Orders
+
 - Order #1: User1's completed order with commissions distributed
 - Order #2: User2's processing order
 - Order #3: Sales1's pending order
 
 ### Commission Structure
+
 - Level 1 (Direct Sales): 10% commission
 - Level 2: 5% commission
 - Level 3: 3% commission
@@ -296,6 +322,7 @@ After running `bun run prisma:seed`, the following test data is available:
 After completing the installation steps above:
 
 1. **Create Product Categories**:
+
 ```bash
 # Use the API to create categories
 curl -X POST http://localhost:4000/api/v1/categories \
@@ -309,6 +336,7 @@ curl -X POST http://localhost:4000/api/v1/categories \
 ```
 
 2. **Add Products**:
+
 ```bash
 # Create a product
 curl -X POST http://localhost:4000/api/v1/products \
@@ -323,16 +351,18 @@ curl -X POST http://localhost:4000/api/v1/products \
 ```
 
 3. **Set Up Membership**:
-Membership is now free and automatically available upon user registration. No discounts are applied based on membership - pricing is determined by product levels and commission structure.
+   Membership is now free and automatically available upon user registration. No discounts are applied based on membership - pricing is determined by product levels and commission structure.
 
 4. **Configure Commission Rates**:
-Commission rates are pre-configured in the database seed:
+   Commission rates are pre-configured in the database seed:
+
 - Level 1: 30% (Sales)
 - Level 2: 10% (Leader)
 - Level 3: 5% (Manager)
 - Level 4: 5% (Company)
 
 5. **Test the Shopping Flow**:
+
 - Browse products: `GET /api/v1/products`
 - Add to cart: `POST /api/v1/cart/add`
 - Checkout: `POST /api/v1/orders/checkout`
@@ -362,6 +392,7 @@ bun run docker:stop
 ```
 
 **Available Services:**
+
 - **Redis**: `localhost:6379` (caching)
 - **Redis Commander**: `http://localhost:8081` (Redis GUI)
 - **PostgreSQL**: `localhost:5432` (optional database)
@@ -430,6 +461,7 @@ bun run test:watch
 ## API Documentation
 
 Once the server is running, you can access the Swagger documentation at:
+
 ```
 http://localhost:4000/api-docs
 ```
@@ -497,6 +529,7 @@ src/
 ## Available Scripts
 
 ### Development
+
 - `bun dev` - Start development server with hot reload
 - `bun build` - Build for production
 - `bun start` - Start production server
@@ -504,12 +537,14 @@ src/
 - `bun format` - Format code with Prettier
 
 ### Database
+
 - `bun prisma:generate` - Generate Prisma client
 - `bun prisma:migrate` - Run database migrations
 - `bun prisma:studio` - Open Prisma Studio GUI
 - `bun prisma:seed` - Seed database with sample data
 
 ### Testing
+
 - `bun test` - Run all tests
 - `bun test:unit` - Run unit tests
 - `bun test:integration` - Run integration tests
@@ -517,6 +552,7 @@ src/
 - `bun test:watch` - Run tests in watch mode
 
 ### Docker
+
 - `bun docker:start` - Start Redis
 - `bun docker:start-all` - Start all services
 - `bun docker:stop` - Stop Redis
@@ -526,6 +562,7 @@ src/
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/v1/auth/register` - Register a new user
 - `POST /api/v1/auth/login` - Login with email and password
 - `POST /api/v1/auth/refresh` - Refresh access token
@@ -536,6 +573,7 @@ src/
 - `POST /api/v1/auth/reset-password` - Reset password with token
 
 ### Users
+
 - `GET /api/v1/users` - Get all users (requires auth)
 - `POST /api/v1/users` - Create a new user (requires manager role)
 - `GET /api/v1/users/:id` - Get user by ID (requires auth)
@@ -546,6 +584,7 @@ src/
 - `POST /api/v1/users/change-password` - Change password (requires auth)
 
 ### Products
+
 - `GET /api/v1/products` - Get all products
 - `GET /api/v1/products/search` - Search products with filters
 - `GET /api/v1/products/featured` - Get featured products
@@ -558,6 +597,7 @@ src/
 - `PATCH /api/v1/products/:id/stock` - Update stock status (requires manager role)
 
 ### Categories
+
 - `GET /api/v1/categories` - Get all categories
 - `GET /api/v1/categories/tree` - Get category hierarchy
 - `GET /api/v1/categories/:id` - Get category details
@@ -567,6 +607,7 @@ src/
 - `POST /api/v1/categories/reorder` - Reorder categories (requires manager role)
 
 ### Shopping Cart
+
 - `GET /api/v1/cart` - Get current cart (requires auth)
 - `POST /api/v1/cart/add` - Add item to cart (requires auth)
 - `PUT /api/v1/cart/update` - Update cart item quantity (requires auth)
@@ -575,6 +616,7 @@ src/
 - `POST /api/v1/cart/sync` - Sync guest cart with user cart (requires auth)
 
 ### Orders
+
 - `GET /api/v1/orders` - Get all orders (requires manager role)
 - `POST /api/v1/orders` - Create order (requires auth)
 - `GET /api/v1/orders/my-orders` - Get user's orders (requires auth)
@@ -585,6 +627,7 @@ src/
 - `POST /api/v1/orders/:id/cancel` - Cancel order (requires auth)
 
 ### Commissions
+
 - `GET /api/v1/commissions/my-commissions` - Get user's commissions (requires auth)
 - `GET /api/v1/commissions/stats` - Get commission statistics (requires auth)
 - `GET /api/v1/commissions/network` - Get MLM network (requires auth)
@@ -594,6 +637,7 @@ src/
 - `POST /api/v1/commissions/process` - Process pending commissions (requires admin role)
 
 ### Memberships
+
 - `GET /api/v1/memberships/tiers` - Get membership tiers
 - `GET /api/v1/memberships/tiers/:id` - Get tier details
 - `GET /api/v1/memberships/my-membership` - Get user's membership (requires auth)
@@ -607,6 +651,7 @@ src/
 - `POST /api/v1/memberships/process-expired` - Process expired memberships (requires admin role)
 
 ### Promotions
+
 - `GET /api/v1/promotions/active` - Get active promotions
 - `POST /api/v1/promotions/validate` - Validate promotion code
 - `GET /api/v1/promotions` - Get all promotions (requires manager role)
@@ -620,6 +665,7 @@ src/
 ## Security Features
 
 ### Rate Limiting
+
 - **General API**: 100 requests per 15 minutes
 - **Authentication**: 5 attempts per 15 minutes
 - **Account Creation**: 3 accounts per hour per IP
@@ -627,17 +673,20 @@ src/
 - **Email Verification**: 5 requests per hour per IP
 
 ### Password Policy
+
 - Minimum 8 characters
 - Must contain: uppercase, lowercase, number, special character
 - Blacklisted common passwords
 - Different from previous password
 
 ### Token Security
+
 - Access tokens: 15 minutes expiry
 - Refresh tokens: 7 days expiry, hashed in database
 - Secure token generation with crypto module
 
 ### Caching Strategy
+
 - User authentication data cached for 5 minutes
 - Cache invalidation on logout and profile updates
 - Graceful degradation when Redis unavailable
@@ -648,33 +697,34 @@ After running the seed script (`bun run prisma:seed`), you can use these credent
 
 ### Admin & Management Accounts
 
-| Role | Email | Password | Description |
-|------|-------|----------|-------------|
-| Super Admin | super.admin@grabhealth.com | TestPass@123 | Full system access |
-| Company | company@grabhealth.com | TestPass@123 | Top-level MLM account |
-| Manager 1 | manager1@grabhealth.com | TestPass@123 | Manager with downline network |
-| Manager 2 | manager2@grabhealth.com | TestPass@123 | Manager with downline network |
+| Role        | Email                      | Password     | Description                   |
+| ----------- | -------------------------- | ------------ | ----------------------------- |
+| Super Admin | super.admin@grabhealth.com | TestPass@123 | Full system access            |
+| Company     | company@grabhealth.com     | TestPass@123 | Top-level MLM account         |
+| Manager 1   | manager1@grabhealth.com    | TestPass@123 | Manager with downline network |
+| Manager 2   | manager2@grabhealth.com    | TestPass@123 | Manager with downline network |
 
 ### Sales & Leader Accounts
 
-| Role | Email | Password | Description |
-|------|-------|----------|-------------|
+| Role     | Email                  | Password     | Description     |
+| -------- | ---------------------- | ------------ | --------------- |
 | Leader 1 | leader1@grabhealth.com | TestPass@123 | Under Manager 1 |
 | Leader 2 | leader2@grabhealth.com | TestPass@123 | Under Manager 1 |
 | Leader 3 | leader3@grabhealth.com | TestPass@123 | Under Manager 2 |
-| Sales 1 | sales1@grabhealth.com | TestPass@123 | Under Leader 1 |
-| Sales 2 | sales2@grabhealth.com | TestPass@123 | Under Leader 1 |
-| Sales 3 | sales3@grabhealth.com | TestPass@123 | Under Leader 2 |
+| Sales 1  | sales1@grabhealth.com  | TestPass@123 | Under Leader 1  |
+| Sales 2  | sales2@grabhealth.com  | TestPass@123 | Under Leader 1  |
+| Sales 3  | sales3@grabhealth.com  | TestPass@123 | Under Leader 2  |
 
 ### Regular User Accounts
 
-| Role | Email | Password | Description |
-|------|-------|----------|-------------|
+| Role   | Email             | Password     | Description        |
+| ------ | ----------------- | ------------ | ------------------ |
 | User 1 | user1@example.com | TestPass@123 | Has existing order |
-| User 2 | user2@example.com | TestPass@123 | Regular user |
-| User 3 | user3@example.com | TestPass@123 | Regular user |
+| User 2 | user2@example.com | TestPass@123 | Regular user       |
+| User 3 | user3@example.com | TestPass@123 | Regular user       |
 
 ### MLM Network Structure
+
 ```
 Company (company@grabhealth.com)
 ├── Manager 1 (manager1@grabhealth.com)
@@ -692,29 +742,30 @@ Company (company@grabhealth.com)
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| NODE_ENV | Environment (development/production/test) | No | development |
-| PORT | Server port | No | 4000 |
-| DATABASE_URL | Database connection string | Yes | - |
-| JWT_SECRET | Secret key for JWT tokens (min 32 chars) | Yes | - |
-| JWT_EXPIRES_IN | Access token expiry | No | 15m |
-| JWT_REFRESH_EXPIRES_IN | Refresh token expiry | No | 7d |
-| SMTP_HOST | Email SMTP host | No | - |
-| SMTP_PORT | Email SMTP port | No | 587 |
-| SMTP_USER | SMTP username | No | - |
-| SMTP_PASS | SMTP password | No | - |
-| EMAIL_FROM | From email address | No | noreply@app.com |
-| CORS_ORIGIN | Allowed CORS origins | No | * |
-| REDIS_URL | Redis connection URL | No | - |
-| FRONTEND_URL | Frontend application URL | No | http://localhost:3001 |
-| ADMIN_URL | Admin panel URL | No | http://localhost:3002 |
+| Variable               | Description                               | Required | Default               |
+| ---------------------- | ----------------------------------------- | -------- | --------------------- |
+| NODE_ENV               | Environment (development/production/test) | No       | development           |
+| PORT                   | Server port                               | No       | 4000                  |
+| DATABASE_URL           | Database connection string                | Yes      | -                     |
+| JWT_SECRET             | Secret key for JWT tokens (min 32 chars)  | Yes      | -                     |
+| JWT_EXPIRES_IN         | Access token expiry                       | No       | 15m                   |
+| JWT_REFRESH_EXPIRES_IN | Refresh token expiry                      | No       | 7d                    |
+| SMTP_HOST              | Email SMTP host                           | No       | -                     |
+| SMTP_PORT              | Email SMTP port                           | No       | 587                   |
+| SMTP_USER              | SMTP username                             | No       | -                     |
+| SMTP_PASS              | SMTP password                             | No       | -                     |
+| EMAIL_FROM             | From email address                        | No       | noreply@app.com       |
+| CORS_ORIGIN            | Allowed CORS origins                      | No       | \*                    |
+| REDIS_URL              | Redis connection URL                      | No       | -                     |
+| FRONTEND_URL           | Frontend application URL                  | No       | http://localhost:3001 |
+| ADMIN_URL              | Admin panel URL                           | No       | http://localhost:3002 |
 
 ## Database Schema
 
 ### Core Models
 
 #### User Model
+
 ```prisma
 model User {
   id                     String    @id @default(cuid())
@@ -733,7 +784,7 @@ model User {
   passwordResetExpires   DateTime?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
-  
+
   // E-commerce relations
   orders                 Order[]
   membership             UserMembership?
@@ -743,6 +794,7 @@ model User {
 ```
 
 #### Product Model
+
 ```prisma
 model Product {
   id                Int      @id @default(autoincrement())
@@ -755,7 +807,7 @@ model Product {
   imageUrl          String?
   inStock           Boolean  @default(true)
   status            String   @default("ACTIVE")
-  
+
   // Relations
   category          Category?
   orderItems        OrderItem[]
@@ -763,6 +815,7 @@ model Product {
 ```
 
 #### Order Model
+
 ```prisma
 model Order {
   id              Int      @id @default(autoincrement())
@@ -776,7 +829,7 @@ model Order {
   shippingAddress String?
   billingAddress  String?
   notes           String?
-  
+
   // Relations
   user            User
   items           OrderItem[]
@@ -785,6 +838,7 @@ model Order {
 ```
 
 #### Category Model
+
 ```prisma
 model Category {
   id          Int      @id @default(autoincrement())
@@ -795,7 +849,7 @@ model Category {
   parentId    Int?
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
-  
+
   // Hierarchical relations
   parent      Category?
   children    Category[]
@@ -804,6 +858,7 @@ model Category {
 ```
 
 #### Commission Model
+
 ```prisma
 model Commission {
   id                Int      @id @default(autoincrement())
@@ -815,7 +870,7 @@ model Commission {
   relationshipLevel Int
   type              String   @default("DIRECT")
   status            String   @default("PENDING")
-  
+
   // Relations
   order             Order
   user              User
@@ -824,6 +879,7 @@ model Commission {
 ```
 
 #### MembershipTier Model
+
 ```prisma
 model MembershipTier {
   id          Int      @id @default(autoincrement())
@@ -832,13 +888,14 @@ model MembershipTier {
   price       Float
   discount    Float    // Discount rate for this tier
   benefits    String?
-  
+
   // Relations
   memberships UserMembership[]
 }
 ```
 
 #### Promotion Model
+
 ```prisma
 model Promotion {
   id            Int      @id @default(autoincrement())
@@ -854,6 +911,7 @@ model Promotion {
 ```
 
 ### Enums (stored as strings)
+
 - **UserRole**: SUPER_ADMIN, MANAGER, USER
 - **UserStatus**: ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION
 - **OrderStatus**: PENDING, PROCESSING, COMPLETED, CANCELLED
@@ -866,12 +924,14 @@ model Promotion {
 ## Monitoring & Logging
 
 ### Structured Logging
+
 - **Winston logger** with multiple transports
 - **Log files**: `logs/error.log`, `logs/combined.log`
 - **Log levels**: error, warn, info, http, debug
 - **Request logging** with Morgan integration
 
 ### Health Check
+
 ```bash
 curl http://localhost:4000/health
 ```
@@ -941,6 +1001,7 @@ Commissions are automatically calculated when orders are marked as completed or 
 To switch from SQLite to PostgreSQL:
 
 1. Update `datasource` in `prisma/schema.prisma`:
+
 ```prisma
 datasource db {
   provider = "postgresql"
@@ -949,16 +1010,19 @@ datasource db {
 ```
 
 2. Update `DATABASE_URL` in `.env`:
+
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
 ```
 
 3. Use the provided PostgreSQL Docker service:
+
 ```bash
 bun run docker:start-all
 ```
 
 4. Run migrations:
+
 ```bash
 bun prisma migrate dev
 ```
@@ -966,11 +1030,13 @@ bun prisma migrate dev
 ## Performance Optimization
 
 ### Caching Strategy
+
 - **User authentication**: Cached for 5 minutes
 - **Database queries**: Consider implementing query result caching
 - **Static data**: Cache configuration and lookup data
 
 ### Database Optimization
+
 - **Indexes**: Added on frequently queried fields
 - **Connection pooling**: Configured for production
 - **Query optimization**: Use Prisma's query engine features
@@ -980,26 +1046,30 @@ bun prisma migrate dev
 ### Common Issues
 
 1. **Prisma Studio Error**: Make sure to run migrations first:
+
    ```bash
    bun prisma migrate dev
    ```
 
 2. **TypeScript Errors**: Regenerate Prisma client:
+
    ```bash
    bun prisma generate
    ```
 
 3. **Database Locked**: Stop all running processes and try again
 
-4. **Email Not Sending**: 
+4. **Email Not Sending**:
+
    - Check Gmail app-specific password
    - Enable "Less secure app access" or use OAuth2
 
 5. **Redis Connection Issues**:
+
    ```bash
    # Check if Redis is running
    bun run docker:status
-   
+
    # Restart Redis
    bun run docker:stop
    bun run docker:start

@@ -4,11 +4,11 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { 
-  IProduct, 
+import {
+  IProduct,
   ICategory,
   ProductSearchParams,
-  ApiResponse 
+  ApiResponse,
 } from '@app/shared-types';
 
 export type PriceRange = '0-50' | '50-100' | '100-200' | '200+';
@@ -18,16 +18,18 @@ export interface EnhancedProductSearchParams extends ProductSearchParams {
 }
 
 class ProductService extends BaseService {
-  async searchProducts(params?: ProductSearchParams): Promise<{ 
-    products: IProduct[]; 
-    total: number; 
-    page: number; 
-    totalPages: number 
+  async searchProducts(params?: ProductSearchParams): Promise<{
+    products: IProduct[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> {
     try {
       const queryString = this.buildQueryString(params);
-      const response = await apiClient.get<ApiResponse<{ products: IProduct[]; pagination: any }>>(`/products/search${queryString}`);
-      
+      const response = await apiClient.get<
+        ApiResponse<{ products: IProduct[]; pagination: any }>
+      >(`/products/search${queryString}`);
+
       const data = this.extractData(response);
       return {
         products: data.products || [],
@@ -40,16 +42,18 @@ class ProductService extends BaseService {
     }
   }
 
-  async searchProductsWithFilters(params?: EnhancedProductSearchParams): Promise<{ 
-    products: IProduct[]; 
-    total: number; 
-    page: number; 
-    totalPages: number 
+  async searchProductsWithFilters(
+    params?: EnhancedProductSearchParams
+  ): Promise<{
+    products: IProduct[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> {
     // Convert price range to min/max values
     let minPrice = params?.minPrice;
     let maxPrice = params?.maxPrice;
-    
+
     if (params?.priceRange) {
       switch (params.priceRange) {
         case '0-50':
@@ -83,7 +87,9 @@ class ProductService extends BaseService {
 
   async getProduct(id: number): Promise<IProduct> {
     try {
-      const response = await apiClient.get<ApiResponse<IProduct>>(`/products/${id}`);
+      const response = await apiClient.get<ApiResponse<IProduct>>(
+        `/products/${id}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -92,14 +98,20 @@ class ProductService extends BaseService {
 
   async getFeaturedProducts(limit: number = 4): Promise<IProduct[]> {
     try {
-      const response = await apiClient.get<ApiResponse<IProduct[]>>('/products/featured', { params: { limit } });
+      const response = await apiClient.get<ApiResponse<IProduct[]>>(
+        '/products/featured',
+        { params: { limit } }
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async getProductsByCategory(categoryId: string, params?: ProductSearchParams): Promise<{ products: IProduct[]; total: number }> {
+  async getProductsByCategory(
+    categoryId: string,
+    params?: ProductSearchParams
+  ): Promise<{ products: IProduct[]; total: number }> {
     const searchParams = { ...params, category: categoryId };
     const result = await this.searchProducts(searchParams);
     return { products: result.products, total: result.total };
@@ -107,11 +119,34 @@ class ProductService extends BaseService {
 
   async getCategories(): Promise<ICategory[]> {
     try {
-      const response = await apiClient.get<ApiResponse<ICategory[]>>('/categories');
+      const response =
+        await apiClient.get<ApiResponse<ICategory[]>>('/categories');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
+  }
+
+  // Helper method to convert min/max price values to price range
+  getPriceRangeFromValues(
+    minPrice?: number,
+    maxPrice?: number
+  ): PriceRange | undefined {
+    if (minPrice === undefined && maxPrice === undefined) {
+      return undefined;
+    }
+
+    if (minPrice === 0 && maxPrice === 50) {
+      return '0-50';
+    } else if (minPrice === 50 && maxPrice === 100) {
+      return '50-100';
+    } else if (minPrice === 100 && maxPrice === 200) {
+      return '100-200';
+    } else if (minPrice === 200 && maxPrice === undefined) {
+      return '200+';
+    }
+
+    return undefined;
   }
 }
 
