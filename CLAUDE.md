@@ -183,13 +183,11 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 ### Development Setup
 
 1. **Environment Variables**: Each app has its own `.env` file
-
    - Backend: Database URL, JWT secrets, email config, Redis URL
    - Web: Cloudinary, OpenAI API key, backend URL
    - See `.env.example` files in each app directory
 
 2. **Database Setup**:
-
    - Backend uses Prisma with migrations
    - Web app has its own database (migration in progress)
    - Run migrations before starting development
@@ -203,7 +201,6 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
 ### Key Business Logic
 
 1. **Commission Structure**:
-
    - **Database-Driven Configuration**: Commission rates, role tiers, and product pricing should be stored in database tables
    - **Dynamic Role Tiers**: Support for multiple commission levels (Sales, Leader, Manager, Company, etc.) defined in database
    - **Configurable Rates**: Commission percentages and price differentials managed through admin interface
@@ -213,7 +210,6 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
    - See commission.md for current example structure (to be migrated to database)
 
 2. **Membership System**:
-
    - Free membership upon registration
    - No discount tiers - pricing based on product levels
    - System supports future paid membership tiers
