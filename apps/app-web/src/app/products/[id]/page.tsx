@@ -46,12 +46,11 @@ export default function ProductDetailPage() {
         // Track product view for AI recommendations
         try {
           await services.ai.recordInteraction({
-            userId: undefined, // Will be handled by the service if user is authenticated
-            productId: productData.id,
-            interactionType: 'view',
+            type: 'view',
+            productId: productData.id.toString(),
+            categoryId: productData.categoryId?.toString(),
             metadata: {
               source: 'product_detail',
-              category: productData.categoryId,
             },
           });
         } catch (trackingError) {

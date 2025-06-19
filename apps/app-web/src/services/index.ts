@@ -15,6 +15,7 @@ export { profileService } from './profile.service';
 export { aiService } from './ai.service';
 export { bookingsService } from './bookings.service';
 export { partnersService } from './partners.service';
+export { promotionService } from './promotion.service';
 export { apiClient } from './api-client';
 
 // Export base service for extending

@@ -52,7 +52,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Debug middleware to log cookies
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   if (req.url.includes('/auth')) {
     console.log('Request to:', req.method, req.url);
     console.log('Cookies:', req.cookies);

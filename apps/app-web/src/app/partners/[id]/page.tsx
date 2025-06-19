@@ -39,7 +39,7 @@ export default function PartnerDetailPage() {
         // Fetch free checkup status if user is logged in
         if (user && user.id) {
           try {
-            const status = await services.bookings.getFreeCheckupStatus(user.id);
+            const status = await services.bookings.checkFreeCheckupEligibility();
             setFreeCheckupStatus(status);
           } catch (error: any) {
             // Ignore rate limit errors and authentication errors

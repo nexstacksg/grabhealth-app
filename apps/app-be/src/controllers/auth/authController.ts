@@ -15,7 +15,7 @@ import {
 } from '@app/shared-types';
 
 // Cookie configuration
-const getCookieOptions = (maxAge: number) => {
+const getCookieOptions = (maxAge?: number) => {
   const isProduction = process.env.NODE_ENV === 'production';
   
   // For development with different ports, we need special handling
@@ -25,7 +25,7 @@ const getCookieOptions = (maxAge: number) => {
       secure: false,
       sameSite: false as any, // Disable SameSite in development
       path: '/',
-      maxAge,
+      ...(maxAge !== undefined && { maxAge }),
     };
   }
   
@@ -35,7 +35,7 @@ const getCookieOptions = (maxAge: number) => {
     secure: true,
     sameSite: 'lax' as const,
     path: '/',
-    maxAge,
+    ...(maxAge !== undefined && { maxAge }),
   };
 };
 
@@ -149,8 +149,7 @@ export const logout = async (
     await authService.logout(req.user.id);
 
     // Clear cookies with the same options used when setting them
-    const clearOptions = getCookieOptions(0);
-    delete clearOptions.maxAge; // Remove maxAge for clearing
+    const clearOptions = getCookieOptions(); // No maxAge for clearing
     
     res.clearCookie('accessToken', clearOptions);
     res.clearCookie('refreshToken', clearOptions);

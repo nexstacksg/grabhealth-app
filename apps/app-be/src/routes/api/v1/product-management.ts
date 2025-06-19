@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { productManagementController } from '../../../controllers/product/productManagementController';
-import { authenticate } from '../../../middleware/auth/authenticate';
-import { authorize } from '../../../middleware/auth/authorize';
+// import { authenticate } from '../../../middleware/auth/authenticate';
+// import { authorize } from '../../../middleware/auth/authorize';
 import { validateRequest } from '../../../middleware/validation/validationMiddleware';
 import { body, query, param } from 'express-validator';
 

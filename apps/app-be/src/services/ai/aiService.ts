@@ -282,7 +282,7 @@ export class AIService {
       // Sort by the original trending order
       const sortedProducts = productIds
         .map((id) => transformedProducts.find((p) => p.id === id))
-        .filter(Boolean)
+        .filter((p): p is IProduct => p !== undefined)
         .slice(0, limit);
 
       return sortedProducts;

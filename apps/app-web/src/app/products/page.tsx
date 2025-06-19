@@ -109,7 +109,7 @@ export default function ProductsPage() {
       setFilters(updatedFilters);
 
       // Use service method to determine price range from min/max values
-      const priceRange = services.product.getPriceRangeFromValues(
+      const priceRange = productService.getPriceRangeFromValues(
         newFilters.minPrice,
         newFilters.maxPrice
       );

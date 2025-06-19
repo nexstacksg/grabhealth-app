@@ -39,11 +39,10 @@ export default function BookingsPage() {
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
-      const response = await services.bookings.getBookings(
-        {}, // empty filters
-        1,  // page
-        20  // limit
-      );
+      const response = await services.bookings.getMyBookings({
+        page: 1,
+        limit: 20
+      });
       setBookings(response.bookings);
     } catch (error: any) {
       console.error('Failed to fetch bookings:', error);
@@ -64,7 +63,7 @@ export default function BookingsPage() {
 
   const fetchFreeCheckupStatus = async () => {
     try {
-      const status = await services.bookings.getFreeCheckupStatus(user!.id);
+      const status = await services.bookings.checkFreeCheckupEligibility();
       setFreeCheckupStatus(status);
     } catch (error) {
       console.error('Failed to fetch free checkup status:', error);
@@ -73,7 +72,7 @@ export default function BookingsPage() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      await services.bookings.updateBookingStatus(bookingId, 'CANCELLED');
+      await services.bookings.cancelBooking(bookingId);
       fetchBookings();
     } catch (error) {
       console.error('Failed to cancel booking:', error);
@@ -82,11 +81,10 @@ export default function BookingsPage() {
 
   const handleClaimFreeCheckup = async () => {
     try {
-      await services.bookings.claimFreeCheckup(user!.id);
-      fetchFreeCheckupStatus();
+      // For now, just redirect to partners page to book a free checkup
       router.push('/partners');
     } catch (error) {
-      console.error('Failed to claim free checkup:', error);
+      console.error('Failed to redirect:', error);
     }
   };
 

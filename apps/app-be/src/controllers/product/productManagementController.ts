@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 
 export const productManagementController = {
   // Get all products with pricing and commission data
-  async getAllProducts(req: AuthRequest, res: Response, next: NextFunction) {
+  async getAllProducts(_req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const products = await prisma.product.findMany({
         include: {

@@ -229,6 +229,11 @@ class BookingService {
 
     return transformedBooking as unknown as IBooking;
   }
+
+  // Add alias method for consistency
+  async getBooking(id: string): Promise<IBooking | null> {
+    return this.getBookingById(id);
+  }
 }
 
 export { BookingService };
