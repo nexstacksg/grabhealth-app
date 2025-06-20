@@ -561,6 +561,20 @@ export default function PartnerCalendarPage() {
           onClose={() => setShowSlotBreakdown(false)}
           selectedDate={selectedDate}
           partnerId={partnerId}
+          mockData={(() => {
+            const selectedDay = calendarDays.find(
+              (d) => d.date === format(selectedDate, 'yyyy-MM-dd')
+            );
+            // Only pass mock data if we're using mock calendar data (when API fetch failed)
+            if (selectedDay && selectedDay.bookings) {
+              return {
+                bookings: selectedDay.bookings,
+                totalSlots: selectedDay.totalSlots,
+                availableSlots: selectedDay.availableSlots,
+              };
+            }
+            return undefined;
+          })()}
         />
       )}
     </div>

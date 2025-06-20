@@ -120,19 +120,12 @@ class PartnerService {
     year: number,
     month: number
   ): Promise<ICalendarDay[]> {
-    // Get partner availability
+    // Get partner availability and all days off (we'll filter recurring ones in code)
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
       include: {
         availability: true,
-        daysOff: {
-          where: {
-            date: {
-              gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1),
-            },
-          },
-        },
+        daysOff: true, // Get all days off, we'll handle filtering in code
       },
     });
 
@@ -170,8 +163,16 @@ class PartnerService {
 
     const calendar: ICalendarDay[] = [];
     const daysInMonth = new Date(year, month, 0).getDate();
-    const daysOffMap = new Map(
-      partner.daysOff.map((d) => [d.date.toISOString().split('T')[0], d])
+
+    // Create maps for different types of days off
+    const specificDaysOffMap = new Map(
+      partner.daysOff
+        .filter((d: any) => !d.recurringType || d.recurringType === null)
+        .map((d: any) => [d.date.toISOString().split('T')[0], d])
+    );
+
+    const weeklyRecurringDaysOff = partner.daysOff.filter(
+      (d: any) => d.recurringType === 'WEEKLY'
     );
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -179,8 +180,12 @@ class PartnerService {
       const dateStr = date.toISOString().split('T')[0];
       const dayOfWeek = date.getDay();
 
-      // Check if this day is a day off
-      const isDayOff = daysOffMap.has(dateStr);
+      // Check if this day is a day off (specific date or weekly recurring)
+      const isSpecificDayOff = specificDaysOffMap.has(dateStr);
+      const isWeeklyRecurringDayOff = weeklyRecurringDaysOff.some(
+        (d: any) => d.dayOfWeek === dayOfWeek
+      );
+      const isDayOff = isSpecificDayOff || isWeeklyRecurringDayOff;
 
       // Check if partner has availability for this day of week
       const dayAvailability = partner.availability.find(
@@ -234,17 +239,27 @@ class PartnerService {
   ): Promise<IAvailableSlot[]> {
     const dayOfWeek = date.getDay();
 
-    // Check if it's a day off
-    const dayOff = await prisma.partnerDaysOff.findFirst({
+    // Check if it's a day off (specific date or weekly recurring)
+    const dayOfWeekForCheck = date.getDay();
+    const allDaysOff = await prisma.partnerDaysOff.findMany({
       where: {
         partnerId,
-        date: {
-          equals: date,
-        },
       },
     });
 
-    if (dayOff) {
+    // Check for specific date day off
+    const specificDayOff = allDaysOff.find(
+      (d: any) =>
+        d.date.toISOString().split('T')[0] === date.toISOString().split('T')[0]
+    );
+
+    // Check for weekly recurring day off
+    const weeklyDayOff = allDaysOff.find(
+      (d: any) =>
+        d.recurringType === 'WEEKLY' && d.dayOfWeek === dayOfWeekForCheck
+    );
+
+    if (specificDayOff || weeklyDayOff) {
       return [];
     }
 
@@ -316,17 +331,27 @@ class PartnerService {
     const dayOfWeek = date.getDay();
     const dateStr = date.toISOString().split('T')[0];
 
-    // Check if it's a day off
-    const dayOff = await prisma.partnerDaysOff.findFirst({
+    // Check if it's a day off (specific date or weekly recurring)
+    const dayOfWeekForCheck = date.getDay();
+    const allDaysOff = await prisma.partnerDaysOff.findMany({
       where: {
         partnerId,
-        date: {
-          equals: date,
-        },
       },
     });
 
-    if (dayOff) {
+    // Check for specific date day off
+    const specificDayOff = allDaysOff.find(
+      (d: any) =>
+        d.date.toISOString().split('T')[0] === date.toISOString().split('T')[0]
+    );
+
+    // Check for weekly recurring day off
+    const weeklyDayOff = allDaysOff.find(
+      (d: any) =>
+        d.recurringType === 'WEEKLY' && d.dayOfWeek === dayOfWeekForCheck
+    );
+
+    if (specificDayOff || weeklyDayOff) {
       return {
         date: dateStr,
         totalSlots: 0,

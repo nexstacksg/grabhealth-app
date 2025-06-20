@@ -8,6 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -16,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { CalendarOff, Plus, Trash2, RefreshCw } from 'lucide-react';
+import { CalendarOff, Plus, Trash2, RefreshCw, Repeat } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -25,6 +32,8 @@ interface DayOff {
   date: Date;
   reason?: string;
   isRecurring: boolean;
+  recurringType?: 'WEEKLY' | 'ANNUAL' | null;
+  dayOfWeek?: number;
 }
 
 export default function DaysOffPage() {
@@ -32,6 +41,12 @@ export default function DaysOffPage() {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [reason, setReason] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringType, setRecurringType] = useState<'WEEKLY' | 'ANNUAL' | ''>(
+    ''
+  );
+  const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<number | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -53,7 +68,7 @@ export default function DaysOffPage() {
         {
           id: '2',
           date: new Date('2024-12-31'),
-          reason: 'New Year\'s Eve',
+          reason: "New Year's Eve",
           isRecurring: true,
         },
         {
@@ -72,26 +87,60 @@ export default function DaysOffPage() {
   };
 
   const handleAddDaysOff = async () => {
-    if (selectedDates.length === 0) {
+    // Validation
+    if (recurringType === 'WEEKLY') {
+      if (selectedDayOfWeek === null) {
+        toast.error('Please select a day of the week for weekly recurring');
+        return;
+      }
+      if (selectedDates.length === 0) {
+        toast.error('Please select a start date for the weekly pattern');
+        return;
+      }
+    } else if (selectedDates.length === 0) {
       toast.error('Please select at least one date');
       return;
     }
 
     try {
-      // This would be replaced with actual API call
-      const newDaysOff = selectedDates.map((date, index) => ({
-        id: `new-${Date.now()}-${index}`,
-        date,
-        reason,
-        isRecurring,
-      }));
+      if (recurringType === 'WEEKLY') {
+        // For weekly recurring, create one entry with the pattern
+        const newDayOff: DayOff = {
+          id: `new-${Date.now()}`,
+          date: selectedDates[0], // Use first selected date as start date
+          reason,
+          isRecurring: true,
+          recurringType: 'WEEKLY',
+          dayOfWeek: selectedDayOfWeek!,
+        };
+        setDaysOff([...daysOff, newDayOff]);
+        toast.success(
+          `Weekly day off set for every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][selectedDayOfWeek!]}`
+        );
+      } else {
+        // For one-time or annual recurring days off
+        const newDaysOff = selectedDates.map((date, index) => ({
+          id: `new-${Date.now()}-${index}`,
+          date,
+          reason,
+          isRecurring,
+          recurringType: isRecurring ? recurringType || 'ANNUAL' : null,
+          dayOfWeek:
+            isRecurring && recurringType === 'ANNUAL'
+              ? date.getDay()
+              : undefined,
+        }));
+        setDaysOff([...daysOff, ...newDaysOff]);
+        toast.success('Days off added successfully');
+      }
 
-      setDaysOff([...daysOff, ...newDaysOff]);
+      // Reset form
       setSelectedDates([]);
       setReason('');
       setIsRecurring(false);
+      setRecurringType('');
+      setSelectedDayOfWeek(null);
       setDialogOpen(false);
-      toast.success('Days off added successfully');
     } catch (error) {
       console.error('Error adding days off:', error);
       toast.error('Failed to add days off');
@@ -101,7 +150,7 @@ export default function DaysOffPage() {
   const handleDeleteDayOff = async (id: string) => {
     try {
       // This would be replaced with actual API call
-      setDaysOff(daysOff.filter(day => day.id !== id));
+      setDaysOff(daysOff.filter((day) => day.id !== id));
       toast.success('Day off removed successfully');
     } catch (error) {
       console.error('Error deleting day off:', error);
@@ -111,7 +160,7 @@ export default function DaysOffPage() {
 
   const handleQuickAddHoliday = (holiday: string) => {
     const holidayDates: Record<string, Date[]> = {
-      'singapore': [
+      singapore: [
         new Date('2024-01-01'), // New Year
         new Date('2024-02-10'), // Chinese New Year
         new Date('2024-02-11'), // Chinese New Year
@@ -127,7 +176,9 @@ export default function DaysOffPage() {
 
     const dates = holidayDates[holiday] || [];
     setSelectedDates(dates);
-    setReason(`${holiday.charAt(0).toUpperCase() + holiday.slice(1)} Public Holidays`);
+    setReason(
+      `${holiday.charAt(0).toUpperCase() + holiday.slice(1)} Public Holidays`
+    );
     setIsRecurring(true);
   };
 
@@ -145,7 +196,9 @@ export default function DaysOffPage() {
   return (
     <div className="p-4 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Days Off Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Days Off Management
+        </h1>
         <p className="text-gray-600">Manage your days off and holidays</p>
       </div>
 
@@ -200,24 +253,84 @@ export default function DaysOffPage() {
                         placeholder="e.g., Personal Leave, Holiday"
                       />
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="recurring"
-                        checked={isRecurring}
-                        onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
-                      />
-                      <Label htmlFor="recurring">
-                        Recurring annually
-                      </Label>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="recurring"
+                          checked={isRecurring}
+                          onCheckedChange={(checked) => {
+                            setIsRecurring(checked as boolean);
+                            if (!checked) {
+                              setRecurringType('');
+                              setSelectedDayOfWeek(null);
+                            }
+                          }}
+                        />
+                        <Label htmlFor="recurring">Make this recurring</Label>
+                      </div>
+
+                      {isRecurring && (
+                        <div className="space-y-3 pl-6">
+                          <div>
+                            <Label htmlFor="recurringType">
+                              Recurring Pattern
+                            </Label>
+                            <Select
+                              value={recurringType}
+                              onValueChange={(
+                                value: 'WEEKLY' | 'ANNUAL' | ''
+                              ) => setRecurringType(value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select pattern" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="WEEKLY">
+                                  Weekly (every week)
+                                </SelectItem>
+                                <SelectItem value="ANNUAL">
+                                  Annually (every year)
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {recurringType === 'WEEKLY' && (
+                            <div>
+                              <Label htmlFor="dayOfWeek">Day of Week</Label>
+                              <Select
+                                value={selectedDayOfWeek?.toString() || ''}
+                                onValueChange={(value) =>
+                                  setSelectedDayOfWeek(parseInt(value))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select day" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="0">Sunday</SelectItem>
+                                  <SelectItem value="1">Monday</SelectItem>
+                                  <SelectItem value="2">Tuesday</SelectItem>
+                                  <SelectItem value="3">Wednesday</SelectItem>
+                                  <SelectItem value="4">Thursday</SelectItem>
+                                  <SelectItem value="5">Friday</SelectItem>
+                                  <SelectItem value="6">Saturday</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogOpen(false)}
+                    >
                       Cancel
                     </Button>
-                    <Button onClick={handleAddDaysOff}>
-                      Add Days Off
-                    </Button>
+                    <Button onClick={handleAddDaysOff}>Add Days Off</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -227,7 +340,7 @@ export default function DaysOffPage() {
             {/* Calendar View */}
             <Calendar
               mode="multiple"
-              selected={daysOff.map(d => d.date)}
+              selected={daysOff.map((d) => d.date)}
               className="rounded-md border"
               disabled
             />
@@ -242,7 +355,9 @@ export default function DaysOffPage() {
           <CardContent>
             <div className="space-y-2">
               {daysOff.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No days off scheduled</p>
+                <p className="text-gray-500 text-center py-4">
+                  No days off scheduled
+                </p>
               ) : (
                 daysOff.map((dayOff) => (
                   <div
@@ -251,15 +366,28 @@ export default function DaysOffPage() {
                   >
                     <div className="flex-1">
                       <div className="font-medium">
-                        {format(dayOff.date, 'EEEE, MMMM d, yyyy')}
+                        {dayOff.recurringType === 'WEEKLY'
+                          ? `Every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOff.dayOfWeek!]}`
+                          : format(dayOff.date, 'EEEE, MMMM d, yyyy')}
                       </div>
                       {dayOff.reason && (
-                        <div className="text-sm text-gray-600">{dayOff.reason}</div>
+                        <div className="text-sm text-gray-600">
+                          {dayOff.reason}
+                        </div>
                       )}
                       {dayOff.isRecurring && (
                         <div className="flex items-center gap-1 text-xs text-blue-600 mt-1">
-                          <RefreshCw className="h-3 w-3" />
-                          Recurring annually
+                          {dayOff.recurringType === 'WEEKLY' ? (
+                            <>
+                              <Repeat className="h-3 w-3" />
+                              Weekly recurring
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="h-3 w-3" />
+                              Recurring annually
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

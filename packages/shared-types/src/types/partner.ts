@@ -54,6 +54,8 @@ export interface IPartnerDaysOff {
   date: Date;
   reason?: string;
   isRecurring: boolean;
+  recurringType?: 'WEEKLY' | 'ANNUAL' | null;
+  dayOfWeek?: number; // 0-6 for weekly recurring (0=Sunday, 1=Monday, etc.)
   createdAt: Date;
 }
 

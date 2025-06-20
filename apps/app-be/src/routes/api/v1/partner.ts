@@ -21,12 +21,14 @@ router.get('/schedule/today', partnerDashboardController.getTodaySchedule);
 router.get(
   '/bookings',
   [
-    query('status').optional().isIn(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
+    query('status')
+      .optional()
+      .isIn(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
     query('fromDate').optional().isISO8601(),
     query('toDate').optional().isISO8601(),
     query('serviceId').optional().isString(),
     query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 100 })
+    query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   validateRequest,
   partnerDashboardController.getPartnerBookings
@@ -37,7 +39,7 @@ router.patch(
   [
     param('id').isString().notEmpty(),
     body('status').isIn(['CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
-    body('notes').optional().isString()
+    body('notes').optional().isString(),
   ],
   validateRequest,
   partnerDashboardController.updateBookingStatus
@@ -56,7 +58,7 @@ router.post(
     body('category').isString().notEmpty(),
     body('isActive').optional().isBoolean(),
     body('requiresApproval').optional().isBoolean(),
-    body('maxBookingsPerDay').optional().isInt({ min: 1 })
+    body('maxBookingsPerDay').optional().isInt({ min: 1 }),
   ],
   validateRequest,
   partnerDashboardController.createPartnerService
@@ -73,7 +75,7 @@ router.put(
     body('category').isString().notEmpty(),
     body('isActive').optional().isBoolean(),
     body('requiresApproval').optional().isBoolean(),
-    body('maxBookingsPerDay').optional().isInt({ min: 1 })
+    body('maxBookingsPerDay').optional().isInt({ min: 1 }),
   ],
   validateRequest,
   partnerDashboardController.updatePartnerService
@@ -81,9 +83,7 @@ router.put(
 
 router.delete(
   '/services/:id',
-  [
-    param('id').isString().notEmpty()
-  ],
+  [param('id').isString().notEmpty()],
   validateRequest,
   partnerDashboardController.deletePartnerService
 );
@@ -96,10 +96,12 @@ router.put(
   [
     body('availability').isArray(),
     body('availability.*.dayOfWeek').isInt({ min: 0, max: 6 }),
-    body('availability.*.startTime').matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/),
+    body('availability.*.startTime').matches(
+      /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
+    ),
     body('availability.*.endTime').matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/),
     body('availability.*.slotDuration').optional().isInt({ min: 15 }),
-    body('availability.*.maxBookingsPerSlot').optional().isInt({ min: 1 })
+    body('availability.*.maxBookingsPerSlot').optional().isInt({ min: 1 }),
   ],
   validateRequest,
   partnerDashboardController.updatePartnerAvailability
@@ -120,7 +122,7 @@ router.put(
     body('phone').optional().isString(),
     body('website').optional().isURL(),
     body('specializations').optional().isArray(),
-    body('operatingHours').optional().isObject()
+    body('operatingHours').optional().isObject(),
   ],
   validateRequest,
   partnerDashboardController.updatePartnerProfile
@@ -133,7 +135,10 @@ router.post(
   '/days-off',
   [
     body('date').isISO8601({ strict: true }).toDate(),
-    body('reason').optional().isString()
+    body('reason').optional().isString(),
+    body('isRecurring').optional().isBoolean(),
+    body('recurringType').optional().isIn(['WEEKLY', 'ANNUAL']),
+    body('dayOfWeek').optional().isInt({ min: 0, max: 6 }),
   ],
   validateRequest,
   partnerDashboardController.createPartnerDayOff
@@ -141,9 +146,7 @@ router.post(
 
 router.delete(
   '/days-off/:id',
-  [
-    param('id').isString().notEmpty()
-  ],
+  [param('id').isString().notEmpty()],
   validateRequest,
   partnerDashboardController.deletePartnerDayOff
 );

@@ -57,6 +57,17 @@ interface DailySlotBreakdownProps {
   onClose: () => void;
   selectedDate: Date;
   partnerId: string;
+  mockData?: {
+    bookings: {
+      id: string;
+      time: string;
+      customerName: string;
+      serviceName: string;
+      status: string;
+    }[];
+    totalSlots: number;
+    availableSlots: number;
+  };
 }
 
 const statusConfig = {
@@ -92,6 +103,7 @@ export function DailySlotBreakdown({
   onClose,
   selectedDate,
   partnerId,
+  mockData,
 }: DailySlotBreakdownProps) {
   const [loading, setLoading] = useState(true);
   const [slotData, setSlotData] = useState<DailySlotData | null>(null);
@@ -110,7 +122,37 @@ export function DailySlotBreakdown({
 
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
-      // Fetch detailed slot information
+      // If mock data is provided, use it instead of making API call
+      if (mockData) {
+        const mockSlotData: DailySlotData = {
+          date: dateStr,
+          totalSlots: mockData.totalSlots,
+          availableSlots: mockData.availableSlots,
+          bookedSlots: mockData.bookings.map((booking) => ({
+            id: booking.id,
+            time: booking.time,
+            customerName: booking.customerName,
+            customerEmail: `${booking.customerName.toLowerCase().replace(' ', '.')}@example.com`,
+            serviceName: booking.serviceName,
+            status: booking.status as
+              | 'PENDING'
+              | 'CONFIRMED'
+              | 'COMPLETED'
+              | 'CANCELLED'
+              | 'NO_SHOW',
+            duration: 30, // Default duration
+            notes: undefined,
+            isFreeCheckup: false,
+          })),
+          availableTimeSlots: generateMockAvailableSlots(
+            mockData.totalSlots - mockData.bookings.length
+          ),
+        };
+        setSlotData(mockSlotData);
+        return;
+      }
+
+      // Fetch detailed slot information from API
       const response = await fetch(
         `http://localhost:4000/api/v1/partners/${partnerId}/available-slots/${dateStr}?detailed=true`,
         {
@@ -138,6 +180,29 @@ export function DailySlotBreakdown({
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateMockAvailableSlots = (count: number) => {
+    const slots = [];
+    const startHour = 9;
+    const endHour = 18;
+    const slotDuration = 30;
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += slotDuration) {
+        if (slots.length >= count) break;
+        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        slots.push({
+          time,
+          duration: slotDuration,
+          maxBookings: 1,
+          currentBookings: 0,
+        });
+      }
+      if (slots.length >= count) break;
+    }
+
+    return slots.slice(0, count);
   };
 
   const handleStatusUpdate = async (bookingId: string, newStatus: string) => {
@@ -187,6 +252,11 @@ export function DailySlotBreakdown({
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Daily Schedule - {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+            {mockData && (
+              <Badge variant="secondary" className="text-xs">
+                Demo Data
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -321,7 +391,7 @@ export function DailySlotBreakdown({
                               )}
                             </div>
 
-                            {booking.status === 'PENDING' && (
+                            {booking.status === 'PENDING' && !mockData && (
                               <div className="flex gap-2 mt-3">
                                 <Button
                                   size="sm"
@@ -342,6 +412,13 @@ export function DailySlotBreakdown({
                                 >
                                   Cancel
                                 </Button>
+                              </div>
+                            )}
+                            {booking.status === 'PENDING' && mockData && (
+                              <div className="mt-3">
+                                <Badge variant="outline" className="text-xs">
+                                  Demo Mode - Actions Disabled
+                                </Badge>
                               </div>
                             )}
                           </CardContent>
