@@ -19,10 +19,10 @@ router.post(
     body('startTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
     body('notes').optional().isString(),
     body('isFreeCheckup').optional().isBoolean(),
-    body('paymentMethod').optional().isString()
+    body('paymentMethod').optional().isString(),
   ],
   validateRequest,
-  bookingController.createBooking
+  bookingController.createBooking.bind(bookingController)
 );
 
 // Get user's bookings
@@ -33,20 +33,18 @@ router.get(
     query('fromDate').optional().isISO8601(),
     query('toDate').optional().isISO8601(),
     query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 100 })
+    query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   validateRequest,
-  bookingController.getBookings
+  bookingController.getBookings.bind(bookingController)
 );
 
 // Get specific booking
 router.get(
   '/:id',
-  [
-    param('id').isString().notEmpty()
-  ],
+  [param('id').isString().notEmpty()],
   validateRequest,
-  bookingController.getBooking
+  bookingController.getBooking.bind(bookingController)
 );
 
 // Update booking status
@@ -55,10 +53,10 @@ router.patch(
   [
     param('id').isString().notEmpty(),
     body('status').isIn(['CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW']),
-    body('cancellationReason').optional().isString()
+    body('cancellationReason').optional().isString(),
   ],
   validateRequest,
-  bookingController.updateBookingStatus
+  bookingController.updateBookingStatus.bind(bookingController)
 );
 
 export default router;

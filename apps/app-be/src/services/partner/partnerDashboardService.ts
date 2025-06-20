@@ -1,4 +1,13 @@
 import prisma from '../../database/client';
+import { randomBytes } from 'crypto';
+
+// Generate a unique ID similar to Prisma's cuid
+function generateId(): string {
+  return (
+    'c' +
+    randomBytes(12).toString('base64').replace(/[+/]/g, '').substring(0, 24)
+  );
+}
 
 interface DashboardStats {
   todayBookings: number;
@@ -23,13 +32,13 @@ class PartnerDashboardService {
   async getDashboardStats(partnerId: string): Promise<DashboardStats> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const weekStart = new Date(today);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    
+
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
@@ -42,7 +51,7 @@ class PartnerDashboardService {
       weekTotal,
       monthTotal,
       totalRevenue,
-      monthRevenue
+      monthRevenue,
     ] = await Promise.all([
       // Today's total bookings
       prisma.booking.count({
@@ -50,78 +59,78 @@ class PartnerDashboardService {
           partnerId,
           bookingDate: {
             gte: today,
-            lt: tomorrow
-          }
-        }
+            lt: tomorrow,
+          },
+        },
       }),
-      
+
       // Today's upcoming bookings
       prisma.booking.count({
         where: {
           partnerId,
           bookingDate: {
             gte: today,
-            lt: tomorrow
+            lt: tomorrow,
           },
-          status: { in: ['PENDING', 'CONFIRMED'] }
-        }
+          status: { in: ['PENDING', 'CONFIRMED'] },
+        },
       }),
-      
+
       // Today's completed bookings
       prisma.booking.count({
         where: {
           partnerId,
           bookingDate: {
             gte: today,
-            lt: tomorrow
+            lt: tomorrow,
           },
-          status: 'COMPLETED'
-        }
+          status: 'COMPLETED',
+        },
       }),
-      
+
       // Today's cancelled bookings
       prisma.booking.count({
         where: {
           partnerId,
           bookingDate: {
             gte: today,
-            lt: tomorrow
+            lt: tomorrow,
           },
-          status: 'CANCELLED'
-        }
+          status: 'CANCELLED',
+        },
       }),
-      
+
       // Week's bookings
       prisma.booking.count({
         where: {
           partnerId,
-          bookingDate: { gte: weekStart }
-        }
+          bookingDate: { gte: weekStart },
+        },
       }),
-      
+
       // Month's bookings
       prisma.booking.count({
         where: {
           partnerId,
           bookingDate: {
             gte: monthStart,
-            lte: monthEnd
-          }
-        }
+            lte: monthEnd,
+          },
+        },
       }),
-      
+
       // Total revenue
       prisma.booking.aggregate({
         where: {
           partnerId,
           status: 'COMPLETED',
-          paymentStatus: 'PAID'
+          paymentStatus: 'PAID',
         },
         _sum: {
-          totalAmount: true
-        }
+          totalAmount: true,
+        },
       }),
-      
+
       // Month revenue
       prisma.booking.aggregate({
         where: {
@@ -130,13 +139,13 @@ class PartnerDashboardService {
           paymentStatus: 'PAID',
           bookingDate: {
             gte: monthStart,
-            lte: monthEnd
-          }
+            lte: monthEnd,
+          },
         },
         _sum: {
-          totalAmount: true
-        }
-      })
+          totalAmount: true,
+        },
+      }),
     ]);
 
     return {
@@ -147,13 +156,17 @@ class PartnerDashboardService {
       completedToday: todayCompleted,
       cancelledToday: todayCancelled,
       totalRevenue: totalRevenue._sum.totalAmount || 0,
-      monthRevenue: monthRevenue._sum.totalAmount || 0
+      monthRevenue: monthRevenue._sum.totalAmount || 0,
     };
   }
 
-  async getPartnerBookings(filters: PartnerBookingFilters, page: number, limit: number) {
+  async getPartnerBookings(
+    filters: PartnerBookingFilters,
+    page: number,
+    limit: number
+  ) {
     const where: any = {
-      partnerId: filters.partnerId
+      partnerId: filters.partnerId,
     };
 
     if (filters.status) {
@@ -177,10 +190,7 @@ class PartnerDashboardService {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: [
-          { bookingDate: 'desc' },
-          { startTime: 'desc' }
-        ],
+        orderBy: [{ bookingDate: 'desc' }, { startTime: 'desc' }],
         include: {
           user: {
             select: {
@@ -188,13 +198,13 @@ class PartnerDashboardService {
               firstName: true,
               lastName: true,
               email: true,
-              profileImage: true
-            }
+              profileImage: true,
+            },
           },
-          service: true
-        }
+          service: true,
+        },
       }),
-      prisma.booking.count({ where })
+      prisma.booking.count({ where }),
     ]);
 
     return {
@@ -203,15 +213,15 @@ class PartnerDashboardService {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
   async getTodaySchedule(partnerId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -220,9 +230,9 @@ class PartnerDashboardService {
         partnerId,
         bookingDate: {
           gte: today,
-          lt: tomorrow
+          lt: tomorrow,
         },
-        status: { notIn: ['CANCELLED'] }
+        status: { notIn: ['CANCELLED'] },
       },
       orderBy: { startTime: 'asc' },
       include: {
@@ -232,23 +242,28 @@ class PartnerDashboardService {
             firstName: true,
             lastName: true,
             email: true,
-            profileImage: true
-          }
+            profileImage: true,
+          },
         },
-        service: true
-      }
+        service: true,
+      },
     });
 
     return bookings;
   }
 
-  async updateBookingStatus(bookingId: string, partnerId: string, status: string, notes?: string) {
+  async updateBookingStatus(
+    bookingId: string,
+    partnerId: string,
+    status: string,
+    notes?: string
+  ) {
     // First verify the booking belongs to this partner
     const booking = await prisma.booking.findFirst({
       where: {
         id: bookingId,
-        partnerId
-      }
+        partnerId,
+      },
     });
 
     if (!booking) {
@@ -257,15 +272,17 @@ class PartnerDashboardService {
 
     // Validate status transitions
     const validTransitions: Record<string, string[]> = {
-      'PENDING': ['CONFIRMED', 'CANCELLED'],
-      'CONFIRMED': ['COMPLETED', 'CANCELLED', 'NO_SHOW'],
-      'COMPLETED': [],
-      'CANCELLED': [],
-      'NO_SHOW': []
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['COMPLETED', 'CANCELLED', 'NO_SHOW'],
+      COMPLETED: [],
+      CANCELLED: [],
+      NO_SHOW: [],
     };
 
     if (!validTransitions[booking.status]?.includes(status)) {
-      throw new Error(`Invalid status transition from ${booking.status} to ${status}`);
+      throw new Error(
+        `Invalid status transition from ${booking.status} to ${status}`
+      );
     }
 
     // Update the booking
@@ -274,7 +291,7 @@ class PartnerDashboardService {
       data: {
         status,
         notes: notes || booking.notes,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       include: {
         user: {
@@ -282,11 +299,11 @@ class PartnerDashboardService {
             id: true,
             firstName: true,
             lastName: true,
-            email: true
-          }
+            email: true,
+          },
         },
-        service: true
-      }
+        service: true,
+      },
     });
 
     return updatedBooking;
@@ -295,7 +312,7 @@ class PartnerDashboardService {
   async getPartnerServices(partnerId: string) {
     const services = await prisma.service.findMany({
       where: { partnerId },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
 
     return services;
@@ -306,8 +323,8 @@ class PartnerDashboardService {
     const service = await prisma.service.findFirst({
       where: {
         id: serviceId,
-        partnerId
-      }
+        partnerId,
+      },
     });
 
     if (!service) {
@@ -325,8 +342,8 @@ class PartnerDashboardService {
         isActive: data.isActive,
         requiresApproval: data.requiresApproval,
         maxBookingsPerDay: data.maxBookingsPerDay,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     return updatedService;
@@ -343,8 +360,8 @@ class PartnerDashboardService {
         category: data.category,
         isActive: data.isActive ?? true,
         requiresApproval: data.requiresApproval ?? false,
-        maxBookingsPerDay: data.maxBookingsPerDay
-      }
+        maxBookingsPerDay: data.maxBookingsPerDay,
+      },
     });
 
     return service;
@@ -355,8 +372,8 @@ class PartnerDashboardService {
     const service = await prisma.service.findFirst({
       where: {
         id: serviceId,
-        partnerId
-      }
+        partnerId,
+      },
     });
 
     if (!service) {
@@ -368,12 +385,12 @@ class PartnerDashboardService {
       where: {
         serviceId,
         bookingDate: {
-          gte: new Date()
+          gte: new Date(),
         },
         status: {
-          notIn: ['CANCELLED', 'COMPLETED']
-        }
-      }
+          notIn: ['CANCELLED', 'COMPLETED'],
+        },
+      },
     });
 
     if (futureBookings > 0) {
@@ -385,8 +402,8 @@ class PartnerDashboardService {
       where: { id: serviceId },
       data: {
         isActive: false,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     return deletedService;
@@ -395,7 +412,7 @@ class PartnerDashboardService {
   async getPartnerAvailability(partnerId: string) {
     const availability = await prisma.partnerAvailability.findMany({
       where: { partnerId },
-      orderBy: { dayOfWeek: 'asc' }
+      orderBy: { dayOfWeek: 'asc' },
     });
 
     return availability;
@@ -404,19 +421,19 @@ class PartnerDashboardService {
   async updatePartnerAvailability(partnerId: string, availability: any[]) {
     // Delete existing availability
     await prisma.partnerAvailability.deleteMany({
-      where: { partnerId }
+      where: { partnerId },
     });
 
     // Create new availability
     const created = await prisma.partnerAvailability.createMany({
-      data: availability.map(slot => ({
+      data: availability.map((slot) => ({
         partnerId,
         dayOfWeek: slot.dayOfWeek,
         startTime: slot.startTime,
         endTime: slot.endTime,
         slotDuration: slot.slotDuration || 30,
-        maxBookingsPerSlot: slot.maxBookingsPerSlot || 1
-      }))
+        maxBookingsPerSlot: slot.maxBookingsPerSlot || 1,
+      })),
     });
 
     return created;
@@ -429,10 +446,10 @@ class PartnerDashboardService {
         _count: {
           select: {
             services: true,
-            bookings: true
-          }
-        }
-      }
+            bookings: true,
+          },
+        },
+      },
     });
 
     if (!partner) {
@@ -455,46 +472,83 @@ class PartnerDashboardService {
         phone: data.phone,
         website: data.website,
         specializations: data.specializations,
-        operatingHours: data.operatingHours ? JSON.stringify(data.operatingHours) : undefined,
-        updatedAt: new Date()
-      }
+        operatingHours: data.operatingHours
+          ? JSON.stringify(data.operatingHours)
+          : undefined,
+        updatedAt: new Date(),
+      },
     });
 
     return updatedPartner;
   }
 
   async getPartnerDaysOff(partnerId: string) {
-    const daysOff = await prisma.partnerDaysOff.findMany({
-      where: { partnerId },
-      orderBy: { date: 'asc' }
-    });
+    // Use raw query to get all fields including the new ones
+    const daysOff = await prisma.$queryRaw`
+      SELECT * FROM "PartnerDaysOff"
+      WHERE "partnerId" = ${partnerId}
+      ORDER BY "date" ASC
+    `;
 
     return daysOff;
   }
 
   async createPartnerDayOff(partnerId: string, data: any) {
-    // Check if day off already exists
+    // For weekly recurring, check if there's already a recurring pattern for this day of week
+    if (data.recurringType === 'WEEKLY' && data.dayOfWeek !== undefined) {
+      // Check manually for weekly pattern in the results
+      const weeklyPatterns = await prisma.$queryRaw`
+        SELECT * FROM "PartnerDaysOff"
+        WHERE "partnerId" = ${partnerId}
+        AND "recurringType" = 'WEEKLY'
+        AND "dayOfWeek" = ${data.dayOfWeek}
+      `;
+
+      if (Array.isArray(weeklyPatterns) && weeklyPatterns.length > 0) {
+        throw new Error(
+          `Weekly day off already exists for this day of the week`
+        );
+      }
+
+      // For weekly recurring, create a pattern entry using raw query
+      const dayOff = await prisma.$queryRaw`
+        INSERT INTO "PartnerDaysOff" ("id", "partnerId", "date", "reason", "isRecurring", "recurringType", "dayOfWeek", "createdAt")
+        VALUES (${generateId()}, ${partnerId}, ${new Date(data.date)}, ${data.reason || null}, ${true}, ${'WEEKLY'}, ${data.dayOfWeek}, ${new Date()})
+        RETURNING *
+      `;
+
+      return Array.isArray(dayOff) ? dayOff[0] : dayOff;
+    }
+
+    // For one-time or annual recurring days off
     const existingDayOff = await prisma.partnerDaysOff.findFirst({
       where: {
         partnerId,
-        date: new Date(data.date)
-      }
+        date: new Date(data.date),
+      },
     });
 
     if (existingDayOff) {
       throw new Error('Day off already exists for this date');
     }
 
-    const dayOff = await prisma.partnerDaysOff.create({
-      data: {
-        partnerId,
-        date: new Date(data.date),
-        reason: data.reason,
-        isRecurring: data.isRecurring || false
-      }
-    });
+    // Use raw query for creating with new fields
+    const dayOff = await prisma.$queryRaw`
+      INSERT INTO "PartnerDaysOff" ("id", "partnerId", "date", "reason", "isRecurring", "recurringType", "dayOfWeek", "createdAt")
+      VALUES (
+        ${generateId()},
+        ${partnerId},
+        ${new Date(data.date)},
+        ${data.reason || null},
+        ${data.isRecurring || false},
+        ${data.recurringType || null},
+        ${data.recurringType === 'ANNUAL' ? new Date(data.date).getDay() : null},
+        ${new Date()}
+      )
+      RETURNING *
+    `;
 
-    return dayOff;
+    return Array.isArray(dayOff) ? dayOff[0] : dayOff;
   }
 
   async deletePartnerDayOff(dayOffId: string, partnerId: string) {
@@ -502,8 +556,8 @@ class PartnerDashboardService {
     const dayOff = await prisma.partnerDaysOff.findFirst({
       where: {
         id: dayOffId,
-        partnerId
-      }
+        partnerId,
+      },
     });
 
     if (!dayOff) {
@@ -511,7 +565,7 @@ class PartnerDashboardService {
     }
 
     await prisma.partnerDaysOff.delete({
-      where: { id: dayOffId }
+      where: { id: dayOffId },
     });
 
     return { success: true };

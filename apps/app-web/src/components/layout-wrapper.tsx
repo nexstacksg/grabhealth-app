@@ -8,17 +8,13 @@ import { ProductChatbot } from '@/components/product-chatbot';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Check if we're on a partner dashboard route
-  const isPartnerDashboard = pathname?.startsWith('/partner');
+  // Check if we're on a partner dashboard route (but not the public partners page)
+  const isPartnerDashboard =
+    pathname?.startsWith('/partner/') || pathname === '/partner';
 
-  // For partner dashboard pages, show header but not footer/chatbot
+  // For partner dashboard pages, show no header/footer/chatbot - just the content
   if (isPartnerDashboard) {
-    return (
-      <>
-        <Header />
-        {children}
-      </>
-    );
+    return <>{children}</>;
   }
 
   return (

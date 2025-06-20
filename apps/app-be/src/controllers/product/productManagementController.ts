@@ -25,7 +25,7 @@ export const productManagementController = {
 
       res.json({
         success: true,
-        data: products.map(product => ({
+        data: products.map((product) => ({
           id: product.id,
           name: product.name,
           description: product.description,
@@ -33,7 +33,9 @@ export const productManagementController = {
           status: product.status,
           category: product.category,
           pricing: product.productPricing,
-          commissions: product.productCommissions[0] || null,
+          commissions: Array.isArray(product.productCommissions)
+            ? product.productCommissions[0] || null
+            : product.productCommissions || null,
           createdAt: product.createdAt,
           updatedAt: product.updatedAt,
         })),
@@ -47,7 +49,7 @@ export const productManagementController = {
   async getProduct(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      
+
       const product = await prisma.product.findUnique({
         where: { id: parseInt(id) },
         include: {
@@ -71,7 +73,9 @@ export const productManagementController = {
           status: product.status,
           category: product.category,
           pricing: product.productPricing,
-          commissions: product.productCommissions[0] || null,
+          commissions: Array.isArray(product.productCommissions)
+            ? product.productCommissions[0] || null
+            : product.productCommissions || null,
           createdAt: product.createdAt,
           updatedAt: product.updatedAt,
         },
@@ -130,8 +134,8 @@ export const productManagementController = {
             salesCommissionAmount: commissions.salesCommissionAmount,
             leaderCommissionAmount: commissions.leaderCommissionAmount,
             managerCommissionAmount: commissions.managerCommissionAmount,
-            salesCommissionRate: commissions.salesCommissionRate || 0.30,
-            leaderCommissionRate: commissions.leaderCommissionRate || 0.10,
+            salesCommissionRate: commissions.salesCommissionRate || 0.3,
+            leaderCommissionRate: commissions.leaderCommissionRate || 0.1,
             managerCommissionRate: commissions.managerCommissionRate || 0.05,
           },
         });
@@ -182,7 +186,9 @@ export const productManagementController = {
             ...(name && { name }),
             ...(description !== undefined && { description }),
             ...(sku && { sku }),
-            ...(categoryId !== undefined && { categoryId: categoryId ? parseInt(categoryId) : null }),
+            ...(categoryId !== undefined && {
+              categoryId: categoryId ? parseInt(categoryId) : null,
+            }),
             ...(status && { status }),
           },
         });
@@ -193,10 +199,18 @@ export const productManagementController = {
           productPricing = await tx.productPricing.upsert({
             where: { productId },
             update: {
-              ...(pricing.pvValue !== undefined && { pvValue: pricing.pvValue }),
-              ...(pricing.customerPrice !== undefined && { customerPrice: pricing.customerPrice }),
-              ...(pricing.travelPackagePrice !== undefined && { travelPackagePrice: pricing.travelPackagePrice }),
-              ...(pricing.costPrice !== undefined && { costPrice: pricing.costPrice }),
+              ...(pricing.pvValue !== undefined && {
+                pvValue: pricing.pvValue,
+              }),
+              ...(pricing.customerPrice !== undefined && {
+                customerPrice: pricing.customerPrice,
+              }),
+              ...(pricing.travelPackagePrice !== undefined && {
+                travelPackagePrice: pricing.travelPackagePrice,
+              }),
+              ...(pricing.costPrice !== undefined && {
+                costPrice: pricing.costPrice,
+              }),
             },
             create: {
               productId,
@@ -215,12 +229,24 @@ export const productManagementController = {
             where: { productId },
             update: {
               ...(name && { productName: name }),
-              ...(commissions.salesCommissionAmount !== undefined && { salesCommissionAmount: commissions.salesCommissionAmount }),
-              ...(commissions.leaderCommissionAmount !== undefined && { leaderCommissionAmount: commissions.leaderCommissionAmount }),
-              ...(commissions.managerCommissionAmount !== undefined && { managerCommissionAmount: commissions.managerCommissionAmount }),
-              ...(commissions.salesCommissionRate !== undefined && { salesCommissionRate: commissions.salesCommissionRate }),
-              ...(commissions.leaderCommissionRate !== undefined && { leaderCommissionRate: commissions.leaderCommissionRate }),
-              ...(commissions.managerCommissionRate !== undefined && { managerCommissionRate: commissions.managerCommissionRate }),
+              ...(commissions.salesCommissionAmount !== undefined && {
+                salesCommissionAmount: commissions.salesCommissionAmount,
+              }),
+              ...(commissions.leaderCommissionAmount !== undefined && {
+                leaderCommissionAmount: commissions.leaderCommissionAmount,
+              }),
+              ...(commissions.managerCommissionAmount !== undefined && {
+                managerCommissionAmount: commissions.managerCommissionAmount,
+              }),
+              ...(commissions.salesCommissionRate !== undefined && {
+                salesCommissionRate: commissions.salesCommissionRate,
+              }),
+              ...(commissions.leaderCommissionRate !== undefined && {
+                leaderCommissionRate: commissions.leaderCommissionRate,
+              }),
+              ...(commissions.managerCommissionRate !== undefined && {
+                managerCommissionRate: commissions.managerCommissionRate,
+              }),
             },
             create: {
               productId,
@@ -228,8 +254,8 @@ export const productManagementController = {
               salesCommissionAmount: commissions.salesCommissionAmount || 0,
               leaderCommissionAmount: commissions.leaderCommissionAmount || 0,
               managerCommissionAmount: commissions.managerCommissionAmount || 0,
-              salesCommissionRate: commissions.salesCommissionRate || 0.30,
-              leaderCommissionRate: commissions.leaderCommissionRate || 0.10,
+              salesCommissionRate: commissions.salesCommissionRate || 0.3,
+              leaderCommissionRate: commissions.leaderCommissionRate || 0.1,
               managerCommissionRate: commissions.managerCommissionRate || 0.05,
             },
           });
@@ -278,7 +304,11 @@ export const productManagementController = {
   },
 
   // Get commission calculation preview
-  async getCommissionPreview(req: AuthRequest, res: Response, next: NextFunction) {
+  async getCommissionPreview(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const { productId, quantity = 1 } = req.query;
 
@@ -294,13 +324,23 @@ export const productManagementController = {
         },
       });
 
-      if (!product || !product.productPricing || !product.productCommissions[0]) {
+      if (!product || !product.productPricing) {
+        throw new AppError('Product or pricing not found', 404);
+      }
+
+      const commissions = Array.isArray(product.productCommissions)
+        ? product.productCommissions
+        : product.productCommissions
+          ? [product.productCommissions]
+          : [];
+
+      if (!commissions[0]) {
         throw new AppError('Product or commission structure not found', 404);
       }
 
       const qty = parseInt(quantity as string);
       const pricing = product.productPricing;
-      const commission = product.productCommissions[0];
+      const commission = commissions[0];
 
       const preview = {
         product: {
@@ -326,11 +366,11 @@ export const productManagementController = {
             rate: commission.managerCommissionRate,
           },
         },
-        totalCommissionPayout: (
-          commission.salesCommissionAmount +
-          commission.leaderCommissionAmount +
-          commission.managerCommissionAmount
-        ) * qty,
+        totalCommissionPayout:
+          (commission.salesCommissionAmount +
+            commission.leaderCommissionAmount +
+            commission.managerCommissionAmount) *
+          qty,
       };
 
       res.json({

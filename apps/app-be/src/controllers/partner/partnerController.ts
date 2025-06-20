@@ -8,9 +8,11 @@ class PartnerController {
       const filters = {
         city: req.query.city as string,
         specialization: req.query.specialization as string,
-        rating: req.query.rating ? parseFloat(req.query.rating as string) : undefined,
+        rating: req.query.rating
+          ? parseFloat(req.query.rating as string)
+          : undefined,
         search: req.query.search as string,
-        isActive: req.query.isActive !== 'false'
+        isActive: req.query.isActive !== 'false',
       };
 
       const page = parseInt(req.query.page as string) || 1;
@@ -20,7 +22,7 @@ class PartnerController {
 
       const response: ApiResponse = {
         success: true,
-        data: result
+        data: result,
       };
 
       res.json(response);
@@ -30,8 +32,8 @@ class PartnerController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch partners'
-        }
+          message: 'Failed to fetch partners',
+        },
       });
     }
   }
@@ -46,15 +48,15 @@ class PartnerController {
           success: false,
           error: {
             code: 'NOT_FOUND',
-            message: 'Partner not found'
-          }
+            message: 'Partner not found',
+          },
         });
         return;
       }
 
       const response: ApiResponse = {
         success: true,
-        data: partner
+        data: partner,
       };
 
       res.json(response);
@@ -64,8 +66,8 @@ class PartnerController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch partner'
-        }
+          message: 'Failed to fetch partner',
+        },
       });
     }
   }
@@ -75,14 +77,14 @@ class PartnerController {
       const { id } = req.params;
       const filters = {
         category: req.query.category as string,
-        isActive: req.query.isActive !== 'false'
+        isActive: req.query.isActive !== 'false',
       };
 
       const services = await partnerService.getPartnerServices(id, filters);
 
       const response: ApiResponse = {
         success: true,
-        data: services
+        data: services,
       };
 
       res.json(response);
@@ -92,8 +94,8 @@ class PartnerController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch partner services'
-        }
+          message: 'Failed to fetch partner services',
+        },
       });
     }
   }
@@ -103,11 +105,15 @@ class PartnerController {
       const { id, month } = req.params;
       const [year, monthNum] = month.split('-').map(Number);
 
-      const calendar = await partnerService.getPartnerCalendar(id, year, monthNum);
+      const calendar = await partnerService.getPartnerCalendar(
+        id,
+        year,
+        monthNum
+      );
 
       const response: ApiResponse = {
         success: true,
-        data: calendar
+        data: calendar,
       };
 
       res.json(response);
@@ -117,8 +123,8 @@ class PartnerController {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch partner calendar'
-        }
+          message: 'Failed to fetch partner calendar',
+        },
       });
     }
   }
@@ -126,22 +132,39 @@ class PartnerController {
   async getAvailableSlots(req: Request, res: Response) {
     try {
       const { id, date } = req.params;
-      const slots = await partnerService.getAvailableSlots(id, new Date(date));
 
-      const response: ApiResponse = {
-        success: true,
-        data: slots
-      };
+      // Check if detailed breakdown is requested
+      const detailed = req.query.detailed === 'true';
 
-      res.json(response);
+      if (detailed) {
+        const slotBreakdown = await partnerService.getDetailedSlotBreakdown(
+          id,
+          new Date(date)
+        );
+        const response: ApiResponse = {
+          success: true,
+          data: slotBreakdown,
+        };
+        res.json(response);
+      } else {
+        const slots = await partnerService.getAvailableSlots(
+          id,
+          new Date(date)
+        );
+        const response: ApiResponse = {
+          success: true,
+          data: slots,
+        };
+        res.json(response);
+      }
     } catch (error) {
       console.error('Get available slots error:', error);
       res.status(500).json({
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch available slots'
-        }
+          message: 'Failed to fetch available slots',
+        },
       });
     }
   }

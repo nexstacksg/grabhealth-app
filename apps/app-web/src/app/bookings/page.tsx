@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,14 +47,17 @@ export default function BookingsPage() {
       setIsLoading(true);
       const response = await services.bookings.getMyBookings({
         page: 1,
-        limit: 20
+        limit: 20,
       });
       setBookings(response.bookings);
     } catch (error: any) {
       console.error('Failed to fetch bookings:', error);
-      
+
       // If it's a rate limit error, show a user-friendly message
-      if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+      if (
+        error.message?.includes('429') ||
+        error.message?.includes('Too Many Requests')
+      ) {
         setIsRetrying(true);
         // Retry after a delay
         setTimeout(() => {
@@ -74,8 +83,19 @@ export default function BookingsPage() {
     try {
       await services.bookings.cancelBooking(bookingId);
       fetchBookings();
-    } catch (error) {
+      // You could add a success toast here if you have a toast system
+    } catch (error: any) {
       console.error('Failed to cancel booking:', error);
+      
+      // Check if it's an authentication error
+      if (error.status === 401 || error.code === 'NETWORK_ERROR') {
+        alert('Your session has expired. Please log in again.');
+        router.push('/auth/login');
+        return;
+      }
+      
+      // You could add an error toast here if you have a toast system
+      alert(error.message || 'Failed to cancel booking. Please try again.');
     }
   };
 
@@ -107,17 +127,19 @@ export default function BookingsPage() {
 
     switch (status) {
       case 'upcoming':
-        return bookings.filter(b => 
-          new Date(b.bookingDate) >= today && 
-          !['CANCELLED', 'COMPLETED', 'NO_SHOW'].includes(b.status)
+        return bookings.filter(
+          (b) =>
+            new Date(b.bookingDate) >= today &&
+            !['CANCELLED', 'COMPLETED', 'NO_SHOW'].includes(b.status)
         );
       case 'past':
-        return bookings.filter(b => 
-          new Date(b.bookingDate) < today || 
-          ['COMPLETED', 'NO_SHOW'].includes(b.status)
+        return bookings.filter(
+          (b) =>
+            new Date(b.bookingDate) < today ||
+            ['COMPLETED', 'NO_SHOW'].includes(b.status)
         );
       case 'cancelled':
-        return bookings.filter(b => b.status === 'CANCELLED');
+        return bookings.filter((b) => b.status === 'CANCELLED');
       default:
         return bookings;
     }
@@ -156,11 +178,18 @@ export default function BookingsPage() {
                   <Gift className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Your Annual Free Body Checkup is Available!</h3>
-                  <p className="text-gray-600">Claim your free health screening today</p>
+                  <h3 className="text-lg font-semibold">
+                    Your Annual Free Body Checkup is Available!
+                  </h3>
+                  <p className="text-gray-600">
+                    Claim your free health screening today
+                  </p>
                 </div>
               </div>
-              <Button onClick={handleClaimFreeCheckup} className="bg-green-600 hover:bg-green-700">
+              <Button
+                onClick={handleClaimFreeCheckup}
+                className="bg-green-600 hover:bg-green-700"
+              >
                 Claim Now
               </Button>
             </div>
@@ -181,16 +210,19 @@ export default function BookingsPage() {
             <Card>
               <CardContent className="text-center py-8">
                 <p className="text-gray-500">No upcoming bookings</p>
-                <Button onClick={() => router.push('/partners')} className="mt-4">
+                <Button
+                  onClick={() => router.push('/partners')}
+                  className="mt-4"
+                >
                   Book an Appointment
                 </Button>
               </CardContent>
             </Card>
           ) : (
             filterBookings('upcoming').map((booking) => (
-              <BookingCard 
-                key={booking.id} 
-                booking={booking} 
+              <BookingCard
+                key={booking.id}
+                booking={booking}
                 onCancel={() => handleCancelBooking(booking.id)}
                 showActions
               />
@@ -230,12 +262,12 @@ export default function BookingsPage() {
   );
 }
 
-function BookingCard({ 
-  booking, 
-  onCancel, 
-  showActions = false 
-}: { 
-  booking: IBooking; 
+function BookingCard({
+  booking,
+  onCancel,
+  showActions = false,
+}: {
+  booking: IBooking;
   onCancel?: () => void;
   showActions?: boolean;
 }) {
@@ -244,8 +276,12 @@ function BookingCard({
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg">{booking.service?.name || 'Unknown Service'}</CardTitle>
-            <CardDescription>{booking.partner?.name || 'Unknown Partner'}</CardDescription>
+            <CardTitle className="text-lg">
+              {booking.service?.name || 'Unknown Service'}
+            </CardTitle>
+            <CardDescription>
+              {booking.partner?.name || 'Unknown Partner'}
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {booking.isFreeCheckup && (
@@ -281,7 +317,7 @@ function BookingCard({
             </div>
           </div>
         </div>
-        
+
         {booking.notes && (
           <div className="mt-4 p-3 bg-gray-50 rounded">
             <p className="text-sm text-gray-600">{booking.notes}</p>

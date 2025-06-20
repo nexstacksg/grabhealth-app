@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   Calendar,
@@ -18,13 +18,6 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navigation = [
@@ -37,68 +30,6 @@ const navigation = [
   { name: 'Settings', href: '/partner/settings', icon: Settings },
 ];
 
-function PartnerUserMenu() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  if (!user) return null;
-
-  // Get initials for avatar
-  const initials =
-    `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold text-sm">
-            {initials || <User className="h-5 w-5" />}
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <div className="flex items-center justify-start gap-3 p-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold text-sm">
-            {initials || <User className="h-5 w-5" />}
-          </div>
-          <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-medium text-sm">
-              {user.firstName} {user.lastName}
-            </p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
-            {user.partner && (
-              <p className="text-xs text-emerald-600 font-medium">
-                {user.partner.name}
-              </p>
-            )}
-          </div>
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/partner/settings">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-          <LogOut className="mr-2 h-4 w-4" />
-          Log out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 export default function PartnerDashboardLayout({
   children,
 }: {
@@ -106,9 +37,19 @@ export default function PartnerDashboardLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-14 md:pt-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
       <div
         className={cn(
@@ -121,18 +62,29 @@ export default function PartnerDashboardLayout({
           onClick={() => setSidebarOpen(false)}
         />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Partner Portal
-            </h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(false)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+          {/* User Section */}
+          <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <User className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.partner?.name || 'HealthFirst Admin'}
+                  </p>
+                  <p className="text-xs text-gray-500">Partner</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(false)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navigation.map((item) => {
@@ -161,19 +113,38 @@ export default function PartnerDashboardLayout({
                 </Link>
               );
             })}
+
+            {/* Logout Button */}
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-4"
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Logout
+            </Button>
           </nav>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:top-14 xl:top-20 lg:bottom-0 lg:flex lg:w-64 lg:flex-col">
+      <div className="hidden lg:fixed lg:top-0 lg:bottom-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-1 bg-white border-r border-gray-200">
-          <div className="flex items-center h-16 px-6 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Partner Portal
-            </h2>
+          {/* User Section */}
+          <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                <User className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  {user?.partner?.name || 'HealthFirst Admin'}
+                </p>
+                <p className="text-xs text-gray-500">Partner</p>
+              </div>
+            </div>
           </div>
-          <nav className="flex-1 space-y-1 px-3 py-4">
+          <nav className="flex-1 space-y-1 px-3 pt-4 pb-4">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -199,30 +170,32 @@ export default function PartnerDashboardLayout({
                 </Link>
               );
             })}
+
+            {/* Logout Button */}
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-4 mx-3"
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Logout
+            </Button>
           </nav>
         </div>
       </div>
 
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-30 lg:hidden"
+        onClick={() => setSidebarOpen(true)}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+
       {/* Main content */}
       <div className="lg:pl-64 flex flex-col flex-1">
-        <div className="sticky top-14 md:top-20 z-10 flex items-center justify-between h-16 px-4 bg-white border-b lg:px-8">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-            <span className="text-lg font-semibold text-gray-900 ml-4 lg:ml-0">
-              Partner Portal
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <PartnerUserMenu />
-          </div>
-        </div>
         <main className="flex-1">{children}</main>
       </div>
     </div>

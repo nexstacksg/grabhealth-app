@@ -282,7 +282,9 @@ export const productController = {
             status: product.status,
             category: product.category,
             pricing: product.productPricing,
-            commissions: product.productCommissions[0] || null,
+            commissions: Array.isArray(product.productCommissions)
+              ? product.productCommissions[0] || null
+              : product.productCommissions || null,
             imageUrl: product.imageUrl,
             inStock: product.inStock,
             createdAt: product.createdAt,
@@ -431,17 +433,23 @@ export const productController = {
         },
       });
 
-      if (
-        !product ||
-        !product.productPricing ||
-        !product.productCommissions[0]
-      ) {
+      if (!product || !product.productPricing) {
+        throw new AppError('Product or pricing not found', 404);
+      }
+
+      const commissions = Array.isArray(product.productCommissions)
+        ? product.productCommissions
+        : product.productCommissions
+          ? [product.productCommissions]
+          : [];
+
+      if (!commissions[0]) {
         throw new AppError('Product or commission structure not found', 404);
       }
 
       const qty = parseInt(quantity as string);
       const pricing = product.productPricing;
-      const commission = product.productCommissions[0];
+      const commission = commissions[0];
 
       const preview = {
         product: {
