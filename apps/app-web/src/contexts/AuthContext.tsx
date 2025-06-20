@@ -30,7 +30,10 @@ const useAuthProvider = () => {
       setUser(userProfile);
     } catch (error: any) {
       // User is not authenticated or there was an error
-      console.log('Auth check failed:', error.message || 'Not authenticated');
+      // Don't log anything for 401 errors on initial auth check
+      if (error.status !== 401) {
+        console.log('Auth check failed:', error.message || 'Not authenticated');
+      }
       setUser(null);
     } finally {
       setIsLoading(false);
