@@ -25,17 +25,19 @@ interface BookingFilters {
 }
 
 class BookingsService extends BaseService {
-  async getMyBookings(filters?: BookingFilters): Promise<{ 
-    bookings: IBooking[]; 
-    total: number; 
-    page: number; 
-    totalPages: number 
+  async getMyBookings(filters?: BookingFilters): Promise<{
+    bookings: IBooking[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> {
     try {
       const queryString = this.buildQueryString(filters);
-      const response = await apiClient.get<ApiResponse<{ bookings: IBooking[]; pagination: any }>>(`/bookings${queryString}`);
+      const response = await apiClient.get<
+        ApiResponse<{ bookings: IBooking[]; pagination: any }>
+      >(`/bookings${queryString}`);
       const data = this.extractData(response);
-      
+
       return {
         bookings: data.bookings || [],
         total: data.pagination?.total || 0,
@@ -49,7 +51,9 @@ class BookingsService extends BaseService {
 
   async getBooking(id: string): Promise<IBooking> {
     try {
-      const response = await apiClient.get<ApiResponse<IBooking>>(`/bookings/${id}`);
+      const response = await apiClient.get<ApiResponse<IBooking>>(
+        `/bookings/${id}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -58,7 +62,10 @@ class BookingsService extends BaseService {
 
   async createBooking(data: CreateBookingData): Promise<IBooking> {
     try {
-      const response = await apiClient.post<ApiResponse<IBooking>>('/bookings', data);
+      const response = await apiClient.post<ApiResponse<IBooking>>(
+        '/bookings',
+        data
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -67,54 +74,80 @@ class BookingsService extends BaseService {
 
   async cancelBooking(id: string, reason?: string): Promise<IBooking> {
     try {
-      const response = await apiClient.post<ApiResponse<IBooking>>(`/bookings/${id}/cancel`, { reason });
+      const response = await apiClient.patch<ApiResponse<IBooking>>(
+        `/bookings/${id}/status`,
+        {
+          status: 'CANCELLED',
+          cancellationReason: reason,
+        }
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async rescheduleBooking(id: string, data: { 
-    bookingDate: string; 
-    startTime: string; 
-  }): Promise<IBooking> {
+  async rescheduleBooking(
+    id: string,
+    data: {
+      bookingDate: string;
+      startTime: string;
+    }
+  ): Promise<IBooking> {
     try {
-      const response = await apiClient.post<ApiResponse<IBooking>>(`/bookings/${id}/reschedule`, data);
+      const response = await apiClient.post<ApiResponse<IBooking>>(
+        `/bookings/${id}/reschedule`,
+        data
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async getAvailableSlots(partnerId: string, serviceId: string, date: string): Promise<string[]> {
+  async getAvailableSlots(
+    partnerId: string,
+    serviceId: string,
+    date: string
+  ): Promise<string[]> {
     try {
       const queryString = this.buildQueryString({ partnerId, serviceId, date });
-      const response = await apiClient.get<ApiResponse<string[]>>(`/bookings/available-slots${queryString}`);
+      const response = await apiClient.get<ApiResponse<string[]>>(
+        `/bookings/available-slots${queryString}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async checkFreeCheckupEligibility(): Promise<{ eligible: boolean; reason?: string }> {
+  async checkFreeCheckupEligibility(): Promise<{
+    eligible: boolean;
+    reason?: string;
+  }> {
     try {
       // Get current user's profile first to get their ID
       const profileResponse = await apiClient.get('/auth/profile');
       // Handle both wrapped and unwrapped response formats
       const profileData = profileResponse.data?.data || profileResponse.data;
       const userId = profileData?.id;
-      
+
       if (!userId) {
         throw new Error('User ID not found');
       }
-      
-      const response = await apiClient.get<ApiResponse<{ eligible: boolean; reason?: string }>>(`/users/${userId}/free-checkup-status`);
+
+      const response = await apiClient.get<
+        ApiResponse<{ eligible: boolean; reason?: string }>
+      >(`/users/${userId}/free-checkup-status`);
       return this.extractData(response);
     } catch (error) {
       // If it's a 500 error, it might be because the table doesn't exist
       // Return a default response to avoid breaking the UI
       if ((error as any)?.status === 500) {
-        return { eligible: false, reason: 'Free checkup system is currently unavailable' };
+        return {
+          eligible: false,
+          reason: 'Free checkup system is currently unavailable',
+        };
       }
       this.handleError(error);
     }
@@ -127,12 +160,14 @@ class BookingsService extends BaseService {
       // Handle both wrapped and unwrapped response formats
       const profileData = profileResponse.data?.data || profileResponse.data;
       const userId = profileData?.id;
-      
+
       if (!userId) {
         throw new Error('User ID not found');
       }
-      
-      const response = await apiClient.post<ApiResponse<{ success: boolean; message?: string }>>(`/users/${userId}/claim-free-checkup`, {});
+
+      const response = await apiClient.post<
+        ApiResponse<{ success: boolean; message?: string }>
+      >(`/users/${userId}/claim-free-checkup`, {});
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
