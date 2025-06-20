@@ -80,6 +80,18 @@ export interface ICalendarDay {
   isDayOff: boolean;
   availableSlots: number;
   totalSlots: number;
+  bookings?: {
+    id: string;
+    time: string;
+    customerName: string;
+    serviceName: string;
+    status: string;
+  }[];
 }
 
-export type ServiceCategory = 'Body Check' | 'Consultation' | 'Therapy' | 'Screening' | 'Other';
+export type ServiceCategory =
+  | 'Body Check'
+  | 'Consultation'
+  | 'Therapy'
+  | 'Screening'
+  | 'Other';

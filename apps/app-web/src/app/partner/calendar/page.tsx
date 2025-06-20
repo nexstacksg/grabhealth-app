@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { partnerService } from '@/services';
+import { DailySlotBreakdown } from '@/components/partner/daily-slot-breakdown';
 
 interface CalendarDay {
   date: string;
@@ -26,6 +27,13 @@ interface CalendarDay {
   isDayOff: boolean;
   availableSlots: number;
   totalSlots: number;
+  bookings?: {
+    id: string;
+    time: string;
+    customerName: string;
+    serviceName: string;
+    status: string;
+  }[];
 }
 
 export default function PartnerCalendarPage() {
@@ -39,6 +47,7 @@ export default function PartnerCalendarPage() {
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showSlotBreakdown, setShowSlotBreakdown] = useState(false);
 
   useEffect(() => {
     async function checkAuth() {
@@ -133,10 +142,43 @@ export default function PartnerCalendarPage() {
     const end = endOfMonth(month);
     const days = eachDayOfInterval({ start, end });
 
+    const mockCustomers = [
+      'John Doe',
+      'Jane Smith',
+      'Mike Johnson',
+      'Sarah Wilson',
+      'David Brown',
+    ];
+    const mockServices = [
+      'Health Checkup',
+      'Consultation',
+      'Blood Test',
+      'X-Ray',
+      'Therapy',
+    ];
+    const mockTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+
     return days.map((day) => {
       const dayOfWeek = getDay(day);
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const isDayOff = Math.random() > 0.9; // 10% chance of being a day off
+
+      // Generate mock bookings for available days
+      const bookings = [];
+      if (!isWeekend && !isDayOff) {
+        const numBookings = Math.floor(Math.random() * 4); // 0-3 bookings per day
+        for (let i = 0; i < numBookings; i++) {
+          bookings.push({
+            id: `booking-${format(day, 'yyyy-MM-dd')}-${i}`,
+            time: mockTimes[Math.floor(Math.random() * mockTimes.length)],
+            customerName:
+              mockCustomers[Math.floor(Math.random() * mockCustomers.length)],
+            serviceName:
+              mockServices[Math.floor(Math.random() * mockServices.length)],
+            status: ['CONFIRMED', 'PENDING'][Math.floor(Math.random() * 2)],
+          });
+        }
+      }
 
       return {
         date: format(day, 'yyyy-MM-dd'),
@@ -146,6 +188,7 @@ export default function PartnerCalendarPage() {
         availableSlots:
           isWeekend || isDayOff ? 0 : Math.floor(Math.random() * 10) + 5,
         totalSlots: isWeekend ? 0 : 15,
+        bookings,
       };
     });
   };
@@ -161,6 +204,11 @@ export default function PartnerCalendarPage() {
   const handleDateClick = (day: CalendarDay) => {
     setSelectedDate(new Date(day.date));
     setErrorMessage(null); // Clear any error messages when a date is selected
+
+    // If the day has appointments or available slots, show the detailed breakdown
+    if (day.totalSlots > 0 || (day.bookings && day.bookings.length > 0)) {
+      setShowSlotBreakdown(true);
+    }
   };
 
   const handleManageTimeSlots = () => {
@@ -368,8 +416,18 @@ export default function PartnerCalendarPage() {
                         day.isDayOff ? 'bg-red-50 border-red-200' : '',
                         !day.isAvailable && !day.isDayOff ? 'bg-gray-100' : '',
                         isSelected ? 'ring-2 ring-blue-500' : '',
-                        isToday(date) ? 'border-blue-500 border-2' : ''
+                        isToday(date) ? 'border-blue-500 border-2' : '',
+                        day.totalSlots > 0 ||
+                          (day.bookings && day.bookings.length > 0)
+                          ? 'hover:shadow-md hover:border-blue-300'
+                          : ''
                       )}
+                      title={
+                        day.totalSlots > 0 ||
+                        (day.bookings && day.bookings.length > 0)
+                          ? `Click to view appointments and available slots for this day`
+                          : undefined
+                      }
                     >
                       <div className="flex flex-col h-full">
                         <div
@@ -385,17 +443,43 @@ export default function PartnerCalendarPage() {
                         </div>
                         {day.isAvailable && (
                           <div className="mt-auto">
-                            <div className="text-xs text-gray-600">
-                              {day.availableSlots}/{day.totalSlots} slots
-                            </div>
-                            <div className="mt-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-green-500"
-                                style={{
-                                  width: `${(day.availableSlots / day.totalSlots) * 100}%`,
-                                }}
-                              />
-                            </div>
+                            {/* Show booked appointments count */}
+                            {day.bookings && day.bookings.length > 0 ? (
+                              <div className="space-y-1">
+                                <div className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                  {day.bookings.length} appointment
+                                  {day.bookings.length !== 1 ? 's' : ''}
+                                  <span className="ml-1">📅</span>
+                                </div>
+                                {/* Show first few appointment indicators */}
+                                <div className="space-y-0.5">
+                                  {day.bookings
+                                    .slice(0, 2)
+                                    .map((booking, index) => (
+                                      <div
+                                        key={booking.id}
+                                        className="text-xs bg-blue-100 text-blue-800 px-1 py-0.5 rounded truncate"
+                                        title={`${booking.time} - ${booking.customerName} (${booking.serviceName})`}
+                                      >
+                                        {booking.time} -{' '}
+                                        {booking.customerName.split(' ')[0]}
+                                      </div>
+                                    ))}
+                                  {day.bookings.length > 2 && (
+                                    <div className="text-xs text-gray-500">
+                                      +{day.bookings.length - 2} more
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-xs text-gray-500">
+                                No appointments
+                                {day.totalSlots > 0 && (
+                                  <span className="ml-1 text-green-600">✓</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                         {day.isDayOff && (
@@ -468,6 +552,16 @@ export default function PartnerCalendarPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Daily Slot Breakdown Modal */}
+      {selectedDate && partnerId && (
+        <DailySlotBreakdown
+          isOpen={showSlotBreakdown}
+          onClose={() => setShowSlotBreakdown(false)}
+          selectedDate={selectedDate}
+          partnerId={partnerId}
+        />
       )}
     </div>
   );
