@@ -199,7 +199,6 @@ function CommissionStructure() {
               <TableRow>
                 <TableHead className="w-[200px]">Product</TableHead>
                 <TableHead>Customer Price</TableHead>
-                <TableHead>PV Points</TableHead>
                 <TableHead>Sales (30%)</TableHead>
                 <TableHead>Leader (10%)</TableHead>
                 <TableHead>Manager (5%)</TableHead>
@@ -215,20 +214,10 @@ function CommissionStructure() {
                         <div className="text-sm text-muted-foreground">
                           {product.sku}
                         </div>
-                        {product.travelPackagePrice && (
-                          <div className="text-xs text-blue-600">
-                            Travel: {formatPrice(product.travelPackagePrice)}
-                          </div>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="font-semibold">
                       {formatPrice(product.customerPrice)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-purple-50">
-                        {product.pvValue} PV
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-green-50">
@@ -249,7 +238,7 @@ function CommissionStructure() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
+                  <TableCell colSpan={5} className="text-center py-4">
                     No products found
                   </TableCell>
                 </TableRow>
@@ -306,56 +295,6 @@ function CommissionStructure() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Commission Calculation Example</CardTitle>
-          <CardDescription>
-            Total earnings for selling 1 unit of each product (Sales role)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <h4 className="font-semibold">Commission Breakdown:</h4>
-              {products.map((product) => (
-                <div key={product.id} className="flex justify-between text-sm">
-                  <span>{product.name}:</span>
-                  <span className="font-medium">
-                    {formatPrice(product.commissionAmounts.sales)}
-                  </span>
-                </div>
-              ))}
-              <div className="border-t pt-2 flex justify-between font-semibold">
-                <span>Total Commission:</span>
-                <span className="text-green-600">
-                  {formatPrice(
-                    products.reduce(
-                      (sum, p) => sum + p.commissionAmounts.sales,
-                      0
-                    )
-                  )}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold">PV Points Breakdown:</h4>
-              {products.map((product) => (
-                <div key={product.id} className="flex justify-between text-sm">
-                  <span>{product.name}:</span>
-                  <span className="font-medium">{product.pvValue} PV</span>
-                </div>
-              ))}
-              <div className="border-t pt-2 flex justify-between font-semibold">
-                <span>Total PV Points:</span>
-                <span className="text-purple-600">
-                  {products.reduce((sum, p) => sum + p.pvValue, 0)} PV
-                </span>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 

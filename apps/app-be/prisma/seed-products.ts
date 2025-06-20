@@ -309,21 +309,6 @@ Perfect for:
       );
     }
 
-    // Create sample commission calculation summary
-    console.log(
-      '\n📊 Commission Calculation Summary (for Sales role selling 1 unit each):'
-    );
-    console.log('Real Man: $1,080.00 commission (30% of $3,600) + 600 PV');
-    console.log(
-      'Wild Ginseng Honey: $300.00 commission (30% of $1,000) + 700 PV'
-    );
-    console.log(
-      'Golden Ginseng Water: $5.67 commission (30% of $18.90) + 2,000 PV'
-    );
-    console.log('Travel to Yunnan: $239.70 commission (30% of $799) + 500 PV');
-    console.log('Travel to Bangkok: $239.70 commission (30% of $799) + 500 PV');
-    console.log('Total: $1,865.07 commission + 4,300 PV');
-
     console.log(
       '\n🎉 Successfully seeded GrabHealth 5-Product System (3 Products + 2 Travel Packages)!'
     );
