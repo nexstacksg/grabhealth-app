@@ -39,7 +39,7 @@ Who Should Use:
 • Modern men who value wellness and prefer natural health solutions`,
         sku: 'REAL_MAN_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/realmen.jpeg',
+        imageUrl: '/uploads/Real man1.png.png',
         pricing: {
           pvValue: 600,
           customerPrice: 3600.0,
@@ -82,7 +82,7 @@ Who Should Use:
 • Men Seeking Vitality • Frequent Drinkers • Wellness Enthusiasts • Low Energy / Fatigue-Prone Individuals`,
         sku: 'GINSENG_HONEY_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/WildGinseng.png',
+        imageUrl: '/uploads/Ginseng honey.png.png',
         pricing: {
           pvValue: 700,
           customerPrice: 1000.0,
