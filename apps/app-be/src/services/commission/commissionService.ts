@@ -608,7 +608,12 @@ export class CommissionService {
 
       return {
         products: products.map((product) => {
-          const commission = product.productCommissions[0]; // Get first commission tier
+          const commissions = Array.isArray(product.productCommissions)
+            ? product.productCommissions
+            : product.productCommissions
+              ? [product.productCommissions]
+              : [];
+          const commission = commissions[0]; // Get first commission tier
           return {
             id: product.id,
             name: product.name,
