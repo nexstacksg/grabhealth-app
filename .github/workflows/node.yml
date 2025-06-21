@@ -29,9 +29,67 @@ jobs:
       uses: oven-sh/setup-bun@v2
       with:
         bun-version: latest
+    - name: Setup environment files
+      run: |
+        # Copy .env files from /root/ to project directories
+        # Source files: .app-admin.env, .app-be.env, .app-web.env
+        # Target: .env in each respective app directory
+        
+        # Check if source files exist
+        if [ ! -f "/root/.app-admin.env" ] || [ ! -f "/root/.app-be.env" ] || [ ! -f "/root/.app-web.env" ]; then
+          echo "Error: One or more source .env files not found in /root/"
+          exit 1
+        fi
+        
+        # Copy and rename to .env with restricted permissions
+        cp /root/.app-admin.env ./apps/app-admin/.env
+        chmod 600 ./apps/app-admin/.env
+        
+        cp /root/.app-be.env ./apps/app-be/.env
+        chmod 600 ./apps/app-be/.env
+        
+        cp /root/.app-web.env ./apps/app-web/.env
+        chmod 600 ./apps/app-web/.env
+        
+        echo "Environment files copied successfully"
     - name: Install dependencies
       run: bun install
     - name: Build
       run: bun run build
     # - name: Test
     #   run: bun run test
+    - name: Restart PM2 processes
+      run: |
+        # Set PM2 home directory
+        export PM2_HOME=/root/.pm2
+        
+        # Try to connect to PM2 daemon, start it if not running
+        if ! /usr/local/bin/pm2 ping > /dev/null 2>&1; then
+          echo "PM2 daemon not running, starting it..."
+          /usr/local/bin/pm2 resurrect || echo "No dump file found, skipping resurrect"
+        fi
+        
+        # List current PM2 processes
+        echo "Current PM2 processes:"
+        /usr/local/bin/pm2 list
+        
+        # Restart specific application
+        if /usr/local/bin/pm2 describe grabhealth > /dev/null 2>&1; then
+          echo "Restarting grabhealth..."
+          /usr/local/bin/pm2 restart grabhealth --update-env
+          echo "grabhealth restarted successfully"
+        else
+          echo "grabhealth not found in PM2, trying to start from ecosystem file..."
+          if [ -f "/root/ecosystem.config.js" ]; then
+            /usr/local/bin/pm2 start /root/ecosystem.config.js --only grabhealth
+          else
+            echo "Warning: grabhealth not found and no ecosystem file present"
+          fi
+        fi
+        
+        # Show final PM2 status
+        echo "Final PM2 status:"
+        /usr/local/bin/pm2 list
+        
+        # Save PM2 process list
+        /usr/local/bin/pm2 save --force
