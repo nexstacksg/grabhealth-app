@@ -130,7 +130,7 @@ class PartnerService {
 
     const calendar: ICalendarDay[] = [];
     const daysInMonth = new Date(year, month, 0).getDate();
-    const daysOffMap = new Map(partner.daysOff.map(d => [d.date.toISOString().split('T')[0], d]));
+    const daysOffMap = new Map(partner.daysOff.map((d: any) => [d.date.toISOString().split('T')[0], d]));
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month - 1, day);
@@ -141,7 +141,7 @@ class PartnerService {
       const isDayOff = daysOffMap.has(dateStr);
 
       // Check if partner has availability for this day of week
-      const dayAvailability = partner.availability.find(a => a.dayOfWeek === dayOfWeek);
+      const dayAvailability = partner.availability.find((a: any) => a.dayOfWeek === dayOfWeek);
       const isAvailable = !isDayOff && !!dayAvailability;
 
       // Calculate available slots if the day is available
@@ -243,7 +243,7 @@ class PartnerService {
       const slotTime = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
       
       // Count bookings for this slot
-      const bookingsInSlot = bookings.filter(b => b.startTime === slotTime).length;
+      const bookingsInSlot = bookings.filter((b: any) => b.startTime === slotTime).length;
       const available = bookingsInSlot < availability.maxBookingsPerSlot;
 
       slots.push({

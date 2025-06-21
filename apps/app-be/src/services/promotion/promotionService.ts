@@ -1,4 +1,5 @@
-import { PrismaClient, Promotion, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import type { Promotion } from '@prisma/client';
 import { IPromotionCreate } from '@app/shared-types';
 import { AppError } from '../../middleware/error/errorHandler';
 

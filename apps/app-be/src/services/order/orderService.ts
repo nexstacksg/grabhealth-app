@@ -1,4 +1,5 @@
-import { PrismaClient, Order, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import type { Order } from '@prisma/client';
 import {
   IOrderCreate,
   IOrderUpdate,
@@ -31,7 +32,7 @@ export class OrderService {
       }
 
       // Start transaction
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx: any) => {
         // Calculate totals
         let subtotal = 0;
         let discount = 0;

@@ -48,7 +48,7 @@ export const productController = {
           );
         }
 
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
           // Create product
           const product = await tx.product.create({
             data: {
@@ -138,7 +138,7 @@ export const productController = {
           throw new AppError('Product not found', 404);
         }
 
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
           // Update product
           const product = await tx.product.update({
             where: { id: productId },

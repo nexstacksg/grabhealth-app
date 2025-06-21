@@ -57,10 +57,10 @@ export class AIService {
         });
 
         // Extract category preferences from user's order history
-        const userCategories = userOrders.flatMap((order) =>
+        const userCategories = userOrders.flatMap((order: any) =>
           order.items
-            .filter((item) => item.product?.categoryId)
-            .map((item) => item.product!.categoryId)
+            .filter((item: any) => item.product?.categoryId)
+            .map((item: any) => item.product!.categoryId)
         );
 
         if (userCategories.length > 0) {
@@ -86,7 +86,7 @@ export class AIService {
       });
 
       // Transform products to include price from ProductPricing
-      return products.map((product) => ({
+      return products.map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,
@@ -165,7 +165,7 @@ export class AIService {
       });
 
       // Transform products to include price from ProductPricing
-      return similarProducts.map((product) => ({
+      return similarProducts.map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,
@@ -216,7 +216,7 @@ export class AIService {
         take: limit * 2, // Get more to filter out inactive/out-of-stock
       });
 
-      const productIds = trendingProductIds.map((item) => item.productId);
+      const productIds = trendingProductIds.map((item: any) => item.productId);
 
       if (productIds.length === 0) {
         // Fallback to newest products if no orders found
@@ -235,7 +235,7 @@ export class AIService {
         });
 
         // Transform fallback products to include price from ProductPricing
-        return fallbackProducts.map((product) => ({
+        return fallbackProducts.map((product: any) => ({
           id: product.id,
           name: product.name,
           description: product.description,
@@ -265,7 +265,7 @@ export class AIService {
       });
 
       // Transform products to include price from ProductPricing
-      const transformedProducts = trendingProducts.map((product) => ({
+      const transformedProducts = trendingProducts.map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,
@@ -281,8 +281,8 @@ export class AIService {
 
       // Sort by the original trending order
       const sortedProducts = productIds
-        .map((id) => transformedProducts.find((p) => p.id === id))
-        .filter((p): p is IProduct => p !== undefined)
+        .map((id: any) => transformedProducts.find((p: any) => p.id === id))
+        .filter((p: any): p is IProduct => p !== undefined)
         .slice(0, limit);
 
       return sortedProducts;
@@ -372,8 +372,8 @@ export class AIService {
 
       // Extract unique suggestions from product names
       const suggestions = products
-        .map((p) => p.name)
-        .filter((name) => name.toLowerCase().includes(query.toLowerCase()));
+        .map((p: any) => p.name)
+        .filter((name: any) => name.toLowerCase().includes(query.toLowerCase()));
 
       // Add some common health-related search suggestions
       const commonSuggestions = [
