@@ -68,25 +68,25 @@ jobs:
         export PM2_HOME=/root/.pm2
         
         # Try to connect to PM2 daemon, start it if not running
-        if ! /usr/local/bin/pm2 ping > /dev/null 2>&1; then
+        if ! /usr/bin/pm2 ping > /dev/null 2>&1; then
           echo "PM2 daemon not running, starting it..."
-          /usr/local/bin/pm2 resurrect || echo "No dump file found, skipping resurrect"
+          /usr/bin/pm2 resurrect || echo "No dump file found, skipping resurrect"
         fi
         
         # List current PM2 processes
         echo "Current PM2 processes:"
-        /usr/local/bin/pm2 list
+        /usr/bin/pm2 list
         
         # Stop and delete old processes if they exist
-        /usr/local/bin/pm2 delete grabhealth-backend grabhealth-web || true
+        /usr/bin/pm2 delete grabhealth-backend grabhealth-web || true
         
         # Start applications using ecosystem config
         echo "Starting applications with ecosystem config..."
-        /usr/local/bin/pm2 start ecosystem.config.js --update-env
+        /usr/bin/pm2 start ecosystem.config.js --update-env
         
         # Show final PM2 status
         echo "Final PM2 status:"
-        /usr/local/bin/pm2 list
+        /usr/bin/pm2 list
         
         # Save PM2 process list
-        /usr/local/bin/pm2 save --force
+        /usr/bin/pm2 save --force
