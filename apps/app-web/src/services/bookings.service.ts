@@ -4,7 +4,7 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IBooking, ApiResponse } from '@app/shared-types';
+import { IBooking, ApiResponse, IUserPublic } from '@app/shared-types';
 
 interface CreateBookingData {
   partnerId: string;
@@ -99,9 +99,8 @@ class BookingsService extends BaseService {
   async checkFreeCheckupEligibility(): Promise<{ eligible: boolean; reason?: string }> {
     try {
       // Get current user's profile first to get their ID
-      const profileResponse = await apiClient.get('/auth/profile');
-      // Handle both wrapped and unwrapped response formats
-      const profileData = profileResponse.data?.data || profileResponse.data;
+      const profileResponse = await apiClient.get<ApiResponse<IUserPublic>>('/auth/profile');
+      const profileData = this.extractData(profileResponse);
       const userId = profileData?.id;
       
       if (!userId) {
@@ -123,9 +122,8 @@ class BookingsService extends BaseService {
   async claimFreeCheckup(): Promise<{ success: boolean; message?: string }> {
     try {
       // Get current user's profile first to get their ID
-      const profileResponse = await apiClient.get('/auth/profile');
-      // Handle both wrapped and unwrapped response formats
-      const profileData = profileResponse.data?.data || profileResponse.data;
+      const profileResponse = await apiClient.get<ApiResponse<IUserPublic>>('/auth/profile');
+      const profileData = this.extractData(profileResponse);
       const userId = profileData?.id;
       
       if (!userId) {
