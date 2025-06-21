@@ -12,13 +12,18 @@ class CacheService {
 
   constructor() {
     // Automatically choose backend based on environment and Redis availability
-    if (config.redis.url && config.env === 'production') {
-      this.backend = 'redis';
-      this.connect();
-    } else {
-      this.backend = 'memory';
-      logger.info('Using in-memory cache for development');
-    }
+    // Temporarily disable Redis - uncomment below to enable
+    // if (config.redis.url && config.env === 'production') {
+    //   this.backend = 'redis';
+    //   this.connect();
+    // } else {
+    //   this.backend = 'memory';
+    //   logger.info('Using in-memory cache for development');
+    // }
+    
+    // Force memory cache for now
+    this.backend = 'memory';
+    logger.info('Using in-memory cache (Redis temporarily disabled)');
   }
 
   private connect() {

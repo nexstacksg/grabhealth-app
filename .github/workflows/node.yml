@@ -77,8 +77,8 @@ jobs:
         echo "Current PM2 processes:"
         /usr/bin/pm2 list
         
-        # Stop and delete old processes if they exist
-        /usr/bin/pm2 delete grabhealth-backend grabhealth-web || true
+        # Stop and delete all processes if they exist
+        /usr/bin/pm2 delete all || true
         
         # Start applications using ecosystem config
         echo "Starting applications with ecosystem config..."
