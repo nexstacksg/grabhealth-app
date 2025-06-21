@@ -77,19 +77,12 @@ jobs:
         echo "Current PM2 processes:"
         /usr/local/bin/pm2 list
         
-        # Restart specific application
-        if /usr/local/bin/pm2 describe grabhealth > /dev/null 2>&1; then
-          echo "Restarting grabhealth..."
-          /usr/local/bin/pm2 restart grabhealth --update-env
-          echo "grabhealth restarted successfully"
-        else
-          echo "grabhealth not found in PM2, trying to start from ecosystem file..."
-          if [ -f "/root/ecosystem.config.js" ]; then
-            /usr/local/bin/pm2 start /root/ecosystem.config.js --only grabhealth
-          else
-            echo "Warning: grabhealth not found and no ecosystem file present"
-          fi
-        fi
+        # Stop and delete old processes if they exist
+        /usr/local/bin/pm2 delete grabhealth-backend grabhealth-web || true
+        
+        # Start applications using ecosystem config
+        echo "Starting applications with ecosystem config..."
+        /usr/local/bin/pm2 start ecosystem.config.js --update-env
         
         # Show final PM2 status
         echo "Final PM2 status:"
