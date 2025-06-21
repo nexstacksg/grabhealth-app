@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'grabhealth-backend',
-      script: './apps/app-be/dist/server.js',
+      script: 'dist/server.js',
       cwd: './apps/app-be',
       instances: 2,
       exec_mode: 'cluster',
@@ -31,7 +31,7 @@ module.exports = {
       cwd: './apps/app-web',
       instances: 2,
       exec_mode: 'cluster',
-      interpreter: '/usr/local/bin/bun',
+      interpreter: '/root/.bun/bin/bun',
       env: {
         NODE_ENV: 'production',
         PORT: 3000
