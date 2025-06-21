@@ -26,12 +26,11 @@ module.exports = {
     },
     {
       name: 'grabhealth-web',
-      script: 'bun',
+      script: '/root/.bun/bin/bun',
       args: 'run start',
       cwd: './apps/app-web',
-      instances: 2,
-      exec_mode: 'cluster',
-      interpreter: '/root/.bun/bin/bun',
+      instances: 1,
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         PORT: 3000
