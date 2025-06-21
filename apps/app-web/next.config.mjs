@@ -15,6 +15,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'grab.sgp1.digitaloceanspaces.com',
+        port: '',
+        pathname: '/uploads/**',
+      },
     ],
   },
   // Ignore ESLint during production builds

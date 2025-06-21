@@ -39,7 +39,7 @@ Who Should Use:
 • Modern men who value wellness and prefer natural health solutions`,
         sku: 'REAL_MAN_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/Real man1.png.png',
+        imageUrl: 'https://grab.sgp1.digitaloceanspaces.com/uploads/Real man1.png.png',
         pricing: {
           pvValue: 600,
           customerPrice: 3600.0,
@@ -82,7 +82,7 @@ Who Should Use:
 • Men Seeking Vitality • Frequent Drinkers • Wellness Enthusiasts • Low Energy / Fatigue-Prone Individuals`,
         sku: 'GINSENG_HONEY_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/Ginseng honey.png.png',
+        imageUrl: 'https://grab.sgp1.digitaloceanspaces.com/uploads/Ginseng honey.png.png',
         pricing: {
           pvValue: 700,
           customerPrice: 1000.0,
@@ -130,7 +130,7 @@ Who Should Use:
 • Men Seeking Vitality • Frequent Drinkers • Wellness Enthusiasts • Low Energy / Fatigue-Prone Individuals`,
         sku: 'GOLDEN_WATER_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/GoldenGinseng.png',
+        imageUrl: 'https://grab.sgp1.digitaloceanspaces.com/uploads/GoldenGinseng.png',
         pricing: {
           pvValue: 2000,
           customerPrice: 18.9,
@@ -172,7 +172,7 @@ Perfect for:
 • Groups looking for educational health retreats`,
         sku: 'TRAVEL_YUNNAN_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/TravelToYu.png',
+        imageUrl: 'https://grab.sgp1.digitaloceanspaces.com/uploads/TravelToYu.png',
         pricing: {
           pvValue: 500,
           customerPrice: 799.0,
@@ -221,7 +221,7 @@ Perfect for:
 • Groups seeking cultural immersion with health focus`,
         sku: 'TRAVEL_BANGKOK_001',
         status: 'ACTIVE',
-        imageUrl: '/uploads/TravelToBkk.png',
+        imageUrl: 'https://grab.sgp1.digitaloceanspaces.com/uploads/TravelToBkk.png',
         pricing: {
           pvValue: 500,
           customerPrice: 799.0,
