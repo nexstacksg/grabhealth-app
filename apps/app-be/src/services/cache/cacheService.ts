@@ -26,6 +26,7 @@ class CacheService {
     logger.info('Using in-memory cache (Redis temporarily disabled)');
   }
 
+  // @ts-ignore - temporarily unused while Redis is disabled
   private connect() {
     try {
       this.client = new Redis(config.redis.url!, {
