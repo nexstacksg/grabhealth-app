@@ -18,7 +18,7 @@ const s3Client = new S3Client({
 });
 
 // File type validation
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Allowed file types
   const allowedMimes = [
     'image/jpeg',
@@ -41,13 +41,15 @@ export const uploadToSpaces = multer({
     s3: s3Client,
     bucket: config.spaces.bucket,
     acl: 'public-read',
-    key: function (req, file, cb) {
+    key: function (_req: any, file: any, cb: any) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const ext = path.extname(file.originalname);
       const filename = `uploads/${file.fieldname}-${uniqueSuffix}${ext}`;
       cb(null, filename);
     },
-    contentType: multerS3.AUTO_CONTENT_TYPE,
+    contentType: (_req: any, file: any, cb: any) => {
+      cb(null, file.mimetype);
+    },
   }),
   fileFilter: fileFilter,
   limits: {

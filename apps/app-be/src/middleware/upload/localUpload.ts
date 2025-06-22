@@ -12,10 +12,10 @@ if (!fs.existsSync(uploadDir)) {
 
 // Configure local storage
 const localStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (_req, _file, cb) {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
+  filename: function (_req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
     cb(null, file.fieldname + '-' + uniqueSuffix + ext);
@@ -23,7 +23,7 @@ const localStorage = multer.diskStorage({
 });
 
 // File type validation
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Allowed file types
   const allowedMimes = [
     'image/jpeg',

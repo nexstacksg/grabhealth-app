@@ -99,7 +99,7 @@ router.post(
 router.post(
   '/product-image',
   authenticate,
-  authorize([UserRole.SUPER_ADMIN, UserRole.MANAGER]),
+  authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   upload.single('image'),
   uploadController.uploadProductImage
 );
@@ -128,7 +128,7 @@ router.post(
 router.delete(
   '/delete',
   authenticate,
-  authorize([UserRole.SUPER_ADMIN, UserRole.MANAGER]),
+  authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   uploadController.deleteFile
 );
 
