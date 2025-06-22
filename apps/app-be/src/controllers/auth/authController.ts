@@ -33,10 +33,10 @@ const getCookieOptions = (maxAge?: number) => {
   // Production settings
   return {
     httpOnly: true,
-    secure: true,
-    sameSite: 'lax' as const,
+    secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true', // Only secure if HTTPS is enabled
+    sameSite: process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none' || 'lax',
     path: '/',
-    domain: undefined, // Let browser handle domain
+    domain: process.env.COOKIE_DOMAIN || undefined, // Allow setting custom domain for production
     ...(maxAge !== undefined && { maxAge }),
   };
 };
