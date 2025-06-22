@@ -23,8 +23,9 @@ const getCookieOptions = (maxAge?: number) => {
     return {
       httpOnly: true,
       secure: false,
-      sameSite: false as any, // Disable SameSite in development
+      sameSite: 'lax' as const, // Changed from false to 'lax' for better compatibility
       path: '/',
+      domain: undefined, // Let browser handle domain in development
       ...(maxAge !== undefined && { maxAge }),
     };
   }
@@ -35,6 +36,7 @@ const getCookieOptions = (maxAge?: number) => {
     secure: true,
     sameSite: 'lax' as const,
     path: '/',
+    domain: undefined, // Let browser handle domain
     ...(maxAge !== undefined && { maxAge }),
   };
 };
