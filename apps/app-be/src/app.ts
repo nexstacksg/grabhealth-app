@@ -13,6 +13,7 @@ import { config } from './config/env';
 import { apiLimiter } from './middleware/security/rateLimiter';
 import { stream } from './utils/logger';
 import cacheService from './services/cache/cacheService';
+import path from 'path';
 
 const app: Application = express();
 
@@ -50,6 +51,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Cookie parsing
 app.use(cookieParser());
+
+// Serve static files (for local uploads)
+app.use('/uploads', express.static(path.join(process.cwd(), config.upload.path)));
 
 // Debug middleware to log cookies
 app.use((req, _res, next) => {

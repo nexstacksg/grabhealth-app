@@ -47,6 +47,26 @@ const envSchema = Joi.object({
     .optional()
     .description('Redis URL for caching (optional)'),
   REDIS_TTL: Joi.number().default(300), // 5 minutes
+
+  // DigitalOcean Spaces
+  DO_SPACES_KEY: Joi.string()
+    .optional()
+    .description('DigitalOcean Spaces access key'),
+  DO_SPACES_SECRET: Joi.string()
+    .optional()
+    .description('DigitalOcean Spaces secret key'),
+  DO_SPACES_ENDPOINT: Joi.string()
+    .default('sgp1.digitaloceanspaces.com')
+    .description('DigitalOcean Spaces endpoint'),
+  DO_SPACES_REGION: Joi.string()
+    .default('sgp1')
+    .description('DigitalOcean Spaces region'),
+  DO_SPACES_BUCKET: Joi.string()
+    .default('grab')
+    .description('DigitalOcean Spaces bucket name'),
+  DO_SPACES_CDN_ENDPOINT: Joi.string()
+    .default('https://grab.sgp1.digitaloceanspaces.com')
+    .description('DigitalOcean Spaces CDN endpoint'),
 }).unknown();
 
 // Validate environment variables
@@ -96,6 +116,14 @@ export const config = {
   redis: {
     url: envVars.REDIS_URL,
     ttl: envVars.REDIS_TTL,
+  },
+  spaces: {
+    key: envVars.DO_SPACES_KEY,
+    secret: envVars.DO_SPACES_SECRET,
+    endpoint: envVars.DO_SPACES_ENDPOINT,
+    region: envVars.DO_SPACES_REGION,
+    bucket: envVars.DO_SPACES_BUCKET,
+    cdnEndpoint: envVars.DO_SPACES_CDN_ENDPOINT,
   },
 };
 
