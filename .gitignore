@@ -150,3 +150,6 @@ apps/app-mobile/.expo/
 # Uploads
 uploads/
 public/uploads/
+.app-admin.env
+.app-be.env
+.app-web.env
