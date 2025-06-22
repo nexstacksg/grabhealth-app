@@ -19,7 +19,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'grab.sgp1.digitaloceanspaces.com',
         port: '',
-        pathname: '/uploads/**',
+        pathname: '/grabhealth/uploads/**',
       },
     ],
   },
