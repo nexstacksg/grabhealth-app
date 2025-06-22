@@ -17,6 +17,12 @@ import path from 'path';
 
 const app: Application = express();
 
+// Trust proxy - required when running behind a reverse proxy (nginx, load balancer, etc)
+// This ensures Express correctly identifies client IPs from X-Forwarded-* headers
+if (config.env === 'production') {
+  app.set('trust proxy', true);
+}
+
 // Security middleware
 app.use(helmet());
 
