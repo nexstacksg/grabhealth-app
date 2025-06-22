@@ -92,9 +92,9 @@ export default function ProductsPage() {
       }
     },
     [
-      pagination.limit,
       pagination.page,
-      products.length,
+      pagination.limit,
+      products,
       filters.query,
       filters.inStock,
       filters.minPrice,
@@ -170,6 +170,7 @@ export default function ProductsPage() {
   // Initial fetch of products
   useEffect(() => {
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle category change
