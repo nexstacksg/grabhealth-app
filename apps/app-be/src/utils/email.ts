@@ -11,10 +11,26 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false, // Allow self-signed certificates in production
+  },
+  connectionTimeout: 5000, // 5 seconds connection timeout
+  greetingTimeout: 5000, // 5 seconds greeting timeout
+  socketTimeout: 10000, // 10 seconds socket timeout
 });
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
   try {
+    // Log email configuration for debugging
+    console.log('Email configuration:', {
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || '587',
+      secure: process.env.SMTP_SECURE === 'true',
+      user: process.env.SMTP_USER ? '***' + process.env.SMTP_USER.slice(-4) : 'not set',
+      from: process.env.EMAIL_FROM || `"${process.env.APP_NAME || 'GrabHealth'}" <${process.env.SMTP_USER}>`,
+      to: to,
+    });
+
     const mailOptions = {
       from: process.env.EMAIL_FROM || `"${process.env.APP_NAME || 'GrabHealth'}" <${process.env.SMTP_USER}>`,
       to,
@@ -22,8 +38,13 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
       html,
     };
 
+    // Check if SMTP credentials are properly configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      throw new Error('SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.');
+    }
+
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent: %s', info.messageId);
+    console.log('Email sent successfully: %s', info.messageId);
     return info;
   } catch (error) {
     console.error('Error sending email:', error);

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import * as authController from '../../../controllers/auth/authController';
 import { authenticate } from '../../../middleware/auth/authenticate';
 import { validate } from '../../../middleware/validation/validationMiddleware';
@@ -322,5 +322,6 @@ router.post(
   validate,
   authController.resetPassword
 );
+
 
 export default router;

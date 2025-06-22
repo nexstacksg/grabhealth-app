@@ -137,13 +137,17 @@ export class AuthService {
       data: { refreshToken: hashedRefreshToken },
     });
 
-    // Send verification email with code
-    try {
-      await this.sendVerificationCode(user.email, emailVerificationCode);
-    } catch (error) {
-      logger.error('Failed to send verification email:', error);
-      // Don't fail the registration if email fails
-    }
+    // Send verification email asynchronously (don't wait for it)
+    console.log('Attempting to send verification email to:', user.email);
+    this.sendVerificationCodeAsync(user.email, emailVerificationCode)
+      .then(() => {
+        console.log('Verification email queued successfully for:', user.email);
+      })
+      .catch(error => {
+        console.error('Failed to send verification email to', user.email, ':', error);
+        logger.error('Failed to send verification email:', error);
+        // TODO: Consider implementing retry logic or email queue
+      });
 
     return {
       user: this.createUserPublic(user),
@@ -445,6 +449,28 @@ export class AuthService {
     await sendEmail(email, 'Your Verification Code', html);
   }
 
+  // Send verification code email asynchronously with timeout
+  async sendVerificationCodeAsync(email: string, code: string): Promise<void> {
+    console.log(`[Email Async] Starting async email send to ${email} with code ${code}`);
+    try {
+      // Create a promise that will timeout after 10 seconds
+      const emailPromise = this.sendVerificationCode(email, code);
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Email sending timeout after 10 seconds')), 10000)
+      );
+      
+      // Race between email sending and timeout
+      await Promise.race([emailPromise, timeoutPromise]);
+      console.log(`[Email Async] Email sent successfully to ${email}`);
+      logger.info(`Verification email sent successfully to ${email}`);
+    } catch (error: any) {
+      // Log error but don't throw - this is async
+      console.error(`[Email Async] Failed to send email to ${email}:`, error.message || error);
+      logger.error(`Failed to send verification email to ${email}:`, error);
+      // In production, you might want to add this to a retry queue
+    }
+  }
+
   // Verify email with 4-digit code
   async verifyEmailCode(email: string, code: string): Promise<void> {
     console.log('Verifying email code for:', email, 'with code:', code);
@@ -599,8 +625,11 @@ export class AuthService {
     // Set rate limit (1 minute between resends)
     await cacheService.set(resendKey, Date.now().toString(), 60);
 
-    // Send new code
-    await this.sendVerificationCode(user.email, emailVerificationCode);
+    // Send new code asynchronously
+    this.sendVerificationCodeAsync(user.email, emailVerificationCode)
+      .catch(error => {
+        logger.error('Failed to resend verification email:', error);
+      });
   }
 }
 
