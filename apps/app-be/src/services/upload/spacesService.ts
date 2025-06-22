@@ -18,7 +18,7 @@ const s3Client = new S3Client({
 });
 
 // File type validation
-const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: any, file: any, cb: multer.FileFilterCallback) => {
   // Allowed file types
   const allowedMimes = [
     'image/jpeg',
@@ -60,7 +60,7 @@ export const uploadToSpaces = multer({
 // Service for Spaces operations
 export const spacesService = {
   // Upload file to Spaces
-  async uploadFile(file: Express.Multer.File): Promise<string> {
+  async uploadFile(file: any): Promise<string> {
     if (!config.spaces.key || !config.spaces.secret) {
       throw new AppError('DigitalOcean Spaces not configured', 500);
     }
