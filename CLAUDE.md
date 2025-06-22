@@ -204,6 +204,12 @@ See [packages/shared-types/README.md](packages/shared-types/README.md) for detai
    - Backend: Database URL, JWT secrets, email config, Redis URL
    - Web: Cloudinary, OpenAI API key, backend URL
    - See `.env.example` files in each app directory
+   
+   **Important**: When modifying environment variables, ensure synchronization:
+   - If you modify `apps/app-web/.env` → also update `/app-web.env`
+   - If you modify `apps/app-be/.env` → also update `/app-be.env`
+   - If you modify `apps/app-admin/.env` → also update `/app-admin.env`
+   - This ensures consistency between local development and deployment configurations
 
 2. **Database Setup**:
    - Backend uses Prisma with PostgreSQL

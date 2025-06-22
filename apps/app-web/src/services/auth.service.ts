@@ -59,7 +59,7 @@ class AuthService extends BaseService {
 
   async requestPasswordReset(email: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/password-reset', { email });
+      const response = await apiClient.post<ApiResponse>('/auth/request-password-reset', { email });
       this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -68,7 +68,7 @@ class AuthService extends BaseService {
 
   async resetPassword(token: string, password: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/password-reset/confirm', { token, password });
+      const response = await apiClient.post<ApiResponse>('/auth/reset-password', { token, newPassword: password });
       this.extractData(response);
     } catch (error) {
       this.handleError(error);
