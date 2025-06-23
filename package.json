@@ -17,8 +17,10 @@
     "dev:be": "turbo run dev --filter=app-be",
     "dev:web": "turbo run dev --filter=app-web",
     "dev:mobile": "turbo run start --filter=app-mobile",
+    "dev:strapi": "turbo run dev --filter=app-strapi",
     "build:be": "turbo run build --filter=app-be",
     "build:web": "turbo run build --filter=app-web",
+    "build:strapi": "turbo run build --filter=app-strapi",
     "lint:be": "turbo run lint --filter=app-be",
     "lint:web": "turbo run lint --filter=app-web",
     "lint:mobile": "turbo run lint --filter=app-mobile",
@@ -55,6 +57,10 @@
     "apps/app-mobile/**/*.{ts,tsx,js,jsx,json}": [
       "cd apps/app-mobile && bun run format",
       "cd apps/app-mobile && bun run lint"
+    ],
+    "apps/app-strapi/**/*.{ts,js,json}": [
+      "cd apps/app-strapi && bun run format",
+      "cd apps/app-strapi && bun run lint"
     ]
   }
 }
