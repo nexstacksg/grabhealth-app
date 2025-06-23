@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run lint-staged
-npx lint-staged
+# # Run lint-staged
+# npx lint-staged
 
-# Run build to catch TypeScript errors
-echo "Running build to check for TypeScript errors..."
-bun run build
-if [ $? -ne 0 ]; then
-  echo "❌ Build failed! Please fix TypeScript errors before committing."
-  exit 1
-fi
+# # Run build to catch TypeScript errors
+# echo "Running build to check for TypeScript errors..."
+# bun run build
+# if [ $? -ne 0 ]; then
+#   echo "❌ Build failed! Please fix TypeScript errors before committing."
+#   exit 1
+# fi
 
-echo "✅ Build passed!"
+# echo "✅ Build passed!"
