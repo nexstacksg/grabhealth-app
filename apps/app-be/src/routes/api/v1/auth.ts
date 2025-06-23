@@ -323,4 +323,5 @@ router.post(
   authController.resetPassword
 );
 
+
 export default router;

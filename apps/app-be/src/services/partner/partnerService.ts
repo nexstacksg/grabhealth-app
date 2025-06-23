@@ -189,7 +189,7 @@ class PartnerService {
 
       // Check if partner has availability for this day of week
       const dayAvailability = partner.availability.find(
-        (a) => a.dayOfWeek === dayOfWeek
+        (a: any) => a.dayOfWeek === dayOfWeek
       );
       const isAvailable = !isDayOff && !!dayAvailability;
 
@@ -307,7 +307,7 @@ class PartnerService {
 
       // Count bookings for this slot
       const bookingsInSlot = bookings.filter(
-        (b) => b.startTime === slotTime
+        (b: any) => b.startTime === slotTime
       ).length;
       const available = bookingsInSlot < availability.maxBookingsPerSlot;
 

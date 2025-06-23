@@ -1,4 +1,5 @@
-import { PrismaClient, UserMembership, MembershipTier } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { UserMembership, MembershipTier } from '@prisma/client';
 import {
   IMembershipCreate,
   MembershipStatus,
@@ -300,7 +301,7 @@ export class MembershipService {
 
       // Get tier details for revenue calculation
       const revenueDetails = await Promise.all(
-        revenueByTier.map(async (item) => {
+        revenueByTier.map(async (item: any) => {
           const tier = await this.prisma.membershipTier.findUnique({
             where: { id: item.tierId },
           });

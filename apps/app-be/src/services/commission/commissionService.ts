@@ -1,4 +1,5 @@
-import { PrismaClient, Commission, UserRelationship } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { Commission, UserRelationship } from '@prisma/client';
 import {
   CommissionStatus,
   CommissionType,
@@ -285,9 +286,12 @@ export class CommissionService {
         email: user.email,
         role: user.role,
         level: 0,
-        totalSales: user.orders.reduce((sum, order) => sum + order.total, 0),
+        totalSales: user.orders.reduce(
+          (sum: number, order: any) => sum + order.total,
+          0
+        ),
         commissionEarned: user.commissionsReceived.reduce(
-          (sum, c) => sum + c.amount,
+          (sum: number, c: any) => sum + c.amount,
           0
         ),
         isActive: user.status === 'ACTIVE',
@@ -365,11 +369,11 @@ export class CommissionService {
         role: rel.user.role,
         level: currentLevel,
         totalSales: rel.user.orders.reduce(
-          (sum, order) => sum + order.total,
+          (sum: number, order: any) => sum + order.total,
           0
         ),
         commissionEarned: rel.user.commissionsReceived.reduce(
-          (sum, c) => sum + c.amount,
+          (sum: number, c: any) => sum + c.amount,
           0
         ),
         isActive: rel.user.status === 'ACTIVE',
@@ -571,7 +575,7 @@ export class CommissionService {
 
       // Get user details for top earners
       const topEarnersWithDetails = await Promise.all(
-        topEarners.map(async (earner) => {
+        topEarners.map(async (earner: any) => {
           const user = await this.prisma.user.findUnique({
             where: { id: earner.recipientId },
             select: { id: true, email: true, firstName: true, lastName: true },
@@ -607,7 +611,7 @@ export class CommissionService {
       });
 
       return {
-        products: products.map((product) => {
+        products: products.map((product: any) => {
           const commissions = Array.isArray(product.productCommissions)
             ? product.productCommissions
             : product.productCommissions

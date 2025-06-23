@@ -13,6 +13,7 @@ import aiRoutes from './ai';
 import partnerRoutes from './partners';
 import bookingRoutes from './bookings';
 import partnerDashboardRoutes from './partner';
+import uploadRoutes from '../../upload/uploadRoutes';
 
 const router = Router();
 
@@ -35,6 +36,7 @@ router.get('/', (_req, res) => {
       partners: '/api/v1/partners',
       bookings: '/api/v1/bookings',
       partner: '/api/v1/partner',
+      upload: '/api/v1/upload',
     },
   });
 });
@@ -54,5 +56,6 @@ router.use('/ai', aiRoutes);
 router.use('/partners', partnerRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/partner', partnerDashboardRoutes);
+router.use('/upload', uploadRoutes);
 
 export default router;

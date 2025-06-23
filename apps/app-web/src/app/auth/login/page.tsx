@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -144,6 +144,14 @@ function LoginPageContent() {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-center">
+            <Link
+              href="/auth/forgot-password"
+              className="text-emerald-500 hover:text-emerald-600"
+            >
+              Forgot your password?
+            </Link>
+          </div>
           <div className="text-sm text-center text-gray-500">
             Don't have an account?{' '}
             <Link

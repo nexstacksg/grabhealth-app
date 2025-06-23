@@ -25,7 +25,7 @@ export const productManagementController = {
 
       res.json({
         success: true,
-        data: products.map((product) => ({
+        data: products.map((product: any) => ({
           id: product.id,
           name: product.name,
           description: product.description,
@@ -103,7 +103,7 @@ export const productManagementController = {
         throw new AppError('Missing required fields', 400);
       }
 
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Create product
         const product = await tx.product.create({
           data: {
@@ -178,7 +178,7 @@ export const productManagementController = {
         throw new AppError('Product not found', 404);
       }
 
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Update product
         const product = await tx.product.update({
           where: { id: productId },

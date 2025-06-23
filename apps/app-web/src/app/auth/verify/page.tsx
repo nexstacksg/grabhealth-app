@@ -205,6 +205,13 @@ export default function VerifyPage() {
             </Alert>
           )}
 
+          {/* Info message about email being sent */}
+          <Alert className="mb-4">
+            <AlertDescription>
+              The verification code has been sent to your email. It may take a few moments to arrive. Please check your spam folder if you don't see it.
+            </AlertDescription>
+          </Alert>
+
           <div className="space-y-4">
             <div className="flex justify-center gap-2">
               {code.map((digit, index) => (

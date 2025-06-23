@@ -109,7 +109,7 @@ export const commissionController = {
 
       // Calculate total earnings
       const totalEarnings = commissions.reduce(
-        (sum, commission) => sum + commission.amount,
+        (sum: number, commission: { amount: number }) => sum + commission.amount,
         0
       );
 
@@ -131,7 +131,7 @@ export const commissionController = {
                 email: userRelationship.upline.email,
               }
             : null,
-          downlines: downlines.map((d) => ({
+          downlines: downlines.map((d: any) => ({
             id: d.id,
             user_id: d.userId,
             upline_id: d.uplineId,
@@ -141,7 +141,7 @@ export const commissionController = {
             name: `${d.user.firstName} ${d.user.lastName}`,
             email: d.user.email,
           })),
-          commissions: commissions.map((c) => ({
+          commissions: commissions.map((c: any) => ({
             id: c.id,
             order_id: c.orderId,
             user_id: c.userId,

@@ -1,4 +1,5 @@
-import { PrismaClient, Category, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import type { Category } from '@prisma/client';
 import { ICategoryCreate, ICategoryUpdate } from '@app/shared-types';
 import { AppError } from '../../middleware/error/errorHandler';
 

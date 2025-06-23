@@ -25,7 +25,7 @@ export class ProductService {
       }
 
       // Create product and pricing in a transaction
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx: any) => {
         // Create the product first
         const product = await tx.product.create({
           data: {
@@ -107,7 +107,7 @@ export class ProductService {
       }
 
       // Update product and pricing in a transaction
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx: any) => {
         // Update the product
         await tx.product.update({
           where: { id },
@@ -285,7 +285,7 @@ export class ProductService {
       ]);
 
       // Transform products to include price from ProductPricing
-      const transformedProducts = products.map((product) => ({
+      const transformedProducts = products.map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,
@@ -372,7 +372,7 @@ export class ProductService {
       });
 
       // Transform products to include price from ProductPricing
-      return products.map((product) => ({
+      return products.map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,
@@ -407,7 +407,7 @@ export class ProductService {
       });
 
       // Transform products to include price from ProductPricing
-      return products.map((product) => ({
+      return products.map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,

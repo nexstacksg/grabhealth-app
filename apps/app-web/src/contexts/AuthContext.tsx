@@ -49,6 +49,13 @@ const useAuthProvider = () => {
         // Small delay to ensure cookies are available after hydration
         await new Promise(resolve => setTimeout(resolve, 100));
         await checkAuth();
+        
+        // If still loading after first check, try once more
+        // This helps with race conditions in production
+        if (mounted && !user) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await checkAuth();
+        }
       }
     };
     

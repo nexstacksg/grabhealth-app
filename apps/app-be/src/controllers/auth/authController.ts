@@ -23,8 +23,9 @@ const getCookieOptions = (maxAge?: number) => {
     return {
       httpOnly: true,
       secure: false,
-      sameSite: false as any, // Disable SameSite in development
+      sameSite: 'lax' as const, // Changed from false to 'lax' for better compatibility
       path: '/',
+      domain: undefined, // Let browser handle domain in development
       ...(maxAge !== undefined && { maxAge }),
     };
   }
@@ -32,9 +33,10 @@ const getCookieOptions = (maxAge?: number) => {
   // Production settings
   return {
     httpOnly: true,
-    secure: true,
-    sameSite: 'lax' as const,
+    secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true', // Only secure if HTTPS is enabled
+    sameSite: process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none' || 'lax',
     path: '/',
+    domain: process.env.COOKIE_DOMAIN || undefined, // Allow setting custom domain for production
     ...(maxAge !== undefined && { maxAge }),
   };
 };

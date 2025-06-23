@@ -1,22 +1,33 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import RankRewardsContent from '@/components/rank-rewards/rank-rewards-content';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function RankRewardsPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, isLoading, router]);
+    setMounted(true);
+  }, []);
 
-  if (isLoading) {
+  useEffect(() => {
+    // Only redirect after component is mounted and auth check is complete
+    if (mounted && !authLoading && !user) {
+      console.log('User not authenticated, redirecting to login');
+      // Small delay to prevent race condition with cookie setting
+      const timer = setTimeout(() => {
+        router.push('/auth/login?redirect=/rank-rewards');
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading, router, mounted]);
+
+  // Show loading while auth is being checked or component is mounting
+  if (!mounted || authLoading) {
     return (
       <div className="container mx-auto px-4 md:px-6 py-8 mb-16 flex justify-center items-center min-h-[50vh]">
         <p>Loading...</p>
@@ -24,8 +35,13 @@ export default function RankRewardsPage() {
     );
   }
 
+  // If no user after loading completes, show loading (will redirect soon)
   if (!user) {
-    return null;
+    return (
+      <div className="container mx-auto px-4 md:px-6 py-8 mb-16 flex justify-center items-center min-h-[50vh]">
+        <p>Redirecting to login...</p>
+      </div>
+    );
   }
 
   return (
