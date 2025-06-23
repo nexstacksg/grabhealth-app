@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_points",
+  "info": {
+    "singularName": "user-point",
+    "pluralName": "user-points",
+    "displayName": "User Points",
+    "description": "User loyalty points tracking"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "points": {
+      "type": "integer",
+      "default": 0,
+      "required": true,
+      "min": 0
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

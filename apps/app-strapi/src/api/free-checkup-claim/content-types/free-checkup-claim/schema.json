@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "free_checkup_claims",
+  "info": {
+    "singularName": "free-checkup-claim",
+    "pluralName": "free-checkup-claims",
+    "displayName": "Free Checkup Claim",
+    "description": "Free checkup vouchers claimed by users"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "claimDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "expiryDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["ACTIVE", "USED", "EXPIRED"],
+      "default": "ACTIVE"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "usedBooking": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::booking.booking"
+    }
+  }
+}

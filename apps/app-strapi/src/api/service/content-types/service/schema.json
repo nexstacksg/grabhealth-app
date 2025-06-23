@@ -1,0 +1,77 @@
+{
+  "kind": "collectionType",
+  "collectionName": "services",
+  "info": {
+    "singularName": "service",
+    "pluralName": "services",
+    "displayName": "Service",
+    "description": "Partner services"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": false,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "description": {
+      "type": "text",
+      "required": false,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "duration": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "price": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "category": {
+      "type": "string",
+      "required": true,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true,
+      "required": false,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "requiresApproval": {
+      "type": "boolean",
+      "default": false,
+      "required": false,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "maxBookingsPerDay": {
+      "type": "integer",
+      "default": 10,
+      "required": false,
+      "min": 0,
+      "configurable": false,
+      "pluginOptions": {}
+    },
+    "partner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::partner.partner",
+      "inversedBy": "services"
+    }
+  }
+}

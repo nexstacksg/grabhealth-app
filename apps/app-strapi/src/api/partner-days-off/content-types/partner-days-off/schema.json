@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "partner_days_offs",
+  "info": {
+    "singularName": "partner-days-off",
+    "pluralName": "partner-days-offs",
+    "displayName": "Partner Days Off",
+    "description": "Partner unavailable days and holidays"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "date": {
+      "type": "date",
+      "required": true
+    },
+    "reason": {
+      "type": "text"
+    },
+    "isRecurring": {
+      "type": "boolean",
+      "default": false
+    },
+    "dayOfWeek": {
+      "type": "integer",
+      "min": 0,
+      "max": 6
+    },
+    "recurringType": {
+      "type": "string"
+    },
+    "partner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::partner.partner",
+      "inversedBy": "daysOff"
+    }
+  }
+}

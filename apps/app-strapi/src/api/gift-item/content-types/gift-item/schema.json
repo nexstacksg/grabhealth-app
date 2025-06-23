@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "gift_items",
+  "info": {
+    "singularName": "gift-item",
+    "pluralName": "gift-items",
+    "displayName": "Gift Item",
+    "description": "Gift items available through the loyalty program"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "requiredPurchases": {
+      "type": "integer",
+      "required": true
+    },
+    "imageUrl": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_memberships",
+  "info": {
+    "singularName": "user-membership",
+    "pluralName": "user-memberships",
+    "displayName": "User Membership",
+    "description": "User membership subscriptions and status"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "status": {
+      "type": "enumeration",
+      "enum": ["ACTIVE", "INACTIVE", "EXPIRED"],
+      "default": "ACTIVE",
+      "required": true
+    },
+    "startDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime"
+    },
+    "autoRenew": {
+      "type": "boolean",
+      "default": true
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "tier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::membership-tier.membership-tier"
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bookings",
+  "info": {
+    "singularName": "booking",
+    "pluralName": "bookings",
+    "displayName": "Booking",
+    "description": "Service and appointment bookings"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "bookingDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "startTime": {
+      "type": "string",
+      "required": true
+    },
+    "endTime": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"],
+      "default": "PENDING",
+      "required": true
+    },
+    "notes": {
+      "type": "text"
+    },
+    "cancellationReason": {
+      "type": "text"
+    },
+    "isFreeCheckup": {
+      "type": "boolean",
+      "default": false
+    },
+    "totalAmount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": ["PENDING", "PAID", "REFUNDED"],
+      "default": "PENDING",
+      "required": true
+    },
+    "paymentMethod": {
+      "type": "string"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "partner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::partner.partner"
+    },
+    "service": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::service.service"
+    }
+  }
+}

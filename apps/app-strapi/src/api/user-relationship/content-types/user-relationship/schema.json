@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_relationships",
+  "info": {
+    "singularName": "user-relationship",
+    "pluralName": "user-relationships",
+    "displayName": "UserRelationship",
+    "description": "Tracks user relationships and hierarchy levels"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "timestamps": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "relationshipLevel": {
+      "type": "integer",
+      "default": 1,
+      "required": true,
+      "min": 1
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "upline": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

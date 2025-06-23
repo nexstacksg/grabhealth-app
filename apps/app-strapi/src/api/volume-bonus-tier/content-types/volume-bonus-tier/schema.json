@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "volume_bonus_tiers",
+  "info": {
+    "singularName": "volume-bonus-tier",
+    "pluralName": "volume-bonus-tiers",
+    "displayName": "Volume Bonus Tier",
+    "description": "Volume-based bonus tiers for commissions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "minVolume": {
+      "type": "decimal",
+      "required": true
+    },
+    "maxVolume": {
+      "type": "decimal"
+    },
+    "bonusPercentage": {
+      "type": "decimal",
+      "required": true
+    }
+  }
+}

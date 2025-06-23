@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "partner_availabilities",
+  "info": {
+    "singularName": "partner-availability",
+    "pluralName": "partner-availabilities",
+    "displayName": "Partner Availability",
+    "description": "Partner working hours and availability slots"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "dayOfWeek": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 6
+    },
+    "startTime": {
+      "type": "string",
+      "required": true
+    },
+    "endTime": {
+      "type": "string",
+      "required": true
+    },
+    "slotDuration": {
+      "type": "integer",
+      "default": 30
+    },
+    "maxBookingsPerSlot": {
+      "type": "integer",
+      "default": 1
+    },
+    "partner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::partner.partner",
+      "inversedBy": "availabilities"
+    }
+  }
+}

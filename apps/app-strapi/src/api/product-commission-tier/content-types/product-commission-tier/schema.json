@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_commission_tiers",
+  "info": {
+    "singularName": "product-commission-tier",
+    "pluralName": "product-commission-tiers",
+    "displayName": "Product Commission Tier",
+    "description": "Commission tiers for products with rates and amounts for different roles"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "productName": {
+      "type": "string",
+      "required": true
+    },
+    "salesCommissionAmount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "salesCommissionRate": {
+      "type": "decimal",
+      "default": 0.30,
+      "min": 0,
+      "max": 1
+    },
+    "leaderCommissionAmount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "leaderCommissionRate": {
+      "type": "decimal",
+      "default": 0.10,
+      "min": 0,
+      "max": 1
+    },
+    "managerCommissionAmount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "managerCommissionRate": {
+      "type": "decimal",
+      "default": 0.05,
+      "min": 0,
+      "max": 1
+    },
+    "product": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::product.product"
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "Order",
+    "description": "Order management for e-commerce"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "total": {
+      "type": "decimal",
+      "default": 0,
+      "required": false
+    },
+    "subtotal": {
+      "type": "decimal",
+      "default": 0,
+      "required": false
+    },
+    "discount": {
+      "type": "decimal",
+      "default": 0,
+      "required": false
+    },
+    "tax": {
+      "type": "decimal",
+      "default": 0,
+      "required": false
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "CANCELLED"
+      ],
+      "default": "PENDING",
+      "required": true
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "PENDING",
+        "PAID",
+        "FAILED",
+        "REFUNDED"
+      ],
+      "default": "PENDING",
+      "required": true
+    },
+    "paymentMethod": {
+      "type": "string",
+      "required": false
+    },
+    "shippingAddress": {
+      "type": "text",
+      "required": false
+    },
+    "billingAddress": {
+      "type": "text",
+      "required": false
+    },
+    "notes": {
+      "type": "text",
+      "required": false
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "items": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-item.order-item",
+      "mappedBy": "order"
+    },
+    "commissions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::commission.commission",
+      "mappedBy": "order"
+    }
+  }
+}

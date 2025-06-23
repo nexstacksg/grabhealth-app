@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "email_verifications",
+  "info": {
+    "singularName": "email-verification",
+    "pluralName": "email-verifications",
+    "displayName": "Email Verification",
+    "description": "Email verification codes for user authentication"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "code": {
+      "type": "string",
+      "required": true,
+      "private": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["login", "registration", "password_reset"],
+      "default": "login",
+      "required": true
+    },
+    "expiresAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "attempts": {
+      "type": "integer",
+      "default": 0
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

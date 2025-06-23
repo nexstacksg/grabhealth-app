@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_pricings",
+  "info": {
+    "singularName": "product-pricing",
+    "pluralName": "product-pricings",
+    "displayName": "Product Pricing",
+    "description": "Product pricing information including PV value and various price points"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "pvValue": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "customerPrice": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "travelPackagePrice": {
+      "type": "decimal",
+      "min": 0
+    },
+    "costPrice": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "product": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::product.product"
+    }
+  }
+}

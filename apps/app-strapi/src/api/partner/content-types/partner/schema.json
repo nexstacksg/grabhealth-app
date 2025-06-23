@@ -1,0 +1,106 @@
+{
+  "kind": "collectionType",
+  "collectionName": "partners",
+  "info": {
+    "singularName": "partner",
+    "pluralName": "partners",
+    "displayName": "Partner",
+    "description": "Partner clinics and healthcare providers"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "address": {
+      "type": "string",
+      "required": true
+    },
+    "city": {
+      "type": "string",
+      "required": true
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "country": {
+      "type": "string",
+      "default": "Singapore",
+      "required": true
+    },
+    "postalCode": {
+      "type": "string",
+      "required": true
+    },
+    "phone": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    },
+    "website": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "decimal",
+      "default": 0
+    },
+    "totalReviews": {
+      "type": "integer",
+      "default": 0
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "operatingHours": {
+      "type": "text"
+    },
+    "specializations": {
+      "type": "json"
+    },
+    "users": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "partner"
+    },
+    "services": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::service.service",
+      "mappedBy": "partner"
+    },
+    "bookings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::booking.booking",
+      "mappedBy": "partner"
+    },
+    "availabilities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::partner-availability.partner-availability",
+      "mappedBy": "partner"
+    },
+    "daysOff": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::partner-days-off.partner-days-off",
+      "mappedBy": "partner"
+    }
+  }
+}
