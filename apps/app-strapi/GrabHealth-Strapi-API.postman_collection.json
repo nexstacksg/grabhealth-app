@@ -1,0 +1,907 @@
+{
+  "info": {
+    "_postman_id": "grabhealth-strapi-api",
+    "name": "GrabHealth Strapi API",
+    "description": "Complete API collection for GrabHealth Strapi CMS with all content types",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:1337/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/local/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "local", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.jwt) {",
+                  "    pm.collectionVariables.set('authToken', response.jwt);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"test@example.com\",\n  \"password\": \"Test123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/local",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "local"]
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me?populate=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Me",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\",\n  \"profileImage\": \"https://example.com/avatar.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories?populate=*&pagination[limit]=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                },
+                {
+                  "key": "pagination[limit]",
+                  "value": "100"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories/1?populate=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"name\": \"Health Supplements\",\n    \"slug\": \"health-supplements\",\n    \"description\": \"Premium health supplements category\",\n    \"isActive\": true,\n    \"sortOrder\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"name\": \"Updated Category Name\",\n    \"description\": \"Updated description\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?populate[category]=*&populate[imageUrl]=*&filters[status][$eq]=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "populate[category]",
+                  "value": "*"
+                },
+                {
+                  "key": "populate[imageUrl]",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[status][$eq]",
+                  "value": "ACTIVE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/1?populate=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "1"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"name\": \"Realman Premium\",\n    \"description\": \"Premium herbal supplement for men's health\",\n    \"sku\": \"RM-001\",\n    \"inStock\": true,\n    \"status\": \"ACTIVE\",\n    \"category\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"name\": \"Updated Product Name\",\n    \"inStock\": false,\n    \"status\": \"INACTIVE\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders?populate[user]=*&populate[items][populate][product]=*&filters[status][$eq]=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "populate[user]",
+                  "value": "*"
+                },
+                {
+                  "key": "populate[items][populate][product]",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[status][$eq]",
+                  "value": "PENDING"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/1?populate=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "1"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"user\": 1,\n    \"total\": 3600,\n    \"subtotal\": 3600,\n    \"discount\": 0,\n    \"tax\": 0,\n    \"status\": \"PENDING\",\n    \"paymentStatus\": \"PENDING\",\n    \"paymentMethod\": \"credit_card\",\n    \"shippingAddress\": \"123 Main St, Singapore\",\n    \"billingAddress\": \"123 Main St, Singapore\",\n    \"notes\": \"Please handle with care\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"status\": \"COMPLETED\",\n    \"paymentStatus\": \"PAID\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order Items",
+      "item": [
+        {
+          "name": "Create Order Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"order\": 1,\n    \"product\": 1,\n    \"quantity\": 2,\n    \"price\": 1800,\n    \"discount\": 0,\n    \"pvPoints\": 100\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["order-items"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Partners",
+      "item": [
+        {
+          "name": "Get All Partners",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/partners?populate=*&filters[isActive][$eq]=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["partners"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[isActive][$eq]",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Partner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"name\": \"NHSP TCM Clinic\",\n    \"description\": \"Traditional Chinese Medicine clinic\",\n    \"address\": \"123 Orchard Road\",\n    \"city\": \"Singapore\",\n    \"state\": \"Singapore\",\n    \"country\": \"Singapore\",\n    \"postalCode\": \"238858\",\n    \"phone\": \"+65 6123 4567\",\n    \"email\": \"clinic@nhsp.com\",\n    \"website\": \"https://nhsp.com\",\n    \"rating\": 4.5,\n    \"totalReviews\": 100,\n    \"isActive\": true,\n    \"operatingHours\": \"Mon-Fri: 9AM-6PM, Sat: 9AM-1PM\",\n    \"specializations\": [\"TCM\", \"Acupuncture\", \"Herbal Medicine\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/partners",
+              "host": ["{{baseUrl}}"],
+              "path": ["partners"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "Get All Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/services?populate[partner]=*&filters[isActive][$eq]=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["services"],
+              "query": [
+                {
+                  "key": "populate[partner]",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[isActive][$eq]",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"partner\": 1,\n    \"name\": \"Health Checkup\",\n    \"description\": \"Comprehensive health screening\",\n    \"duration\": 60,\n    \"price\": 150,\n    \"category\": \"checkup\",\n    \"isActive\": true,\n    \"requiresApproval\": false,\n    \"maxBookingsPerDay\": 10\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["services"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings?populate=*&filters[user][id][$eq]=me",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[user][id][$eq]",
+                  "value": "me"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"user\": 1,\n    \"partner\": 1,\n    \"service\": 1,\n    \"bookingDate\": \"2024-01-15T10:00:00Z\",\n    \"startTime\": \"10:00\",\n    \"endTime\": \"11:00\",\n    \"status\": \"PENDING\",\n    \"notes\": \"First time visit\",\n    \"isFreeCheckup\": false,\n    \"totalAmount\": 150,\n    \"paymentStatus\": \"PENDING\",\n    \"paymentMethod\": \"cash\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"status\": \"CANCELLED\",\n    \"cancellationReason\": \"Unable to attend due to emergency\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Commissions",
+      "item": [
+        {
+          "name": "Get My Commissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/commissions?populate=*&filters[recipient][id][$eq]=me",
+              "host": ["{{baseUrl}}"],
+              "path": ["commissions"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[recipient][id][$eq]",
+                  "value": "me"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Commission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"order\": 1,\n    \"user\": 1,\n    \"recipient\": 2,\n    \"amount\": 540,\n    \"commissionRate\": 0.30,\n    \"relationshipLevel\": 1,\n    \"type\": \"DIRECT\",\n    \"status\": \"PENDING\",\n    \"pvPoints\": 100,\n    \"recipientRole\": \"SALES\",\n    \"product\": 1,\n    \"orderItem\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/commissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["commissions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Relationships",
+      "item": [
+        {
+          "name": "Get My Network",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user-relationships?populate=*&filters[upline][id][$eq]=me",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-relationships"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[upline][id][$eq]",
+                  "value": "me"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Relationship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"user\": 2,\n    \"upline\": 1,\n    \"relationshipLevel\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-relationships"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Membership",
+      "item": [
+        {
+          "name": "Get Membership Tiers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/membership-tiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["membership-tiers"]
+            }
+          }
+        },
+        {
+          "name": "Get My Membership",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user-memberships?populate=*&filters[user][id][$eq]=me",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-memberships"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                },
+                {
+                  "key": "filters[user][id][$eq]",
+                  "value": "me"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User Membership",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"user\": 1,\n    \"tier\": 1,\n    \"status\": \"ACTIVE\",\n    \"startDate\": \"2024-01-01T00:00:00Z\",\n    \"endDate\": \"2024-12-31T23:59:59Z\",\n    \"autoRenew\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user-memberships",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-memberships"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Promotions",
+      "item": [
+        {
+          "name": "Get Active Promotions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/promotions?filters[isActive][$eq]=true&filters[startDate][$lte]={{currentDate}}&filters[$or][0][endDate][$gte]={{currentDate}}&filters[$or][1][endDate][$null]=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["promotions"],
+              "query": [
+                {
+                  "key": "filters[isActive][$eq]",
+                  "value": "true"
+                },
+                {
+                  "key": "filters[startDate][$lte]",
+                  "value": "{{currentDate}}"
+                },
+                {
+                  "key": "filters[$or][0][endDate][$gte]",
+                  "value": "{{currentDate}}"
+                },
+                {
+                  "key": "filters[$or][1][endDate][$null]",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Promotion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"title\": \"New Year Sale\",\n    \"description\": \"Get 20% off on all products\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 20,\n    \"minPurchase\": 100,\n    \"startDate\": \"2024-01-01T00:00:00Z\",\n    \"endDate\": \"2024-01-31T23:59:59Z\",\n    \"isActive\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/promotions",
+              "host": ["{{baseUrl}}"],
+              "path": ["promotions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs?populate[user]=*&sort=createdAt:desc&pagination[limit]=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs"],
+              "query": [
+                {
+                  "key": "populate[user]",
+                  "value": "*"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt:desc"
+                },
+                {
+                  "key": "pagination[limit]",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media Upload",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": "/path/to/your/image.jpg"
+                },
+                {
+                  "key": "ref",
+                  "value": "api::product.product",
+                  "type": "text"
+                },
+                {
+                  "key": "refId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "field",
+                  "value": "imageUrl",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["upload"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
