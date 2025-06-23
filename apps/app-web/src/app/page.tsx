@@ -25,7 +25,7 @@ export default function Home() {
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-3 md:mb-4">
                 Your Trusted
                 <br />
-                Health Partner
+                Healthcare Partner
               </h1>
               <div className="w-20 md:w-24 h-1 bg-[#0C99B4] mb-4 md:mb-6"></div>
               <p className="text-base md:text-lg text-gray-600 mb-6 md:mb-8">
