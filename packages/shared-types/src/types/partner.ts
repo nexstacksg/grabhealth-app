@@ -54,6 +54,8 @@ export interface IPartnerDaysOff {
   date: Date;
   reason?: string;
   isRecurring: boolean;
+  recurringType?: 'WEEKLY' | 'ANNUAL' | null;
+  dayOfWeek?: number; // 0-6 for weekly recurring (0=Sunday, 1=Monday, etc.)
   createdAt: Date;
 }
 
@@ -80,6 +82,18 @@ export interface ICalendarDay {
   isDayOff: boolean;
   availableSlots: number;
   totalSlots: number;
+  bookings?: {
+    id: string;
+    time: string;
+    customerName: string;
+    serviceName: string;
+    status: string;
+  }[];
 }
 
-export type ServiceCategory = 'Body Check' | 'Consultation' | 'Therapy' | 'Screening' | 'Other';
+export type ServiceCategory =
+  | 'Body Check'
+  | 'Consultation'
+  | 'Therapy'
+  | 'Screening'
+  | 'Other';

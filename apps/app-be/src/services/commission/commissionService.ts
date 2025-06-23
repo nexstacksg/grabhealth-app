@@ -286,7 +286,10 @@ export class CommissionService {
         email: user.email,
         role: user.role,
         level: 0,
-        totalSales: user.orders.reduce((sum: number, order: any) => sum + order.total, 0),
+        totalSales: user.orders.reduce(
+          (sum: number, order: any) => sum + order.total,
+          0
+        ),
         commissionEarned: user.commissionsReceived.reduce(
           (sum: number, c: any) => sum + c.amount,
           0
@@ -609,7 +612,12 @@ export class CommissionService {
 
       return {
         products: products.map((product: any) => {
-          const commission = product.productCommissions[0]; // Get first commission tier
+          const commissions = Array.isArray(product.productCommissions)
+            ? product.productCommissions
+            : product.productCommissions
+              ? [product.productCommissions]
+              : [];
+          const commission = commissions[0]; // Get first commission tier
           return {
             id: product.id,
             name: product.name,

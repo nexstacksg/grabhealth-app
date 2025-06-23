@@ -39,9 +39,13 @@ class BookingController {
             message: error.message,
           },
         });
+        return;
       }
 
-      if (error.message === 'Time slot not available') {
+      if (
+        error.message === 'Time slot not available' ||
+        error.message?.includes('slot')
+      ) {
         res.status(409).json({
           success: false,
           error: {
@@ -49,6 +53,21 @@ class BookingController {
             message: 'The selected time slot is no longer available',
           },
         });
+        return;
+      }
+
+      if (
+        error.message?.includes('full') ||
+        error.message?.includes('booked')
+      ) {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: 'SLOT_FULL',
+            message: 'This slot is fully booked',
+          },
+        });
+        return;
       }
 
       res.status(500).json({

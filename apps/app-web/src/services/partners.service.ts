@@ -4,7 +4,12 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IPartner, IService, ApiResponse } from '@app/shared-types';
+import {
+  IPartner,
+  IService,
+  ApiResponse,
+  IAvailableSlot,
+} from '@app/shared-types';
 
 interface PartnerFilters {
   search?: string;
@@ -28,17 +33,19 @@ interface BookingRequest {
 }
 
 class PartnersService extends BaseService {
-  async getPartners(filters?: PartnerFilters): Promise<{ 
-    partners: IPartner[]; 
-    total: number; 
-    page: number; 
-    totalPages: number 
+  async getPartners(filters?: PartnerFilters): Promise<{
+    partners: IPartner[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> {
     try {
       const queryString = this.buildQueryString(filters);
-      const response = await apiClient.get<ApiResponse<{ partners: IPartner[]; pagination: any }>>(`/partners${queryString}`);
+      const response = await apiClient.get<
+        ApiResponse<{ partners: IPartner[]; pagination: any }>
+      >(`/partners${queryString}`);
       const data = this.extractData(response);
-      
+
       return {
         partners: data.partners || [],
         total: data.pagination?.total || 0,
@@ -52,7 +59,9 @@ class PartnersService extends BaseService {
 
   async getPartner(id: string): Promise<IPartner> {
     try {
-      const response = await apiClient.get<ApiResponse<IPartner>>(`/partners/${id}`);
+      const response = await apiClient.get<ApiResponse<IPartner>>(
+        `/partners/${id}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -61,17 +70,25 @@ class PartnersService extends BaseService {
 
   async getPartnerServices(partnerId: string): Promise<IService[]> {
     try {
-      const response = await apiClient.get<ApiResponse<IService[]>>(`/partners/${partnerId}/services`);
+      const response = await apiClient.get<ApiResponse<IService[]>>(
+        `/partners/${partnerId}/services`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async getPartnerAvailability(partnerId: string, serviceId: string, date: string): Promise<PartnerAvailability> {
+  async getPartnerAvailability(
+    partnerId: string,
+    serviceId: string,
+    date: string
+  ): Promise<IAvailableSlot[]> {
     try {
       // Note: serviceId is passed but not used in the current backend implementation
-      const response = await apiClient.get<ApiResponse<PartnerAvailability>>(`/partners/${partnerId}/available-slots/${date}`);
+      const response = await apiClient.get<ApiResponse<IAvailableSlot[]>>(
+        `/partners/${partnerId}/available-slots/${date}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -80,7 +97,10 @@ class PartnersService extends BaseService {
 
   async bookAppointment(partnerId: string, data: BookingRequest): Promise<any> {
     try {
-      const response = await apiClient.post<ApiResponse>(`/partners/${partnerId}/book`, data);
+      const response = await apiClient.post<ApiResponse>(
+        `/partners/${partnerId}/book`,
+        data
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -90,7 +110,9 @@ class PartnersService extends BaseService {
   async getFeaturedPartners(limit: number = 6): Promise<IPartner[]> {
     try {
       const queryString = this.buildQueryString({ featured: true, limit });
-      const response = await apiClient.get<ApiResponse<IPartner[]>>(`/partners${queryString}`);
+      const response = await apiClient.get<ApiResponse<IPartner[]>>(
+        `/partners${queryString}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -100,7 +122,9 @@ class PartnersService extends BaseService {
   async searchPartners(query: string): Promise<IPartner[]> {
     try {
       const queryString = this.buildQueryString({ search: query });
-      const response = await apiClient.get<ApiResponse<IPartner[]>>(`/partners/search${queryString}`);
+      const response = await apiClient.get<ApiResponse<IPartner[]>>(
+        `/partners/search${queryString}`
+      );
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
