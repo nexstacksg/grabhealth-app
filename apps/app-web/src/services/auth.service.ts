@@ -10,29 +10,19 @@ import {
   RegisterRequest,
   AuthResponse,
 } from '@app/shared-types';
+import { api } from './api.service';
+import { StrapiUser, transformStrapiUser } from './strapi-base';
 
 // Strapi auth response types
 interface StrapiAuthResponse {
   jwt: string;
-  user: {
-    id: number;
-    username: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    confirmed: boolean;
-    blocked: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
+  user: StrapiUser;
 }
 
 interface StrapiRegisterRequest {
   username: string;
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 interface StrapiLoginRequest {
@@ -55,15 +45,7 @@ class AuthService extends BaseService {
 
       // Transform Strapi response to our AuthResponse format
       const authResponse: AuthResponse = {
-        user: {
-          id: response.user.id.toString(),
-          email: response.user.email,
-          firstName: response.user.firstName || '',
-          lastName: response.user.lastName || '',
-          role: 'USER', // Default role, can be enhanced later
-          status: response.user.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION',
-          createdAt: new Date(response.user.createdAt),
-        },
+        user: transformStrapiUser(response.user),
         accessToken: response.jwt,
         refreshToken: response.jwt, // Strapi uses same token for both
         expiresIn: 86400, // 24 hours default
@@ -77,29 +59,25 @@ class AuthService extends BaseService {
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
+      // Strapi's default registration only accepts username, email, and password
       const strapiRequest: StrapiRegisterRequest = {
         username: data.email, // Use email as username
         email: data.email,
         password: data.password,
-        // Note: firstName and lastName will be handled separately after registration
       };
+
+      console.log('Registering with Strapi:', { email: data.email });
 
       const response = await apiClient.post<StrapiAuthResponse>(
         '/auth/local/register',
         strapiRequest
       );
 
+      console.log('Registration successful:', response);
+
       // Transform Strapi response to our AuthResponse format
       const authResponse: AuthResponse = {
-        user: {
-          id: response.user.id.toString(),
-          email: response.user.email,
-          firstName: data.firstName || '', // Use provided firstName or empty
-          lastName: data.lastName || '', // Use provided lastName or empty
-          role: 'USER', // Default role
-          status: response.user.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION',
-          createdAt: new Date(response.user.createdAt),
-        },
+        user: transformStrapiUser(response.user),
         accessToken: response.jwt,
         refreshToken: response.jwt, // Strapi uses same token for both
         expiresIn: 86400, // 24 hours default
@@ -107,6 +85,7 @@ class AuthService extends BaseService {
 
       return authResponse;
     } catch (error) {
+      console.error('Registration error in service:', error);
       this.handleError(error);
     }
   }
@@ -125,35 +104,7 @@ class AuthService extends BaseService {
 
   async getProfile(): Promise<IUserPublic> {
     try {
-      const response = await apiClient.get<
-        StrapiAuthResponse['user'] & {
-          profileImage?: string;
-          referralCode?: string;
-          status?: string;
-        }
-      >('/users/me?populate=*');
-
-      // Transform Strapi user to our IUserPublic format
-      const user: IUserPublic = {
-        id: response.id.toString(),
-        email: response.email,
-        firstName: response.firstName || response.username || '', // Fallback to username if no firstName
-        lastName: response.lastName || '', // May be empty for basic Strapi users
-        role: 'USER', // Default role, can be enhanced later
-        status:
-          response.status ||
-          (response.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
-        createdAt: new Date(response.createdAt),
-        // Additional profile fields that are supported by IUserPublic
-        profileImage: response.profileImage || null,
-        referralCode: response.referralCode || null,
-        emailVerified: response.confirmed,
-        emailVerifiedAt: response.confirmed
-          ? new Date(response.createdAt)
-          : null,
-      };
-
-      return user;
+      return await api.auth.getCurrentUser();
     } catch (error) {
       console.error('Failed to get user profile:', error);
       this.handleError(error);

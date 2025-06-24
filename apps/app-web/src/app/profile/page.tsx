@@ -234,9 +234,9 @@ export default function ProfilePage() {
                 <div className="flex flex-row gap-8 mb-6">
                   <div className="flex flex-col items-center">
                     <div className="relative h-32 w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-4">
-                      {(user as any)?.imageUrl ? (
+                      {user?.profileImage ? (
                         <img
-                          src={(user as any).imageUrl}
+                          src={user.profileImage}
                           alt="Profile"
                           className="h-full w-full object-cover"
                         />

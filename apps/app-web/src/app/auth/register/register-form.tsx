@@ -22,8 +22,6 @@ import { Loader2 } from 'lucide-react';
 // Define the schema here to avoid circular dependencies
 const registerSchema = z
   .object({
-    firstName: z.string().min(1, { message: 'First name is required' }),
-    lastName: z.string().min(1, { message: 'Last name is required' }),
     email: z.string().email({ message: 'Please enter a valid email address' }),
     password: z
       .string()
@@ -63,8 +61,6 @@ export default function RegisterForm({
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -79,8 +75,6 @@ export default function RegisterForm({
       await register({
         email: data.email,
         password: data.password,
-        firstName: data.firstName,
-        lastName: data.lastName,
       });
 
       // The AuthContext handles the redirect after successful registration
@@ -92,6 +86,8 @@ export default function RegisterForm({
         message?: string;
         details?: any;
       };
+
+      console.error('Registration error:', error);
 
       // Strapi error format: { error: { message: string, details?: any } }
       const errorMessage =
@@ -113,32 +109,6 @@ export default function RegisterForm({
       )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="email"

@@ -45,7 +45,7 @@ axiosInstance.interceptors.request.use(
 // Response interceptor for Strapi
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Strapi returns data directly, no wrapper needed
+    // Return the full response data (let services handle transformation)
     return response.data;
   },
   async (error: AxiosError<any>) => {

@@ -18,6 +18,9 @@ export { partnersService } from './partners.service';
 export { promotionService } from './promotion.service';
 export { apiClient } from './api-client';
 
+// Export the clean API interface
+export { api } from './api.service';
+
 // Export base service for extending
 export { BaseService } from './base.service';
 

@@ -9,6 +9,7 @@ import {
   IProfileUpdateRequest,
   IPasswordChangeRequest,
 } from '@app/shared-types';
+import { api, getUserId } from './api.service';
 
 interface UserProfile extends IUserPublic {
   referralCode?: string;
@@ -19,47 +20,10 @@ interface UserProfile extends IUserPublic {
   };
 }
 
-// Strapi user response type
-interface StrapiUser {
-  id: number;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  profileImage?: string;
-  referralCode?: string;
-  confirmed: boolean;
-  blocked: boolean;
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
-}
-
 class ProfileService extends BaseService {
   async getProfile(): Promise<UserProfile> {
     try {
-      const response = await apiClient.get<StrapiUser>('/users/me?populate=*');
-
-      // Transform Strapi user to our UserProfile format
-      const userProfile: UserProfile = {
-        id: response.id.toString(),
-        email: response.email,
-        firstName: response.firstName || response.username || '',
-        lastName: response.lastName || '',
-        role: 'USER',
-        status:
-          response.status ||
-          (response.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
-        createdAt: new Date(response.createdAt),
-        profileImage: response.profileImage || undefined,
-        referralCode: response.referralCode || undefined,
-        emailVerified: response.confirmed,
-        emailVerifiedAt: response.confirmed
-          ? new Date(response.createdAt)
-          : null,
-      };
-
-      return userProfile;
+      return await api.auth.getCurrentUser() as UserProfile;
     } catch (error) {
       console.error('Get profile error:', error);
       this.handleError(error);
@@ -68,42 +32,17 @@ class ProfileService extends BaseService {
 
   async updateProfile(data: IProfileUpdateRequest): Promise<UserProfile> {
     try {
-      // First get the current user to get their ID
-      const currentUser = await this.getProfile();
+      // Get current user
+      const currentUser = await api.auth.getCurrentUser();
+      const userId = getUserId(currentUser);
 
-      // Map IProfileUpdateRequest to Strapi's expected format
-      const strapiUpdateData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        // Note: Strapi doesn't support phoneNumber, dateOfBirth, address by default
-      };
+      // Only include fields that have changed
+      const updateData: Partial<IUserPublic> = {};
+      if (data.firstName !== undefined) updateData.firstName = data.firstName;
+      if (data.lastName !== undefined) updateData.lastName = data.lastName;
+      if (data.email !== undefined) updateData.email = data.email;
 
-      const response = await apiClient.put<StrapiUser>(
-        `/users/${currentUser.id}`,
-        strapiUpdateData
-      );
-
-      // Transform response back to UserProfile format
-      const userProfile: UserProfile = {
-        id: response.id.toString(),
-        email: response.email,
-        firstName: response.firstName || response.username || '',
-        lastName: response.lastName || '',
-        role: 'USER',
-        status:
-          response.status ||
-          (response.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
-        createdAt: new Date(response.createdAt),
-        profileImage: response.profileImage || undefined,
-        referralCode: response.referralCode || undefined,
-        emailVerified: response.confirmed,
-        emailVerifiedAt: response.confirmed
-          ? new Date(response.createdAt)
-          : null,
-      };
-
-      return userProfile;
+      return await api.auth.updateUser(userId, updateData) as UserProfile;
     } catch (error) {
       console.error('Profile update error:', error);
       this.handleError(error);
@@ -124,31 +63,23 @@ class ProfileService extends BaseService {
 
   async uploadProfileImage(file: File): Promise<{ url: string }> {
     try {
-      // Strapi has a built-in upload endpoint
-      const formData = new FormData();
-      formData.append('files', file);
+      console.log('Uploading file...');
 
-      const uploadResponse = await apiClient.post<any[]>('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Upload file using the api service
+      const { url: imageUrl } = await api.upload.uploadFile(file);
+      console.log('File uploaded, URL:', imageUrl);
 
-      if (!uploadResponse || uploadResponse.length === 0) {
-        throw new Error('Upload failed');
-      }
-
-      const uploadedFile = uploadResponse[0];
-      const imageUrl = uploadedFile.url;
-
-      // Get current user ID and update profile with the new image URL
-      const currentUser = await this.getProfile();
-      await apiClient.put(`/users/${currentUser.id}`, {
+      // Get current user and update profile image
+      const currentUser = await api.auth.getCurrentUser();
+      const userId = getUserId(currentUser);
+      
+      await api.auth.updateUser(userId, {
         profileImage: imageUrl,
       });
 
       return { url: imageUrl };
     } catch (error) {
+      console.error('Upload profile image error:', error);
       this.handleError(error);
     }
   }

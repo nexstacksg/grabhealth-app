@@ -86,16 +86,15 @@ const useAuthProvider = () => {
           localStorage.setItem('refreshToken', authData.refreshToken);
         }
 
-        // Check if email verification is needed
-        if (authData.user.status === 'PENDING_VERIFICATION') {
-          router.push('/auth/verify');
-        } else if (
+        // Skip email verification for now and redirect to home
+        if (
           authData.user.role === 'PARTNER' &&
           authData.user.partnerId
         ) {
           // Redirect partner users to partner dashboard
           router.push('/partner');
         } else {
+          // Always redirect to home page, even if status is PENDING_VERIFICATION
           router.push('/');
         }
       } catch (error: any) {
@@ -140,16 +139,15 @@ const useAuthProvider = () => {
           localStorage.setItem('refreshToken', authData.refreshToken);
         }
 
-        // Check if email verification is needed
-        if (authData.user.status === 'PENDING_VERIFICATION') {
-          router.push('/auth/verify');
-        } else if (
+        // Skip email verification for now and redirect to home
+        if (
           authData.user.role === 'PARTNER' &&
           authData.user.partnerId
         ) {
           // Redirect partner users to partner dashboard
           router.push('/partner');
         } else {
+          // Always redirect to home page, even if status is PENDING_VERIFICATION
           router.push('/');
         }
       } catch (error: any) {
