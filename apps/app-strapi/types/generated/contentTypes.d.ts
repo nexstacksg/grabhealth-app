@@ -2134,9 +2134,9 @@ export interface PluginUsersPermissionsUser
     emailVerificationCodeExpires: Schema.Attribute.DateTime &
       Schema.Attribute.Private;
     emailVerifiedAt: Schema.Attribute.DateTime;
-    firstName: Schema.Attribute.String & Schema.Attribute.Required;
+    firstName: Schema.Attribute.String;
     lastLoginAt: Schema.Attribute.DateTime;
-    lastName: Schema.Attribute.String & Schema.Attribute.Required;
+    lastName: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

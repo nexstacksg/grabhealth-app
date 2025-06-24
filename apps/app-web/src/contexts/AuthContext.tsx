@@ -9,8 +9,12 @@ import React, {
   useMemo,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/services';
-import { IUserPublic, RegisterRequest } from '@app/shared-types';
+import { authService, profileService } from '@/services';
+import {
+  IUserPublic,
+  RegisterRequest,
+  IProfileUpdateRequest,
+} from '@app/shared-types';
 
 // Create context without explicit type definition to avoid unused warnings
 const AuthContext = createContext<
@@ -160,6 +164,32 @@ const useAuthProvider = () => {
     await checkAuth();
   }, [checkAuth]);
 
+  const updateProfile = useCallback(async (data: IProfileUpdateRequest) => {
+    try {
+      const updatedUser = await profileService.updateProfile(data);
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      throw error;
+    }
+  }, []);
+
+  const updateProfileImage = useCallback(
+    async (file: File) => {
+      try {
+        const result = await profileService.uploadProfileImage(file);
+        // Refresh user data to get the updated profile image
+        await refreshAuth();
+        return result;
+      } catch (error) {
+        console.error('Failed to update profile image:', error);
+        throw error;
+      }
+    },
+    [refreshAuth]
+  );
+
   return useMemo(
     () => ({
       user,
@@ -168,8 +198,19 @@ const useAuthProvider = () => {
       logout,
       register,
       refreshAuth,
+      updateProfile,
+      updateProfileImage,
     }),
-    [user, isLoading, login, logout, register, refreshAuth]
+    [
+      user,
+      isLoading,
+      login,
+      logout,
+      register,
+      refreshAuth,
+      updateProfile,
+      updateProfileImage,
+    ]
   );
 };
 

@@ -125,9 +125,13 @@ class AuthService extends BaseService {
 
   async getProfile(): Promise<IUserPublic> {
     try {
-      const response = await apiClient.get<StrapiAuthResponse['user']>(
-        '/users/me?populate=*'
-      );
+      const response = await apiClient.get<
+        StrapiAuthResponse['user'] & {
+          profileImage?: string;
+          referralCode?: string;
+          status?: string;
+        }
+      >('/users/me?populate=*');
 
       // Transform Strapi user to our IUserPublic format
       const user: IUserPublic = {
@@ -136,12 +140,22 @@ class AuthService extends BaseService {
         firstName: response.firstName || response.username || '', // Fallback to username if no firstName
         lastName: response.lastName || '', // May be empty for basic Strapi users
         role: 'USER', // Default role, can be enhanced later
-        status: response.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION',
+        status:
+          response.status ||
+          (response.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
         createdAt: new Date(response.createdAt),
+        // Additional profile fields that are supported by IUserPublic
+        profileImage: response.profileImage || null,
+        referralCode: response.referralCode || null,
+        emailVerified: response.confirmed,
+        emailVerifiedAt: response.confirmed
+          ? new Date(response.createdAt)
+          : null,
       };
 
       return user;
     } catch (error) {
+      console.error('Failed to get user profile:', error);
       this.handleError(error);
     }
   }

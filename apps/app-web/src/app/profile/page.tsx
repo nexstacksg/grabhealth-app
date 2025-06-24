@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -17,14 +17,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import services from '@/services';
-import { IUserPublic } from '@app/shared-types';
-
-interface UserProfile extends IUserPublic {}
+import { useAuth } from '@/contexts/AuthContext';
+import { profileService } from '@/services';
+import { IProfileUpdateRequest } from '@app/shared-types';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { user, updateProfile, updateProfileImage } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,35 +38,19 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    async function fetchUserProfile() {
-      try {
-        setIsLoading(true);
-
-        // Fetch user profile
-        const userProfile = await services.profile.getProfile();
-
-        setUser(userProfile);
-        setFormData((prev) => ({
-          ...prev,
-          firstName: userProfile.firstName || '',
-          lastName: userProfile.lastName || '',
-          email: userProfile.email,
-        }));
-      } catch (error: any) {
-        console.error('Error fetching profile:', error);
-        if (error.status === 401) {
-          // Redirect to login if not authenticated
-          router.push('/auth/login');
-          return;
-        }
-        setError('Failed to load profile. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email,
+      }));
+      setIsLoading(false);
+    } else {
+      // If no user, redirect to login
+      router.push('/auth/login');
     }
-
-    fetchUserProfile();
-  }, [router]);
+  }, [user, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -91,17 +74,9 @@ export default function ProfilePage() {
         size: file.size,
       });
 
-      const result = await services.profile.uploadProfileImage(file);
+      await updateProfileImage(file);
 
-      // Update the user's image URL in the local state
-      setUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              image_url: result.url,
-            }
-          : null
-      );
+      // The AuthContext will handle updating the user state
 
       toast.success('Profile picture updated successfully!');
     } catch (error) {
@@ -129,21 +104,16 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      const updatedUser = await services.profile.updateProfile({
+      // Create profile update request
+      const updateRequest: IProfileUpdateRequest = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-      });
+      };
 
-      // Update local state with the returned user data
-      setUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...updatedUser,
-            }
-          : null
-      );
+      await updateProfile(updateRequest);
+
+      // The AuthContext will handle updating the user state
 
       // Show success message
       toast.success('Profile updated successfully!');
@@ -180,7 +150,7 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      await services.profile.changePassword({
+      await profileService.changePassword({
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });
@@ -244,7 +214,6 @@ export default function ProfilePage() {
           <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       )}
-
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="mb-6">
