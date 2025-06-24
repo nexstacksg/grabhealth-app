@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
@@ -48,7 +48,9 @@ function LoginPageContent() {
   useEffect(() => {
     // Check if user was redirected after email verification
     if (searchParams.get('verified') === 'true') {
-      setSuccessMessage('Email verified successfully! Please login to continue.');
+      setSuccessMessage(
+        'Email verified successfully! Please login to continue.'
+      );
     }
   }, [searchParams]);
 
@@ -68,9 +70,17 @@ function LoginPageContent() {
       await login(data.email, data.password);
       // The AuthContext handles the redirect after successful login
     } catch (error: unknown) {
-      // Handle error with backend's error structure
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(err.response?.data?.error?.message || err.message || 'Login failed');
+      // Handle error with Strapi's error structure
+      const err = error as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+        details?: any;
+      };
+
+      // Strapi error format: { error: { message: string, details?: any } }
+      const errorMessage =
+        err.response?.data?.error?.message || err.message || 'Login failed';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +179,13 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          Loading...
+        </div>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   );

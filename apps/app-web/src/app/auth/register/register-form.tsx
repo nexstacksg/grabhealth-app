@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,10 +28,17 @@ const registerSchema = z
     password: z
       .string()
       .min(8, { message: 'Password must be at least 8 characters' })
-      .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-      .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
+      .regex(/[a-z]/, {
+        message: 'Password must contain at least one lowercase letter',
+      })
+      .regex(/[A-Z]/, {
+        message: 'Password must contain at least one uppercase letter',
+      })
       .regex(/\d/, { message: 'Password must contain at least one number' })
-      .regex(/[@$!%*?&]/, { message: 'Password must contain at least one special character (@$!%*?&)' }),
+      .regex(/[@$!%*?&]/, {
+        message:
+          'Password must contain at least one special character (@$!%*?&)',
+      }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -46,7 +53,9 @@ interface RegisterFormProps {
   referrerId: string | null;
 }
 
-export default function RegisterForm({ referrerId }: RegisterFormProps) {
+export default function RegisterForm({
+  referrerId: _referrerId,
+}: RegisterFormProps) {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,9 +86,19 @@ export default function RegisterForm({ referrerId }: RegisterFormProps) {
       // The AuthContext handles the redirect after successful registration
       // TODO: Handle referrerId for MLM referral tracking
     } catch (error: unknown) {
-      // Handle error like in login page
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(err.response?.data?.error?.message || err.message || 'Registration failed');
+      // Handle error with Strapi's error structure
+      const err = error as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+        details?: any;
+      };
+
+      // Strapi error format: { error: { message: string, details?: any } }
+      const errorMessage =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Registration failed';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

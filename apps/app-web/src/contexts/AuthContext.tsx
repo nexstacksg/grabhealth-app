@@ -25,7 +25,15 @@ const useAuthProvider = () => {
 
   const checkAuth = useCallback(async () => {
     try {
-      // Try to get user profile - cookies will be sent automatically
+      // Check if we have a token in localStorage
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // Try to get user profile with the token
       const userProfile = await authService.getProfile();
       setUser(userProfile);
     } catch (error: any) {
@@ -35,6 +43,9 @@ const useAuthProvider = () => {
         console.log('Auth check failed:', error.message || 'Not authenticated');
       }
       setUser(null);
+      // Clear any stored tokens on auth failure
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     } finally {
       setIsLoading(false);
     }
@@ -42,25 +53,16 @@ const useAuthProvider = () => {
 
   useEffect(() => {
     let mounted = true;
-    
+
     // Only check auth once on mount
     const checkAuthOnce = async () => {
       if (mounted) {
-        // Small delay to ensure cookies are available after hydration
-        await new Promise(resolve => setTimeout(resolve, 100));
         await checkAuth();
-        
-        // If still loading after first check, try once more
-        // This helps with race conditions in production
-        if (mounted && !user) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          await checkAuth();
-        }
       }
     };
-    
+
     checkAuthOnce();
-    
+
     return () => {
       mounted = false;
     };
@@ -72,7 +74,7 @@ const useAuthProvider = () => {
         const authData = await authService.login({ email, password });
         setUser(authData.user);
 
-        // Store tokens in localStorage as backup (cookies are primary)
+        // Store tokens in localStorage (Strapi uses Bearer tokens)
         if (authData.accessToken) {
           localStorage.setItem('accessToken', authData.accessToken);
         }
@@ -109,7 +111,7 @@ const useAuthProvider = () => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);
-      
+
       // Force a full page reload to clear any cached state
       window.location.href = '/';
     }
@@ -126,7 +128,7 @@ const useAuthProvider = () => {
         });
         setUser(authData.user);
 
-        // Store tokens in localStorage as backup (cookies are primary)
+        // Store tokens in localStorage (Strapi uses Bearer tokens)
         if (authData.accessToken) {
           localStorage.setItem('accessToken', authData.accessToken);
         }

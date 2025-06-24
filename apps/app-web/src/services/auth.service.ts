@@ -1,22 +1,75 @@
 /**
- * Auth Service - Handles all authentication related API calls
+ * Auth Service - Handles all authentication related API calls for Strapi
  */
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { 
-  IUserPublic, 
-  LoginRequest, 
-  RegisterRequest, 
+import {
+  IUserPublic,
+  LoginRequest,
+  RegisterRequest,
   AuthResponse,
-  ApiResponse 
 } from '@app/shared-types';
+
+// Strapi auth response types
+interface StrapiAuthResponse {
+  jwt: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    confirmed: boolean;
+    blocked: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+interface StrapiRegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface StrapiLoginRequest {
+  identifier: string; // email or username
+  password: string;
+}
 
 class AuthService extends BaseService {
   async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data);
-      return this.extractData(response);
+      const strapiRequest: StrapiLoginRequest = {
+        identifier: data.email,
+        password: data.password,
+      };
+
+      const response = await apiClient.post<StrapiAuthResponse>(
+        '/auth/local',
+        strapiRequest
+      );
+
+      // Transform Strapi response to our AuthResponse format
+      const authResponse: AuthResponse = {
+        user: {
+          id: response.user.id.toString(),
+          email: response.user.email,
+          firstName: response.user.firstName || '',
+          lastName: response.user.lastName || '',
+          role: 'USER', // Default role, can be enhanced later
+          status: response.user.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION',
+          createdAt: new Date(response.user.createdAt),
+        },
+        accessToken: response.jwt,
+        refreshToken: response.jwt, // Strapi uses same token for both
+        expiresIn: 86400, // 24 hours default
+      };
+
+      return authResponse;
     } catch (error) {
       this.handleError(error);
     }
@@ -24,8 +77,35 @@ class AuthService extends BaseService {
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data);
-      return this.extractData(response);
+      const strapiRequest: StrapiRegisterRequest = {
+        username: data.email, // Use email as username
+        email: data.email,
+        password: data.password,
+        // Note: firstName and lastName will be handled separately after registration
+      };
+
+      const response = await apiClient.post<StrapiAuthResponse>(
+        '/auth/local/register',
+        strapiRequest
+      );
+
+      // Transform Strapi response to our AuthResponse format
+      const authResponse: AuthResponse = {
+        user: {
+          id: response.user.id.toString(),
+          email: response.user.email,
+          firstName: data.firstName || '', // Use provided firstName or empty
+          lastName: data.lastName || '', // Use provided lastName or empty
+          role: 'USER', // Default role
+          status: response.user.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION',
+          createdAt: new Date(response.user.createdAt),
+        },
+        accessToken: response.jwt,
+        refreshToken: response.jwt, // Strapi uses same token for both
+        expiresIn: 86400, // 24 hours default
+      };
+
+      return authResponse;
     } catch (error) {
       this.handleError(error);
     }
@@ -33,7 +113,11 @@ class AuthService extends BaseService {
 
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/auth/logout');
+      // Strapi doesn't have a logout endpoint, just clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
     } catch (error) {
       this.handleError(error);
     }
@@ -41,8 +125,22 @@ class AuthService extends BaseService {
 
   async getProfile(): Promise<IUserPublic> {
     try {
-      const response = await apiClient.get<ApiResponse<IUserPublic>>('/auth/profile');
-      return this.extractData(response);
+      const response = await apiClient.get<StrapiAuthResponse['user']>(
+        '/users/me?populate=*'
+      );
+
+      // Transform Strapi user to our IUserPublic format
+      const user: IUserPublic = {
+        id: response.id.toString(),
+        email: response.email,
+        firstName: response.firstName || response.username || '', // Fallback to username if no firstName
+        lastName: response.lastName || '', // May be empty for basic Strapi users
+        role: 'USER', // Default role, can be enhanced later
+        status: response.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION',
+        createdAt: new Date(response.createdAt),
+      };
+
+      return user;
     } catch (error) {
       this.handleError(error);
     }
@@ -50,8 +148,28 @@ class AuthService extends BaseService {
 
   async refreshToken(): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/refresh');
-      return this.extractData(response);
+      // Strapi doesn't have a refresh token endpoint
+      // The JWT token is long-lived, so we just return the current token
+      const currentToken =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('accessToken')
+          : null;
+
+      if (!currentToken) {
+        throw new Error('No token available for refresh');
+      }
+
+      // Get current user to validate token is still valid
+      const user = await this.getProfile();
+
+      const authResponse: AuthResponse = {
+        user,
+        accessToken: currentToken,
+        refreshToken: currentToken,
+        expiresIn: 86400, // 24 hours
+      };
+
+      return authResponse;
     } catch (error) {
       this.handleError(error);
     }
@@ -59,17 +177,25 @@ class AuthService extends BaseService {
 
   async requestPasswordReset(email: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/request-password-reset', { email });
-      this.extractData(response);
+      // Strapi has a forgot password endpoint
+      await apiClient.post('/auth/forgot-password', { email });
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async resetPassword(token: string, password: string): Promise<void> {
+  async resetPassword(
+    code: string,
+    password: string,
+    passwordConfirmation: string
+  ): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/reset-password', { token, newPassword: password });
-      this.extractData(response);
+      // Strapi reset password endpoint
+      await apiClient.post('/auth/reset-password', {
+        code,
+        password,
+        passwordConfirmation,
+      });
     } catch (error) {
       this.handleError(error);
     }
@@ -77,17 +203,19 @@ class AuthService extends BaseService {
 
   async verifyEmail(email: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/verify-email', { email });
-      this.extractData(response);
+      // Strapi email confirmation resend
+      await apiClient.post('/auth/send-email-confirmation', { email });
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async verifyEmailCode(email: string, code: string): Promise<void> {
+  async verifyEmailCode(_email: string, confirmation: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/verify-email-code', { email, code });
-      this.extractData(response);
+      // Strapi email confirmation
+      await apiClient.get(
+        `/auth/email-confirmation?confirmation=${confirmation}`
+      );
     } catch (error) {
       this.handleError(error);
     }
@@ -95,12 +223,12 @@ class AuthService extends BaseService {
 
   async resendVerificationCode(email: string): Promise<void> {
     try {
-      const response = await apiClient.post<ApiResponse>('/auth/resend-verification-code', { email });
-      this.extractData(response);
+      // Same as verifyEmail for Strapi
+      await this.verifyEmail(email);
     } catch (error) {
       this.handleError(error);
     }
   }
 }
 
-export const authService = new AuthService('/auth');
+export const authService = new AuthService('');

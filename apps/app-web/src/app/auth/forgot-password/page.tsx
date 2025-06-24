@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -54,8 +54,17 @@ export default function ForgotPasswordPage() {
       await services.auth.requestPasswordReset(data.email);
       setSubmitted(true);
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(err.response?.data?.error?.message || err.message || 'Failed to send reset email');
+      // Handle error with Strapi's error structure
+      const err = error as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+
+      const errorMessage =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Failed to send reset email';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +87,8 @@ export default function ForgotPasswordPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-center text-gray-600">
-              If you don't see the email, check your spam folder. The link will expire in 1 hour.
+              If you don't see the email, check your spam folder. The link will
+              expire in 1 hour.
             </p>
           </CardContent>
           <CardFooter>
@@ -101,7 +111,8 @@ export default function ForgotPasswordPage() {
             Reset password
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we'll send you a link to reset your
+            password
           </CardDescription>
         </CardHeader>
         <CardContent>
