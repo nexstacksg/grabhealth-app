@@ -15,28 +15,23 @@
     "name": {
       "type": "string",
       "required": true,
-      "unique": true,
-      "configurable": false
+      "unique": true
     },
     "slug": {
       "type": "string",
       "required": true,
-      "unique": true,
-      "configurable": false
+      "unique": true
     },
     "description": {
-      "type": "text",
-      "configurable": false
+      "type": "text"
     },
     "isActive": {
       "type": "boolean",
-      "default": true,
-      "configurable": false
+      "default": true
     },
     "sortOrder": {
       "type": "integer",
-      "default": 0,
-      "configurable": false
+      "default": 0
     },
     "parent": {
       "type": "relation",
@@ -59,12 +54,7 @@
     "imageUrl": {
       "type": "media",
       "multiple": true,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
+      "allowedTypes": ["images", "files", "videos", "audios"]
     }
   }
 }

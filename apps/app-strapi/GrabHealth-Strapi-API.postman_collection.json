@@ -46,7 +46,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/local/register",
@@ -123,12 +123,76 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\",\n  \"profileImage\": \"https://example.com/avatar.jpg\"\n}"
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"status\": \"ACTIVE\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/users/me",
               "host": ["{{baseUrl}}"],
               "path": ["users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update User by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"User\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            },
+            "description": "Replace '1' with actual user ID"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?populate=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
             }
           }
         }
@@ -189,7 +253,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"data\": {\n    \"name\": \"Health Supplements\",\n    \"slug\": \"health-supplements\",\n    \"description\": \"Premium health supplements category\",\n    \"isActive\": true,\n    \"sortOrder\": 1\n  }\n}"
+              "raw": "{\n  \"data\": {\n    \"name\": \"Health Supplements\",\n    \"slug\": \"health-supplements\",\n    \"description\": \"Premium health supplements category\",\n    \"isActive\": true,\n    \"sortOrder\": 1,\n    \"publishedAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/categories",
@@ -229,6 +293,50 @@
               "host": ["{{baseUrl}}"],
               "path": ["categories", "1"]
             }
+          }
+        },
+        {
+          "name": "Publish Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"publishedAt\": new Date().toISOString()\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"]
+            },
+            "description": "Publish a draft category by setting publishedAt to current time"
+          }
+        },
+        {
+          "name": "Unpublish Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"publishedAt\": null\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"]
+            },
+            "description": "Unpublish a category by setting publishedAt to null"
           }
         }
       ]
@@ -292,7 +400,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"data\": {\n    \"name\": \"Realman Premium\",\n    \"description\": \"Premium herbal supplement for men's health\",\n    \"sku\": \"RM-001\",\n    \"inStock\": true,\n    \"status\": \"ACTIVE\",\n    \"category\": 1\n  }\n}"
+              "raw": "{\n  \"data\": {\n    \"name\": \"Realman Premium\",\n    \"description\": \"Premium herbal supplement for men's health\",\n    \"sku\": \"RM-001\",\n    \"inStock\": true,\n    \"status\": \"ACTIVE\",\n    \"category\": 1,\n    \"publishedAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/products",
