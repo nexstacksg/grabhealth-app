@@ -1,6 +1,4 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
-import { ApiResponse } from '@app/shared-types';
-
 // Check if we're on the server
 const isServer = typeof window === 'undefined';
 
@@ -34,6 +32,12 @@ axiosInstance.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    
+    // Don't override Content-Type if it's FormData (let axios handle multipart/form-data)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {

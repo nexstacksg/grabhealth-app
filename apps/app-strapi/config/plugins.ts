@@ -1,23 +1,14 @@
 export default ({ env }) => ({
   upload: {
     config: {
-      provider: 'aws-s3',
+      provider: 'strapi-provider-upload-do',
       providerOptions: {
-        s3Options: {
-          // DigitalOcean Spaces is S3-compatible
-          endpoint: env('DO_SPACES_ENDPOINT'), // e.g. 'https://sgp1.digitaloceanspaces.com'
-          accessKeyId: env('DO_SPACES_ACCESS_KEY_ID'),
-          secretAccessKey: env('DO_SPACES_SECRET_ACCESS_KEY'),
-          region: env('DO_SPACES_REGION', 'sgp1'), // Singapore region
-          params: {
-            Bucket: env('DO_SPACES_BUCKET'),
-          },
-        },
-      },
-      actionOptions: {
-        upload: {},
-        uploadStream: {},
-        delete: {},
+        key: env('DO_SPACES_ACCESS_KEY_ID'),
+        secret: env('DO_SPACES_SECRET_ACCESS_KEY'),
+        endpoint: env('DO_SPACES_ENDPOINT'),
+        space: env('DO_SPACES_BUCKET'),
+        directory: 'media', // optional - will organize uploads in a media folder
+        cdn: env('DO_SPACES_CDN'), // optional - if you have a CDN configured
       },
     },
   },

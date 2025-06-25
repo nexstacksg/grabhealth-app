@@ -46,20 +46,26 @@ class Api implements IApi {
 
   upload = {
     async uploadFile(file: File): Promise<{ url: string; id: string | number }> {
+      console.log('Starting file upload:', { name: file.name, size: file.size, type: file.type });
+      
       const formData = new FormData();
       formData.append('files', file);
 
-      const uploadResponse = await apiClient.post<StrapiUploadFile[]>('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      try {
+        // Don't set Content-Type header - let axios set it automatically with boundary
+        const uploadResponse = await apiClient.post<StrapiUploadFile[]>('/upload', formData);
+        
+        console.log('Upload response:', uploadResponse);
 
-      if (!uploadResponse || uploadResponse.length === 0) {
-        throw new Error('Upload failed');
+        if (!uploadResponse || uploadResponse.length === 0) {
+          throw new Error('Upload failed - no files returned');
+        }
+
+        return transformStrapiUploadResponse(uploadResponse[0]);
+      } catch (error) {
+        console.error('Upload error details:', error);
+        throw error;
       }
-
-      return transformStrapiUploadResponse(uploadResponse[0]);
     }
   };
 }

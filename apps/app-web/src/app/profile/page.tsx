@@ -233,22 +233,21 @@ export default function ProfilePage() {
               <CardContent className="space-y-4">
                 <div className="flex flex-row gap-8 mb-6">
                   <div className="flex flex-col items-center">
-                    <div className="relative h-32 w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-4">
-                      {user?.profileImage ? (
-                        <img
-                          src={user.profileImage}
-                          alt="Profile"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-16 w-16 text-emerald-500" />
-                      )}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
-                        <Upload className="h-8 w-8 text-white" />
+                    <label className="relative cursor-pointer group">
+                      <div className="relative h-32 w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-4">
+                        {user?.profileImage ? (
+                          <img
+                            src={user.profileImage}
+                            alt="Profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-16 w-16 text-emerald-500" />
+                        )}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <Upload className="h-8 w-8 text-white" />
+                        </div>
                       </div>
-                    </div>
-                    <label className="relative cursor-pointer text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-                      Change Photo
                       <input
                         type="file"
                         className="sr-only"
@@ -256,12 +255,17 @@ export default function ProfilePage() {
                         onChange={handleFileUpload}
                         disabled={isUploading}
                       />
-                      {isUploading && (
-                        <span className="ml-2">
-                          <Loader2 className="h-4 w-4 animate-spin inline" />
-                        </span>
-                      )}
                     </label>
+                    <div className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                      {isUploading ? (
+                        <span className="flex items-center">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Uploading...
+                        </span>
+                      ) : (
+                        'Click image to change'
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex-1 space-y-4">
