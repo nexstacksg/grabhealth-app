@@ -4,7 +4,7 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IProduct, ICategory, ProductSearchParams } from '@app/shared-types';
+import { IProduct, ICategory, ProductSearchParams, ApiResponse } from '@app/shared-types';
 
 export type PriceRange = '0-50' | '50-100' | '100-200' | '200+';
 
@@ -26,7 +26,7 @@ interface StrapiResponse<T> {
 }
 
 // Transform Strapi category to our ICategory format
-function transformStrapiCategory(strapiCategory: any): ICategory {
+function transformStrapiCategory(strapiCategory: any): ICategory | null {
   if (!strapiCategory) return null;
 
   return {
@@ -50,21 +50,34 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
     Array.isArray(strapiProduct.imageUrl) &&
     strapiProduct.imageUrl.length > 0
   ) {
-    // Get the full URL from Strapi
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
-    imageUrl = `${baseUrl}${strapiProduct.imageUrl[0].url}`;
+    const imageData = strapiProduct.imageUrl[0];
+    
+    // Check if it's a DigitalOcean Spaces URL (already full URL)
+    if (imageData.url && (imageData.url.startsWith('http://') || imageData.url.startsWith('https://'))) {
+      imageUrl = imageData.url;
+    } 
+    // Check if provider is 'aws-s3' (DigitalOcean Spaces uses aws-s3 provider)
+    else if (imageData.provider === 'aws-s3' && imageData.url) {
+      // URL should already be complete from Strapi
+      imageUrl = imageData.url;
+    }
+    // Fallback for local uploads
+    else if (imageData.url) {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+      imageUrl = `${baseUrl}${imageData.url}`;
+    }
   }
 
   return {
     id: strapiProduct.id,
     name: strapiProduct.name || '',
     description: strapiProduct.description || '',
-    price: strapiProduct.price || 0, // Default to 0 if no price
+    price: strapiProduct.price || 0,
     categoryId: strapiProduct.category?.id || null,
     category: transformStrapiCategory(strapiProduct.category),
     imageUrl,
     inStock: strapiProduct.inStock ?? true,
-    status: strapiProduct.status || 'ACTIVE',
+    status: strapiProduct.product_status || strapiProduct.status || 'ACTIVE',
     createdAt: new Date(strapiProduct.createdAt),
     updatedAt: new Date(strapiProduct.updatedAt),
   };
@@ -78,9 +91,9 @@ class ProductService extends BaseService {
     totalPages: number;
   }> {
     try {
-      // Simplified approach - just get all products first
+      // Fetch products with relations
       const fullUrl =
-        'http://localhost:1337/api/products?populate=*&publicationState=preview';
+        'http://localhost:1337/api/products?populate=*';
 
       const response = await fetch(fullUrl);
 
@@ -208,7 +221,7 @@ class ProductService extends BaseService {
       const categories = strapiData.data || strapiData;
 
       if (Array.isArray(categories)) {
-        return categories.map(transformStrapiCategory);
+        return categories.map(transformStrapiCategory).filter((cat): cat is ICategory => cat !== null);
       }
 
       return [];

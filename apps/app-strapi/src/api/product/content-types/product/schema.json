@@ -27,7 +27,7 @@
       "type": "boolean",
       "default": true
     },
-    "status": {
+    "product_status": {
       "type": "enumeration",
       "default": "ACTIVE",
       "enum": [
@@ -51,6 +51,9 @@
         "videos",
         "audios"
       ]
+    },
+    "price": {
+      "type": "decimal"
     }
   }
 }

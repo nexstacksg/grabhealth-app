@@ -1297,12 +1297,13 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    sku: Schema.Attribute.String & Schema.Attribute.Unique;
-    status: Schema.Attribute.Enumeration<
+    price: Schema.Attribute.Decimal;
+    product_status: Schema.Attribute.Enumeration<
       ['ACTIVE', 'INACTIVE', 'DISCONTINUED']
     > &
       Schema.Attribute.DefaultTo<'ACTIVE'>;
+    publishedAt: Schema.Attribute.DateTime;
+    sku: Schema.Attribute.String & Schema.Attribute.Unique;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
