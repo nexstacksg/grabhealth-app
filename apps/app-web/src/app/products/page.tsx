@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { productService, categoryService, PriceRange } from '@/services';
 import { ICategory, IProduct, ProductSearchParams } from '@app/shared-types';
-import { ProductFilters } from '@/components/features/products/ProductFilters';
-import { ProductGrid } from '@/components/features/products/ProductGrid';
-import { Pagination } from '@/components/features/products/Pagination';
+import { ProductFilters } from '@/components/products/ProductFilters';
+import { ProductGrid } from '@/components/products/ProductGrid';
+import { Pagination } from '@/components/products/Pagination';
 
-import { ProductPageTransition } from '@/components/features/products/ProductSkeleton';
+import { ProductPageTransition } from '@/components/products/ProductSkeleton';
 
 export default function ProductsPage() {
   // Products state
@@ -15,6 +15,7 @@ export default function ProductsPage() {
   const [prevProducts, setPrevProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageTransitioning, setPageTransitioning] = useState(false);
+
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 8,
@@ -29,6 +30,8 @@ export default function ProductsPage() {
     maxPrice: undefined,
   });
 
+  console.log(products);
+
   // Categories state
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -36,13 +39,9 @@ export default function ProductsPage() {
 
   // Fetch products function using enhanced service
   const fetchProducts = useCallback(
-    async (
-      page = 1,
-      category?: string,
-      priceRangeParam?: PriceRange | string
-    ) => {
+    async (page = 1, category?: string) => {
       // For page changes, use a transitioning state instead of full loading
-      if (page !== pagination.page && products.length > 0) {
+      if (page !== pagination.page) {
         setPageTransitioning(true);
         // Keep previous products visible during transition
         setPrevProducts(products);
@@ -51,20 +50,20 @@ export default function ProductsPage() {
       }
 
       try {
-        // Use enhanced service method with business logic
-        const response = await productService.searchProductsWithFilters({
+        // Simplified search parameters - use the basic searchProducts method
+        const searchParams: ProductSearchParams = {
           page,
           limit: pagination.limit,
           category: category && category !== 'all' ? category : undefined,
-          priceRange:
-            priceRangeParam && priceRangeParam !== ''
-              ? (priceRangeParam as PriceRange)
-              : undefined,
           query: filters.query,
           inStock: filters.inStock,
           minPrice: filters.minPrice,
           maxPrice: filters.maxPrice,
-        });
+        };
+
+        // Use the basic searchProducts method that we know works
+        const response = await productService.searchProducts(searchParams);
+        console.log(response);
 
         // Update state with response
         setProducts(response.products || []);
@@ -76,45 +75,30 @@ export default function ProductsPage() {
         });
 
         // Update filters state
-        setFilters({
+        setFilters((prev) => ({
+          ...prev,
           category: category && category !== 'all' ? category : undefined,
-          query: filters.query,
-          inStock: filters.inStock,
-          minPrice: filters.minPrice,
-          maxPrice: filters.maxPrice,
-        });
+        }));
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('❌ Error fetching products:', error);
         setProducts([]);
+        setPagination((prev) => ({ ...prev, total: 0, totalPages: 0 }));
       } finally {
         setLoading(false);
         setPageTransitioning(false);
       }
     },
-    [
-      pagination.page,
-      pagination.limit,
-      products,
-      filters.query,
-      filters.inStock,
-      filters.minPrice,
-      filters.maxPrice,
-    ]
+    [pagination.limit]
   );
 
-  // Update filters and refetch products using service business logic
+  // Update filters and refetch products
   const updateFilters = useCallback(
     (newFilters: Partial<ProductSearchParams>) => {
       const updatedFilters = { ...filters, ...newFilters };
       setFilters(updatedFilters);
 
-      // Use service method to determine price range from min/max values
-      const priceRange = productService.getPriceRangeFromValues(
-        newFilters.minPrice,
-        newFilters.maxPrice
-      );
-
-      fetchProducts(1, updatedFilters.category, priceRange);
+      // Fetch products with updated filters
+      fetchProducts(1, updatedFilters.category);
     },
     [filters, fetchProducts]
   );
@@ -181,25 +165,14 @@ export default function ProductsPage() {
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
-    // Fetch products for the new page
     fetchProducts(newPage, activeCategory);
   };
 
-  // Handle price range change
+  // Handle price range change - simplified
   const handlePriceRangeChange = (range: string) => {
     setPriceRange(range as PriceRange | '');
-    // Convert range to min/max and update filters
-    if (range === 'under25') {
-      updateFilters({ minPrice: 0, maxPrice: 25 });
-    } else if (range === '25to50') {
-      updateFilters({ minPrice: 25, maxPrice: 50 });
-    } else if (range === '50to100') {
-      updateFilters({ minPrice: 50, maxPrice: 100 });
-    } else if (range === 'over100') {
-      updateFilters({ minPrice: 100, maxPrice: undefined });
-    } else {
-      updateFilters({ minPrice: undefined, maxPrice: undefined });
-    }
+    // For now, just refetch without price filtering since our products don't have prices
+    fetchProducts(1, activeCategory);
   };
 
   // Handle availability filter changes
@@ -210,10 +183,7 @@ export default function ProductsPage() {
   // Handle price reset
   const handlePriceReset = () => {
     setPriceRange('');
-    updateFilters({
-      minPrice: undefined,
-      maxPrice: undefined,
-    });
+    fetchProducts(1, activeCategory);
   };
 
   return (

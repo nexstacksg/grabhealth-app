@@ -36,9 +36,15 @@ export const ProductCard = React.memo(({ product }: ProductCardProps) => {
           </p>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <span className="text-lg font-bold">
-                {formatPrice(product.price)}
-              </span>
+              {product.price ? (
+                <span className="text-lg font-bold">
+                  {formatPrice(product.price)}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-500">
+                  Contact for pricing
+                </span>
+              )}
             </div>
             {product.inStock ? (
               <Badge
