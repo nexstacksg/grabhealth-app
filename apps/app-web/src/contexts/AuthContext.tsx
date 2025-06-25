@@ -15,6 +15,7 @@ import {
   RegisterRequest,
   IProfileUpdateRequest,
 } from '@app/shared-types';
+import { cookieUtils } from '@/lib/cookies';
 
 // Create context without explicit type definition to avoid unused warnings
 const AuthContext = createContext<
@@ -29,15 +30,7 @@ const useAuthProvider = () => {
 
   const checkAuth = useCallback(async () => {
     try {
-      // Check if we have a token in localStorage
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-
-      // Try to get user profile with the token
+      // Try to get user profile - the API client will check for tokens in cookies
       const userProfile = await authService.getProfile();
       setUser(userProfile);
     } catch (error: any) {
@@ -47,9 +40,8 @@ const useAuthProvider = () => {
         console.log('Auth check failed:', error.message || 'Not authenticated');
       }
       setUser(null);
-      // Clear any stored tokens on auth failure
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // Clear cookies on auth failure
+      cookieUtils.clear();
     } finally {
       setIsLoading(false);
     }
@@ -78,12 +70,12 @@ const useAuthProvider = () => {
         const authData = await authService.login({ email, password });
         setUser(authData.user);
 
-        // Store tokens in localStorage (Strapi uses Bearer tokens)
+        // Store tokens in cookies only
         if (authData.accessToken) {
-          localStorage.setItem('accessToken', authData.accessToken);
+          cookieUtils.set('accessToken', authData.accessToken, 1); // 1 day expiry
         }
         if (authData.refreshToken) {
-          localStorage.setItem('refreshToken', authData.refreshToken);
+          cookieUtils.set('refreshToken', authData.refreshToken, 7); // 7 days expiry
         }
 
         // Skip email verification for now and redirect to home
@@ -110,9 +102,8 @@ const useAuthProvider = () => {
     } catch {
       // Ignore logout errors
     } finally {
-      // Clear stored tokens
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // Clear cookies
+      cookieUtils.clear();
       setUser(null);
 
       // Force a full page reload to clear any cached state
@@ -131,12 +122,12 @@ const useAuthProvider = () => {
         });
         setUser(authData.user);
 
-        // Store tokens in localStorage (Strapi uses Bearer tokens)
+        // Store tokens in cookies only
         if (authData.accessToken) {
-          localStorage.setItem('accessToken', authData.accessToken);
+          cookieUtils.set('accessToken', authData.accessToken, 1); // 1 day expiry
         }
         if (authData.refreshToken) {
-          localStorage.setItem('refreshToken', authData.refreshToken);
+          cookieUtils.set('refreshToken', authData.refreshToken, 7); // 7 days expiry
         }
 
         // Skip email verification for now and redirect to home

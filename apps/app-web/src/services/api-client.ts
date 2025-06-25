@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import { cookieUtils } from '@/lib/cookies';
 // Check if we're on the server
 const isServer = typeof window === 'undefined';
 
@@ -27,7 +28,8 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // Add Bearer token for authenticated requests
     if (!isServer && typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
+      const token = cookieUtils.get('accessToken');
+      
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -59,9 +61,8 @@ axiosInstance.interceptors.response.use(
       !isServer &&
       typeof window !== 'undefined'
     ) {
-      // Clear stored tokens and user data
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // Clear stored tokens and user data from cookies
+      cookieUtils.clear();
       sessionStorage.removeItem('user');
 
       // Only redirect if not already on auth pages
