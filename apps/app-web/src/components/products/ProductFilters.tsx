@@ -161,7 +161,8 @@ export const ProductFilters = React.memo(
           )}
         </div>
 
-        <div className="mb-4">
+        {/* Price Range Filter - Commented out for future use */}
+        {/* <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium">Price Range</h3>
             <button
@@ -209,7 +210,7 @@ export const ProductFilters = React.memo(
               )}
             </div>
           )}
-        </div>
+        </div> */}
 
         <div>
           <div className="flex items-center justify-between mb-2">
