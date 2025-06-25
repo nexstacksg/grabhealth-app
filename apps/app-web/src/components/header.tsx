@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Menu, X, Search, User, LogOut } from 'lucide-react';
+import { Menu, User, LogOut } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -30,7 +29,6 @@ export default function Header() {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -148,9 +146,7 @@ export default function Header() {
                       <Button variant="outline" className="gap-2">
                         <User className="h-4 w-4" />
                         <span>
-                          {user.firstName && user.lastName
-                            ? `${user.firstName} ${user.lastName}`
-                            : user.email}
+                          {user.firstName || user.email.split('@')[0]}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -227,9 +223,7 @@ export default function Header() {
                           </div>
                           <div>
                             <div className="font-medium">
-                              {user.firstName && user.lastName
-                                ? `${user.firstName} ${user.lastName}`
-                                : user.email}
+                              {user.firstName || user.email.split('@')[0]}
                             </div>
                             <div className="text-sm text-gray-500">
                               {user.email}

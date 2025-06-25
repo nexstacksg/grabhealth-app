@@ -1,22 +1,22 @@
 /**
  * API Service
- * 
+ *
  * Provides a clean, backend-agnostic interface for all API calls
  * Currently implements Strapi, but can be swapped for any backend
  */
 
 import { apiClient } from './api-client';
-import { 
-  IUserPublic, 
+import {
+  IUserPublic,
   IUser,
   IProfileUpdateRequest,
-  ApiResponse 
+  ApiResponse,
 } from '@app/shared-types';
-import { 
-  StrapiUser, 
+import {
+  StrapiUser,
   transformStrapiUser,
   StrapiUploadFile,
-  transformStrapiUploadResponse
+  transformStrapiUploadResponse,
 } from './strapi-base';
 
 // API interface - clean and backend-agnostic
@@ -34,27 +34,44 @@ export interface IApi {
 class Api implements IApi {
   auth = {
     async getCurrentUser(): Promise<IUserPublic> {
-      const strapiUser = await apiClient.get<StrapiUser>('/users/me?populate=*');
+      const strapiUser = await apiClient.get<StrapiUser>(
+        '/users/me?populate=*'
+      );
       return transformStrapiUser(strapiUser);
     },
 
-    async updateUser(userId: string, data: Partial<IUser>): Promise<IUserPublic> {
-      const strapiUser = await apiClient.put<StrapiUser>(`/users/${userId}`, data);
+    async updateUser(
+      userId: string,
+      data: Partial<IUser>
+    ): Promise<IUserPublic> {
+      const strapiUser = await apiClient.put<StrapiUser>(
+        `/users/${userId}`,
+        data
+      );
       return transformStrapiUser(strapiUser);
-    }
+    },
   };
 
   upload = {
-    async uploadFile(file: File): Promise<{ url: string; id: string | number }> {
-      console.log('Starting file upload:', { name: file.name, size: file.size, type: file.type });
-      
+    async uploadFile(
+      file: File
+    ): Promise<{ url: string; id: string | number }> {
+      console.log('Starting file upload:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      });
+
       const formData = new FormData();
       formData.append('files', file);
 
       try {
         // Don't set Content-Type header - let axios set it automatically with boundary
-        const uploadResponse = await apiClient.post<StrapiUploadFile[]>('/upload', formData);
-        
+        const uploadResponse = await apiClient.post<StrapiUploadFile[]>(
+          '/upload',
+          formData
+        );
+
         console.log('Upload response:', uploadResponse);
 
         if (!uploadResponse || uploadResponse.length === 0) {
@@ -66,17 +83,19 @@ class Api implements IApi {
         console.error('Upload error details:', error);
         throw error;
       }
-    }
+    },
   };
 }
 
 // Export singleton instance as 'api'
 export const api: IApi = new Api();
 
-// Helper function to get user ID (handles both id and documentId)
+// Helper function to get user ID (for users, always use numeric id, not documentId)
 export function getUserId(user: IUserPublic | StrapiUser): string {
-  if ('documentId' in user && user.documentId) {
-    return user.documentId;
+  // For users, we need to use the numeric id, not documentId
+  // documentId is for content types, but users still use numeric ids for API operations
+  if ('id' in user && user.id) {
+    return typeof user.id === 'number' ? user.id.toString() : user.id;
   }
-  return typeof user.id === 'number' ? user.id.toString() : user.id;
+  throw new Error('User ID not found');
 }

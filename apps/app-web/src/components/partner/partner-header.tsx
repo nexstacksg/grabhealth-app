@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -90,16 +90,14 @@ export default function PartnerHeader() {
                   <Button variant="outline" className="gap-2">
                     <User className="h-4 w-4" />
                     <span className="hidden md:inline">
-                      {user.firstName && user.lastName
-                        ? `${user.firstName} ${user.lastName}`
-                        : user.email}
+                      {user.firstName || user.email.split('@')[0]}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
                     <p className="font-medium text-sm">
-                      {user.firstName} {user.lastName}
+                      {user.firstName || user.email.split('@')[0]}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {user.email}

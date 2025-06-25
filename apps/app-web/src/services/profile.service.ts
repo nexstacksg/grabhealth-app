@@ -23,7 +23,7 @@ interface UserProfile extends IUserPublic {
 class ProfileService extends BaseService {
   async getProfile(): Promise<UserProfile> {
     try {
-      return await api.auth.getCurrentUser() as UserProfile;
+      return (await api.auth.getCurrentUser()) as UserProfile;
     } catch (error) {
       console.error('Get profile error:', error);
       this.handleError(error);
@@ -36,13 +36,17 @@ class ProfileService extends BaseService {
       const currentUser = await api.auth.getCurrentUser();
       const userId = getUserId(currentUser);
 
-      // Only include fields that have changed
-      const updateData: Partial<IUserPublic> = {};
-      if (data.firstName !== undefined) updateData.firstName = data.firstName;
+      // Map profile update to Strapi fields
+      const updateData: any = {};
+      if (data.firstName !== undefined) {
+        // Use firstName as username in Strapi
+        updateData.username = data.firstName;
+        updateData.firstName = data.firstName;
+      }
       if (data.lastName !== undefined) updateData.lastName = data.lastName;
       if (data.email !== undefined) updateData.email = data.email;
 
-      return await api.auth.updateUser(userId, updateData) as UserProfile;
+      return (await api.auth.updateUser(userId, updateData)) as UserProfile;
     } catch (error) {
       console.error('Profile update error:', error);
       this.handleError(error);
@@ -72,7 +76,7 @@ class ProfileService extends BaseService {
       // Get current user and update profile image
       const currentUser = await api.auth.getCurrentUser();
       const userId = getUserId(currentUser);
-      
+
       await api.auth.updateUser(userId, {
         profileImage: imageUrl,
       });

@@ -1,9 +1,9 @@
 /**
  * Strapi Data Transformers
- * 
+ *
  * Centralized transformers for converting between Strapi's data format and our application's format
  * Following DRY principle to avoid repetition across services
- * 
+ *
  * IMPORTANT: Strapi v5 uses 'documentId' as the primary identifier for API operations,
  * not 'id'. The 'id' field is still present but 'documentId' should be used for all
  * API calls like PUT, DELETE, etc.
@@ -24,13 +24,15 @@ export interface StrapiSingleResponse<T> {
 }
 
 export interface StrapiListResponse<T> {
-  data: Array<T & {
-    id: number;
-    documentId: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt?: string;
-  }>;
+  data: Array<
+    T & {
+      id: number;
+      documentId: string;
+      createdAt: string;
+      updatedAt: string;
+      publishedAt?: string;
+    }
+  >;
   meta?: {
     pagination?: {
       page: number;
@@ -66,20 +68,24 @@ export interface StrapiUser {
 }
 
 // Transform Strapi user to our IUserPublic format
-// IMPORTANT: Using documentId as the primary identifier, not id
+// IMPORTANT: For users, we use the numeric ID for API operations, not documentId
 export function transformStrapiUser(strapiUser: StrapiUser): IUserPublic {
   return {
-    id: strapiUser.documentId || strapiUser.id.toString(), // Use documentId if available
+    id: strapiUser.id.toString(), // Use numeric id for users (needed for API operations)
     email: strapiUser.email,
     firstName: strapiUser.firstName || strapiUser.username || '',
     lastName: strapiUser.lastName || '',
     role: strapiUser.role?.type?.toUpperCase() || 'USER',
-    status: strapiUser.status || (strapiUser.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
+    status:
+      strapiUser.status ||
+      (strapiUser.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
     createdAt: new Date(strapiUser.createdAt),
     profileImage: strapiUser.profileImage || null,
     referralCode: strapiUser.referralCode || null,
     emailVerified: strapiUser.confirmed,
-    emailVerifiedAt: strapiUser.confirmed ? new Date(strapiUser.createdAt) : null,
+    emailVerifiedAt: strapiUser.confirmed
+      ? new Date(strapiUser.createdAt)
+      : null,
   };
 }
 
@@ -97,7 +103,7 @@ export function transformStrapiListResponse<T, R>(
   transformer: (data: T & { id: number; documentId: string }) => R
 ): { data: R[]; meta?: Record<string, unknown> } {
   return {
-    data: response.data.map(data => transformer(data)),
+    data: response.data.map((data) => transformer(data)),
     meta: response.meta,
   };
 }
@@ -115,12 +121,12 @@ export function extractStrapiData<T>(response: unknown): T {
 // Helper to construct full URL for Strapi media
 export function getStrapiMediaUrl(url?: string | null): string | null {
   if (!url) return null;
-  
+
   // If already a full URL, return as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  
+
   // Otherwise prepend the Strapi URL
   const strapiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
   return `${strapiUrl}${url}`;
@@ -139,7 +145,10 @@ export interface StrapiUploadFile {
   mime: string;
 }
 
-export function transformStrapiUploadResponse(file: StrapiUploadFile): { url: string; id: number } {
+export function transformStrapiUploadResponse(file: StrapiUploadFile): {
+  url: string;
+  id: number;
+} {
   return {
     id: file.id,
     url: getStrapiMediaUrl(file.url) || file.url,

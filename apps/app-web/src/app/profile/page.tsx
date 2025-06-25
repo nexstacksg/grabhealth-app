@@ -29,8 +29,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    username: '',
     email: '',
     currentPassword: '',
     newPassword: '',
@@ -41,8 +40,8 @@ export default function ProfilePage() {
     if (user) {
       setFormData((prev) => ({
         ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        // Use firstName as username if available, otherwise use email prefix
+        username: user.firstName || user.email.split('@')[0] || '',
         email: user.email,
       }));
       setIsLoading(false);
@@ -104,10 +103,9 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
 
-      // Create profile update request
+      // Create profile update request - use username as firstName
       const updateRequest: IProfileUpdateRequest = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName: formData.username,
         email: formData.email,
       };
 
@@ -269,27 +267,15 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex-1 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleInputChange}
+                        placeholder="Enter your username"
+                      />
                     </div>
 
                     <div className="space-y-2">
