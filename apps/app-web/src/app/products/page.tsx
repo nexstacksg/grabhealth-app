@@ -15,6 +15,7 @@ export default function ProductsPage() {
   const [prevProducts, setPrevProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageTransitioning, setPageTransitioning] = useState(false);
+
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 8,
@@ -63,6 +64,7 @@ export default function ProductsPage() {
         // Use the basic searchProducts method that we know works
         const response = await productService.searchProducts(searchParams);
         console.log(response);
+
         // Update state with response
         setProducts(response.products || []);
         setPagination({
