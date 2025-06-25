@@ -186,11 +186,7 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const productId = Number(params.id);
-
-        if (isNaN(productId)) {
-          throw new Error('Invalid product ID');
-        }
+        const productId = params.id as string;
 
         const productData = await services.product.getProduct(productId);
         setProduct(productData as ProductWithExtras);
@@ -198,34 +194,24 @@ export default function ProductDetailPage() {
         // Note: AI tracking removed as it's not essential for product viewing
         // and was causing authentication errors for public users
 
-        // Fetch AI-powered similar products
-        try {
-          const similarProducts = await services.ai.getSimilarProducts(
-            productData.id,
-            { limit: 4 }
-          );
-          setRelatedProducts(similarProducts);
-        } catch (err) {
-          console.error('Error fetching similar products:', err);
-          // Fallback to category-based products if AI fails
-          if (productData.categoryId) {
-            try {
-              const categoryProducts =
-                await services.product.getProductsByCategory(
-                  productData.categoryId.toString(),
-                  { limit: 4 }
-                );
-              setRelatedProducts(
-                categoryProducts.products
-                  .filter((p: IProduct) => p.id !== productData.id)
-                  .slice(0, 4)
+        // Fetch category-based related products
+        if (productData.categoryId) {
+          try {
+            const categoryProducts =
+              await services.product.getProductsByCategory(
+                productData.categoryId.toString(),
+                { limit: 5 }
               );
-            } catch (fallbackErr) {
-              console.error(
-                'Error fetching category products as fallback:',
-                fallbackErr
-              );
-            }
+            setRelatedProducts(
+              categoryProducts.products
+                .filter((p: IProduct) => p.id !== productData.id)
+                .slice(0, 4)
+            );
+          } catch (err) {
+            console.error(
+              'Error fetching related products:',
+              err
+            );
           }
         }
       } catch (err: any) {
@@ -386,7 +372,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
               <Link
-                href={`/products/${relatedProduct.id}`}
+                href={`/products/${(relatedProduct as any).documentId || relatedProduct.id}`}
                 key={relatedProduct.id}
               >
                 <Card className="h-full hover:shadow-md transition-shadow overflow-hidden">

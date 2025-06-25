@@ -12,8 +12,11 @@ interface ProductCardProps {
 }
 
 export const ProductCard = React.memo(({ product }: ProductCardProps) => {
+  // Use documentId for Strapi v5, fallback to id
+  const productId = (product as any).documentId || product.id;
+  
   return (
-    <Link href={`/products/${product.id}`}>
+    <Link href={`/products/${productId}`}>
       <Card className="overflow-hidden transition-all hover:shadow-md">
         <div className="relative">
           <Image

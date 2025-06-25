@@ -4,7 +4,12 @@
 
 import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IProduct, ICategory, ProductSearchParams, ApiResponse } from '@app/shared-types';
+import { IProduct as BaseIProduct, ICategory, ProductSearchParams, ApiResponse } from '@app/shared-types';
+
+// Extend IProduct to include documentId for Strapi v5
+interface IProduct extends BaseIProduct {
+  documentId?: string;
+}
 
 export type PriceRange = '0-50' | '50-100' | '100-200' | '200+';
 
@@ -70,6 +75,7 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
 
   return {
     id: strapiProduct.id,
+    documentId: strapiProduct.documentId, // Add documentId for Strapi v5
     name: strapiProduct.name || '',
     description: strapiProduct.description || '',
     price: strapiProduct.price || 0,
@@ -174,11 +180,14 @@ class ProductService extends BaseService {
     return this.searchProducts(searchParams);
   }
 
-  async getProduct(id: number): Promise<IProduct> {
+  async getProduct(id: number | string): Promise<IProduct> {
     try {
-      const response = await apiClient.get<StrapiResponse<any>>(
-        `/products/${id}?populate=*`
-      );
+      // For Strapi v5, use documentId if it's a string
+      const endpoint = typeof id === 'string' 
+        ? `/products/${id}?populate=*` 
+        : `/products/${id}?populate=*`;
+      
+      const response = await apiClient.get<StrapiResponse<any>>(endpoint);
       const strapiData = response.data as any;
 
       // Handle Strapi v5 format
