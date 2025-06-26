@@ -20,11 +20,19 @@ export function middleware(request: NextRequest) {
   // For protected routes, redirect to login if not authenticated
   // Add your protected routes here
   // Note: Commission and rank-rewards pages use server-side authentication instead
-  const protectedRoutes = ['/dashboard', '/profile', '/orders', '/partner'];
+  const protectedRoutes = ['/dashboard', '/profile', '/orders'];
+
+  // Check for exact partner route (not partners)
+  const isPartnerDashboard =
+    request.nextUrl.pathname === '/partner' ||
+    request.nextUrl.pathname.startsWith('/partner/');
 
   if (
     !session &&
-    protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+    (protectedRoutes.some((route) =>
+      request.nextUrl.pathname.startsWith(route)
+    ) ||
+      isPartnerDashboard)
   ) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
