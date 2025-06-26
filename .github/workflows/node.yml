@@ -32,11 +32,11 @@ jobs:
     - name: Setup environment files
       run: |
         # Copy .env files from /root/ to project directories
-        # Source files: .app-admin.env, .app-be.env, .app-web.env
+        # Source files: .app-admin.env, .app-strapi.env, .app-web.env
         # Target: .env in each respective app directory
         
         # Check if source files exist
-        if [ ! -f "/root/.app-admin.env" ] || [ ! -f "/root/.app-be.env" ] || [ ! -f "/root/.app-web.env" ]; then
+        if [ ! -f "/root/.app-admin.env" ] || [ ! -f "/root/.app-strapi.env" ] || [ ! -f "/root/.app-web.env" ]; then
           echo "Error: One or more source .env files not found in /root/"
           exit 1
         fi
@@ -45,8 +45,8 @@ jobs:
         cp /root/.app-admin.env ./apps/app-admin/.env
         chmod 600 ./apps/app-admin/.env
         
-        cp /root/.app-be.env ./apps/app-be/.env
-        chmod 600 ./apps/app-be/.env
+        cp /root/.app-strapi.env ./apps/app-strapi/.env
+        chmod 600 ./apps/app-strapi/.env
         
         cp /root/.app-web.env ./apps/app-web/.env
         chmod 600 ./apps/app-web/.env
@@ -56,7 +56,7 @@ jobs:
       run: bun install
     - name: Generate Prisma Client
       run: |
-        cd apps/app-be
+        cd apps/app-strapi
         bunx prisma generate
     - name: Build
       run: bun run build
