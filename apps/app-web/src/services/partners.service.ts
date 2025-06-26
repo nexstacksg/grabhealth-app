@@ -67,6 +67,20 @@ function transformStrapiPartner(strapiPartner: any): IPartner {
       : strapiPartner.specializations
         ? safeJsonParse(strapiPartner.specializations, [])
         : [],
+    services:
+      strapiPartner.services && Array.isArray(strapiPartner.services)
+        ? strapiPartner.services
+            .filter((service: any) => service) // Include all services for now
+            .map((service: any) => {
+              try {
+                return transformStrapiService(service);
+              } catch (error) {
+                console.warn('Failed to transform service in partner:', error);
+                return null;
+              }
+            })
+            .filter(Boolean) // Remove failed transformations
+        : undefined,
     createdAt: new Date(strapiPartner.createdAt || Date.now()),
     updatedAt: new Date(strapiPartner.updatedAt || Date.now()),
   };

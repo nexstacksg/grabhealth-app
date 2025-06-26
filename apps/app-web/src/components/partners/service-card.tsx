@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, DollarSign, Gift } from 'lucide-react';
@@ -11,9 +17,21 @@ interface ServiceCardProps {
   isEligibleForFreeCheckup?: boolean;
 }
 
-export function ServiceCard({ service, onSelect, isSelected, isEligibleForFreeCheckup }: ServiceCardProps) {
+export function ServiceCard({
+  service,
+  onSelect,
+  isSelected,
+  isEligibleForFreeCheckup,
+}: ServiceCardProps) {
   return (
-    <Card className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+    <Card
+      className={`cursor-pointer transition-all hover:shadow-md ${
+        isSelected
+          ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200'
+          : 'hover:border-gray-300'
+      }`}
+      onClick={() => onSelect(service)}
+    >
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -21,11 +39,17 @@ export function ServiceCard({ service, onSelect, isSelected, isEligibleForFreeCh
             {isEligibleForFreeCheckup && service.category === 'Body Check' && (
               <div className="flex items-center gap-1 mt-1 text-green-600">
                 <Gift className="h-4 w-4" />
-                <span className="text-sm font-medium">Eligible for free checkup</span>
+                <span className="text-sm font-medium">
+                  Eligible for free checkup
+                </span>
               </div>
             )}
           </div>
-          <Badge variant={service.category === 'Body Check' ? 'default' : 'secondary'}>
+          <Badge
+            variant={
+              service.category === 'Body Check' ? 'default' : 'secondary'
+            }
+          >
             {service.category}
           </Badge>
         </div>
@@ -53,12 +77,15 @@ export function ServiceCard({ service, onSelect, isSelected, isEligibleForFreeCh
             )}
           </div>
         </div>
-        <Button 
+        <Button
           className="w-full"
           variant={isSelected ? 'default' : 'outline'}
-          onClick={() => onSelect(service)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(service);
+          }}
         >
-          {isSelected ? 'Selected' : 'Select Service'}
+          {isSelected ? '✓ Selected - Book Now' : 'Select Service'}
         </Button>
       </CardContent>
     </Card>
