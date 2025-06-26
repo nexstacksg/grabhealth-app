@@ -220,7 +220,10 @@ export default function BookingsPage() {
       NO_SHOW: { variant: 'destructive' as const, label: 'No Show' },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig];
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      variant: 'outline' as const,
+      label: status
+    };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
