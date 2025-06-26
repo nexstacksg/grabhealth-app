@@ -281,4 +281,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-Built with ❤️ as a modern app template 2
+Built with ❤️ as a modern app template 1
