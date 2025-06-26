@@ -12,6 +12,7 @@ import {
 } from '@app/shared-types';
 import { api } from './api.service';
 import { StrapiUser, transformStrapiUser } from './strapi-base';
+import { cookieUtils } from '@/lib/cookies';
 
 // Strapi auth response types
 interface StrapiAuthResponse {
@@ -92,10 +93,9 @@ class AuthService extends BaseService {
 
   async logout(): Promise<void> {
     try {
-      // Strapi doesn't have a logout endpoint, just clear local storage
+      // Strapi doesn't have a logout endpoint, just clear cookies
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        cookieUtils.clear();
       }
     } catch (error) {
       this.handleError(error);
@@ -117,7 +117,7 @@ class AuthService extends BaseService {
       // The JWT token is long-lived, so we just return the current token
       const currentToken =
         typeof window !== 'undefined'
-          ? localStorage.getItem('accessToken')
+          ? cookieUtils.get('accessToken')
           : null;
 
       if (!currentToken) {

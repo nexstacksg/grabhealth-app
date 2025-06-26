@@ -32,21 +32,29 @@ jobs:
     - name: Setup environment files
       run: |
         # Copy .env files from /root/ to project directories
-        # Source files: .app-admin.env, .app-be.env, .app-web.env
+        # Source files: .app-strapi.env, .app-web.env
         # Target: .env in each respective app directory
         
-        # Check if source files exist
-        if [ ! -f "/root/.app-admin.env" ] || [ ! -f "/root/.app-be.env" ] || [ ! -f "/root/.app-web.env" ]; then
-          echo "Error: One or more source .env files not found in /root/"
+        # Debug: List files in /root/
+        echo "Listing /root/ directory:"
+        ls -la /root/ | grep -E "\.env|\.app" || true
+        
+        # Check each file individually for better error reporting
+        if [ ! -f "/root/.app-strapi.env" ]; then
+          echo "Error: /root/.app-strapi.env not found"
           exit 1
         fi
         
-        # Copy and rename to .env with restricted permissions
-        cp /root/.app-admin.env ./apps/app-admin/.env
-        chmod 600 ./apps/app-admin/.env
+        if [ ! -f "/root/.app-web.env" ]; then
+          echo "Error: /root/.app-web.env not found"
+          exit 1
+        fi
         
-        cp /root/.app-be.env ./apps/app-be/.env
-        chmod 600 ./apps/app-be/.env
+        echo "All source .env files found successfully"
+        
+        # Copy and rename to .env with restricted permissions
+        cp /root/.app-strapi.env ./apps/app-strapi/.env
+        chmod 600 ./apps/app-strapi/.env
         
         cp /root/.app-web.env ./apps/app-web/.env
         chmod 600 ./apps/app-web/.env
@@ -54,12 +62,18 @@ jobs:
         echo "Environment files copied successfully"
     - name: Install dependencies
       run: bun install
-    - name: Generate Prisma Client
+    - name: Build shared-types
       run: |
-        cd apps/app-be
-        bunx prisma generate
-    - name: Build
-      run: bun run build
+        cd packages/shared-types
+        bun run build
+    - name: Build app-strapi
+      run: |
+        cd apps/app-strapi
+        NODE_OPTIONS="--max-old-space-size=4096" bun run build
+    - name: Build app-web
+      run: |
+        cd apps/app-web
+        bun run build
     # - name: Test
     #   run: bun run test
     - name: Restart PM2 processes

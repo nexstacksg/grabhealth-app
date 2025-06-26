@@ -20,26 +20,13 @@ export default function FeaturedProducts() {
       try {
         setLoading(true);
 
-        try {
-          // Try to get AI recommendations first
-          const recommendedProducts =
-            await services.ai.getPersonalizedRecommendations();
-          setProducts(recommendedProducts);
-          setError(null);
-        } catch (aiError) {
-          console.warn(
-            'AI recommendations not available, falling back to regular products:',
-            aiError
-          );
-
-          // Fallback to regular products if AI fails
-          const regularProducts = await services.product.searchProducts({
-            limit: 4,
-            page: 1,
-          });
-          setProducts(regularProducts.products || []);
-          setError(null);
-        }
+        // Directly fetch products without AI recommendations for now
+        const regularProducts = await services.product.searchProducts({
+          limit: 4,
+          page: 1,
+        });
+        setProducts(regularProducts.products || []);
+        setError(null);
       } catch (err) {
         setError('Error loading products. Please try again later.');
         console.error('Failed to load products:', err);

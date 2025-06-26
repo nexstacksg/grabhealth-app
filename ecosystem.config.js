@@ -1,18 +1,19 @@
 module.exports = {
   apps: [
     {
-      name: 'grabhealth-backend',
-      script: 'dist/server.js',
-      cwd: './apps/app-be',
-      instances: 2,
-      exec_mode: 'cluster',
+      name: 'grabhealth-strapi',
+      script: '/root/.bun/bin/bun',
+      args: 'run start',
+      cwd: './apps/app-strapi',
+      instances: 1,
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: 4000
+        PORT: 1337
       },
-      error_file: './logs/backend-error.log',
-      out_file: './logs/backend-out.log',
-      log_file: './logs/backend-combined.log',
+      error_file: './logs/strapi-error.log',
+      out_file: './logs/strapi-out.log',
+      log_file: './logs/strapi-combined.log',
       time: true,
       watch: false,
       max_memory_restart: '1G',
