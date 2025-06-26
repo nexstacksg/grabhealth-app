@@ -35,11 +35,27 @@ jobs:
         # Source files: .app-admin.env, .app-strapi.env, .app-web.env
         # Target: .env in each respective app directory
         
-        # Check if source files exist
-        if [ ! -f "/root/.app-admin.env" ] || [ ! -f "/root/.app-strapi.env" ] || [ ! -f "/root/.app-web.env" ]; then
-          echo "Error: One or more source .env files not found in /root/"
+        # Debug: List files in /root/
+        echo "Listing /root/ directory:"
+        ls -la /root/ | grep -E "\.env|\.app" || true
+        
+        # Check each file individually for better error reporting
+        if [ ! -f "/root/.app-admin.env" ]; then
+          echo "Error: /root/.app-admin.env not found"
           exit 1
         fi
+        
+        if [ ! -f "/root/.app-strapi.env" ]; then
+          echo "Error: /root/.app-strapi.env not found"
+          exit 1
+        fi
+        
+        if [ ! -f "/root/.app-web.env" ]; then
+          echo "Error: /root/.app-web.env not found"
+          exit 1
+        fi
+        
+        echo "All source .env files found successfully"
         
         # Copy and rename to .env with restricted permissions
         cp /root/.app-admin.env ./apps/app-admin/.env
