@@ -33,12 +33,14 @@ This is a **Turbo-powered monorepo** using Bun workspaces for efficient dependen
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/app-template.git
    cd app-template
    ```
 
 2. **Install all dependencies** (from root directory)
+
    ```bash
    bun install
    ```
@@ -54,6 +56,7 @@ This is a **Turbo-powered monorepo** using Bun workspaces for efficient dependen
 ### Running the Applications
 
 #### Run All Applications (from root)
+
 ```bash
 bun run dev  # Starts all apps concurrently
 ```
@@ -61,6 +64,7 @@ bun run dev  # Starts all apps concurrently
 #### Run Individual Applications
 
 1. **Backend API** (Port 4000)
+
    ```bash
    # From root directory
    bun run dev:be
@@ -69,6 +73,7 @@ bun run dev  # Starts all apps concurrently
    ```
 
 2. **Web Portal** (Port 3000)
+
    ```bash
    # From root directory
    bun run dev:web
@@ -77,6 +82,7 @@ bun run dev  # Starts all apps concurrently
    ```
 
 3. **Admin Portal** (Port 3100)
+
    ```bash
    # From root directory
    bun run dev:admin
@@ -98,6 +104,7 @@ bun run dev  # Starts all apps concurrently
 All TypeScript types and interfaces are centralized in the `@app/shared-types` package to ensure consistency across all applications.
 
 ### Structure
+
 ```
 packages/shared-types/
 ├── src/
@@ -123,6 +130,7 @@ The shared-types package is automatically linked via Bun workspaces. Each app re
 ```
 
 Import types in your code:
+
 ```typescript
 import { UserRole, IUser, ApiResponse } from '@app/shared-types';
 ```
@@ -165,12 +173,14 @@ bun run prisma:generate
 ### Build Commands
 
 #### Build All Applications
+
 ```bash
 # From root directory
 bun run build  # Builds all apps in dependency order
 ```
 
 #### Build Individual Applications
+
 ```bash
 # Build specific app (from root)
 bun run build --filter=app-be      # Backend only
@@ -190,6 +200,7 @@ cd apps/app-mobile && eas build
 ```
 
 #### Other Turbo Commands
+
 ```bash
 # Run linting across all apps
 bun run lint
@@ -227,6 +238,7 @@ cd app-web && bun run test
 ## 🌍 Environment Variables
 
 ### Backend (.env)
+
 ```env
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="your-secret-key"
@@ -238,16 +250,19 @@ NODE_ENV="development"
 ```
 
 ### Web Apps (.env.local)
+
 ```env
 NEXT_PUBLIC_API_URL="http://localhost:4000/api/v1"
 ```
 
 ### Mobile App
+
 Configure in `app.json` or use environment-specific config files.
 
 ## 📄 API Documentation
 
 The backend API is documented with Swagger/OpenAPI. Access the documentation at:
+
 ```
 http://localhost:4000/api-docs
 ```
@@ -266,4 +281,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-Built with ❤️ as a modern app template
+Built with ❤️ as a modern app template 1
