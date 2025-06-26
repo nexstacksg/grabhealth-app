@@ -69,7 +69,7 @@ jobs:
     - name: Build app-strapi
       run: |
         cd apps/app-strapi
-        bun run build
+        NODE_OPTIONS="--max-old-space-size=4096" bun run build
     - name: Build app-web
       run: |
         cd apps/app-web
