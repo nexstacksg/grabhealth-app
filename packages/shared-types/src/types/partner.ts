@@ -16,6 +16,7 @@ export interface IPartner {
   isActive: boolean;
   operatingHours?: Record<string, { open: string; close: string }>;
   specializations: string[];
+  services?: IService[]; // Optional services array when populated
   createdAt: Date;
   updatedAt: Date;
 }

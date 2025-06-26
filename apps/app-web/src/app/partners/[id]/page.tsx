@@ -2,10 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 import { MapPin, Phone, Clock, Globe, Star, ArrowLeft } from 'lucide-react';
 import { IPartner, IService } from '@app/shared-types';
 import services from '@/services';
@@ -24,26 +37,38 @@ export default function PartnerDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [freeCheckupStatus, setFreeCheckupStatus] = useState<any>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const servicesPerPage = 4; // Show 4 services per page (2x2 grid)
+
+  // Filter state
+  const [serviceFilter, setServiceFilter] = useState<string>('all');
+
   useEffect(() => {
     const fetchPartnerDetails = async () => {
       try {
         setIsLoading(true);
-        const [partnerData, servicesData] = await Promise.all([
-          services.partners.getPartner(params.id as string),
-          services.partners.getPartnerServices(params.id as string)
-        ]);
-        
+        // Get partner data which already includes services
+        const partnerData = await services.partners.getPartner(
+          params.id as string
+        );
+
         setPartner(partnerData);
-        setPartnerServices(servicesData);
+        // Extract services from partner data instead of making separate API call
+        setPartnerServices(partnerData.services || []);
 
         // Fetch free checkup status if user is logged in
         if (user && user.id) {
           try {
-            const status = await services.bookings.checkFreeCheckupEligibility();
+            const status =
+              await services.bookings.checkFreeCheckupEligibility();
             setFreeCheckupStatus(status);
           } catch (error: any) {
             // Ignore rate limit errors and authentication errors
-            if (!error.message?.includes('429') && !error.message?.includes('401')) {
+            if (
+              !error.message?.includes('429') &&
+              !error.message?.includes('401')
+            ) {
               console.error('Failed to fetch free checkup status:', error);
             }
           }
@@ -61,6 +86,23 @@ export default function PartnerDetailPage() {
     }
   }, [params.id, user]);
 
+  // Filter and pagination calculations
+  const filteredServices = partnerServices.filter((service) => {
+    if (serviceFilter === 'all') return true;
+    return service.category === serviceFilter;
+  });
+
+  const totalServices = filteredServices.length;
+  const totalPages = Math.ceil(totalServices / servicesPerPage);
+  const startIndex = (currentPage - 1) * servicesPerPage;
+  const endIndex = startIndex + servicesPerPage;
+  const currentServices = filteredServices.slice(startIndex, endIndex);
+
+  // Get unique categories for filter
+  const serviceCategories = Array.from(
+    new Set(partnerServices.map((service) => service.category))
+  );
+
   const handleServiceSelect = (service: IService) => {
     setSelectedService(service);
   };
@@ -68,6 +110,18 @@ export default function PartnerDetailPage() {
   const handleBookingComplete = () => {
     // Handle booking completion
     router.push('/bookings');
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Reset selected service when changing pages
+    setSelectedService(null);
+  };
+
+  const handleFilterChange = (category: string) => {
+    setServiceFilter(category);
+    setCurrentPage(1); // Reset to first page when filter changes
+    setSelectedService(null); // Reset selected service
   };
 
   if (isLoading) {
@@ -87,10 +141,7 @@ export default function PartnerDetailPage() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-red-500">{error || 'Partner not found'}</p>
-            <Button 
-              onClick={() => router.push('/partners')} 
-              className="mt-4"
-            >
+            <Button onClick={() => router.push('/partners')} className="mt-4">
               Back to Partners
             </Button>
           </CardContent>
@@ -123,8 +174,12 @@ export default function PartnerDetailPage() {
             </div>
             <div className="flex items-center">
               <Star className="h-5 w-5 text-yellow-500 fill-current" />
-              <span className="ml-1 font-semibold">{partner.rating.toFixed(1)}</span>
-              <span className="ml-1 text-gray-500">({partner.totalReviews} reviews)</span>
+              <span className="ml-1 font-semibold">
+                {partner.rating.toFixed(1)}
+              </span>
+              <span className="ml-1 text-gray-500">
+                ({partner.totalReviews} reviews)
+              </span>
             </div>
           </div>
         </CardHeader>
@@ -133,7 +188,8 @@ export default function PartnerDetailPage() {
             <div className="space-y-3">
               <div className="flex items-center text-gray-600">
                 <MapPin className="h-4 w-4 mr-2" />
-                {partner.address}, {partner.city}, {partner.state} {partner.postalCode}
+                {partner.address}, {partner.city}, {partner.state}{' '}
+                {partner.postalCode}
               </div>
               <div className="flex items-center text-gray-600">
                 <Phone className="h-4 w-4 mr-2" />
@@ -142,9 +198,9 @@ export default function PartnerDetailPage() {
               {partner.website && (
                 <div className="flex items-center text-gray-600">
                   <Globe className="h-4 w-4 mr-2" />
-                  <a 
-                    href={partner.website} 
-                    target="_blank" 
+                  <a
+                    href={partner.website}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-blue-600"
                   >
@@ -158,14 +214,18 @@ export default function PartnerDetailPage() {
                 <Clock className="h-4 w-4 mr-2" />
                 Operating Hours
               </h4>
-              {partner.operatingHours && Object.entries(partner.operatingHours).map(([day, hours]: [string, any]) => (
-                <div key={day} className="text-sm text-gray-600">
-                  <span className="font-medium capitalize">{day}:</span> {hours.open} - {hours.close}
-                </div>
-              ))}
+              {partner.operatingHours &&
+                Object.entries(partner.operatingHours).map(
+                  ([day, hours]: [string, any]) => (
+                    <div key={day} className="text-sm text-gray-600">
+                      <span className="font-medium capitalize">{day}:</span>{' '}
+                      {hours.open} - {hours.close}
+                    </div>
+                  )
+                )}
             </div>
           </div>
-          
+
           {partner.specializations.length > 0 && (
             <div className="mt-4">
               <h4 className="font-semibold mb-2">Specializations</h4>
@@ -181,63 +241,239 @@ export default function PartnerDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Services and Booking Tabs */}
-      <Tabs defaultValue="services" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="booking" disabled={!selectedService}>
-            Book Appointment
-          </TabsTrigger>
-        </TabsList>
+      {/* Services and Booking Section */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Services Column */}
+        <div
+          className={`${selectedService ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}
+        >
+          <div className="space-y-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Available Services</h3>
+                {totalServices > 0 && (
+                  <p className="text-sm text-gray-500">
+                    Showing {startIndex + 1}-{Math.min(endIndex, totalServices)}{' '}
+                    of {totalServices} services
+                  </p>
+                )}
+              </div>
+              {!selectedService && totalServices > 0 && (
+                <p className="text-sm text-gray-500">
+                  Select a service to book an appointment
+                </p>
+              )}
+            </div>
 
-        <TabsContent value="services" className="space-y-4">
-          <h3 className="text-lg font-semibold mb-4">Available Services</h3>
+            {/* Filter Controls */}
+            {serviceCategories.length > 1 && (
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium">Filter by category:</span>
+                <Select
+                  value={serviceFilter}
+                  onValueChange={handleFilterChange}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {serviceCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {serviceFilter !== 'all' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFilterChange('all')}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Clear filter
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+
           {partnerServices.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-gray-500">No services available at this time.</p>
+                <p className="text-gray-500">
+                  No services available at this time.
+                </p>
+              </CardContent>
+            </Card>
+          ) : filteredServices.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500">
+                  No services found for the selected category.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleFilterChange('all')}
+                  className="mt-2"
+                >
+                  Show all services
+                </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {partnerServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  onSelect={handleServiceSelect}
-                  isSelected={selectedService?.id === service.id}
-                  isEligibleForFreeCheckup={freeCheckupStatus?.eligible}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+            <>
+              <div className="grid md:grid-cols-2 gap-4">
+                {currentServices.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    onSelect={handleServiceSelect}
+                    isSelected={selectedService?.id === service.id}
+                    isEligibleForFreeCheckup={freeCheckupStatus?.eligible}
+                  />
+                ))}
+              </div>
 
-        <TabsContent value="booking">
-          {selectedService && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Selected Service</CardTitle>
-                  <CardDescription>{selectedService.name}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-gray-600">
-                    <p>Duration: {selectedService.duration} minutes</p>
-                    <p>Price: ${selectedService.price.toFixed(2)}</p>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center space-x-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+
+                  <div className="flex space-x-1">
+                    {totalPages <= 5 ? (
+                      // Show all pages if 5 or fewer
+                      Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <Button
+                            key={page}
+                            variant={
+                              currentPage === page ? 'default' : 'outline'
+                            }
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {page}
+                          </Button>
+                        )
+                      )
+                    ) : (
+                      // Show compact pagination for many pages
+                      <>
+                        <Button
+                          variant={currentPage === 1 ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handlePageChange(1)}
+                          className="w-8 h-8 p-0"
+                        >
+                          1
+                        </Button>
+                        {currentPage > 3 && <span className="px-2">...</span>}
+                        {currentPage > 2 && currentPage < totalPages - 1 && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {currentPage}
+                          </Button>
+                        )}
+                        {currentPage < totalPages - 2 && (
+                          <span className="px-2">...</span>
+                        )}
+                        <Button
+                          variant={
+                            currentPage === totalPages ? 'default' : 'outline'
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(totalPages)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {totalPages}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Booking Column - Shows when service is selected */}
+        {selectedService && (
+          <div
+            id="booking-section"
+            className="lg:col-span-1 space-y-4 animate-in slide-in-from-right-4 lg:slide-in-from-bottom-4 duration-300"
+          >
+            <div className="lg:sticky lg:top-4">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-semibold">Book Appointment</h3>
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
+
+              {/* Selected Service Summary */}
+              <Card className="mb-4 bg-blue-50 border-blue-200">
+                <CardContent className="pt-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-semibold text-blue-900 text-sm">
+                        {selectedService.name}
+                      </h4>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedService(null)}
+                        className="text-blue-600 hover:text-blue-800 h-6 w-6 p-0"
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-blue-600">
+                      <span>⏱️ {selectedService.duration}min</span>
+                      <span>💰 ${selectedService.price.toFixed(2)}</span>
+                    </div>
+                    {selectedService.requiresApproval && (
+                      <div className="text-xs text-orange-600">
+                        ⚠️ Requires approval
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <BookingCalendar
-                partnerId={partner.id}
-                service={selectedService}
-                onBookingComplete={handleBookingComplete}
-              />
+              {/* Booking Calendar */}
+              <div className="lg:max-h-[600px] lg:overflow-y-auto">
+                <BookingCalendar
+                  partnerId={partner.id}
+                  service={selectedService}
+                  onBookingComplete={handleBookingComplete}
+                />
+              </div>
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
