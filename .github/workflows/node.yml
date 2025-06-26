@@ -32,7 +32,7 @@ jobs:
     - name: Setup environment files
       run: |
         # Copy .env files from /root/ to project directories
-        # Source files: .app-admin.env, .app-strapi.env, .app-web.env
+        # Source files: .app-strapi.env, .app-web.env
         # Target: .env in each respective app directory
         
         # Debug: List files in /root/
@@ -40,11 +40,6 @@ jobs:
         ls -la /root/ | grep -E "\.env|\.app" || true
         
         # Check each file individually for better error reporting
-        if [ ! -f "/root/.app-admin.env" ]; then
-          echo "Error: /root/.app-admin.env not found"
-          exit 1
-        fi
-        
         if [ ! -f "/root/.app-strapi.env" ]; then
           echo "Error: /root/.app-strapi.env not found"
           exit 1
@@ -58,9 +53,6 @@ jobs:
         echo "All source .env files found successfully"
         
         # Copy and rename to .env with restricted permissions
-        cp /root/.app-admin.env ./apps/app-admin/.env
-        chmod 600 ./apps/app-admin/.env
-        
         cp /root/.app-strapi.env ./apps/app-strapi/.env
         chmod 600 ./apps/app-strapi/.env
         
