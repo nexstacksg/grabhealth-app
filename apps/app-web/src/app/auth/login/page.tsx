@@ -47,7 +47,7 @@ function LoginPageContent() {
 
   useEffect(() => {
     // Check if user was redirected after email verification
-    if (searchParams.get('verified') === 'true') {
+    if (searchParams?.get('verified') === 'true') {
       setSuccessMessage(
         'Email verified successfully! Please login to continue.'
       );
