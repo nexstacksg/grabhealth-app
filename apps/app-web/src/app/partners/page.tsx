@@ -22,6 +22,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { IPartner } from '@app/shared-types';
 import services from '@/services';
+import { apiClient } from '@/services/api-client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
@@ -69,7 +70,7 @@ export default function PartnersPage() {
     try {
       setGiftItemsLoading(true);
       // Fetch gift items from Strapi
-      const response = await services.apiClient.get('/gift-items?sort=requiredPurchases:asc');
+      const response = await apiClient.get<{ data: any[] }>('/gift-items?sort=requiredPurchases:asc');
       
       if (response.data && response.data.length > 0) {
         // Transform Strapi data to match our interface
