@@ -80,6 +80,39 @@ export default {
           action: 'api::service.service.findOne',
           subject: null,
         },
+        // Commission structure permissions (read-only)
+        {
+          action: 'api::commission-tier.commission-tier.find',
+          subject: null,
+        },
+        {
+          action: 'api::commission-tier.commission-tier.findOne',
+          subject: null,
+        },
+        {
+          action: 'api::product-commission-tier.product-commission-tier.find',
+          subject: null,
+        },
+        {
+          action: 'api::product-commission-tier.product-commission-tier.findOne',
+          subject: null,
+        },
+        {
+          action: 'api::volume-bonus-tier.volume-bonus-tier.find',
+          subject: null,
+        },
+        {
+          action: 'api::volume-bonus-tier.volume-bonus-tier.findOne',
+          subject: null,
+        },
+        {
+          action: 'api::gift-item.gift-item.find',
+          subject: null,
+        },
+        {
+          action: 'api::gift-item.gift-item.findOne',
+          subject: null,
+        },
       ];
 
       // Grant permissions to public role

@@ -66,20 +66,21 @@ function transformStrapiCommission(strapiCommission: any): ICommission {
     throw new Error('Invalid commission data');
   }
 
+  // Handle both direct data and Strapi's wrapped format
+  const data = strapiCommission.attributes || strapiCommission;
+
   return {
-    id: strapiCommission.id?.toString() || '',
-    orderId: strapiCommission.order?.id?.toString() || '',
-    userId: strapiCommission.user?.id?.toString() || '',
-    recipientId: strapiCommission.recipient?.id?.toString() || '',
-    recipient: strapiCommission.recipient ? transformStrapiUser(strapiCommission.recipient) : undefined,
-    amount: parseFloat(strapiCommission.amount || 0),
-    commissionRate: parseFloat(strapiCommission.commissionRate || 0),
-    relationshipLevel: strapiCommission.relationshipLevel || 0,
-    type: strapiCommission.type || 'DIRECT',
-    status: strapiCommission.status || 'PENDING',
-    pvPoints: strapiCommission.pvPoints || 0,
-    createdAt: new Date(strapiCommission.createdAt),
-    updatedAt: new Date(strapiCommission.updatedAt),
+    id: parseInt(strapiCommission.id || data.id || '0'),
+    orderId: parseInt(data.order?.data?.id || data.order?.id || data.orderId || '0'),
+    userId: (data.user?.data?.id || data.user?.id || data.userId || '').toString(),
+    recipientId: (data.recipient?.data?.id || data.recipient?.id || data.recipientId || '').toString(),
+    amount: parseFloat(data.amount || 0),
+    commissionRate: parseFloat(data.commissionRate || 0),
+    relationshipLevel: parseInt(data.relationshipLevel || 0),
+    type: data.type || 'DIRECT',
+    status: data.status || 'PENDING',
+    createdAt: new Date(data.createdAt || strapiCommission.createdAt),
+    updatedAt: new Date(data.updatedAt || strapiCommission.updatedAt),
   };
 }
 
@@ -115,14 +116,18 @@ class CommissionService extends BaseService {
         `/commissions?${queryParams.toString()}`
       );
 
-      const commissions = response.data.map(transformStrapiCommission);
-      const pagination = response.meta?.pagination || {};
+      const commissions = (response.data || []).map(transformStrapiCommission);
+      const pagination = response.meta?.pagination || {
+        total: commissions.length,
+        page: 1,
+        pageCount: 1
+      };
 
       return {
         commissions,
-        total: pagination.total || commissions.length,
-        page: pagination.page || 1,
-        totalPages: pagination.pageCount || 1,
+        total: pagination.total,
+        page: pagination.page,
+        totalPages: pagination.pageCount,
       };
     } catch (error) {
       console.error('Error fetching commissions:', error);
@@ -245,6 +250,8 @@ class CommissionService extends BaseService {
       return transformStrapiCommission(response.data);
     } catch (error) {
       this.handleError(error);
+      // TypeScript requires a return value - throw to propagate the error
+      throw error;
     }
   }
 
@@ -260,11 +267,51 @@ class CommissionService extends BaseService {
 
   async getCommissionData(): Promise<CommissionData> {
     try {
-      // Fetch multiple data points
-      const [commissionsData, network] = await Promise.all([
+      // Fetch multiple data points in parallel
+      const [commissionsData, currentUserResp, uplineResp, downlineResp] = await Promise.all([
         this.getMyCommissions({ limit: 50 }),
-        this.getNetwork(),
+        apiClient.get('/users/me').catch(() => ({ id: null })),
+        apiClient.get('/user-relationships?filters[user][id][$eq]=me&populate[upline]=*').catch(() => ({ data: [] })),
+        apiClient.get('/user-relationships?filters[upline][id][$eq]=me&populate[user]=*').catch(() => ({ data: [] }))
       ]);
+      
+      const currentUser = currentUserResp as any;
+      const uplineRelations = Array.isArray((uplineResp as any).data) ? (uplineResp as any).data : [];
+      const downlineRelations = Array.isArray((downlineResp as any).data) ? (downlineResp as any).data : [];
+      
+      // Get upline from relationships
+      let uplineData = null;
+      if (uplineRelations.length > 0) {
+        const rel = uplineRelations[0];
+        const uplineUser = rel.upline?.data || rel.upline || null;
+        if (uplineUser) {
+          uplineData = {
+            id: uplineUser.id,
+            user_id: uplineUser.id,
+            upline_id: null,
+            relationship_level: 1,
+            created_at: rel.createdAt || rel.attributes?.createdAt,
+            updated_at: rel.updatedAt || rel.attributes?.updatedAt,
+            name: `${uplineUser.firstName || ''} ${uplineUser.lastName || ''}`.trim(),
+            email: uplineUser.email,
+          };
+        }
+      }
+      
+      // Transform downlines
+      const downlinesData = downlineRelations.map((rel: any) => {
+        const userData = rel.user?.data || rel.user || {};
+        return {
+          id: rel.id,
+          user_id: userData.id || rel.userId,
+          upline_id: currentUser?.id,
+          relationship_level: rel.relationshipLevel || rel.attributes?.relationshipLevel || 1,
+          created_at: rel.createdAt || rel.attributes?.createdAt,
+          updated_at: rel.updatedAt || rel.attributes?.updatedAt,
+          name: userData ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim() : '',
+          email: userData.email || '',
+        };
+      });
       
       const totalEarnings = commissionsData.commissions.reduce(
         (sum, c) => sum + c.amount, 
@@ -272,11 +319,11 @@ class CommissionService extends BaseService {
       );
       
       return {
-        upline: null, // Would need to fetch from user relationships
-        downlines: network.children,
+        upline: uplineData,
+        downlines: downlinesData,
         commissions: commissionsData.commissions,
         points: 0, // Would need to calculate from orders
-        referralLink: `${window.location.origin}/auth/register?ref=me`,
+        referralLink: typeof window !== 'undefined' ? `${window.location.origin}/auth/register?ref=${currentUser?.id || 'me'}` : '',
         totalEarnings,
       };
     } catch (error) {
@@ -294,24 +341,38 @@ class CommissionService extends BaseService {
 
   async getCommissionStructure(): Promise<CommissionStructure> {
     try {
-      // This would need a custom controller in Strapi
-      // For now, return default structure
+      // Fetch commission tiers from Strapi
+      const tiersResponse = await apiClient.get<StrapiCommissionsResponse>('/commission-tiers?sort=tierLevel:asc');
+      const tiers = (tiersResponse as any).data || [];
+      
+      // Transform Strapi data to our structure
+      const levels = tiers.map((tier: any) => {
+        const tierData = tier.attributes || tier;
+        return {
+          level: tierData.tierLevel || tier.tierLevel,
+          name: tierData.tierName || tier.tierName,
+          rate: parseFloat(tierData.directCommissionRate || tier.directCommissionRate || 0) / 100, // Convert percentage to decimal
+        };
+      });
+      
+      // Build rates object from tiers
+      const rates: Record<string, number> = {};
+      tiers.forEach((tier: any) => {
+        const tierData = tier.attributes || tier;
+        const tierName = tierData.tierName || tier.tierName || '';
+        const roleName = tierName.toUpperCase().replace(/ /g, '_');
+        const commissionRate = tierData.directCommissionRate || tier.directCommissionRate || 0;
+        rates[roleName] = parseFloat(commissionRate) / 100;
+      });
+      
+      // Only return what we have from Strapi, no hardcoded defaults
       return {
-        levels: [
-          { level: 1, name: 'Direct Sales', rate: 0.30 },
-          { level: 2, name: 'Team Leader', rate: 0.10 },
-          { level: 3, name: 'Manager', rate: 0.05 },
-          { level: 4, name: 'Platform', rate: 0.05 },
-        ],
-        rates: {
-          SALES: 0.30,
-          LEADER: 0.10,
-          MANAGER: 0.05,
-          COMPANY: 0.05,
-        },
+        levels,
+        rates,
       };
     } catch (error) {
-      console.error('Error fetching commission structure:', error);
+      console.error('Error fetching commission structure from Strapi:', error);
+      // Return empty structure instead of hardcoded defaults
       return {
         levels: [],
         rates: {},

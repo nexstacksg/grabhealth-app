@@ -68,14 +68,28 @@ export default function PartnersPage() {
   const fetchGiftItems = async () => {
     try {
       setGiftItemsLoading(true);
-      // TODO: Replace with actual API call to fetch gift items from Strapi
-      // const response = await services.giftItems.getGiftItems();
-      // setGiftItems(response.data);
-
-      // For now, just set empty array since we removed hardcoded data
-      setGiftItems([]);
+      // Fetch gift items from Strapi
+      const response = await services.apiClient.get('/gift-items?sort=requiredPurchases:asc');
+      
+      if (response.data && response.data.length > 0) {
+        // Transform Strapi data to match our interface
+        const transformedGiftItems = response.data.map((item: any) => {
+          const itemData = item.attributes || item;
+          return {
+            id: item.id,
+            name: itemData.name,
+            description: itemData.description || '',
+            required_purchases: itemData.requiredPurchases,
+            tier_name: `${itemData.requiredPurchases} purchases`,
+          };
+        });
+        setGiftItems(transformedGiftItems);
+      } else {
+        setGiftItems([]);
+      }
     } catch (error) {
       console.error('Failed to fetch gift items:', error);
+      setGiftItems([]);
     } finally {
       setGiftItemsLoading(false);
     }

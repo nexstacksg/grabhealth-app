@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -13,15 +13,42 @@ import { Input } from '@/components/ui/input';
 import { CopyIcon, Download, Share2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import QRCode from 'react-qr-code';
+import { commissionService } from '@/services';
 
 type ReferralLinkProps = {
   referralLink: string;
 };
 
+type CommissionLevel = {
+  level: number;
+  name: string;
+  rate: number;
+};
+
 function ReferralLink({ referralLink }: ReferralLinkProps) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
+  const [commissionLevels, setCommissionLevels] = useState<CommissionLevel[]>([]);
+  const [isLoadingRates, setIsLoadingRates] = useState(true);
   const qrCodeRef = useRef<HTMLDivElement>(null);
+
+  // Fetch commission structure on mount
+  useEffect(() => {
+    const fetchCommissionRates = async () => {
+      try {
+        const structure = await commissionService.getCommissionStructure();
+        if (structure && structure.levels && structure.levels.length > 0) {
+          setCommissionLevels(structure.levels);
+        }
+      } catch (error) {
+        console.error('Failed to fetch commission rates:', error);
+      } finally {
+        setIsLoadingRates(false);
+      }
+    };
+
+    fetchCommissionRates();
+  }, []);
 
   // Copy referral link to clipboard
   const copyToClipboard = async () => {
@@ -196,27 +223,33 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
           <Share2 className="h-4 w-4" />
           <AlertTitle>How the Commission System Works</AlertTitle>
           <AlertDescription>
-            <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
-              <li>
-                When someone joins using your link, you become their Tier 1
-                upline
-              </li>
-              <li>
-                You earn 30% commission on direct sales to your Tier 1 downlines
-              </li>
-              <li>
-                You earn 10% commission when your Tier 1 downlines make sales to
-                their downlines (Tier 2)
-              </li>
-              <li>
-                For deeper levels (Tier 3+), you earn points that can be
-                redeemed for benefits
-              </li>
-              <li>
-                The more people in your network, the more earning potential you
-                have
-              </li>
-            </ul>
+            {isLoadingRates ? (
+              <div className="text-sm text-muted-foreground">Loading commission rates...</div>
+            ) : commissionLevels.length > 0 ? (
+              <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
+                <li>
+                  When someone joins using your link, you become their upline
+                </li>
+                {commissionLevels.map((level) => (
+                  <li key={level.level}>
+                    {level.name}: Earn {(level.rate * 100).toFixed(0)}% commission
+                    {level.level === 1 && ' on direct sales'}
+                    {level.level === 2 && ' when your direct referrals make sales'}
+                    {level.level === 3 && ' from your extended network'}
+                  </li>
+                ))}
+                <li>
+                  For deeper levels, you earn points that can be redeemed for benefits
+                </li>
+                <li>
+                  The more people in your network, the more earning potential you have
+                </li>
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Commission structure information is not available at the moment.
+              </p>
+            )}
           </AlertDescription>
         </Alert>
 
