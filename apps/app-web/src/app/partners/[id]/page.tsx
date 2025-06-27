@@ -19,6 +19,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Type assertions to fix React component type issues
+const CardComponent = Card as any;
+const CardContentComponent = CardContent as any;
+const CardDescriptionComponent = CardDescription as any;
+const CardHeaderComponent = CardHeader as any;
+const CardTitleComponent = CardTitle as any;
+const ButtonComponent = Button as any;
+const BadgeComponent = Badge as any;
+const SelectComponent = Select as any;
+const SelectContentComponent = SelectContent as any;
+const SelectItemComponent = SelectItem as any;
+const SelectTriggerComponent = SelectTrigger as any;
+const SelectValueComponent = SelectValue as any;
+
 import { MapPin, Phone, Clock, Globe, Star, ArrowLeft } from 'lucide-react';
 import { IPartner, IService } from '@app/shared-types';
 import services from '@/services';
@@ -46,6 +60,12 @@ export default function PartnerDetailPage() {
 
   useEffect(() => {
     const fetchPartnerDetails = async () => {
+      if (!params?.id) {
+        setError('Partner ID not found');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         // Get partner data which already includes services
@@ -81,10 +101,10 @@ export default function PartnerDetailPage() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       fetchPartnerDetails();
     }
-  }, [params.id, user]);
+  }, [params?.id, user]);
 
   // Filter and pagination calculations
   const filteredServices = partnerServices.filter((service) => {
@@ -138,14 +158,17 @@ export default function PartnerDetailPage() {
   if (error || !partner) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="text-center py-8">
+        <CardComponent>
+          <CardContentComponent className="text-center py-8">
             <p className="text-red-500">{error || 'Partner not found'}</p>
-            <Button onClick={() => router.push('/partners')} className="mt-4">
+            <ButtonComponent
+              onClick={() => router.push('/partners')}
+              className="mt-4"
+            >
               Back to Partners
-            </Button>
-          </CardContent>
-        </Card>
+            </ButtonComponent>
+          </CardContentComponent>
+        </CardComponent>
       </div>
     );
   }
@@ -153,24 +176,26 @@ export default function PartnerDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
-      <Button
+      <ButtonComponent
         variant="ghost"
         onClick={() => router.push('/partners')}
         className="mb-4"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Partners
-      </Button>
+      </ButtonComponent>
 
       {/* Partner Header */}
-      <Card className="mb-6">
-        <CardHeader>
+      <CardComponent className="mb-6">
+        <CardHeaderComponent>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-2xl">{partner.name}</CardTitle>
-              <CardDescription className="mt-2">
+              <CardTitleComponent className="text-2xl">
+                {partner.name}
+              </CardTitleComponent>
+              <CardDescriptionComponent className="mt-2">
                 {partner.description}
-              </CardDescription>
+              </CardDescriptionComponent>
             </div>
             <div className="flex items-center">
               <Star className="h-5 w-5 text-yellow-500 fill-current" />
@@ -182,8 +207,8 @@ export default function PartnerDetailPage() {
               </span>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </CardHeaderComponent>
+        <CardContentComponent>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <div className="flex items-center text-gray-600">
@@ -231,15 +256,15 @@ export default function PartnerDetailPage() {
               <h4 className="font-semibold mb-2">Specializations</h4>
               <div className="flex flex-wrap gap-2">
                 {partner.specializations.map((spec) => (
-                  <Badge key={spec} variant="secondary">
+                  <BadgeComponent key={spec} variant="secondary">
                     {spec}
-                  </Badge>
+                  </BadgeComponent>
                 ))}
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </CardContentComponent>
+      </CardComponent>
 
       {/* Services and Booking Section */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -269,60 +294,62 @@ export default function PartnerDetailPage() {
             {serviceCategories.length > 1 && (
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">Filter by category:</span>
-                <Select
+                <SelectComponent
                   value={serviceFilter}
                   onValueChange={handleFilterChange}
                 >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                  <SelectTriggerComponent className="w-48">
+                    <SelectValueComponent placeholder="All categories" />
+                  </SelectTriggerComponent>
+                  <SelectContentComponent>
+                    <SelectItemComponent value="all">
+                      All Categories
+                    </SelectItemComponent>
                     {serviceCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
+                      <SelectItemComponent key={category} value={category}>
                         {category}
-                      </SelectItem>
+                      </SelectItemComponent>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </SelectContentComponent>
+                </SelectComponent>
                 {serviceFilter !== 'all' && (
-                  <Button
+                  <ButtonComponent
                     variant="ghost"
                     size="sm"
                     onClick={() => handleFilterChange('all')}
                     className="text-gray-500 hover:text-gray-700"
                   >
                     Clear filter
-                  </Button>
+                  </ButtonComponent>
                 )}
               </div>
             )}
           </div>
 
           {partnerServices.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
+            <CardComponent>
+              <CardContentComponent className="text-center py-8">
                 <p className="text-gray-500">
                   No services available at this time.
                 </p>
-              </CardContent>
-            </Card>
+              </CardContentComponent>
+            </CardComponent>
           ) : filteredServices.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
+            <CardComponent>
+              <CardContentComponent className="text-center py-8">
                 <p className="text-gray-500">
                   No services found for the selected category.
                 </p>
-                <Button
+                <ButtonComponent
                   variant="outline"
                   size="sm"
                   onClick={() => handleFilterChange('all')}
                   className="mt-2"
                 >
                   Show all services
-                </Button>
-              </CardContent>
-            </Card>
+                </ButtonComponent>
+              </CardContentComponent>
+            </CardComponent>
           ) : (
             <>
               <div className="grid md:grid-cols-2 gap-4">
@@ -340,21 +367,21 @@ export default function PartnerDetailPage() {
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center space-x-2 mt-6">
-                  <Button
+                  <ButtonComponent
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
                     Previous
-                  </Button>
+                  </ButtonComponent>
 
                   <div className="flex space-x-1">
                     {totalPages <= 5 ? (
                       // Show all pages if 5 or fewer
                       Array.from({ length: totalPages }, (_, i) => i + 1).map(
                         (page) => (
-                          <Button
+                          <ButtonComponent
                             key={page}
                             variant={
                               currentPage === page ? 'default' : 'outline'
@@ -364,35 +391,35 @@ export default function PartnerDetailPage() {
                             className="w-8 h-8 p-0"
                           >
                             {page}
-                          </Button>
+                          </ButtonComponent>
                         )
                       )
                     ) : (
                       // Show compact pagination for many pages
                       <>
-                        <Button
+                        <ButtonComponent
                           variant={currentPage === 1 ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => handlePageChange(1)}
                           className="w-8 h-8 p-0"
                         >
                           1
-                        </Button>
+                        </ButtonComponent>
                         {currentPage > 3 && <span className="px-2">...</span>}
                         {currentPage > 2 && currentPage < totalPages - 1 && (
-                          <Button
+                          <ButtonComponent
                             variant="default"
                             size="sm"
                             onClick={() => handlePageChange(currentPage)}
                             className="w-8 h-8 p-0"
                           >
                             {currentPage}
-                          </Button>
+                          </ButtonComponent>
                         )}
                         {currentPage < totalPages - 2 && (
                           <span className="px-2">...</span>
                         )}
-                        <Button
+                        <ButtonComponent
                           variant={
                             currentPage === totalPages ? 'default' : 'outline'
                           }
@@ -401,19 +428,19 @@ export default function PartnerDetailPage() {
                           className="w-8 h-8 p-0"
                         >
                           {totalPages}
-                        </Button>
+                        </ButtonComponent>
                       </>
                     )}
                   </div>
 
-                  <Button
+                  <ButtonComponent
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                   >
                     Next
-                  </Button>
+                  </ButtonComponent>
                 </div>
               )}
             </>
@@ -433,21 +460,21 @@ export default function PartnerDetailPage() {
               </div>
 
               {/* Selected Service Summary */}
-              <Card className="mb-4 bg-blue-50 border-blue-200">
-                <CardContent className="pt-4">
+              <CardComponent className="mb-4 bg-blue-50 border-blue-200">
+                <CardContentComponent className="pt-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-semibold text-blue-900 text-sm">
                         {selectedService.name}
                       </h4>
-                      <Button
+                      <ButtonComponent
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedService(null)}
                         className="text-blue-600 hover:text-blue-800 h-6 w-6 p-0"
                       >
                         ✕
-                      </Button>
+                      </ButtonComponent>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-blue-600">
                       <span>⏱️ {selectedService.duration}min</span>
@@ -459,8 +486,8 @@ export default function PartnerDetailPage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </CardContentComponent>
+              </CardComponent>
 
               {/* Booking Calendar */}
               <div className="lg:max-h-[600px] lg:overflow-y-auto">
