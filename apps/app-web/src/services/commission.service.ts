@@ -93,8 +93,10 @@ class CommissionService extends BaseService {
       // Build query params for Strapi
       const queryParams = new URLSearchParams();
       
-      // Filter by current user as recipient
-      queryParams.append('filters[recipient][id][$eq]', 'me');
+      // Filter by current user as recipient - Strapi doesn't support 'me' in filters
+      // This needs to be handled by custom controller or use actual user ID
+      // For now, we'll fetch all and filter client-side
+      queryParams.append('populate[recipient]', 'true');
       
       if (params?.page) {
         queryParams.append('pagination[page]', params.page.toString());
@@ -129,8 +131,11 @@ class CommissionService extends BaseService {
         page: pagination.page,
         totalPages: pagination.pageCount,
       };
-    } catch (error) {
-      console.error('Error fetching commissions:', error);
+    } catch (error: any) {
+      // Only log detailed error if it's not a 404 or 403
+      if (error?.status !== 404 && error?.status !== 403) {
+        console.error('Error fetching commissions:', error.message || error);
+      }
       return {
         commissions: [],
         total: 0,
