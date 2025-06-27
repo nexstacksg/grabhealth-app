@@ -198,7 +198,6 @@ function CommissionStructure() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]">Product</TableHead>
-                <TableHead>Customer Price</TableHead>
                 <TableHead>
                   {(() => {
                     const role = roleTypes.find(r => r.level === 1);
@@ -230,9 +229,6 @@ function CommissionStructure() {
                           {product.sku}
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {formatPrice(product.customerPrice)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-green-50">
