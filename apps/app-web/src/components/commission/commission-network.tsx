@@ -40,6 +40,8 @@ import {
 } from '@/components/ui/dialog';
 import ReferralLink from './referral-link';
 import { useCommission } from './commission-provider';
+import { apiClient } from '@/services/api-client';
+import { useAuth } from '@/contexts/AuthContext';
 // Authentication is now handled at the page level
 
 type UserRelationship = {
@@ -50,6 +52,11 @@ type UserRelationship = {
   created_at: string;
   updated_at: string;
   user_name?: string;
+  name?: string;
+  email?: string;
+  rank?: string;
+  sales?: number;
+  memberSince?: string;
 };
 
 type CommissionNetworkProps = {
@@ -67,6 +74,20 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
   }>({});
   const [showQRCode, setShowQRCode] = useState(false);
   const { referralLink } = useCommission();
+  const { user } = useAuth();
+  const [memberDetails, setMemberDetails] = useState<{[key: string]: any}>({});
+  const [commissionRates, setCommissionRates] = useState<{tier1: number; tier2: number; tier3: number}>({
+    tier1: 30,
+    tier2: 10,
+    tier3: 5
+  });
+  const [currentUserSales, setCurrentUserSales] = useState<number>(0);
+  const [currentUserRank, setCurrentUserRank] = useState<string>('Bronze');
+  const [rankThresholds, setRankThresholds] = useState<{platinum: number; gold: number; silver: number}>({
+    platinum: 10000,
+    gold: 5000,
+    silver: 2000
+  });
 
   // Update window width on resize for responsive behavior
   useEffect(() => {
@@ -81,6 +102,147 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Fetch member sales data when component mounts
+  useEffect(() => {
+    const fetchMemberSalesData = async () => {
+      try {
+        // Fetch sales data for all members in the network
+        const memberIds = [...downlines.map(d => d.user_id), upline?.user_id].filter(Boolean);
+        
+        if (memberIds.length > 0) {
+          // Fetch actual sales data for each member
+          const salesData: {[key: string]: number} = {};
+          
+          // For now, skip fetching individual member sales to avoid server errors
+          // This would need a custom Strapi endpoint to efficiently fetch sales for multiple users
+          // Just use the sales data if it's already provided in the relationship data
+          memberIds.forEach(memberId => {
+            salesData[memberId || ''] = 0; // Default to 0
+          });
+          
+          setMemberDetails(prev => ({ ...prev, ...salesData }));
+        }
+      } catch (error: any) {
+        if (error?.status !== 404 && error?.status !== 403) {
+          console.error('Error fetching member sales data:', error.message || error);
+        }
+      }
+    };
+
+    fetchMemberSalesData();
+  }, [downlines, upline]);
+
+  // Fetch commission rates from Strapi
+  useEffect(() => {
+    const fetchCommissionRates = async () => {
+      try {
+        const response = await apiClient.get<{ data: any[] }>('/commission-tiers?sort=tierLevel:asc');
+        if (response.data && response.data.length > 0) {
+          const rates: any = {};
+          response.data.forEach((tier: any) => {
+            const tierData = tier.attributes || tier;
+            const level = tierData.tierLevel || tier.tierLevel;
+            rates[`tier${level}`] = parseFloat(tierData.directCommissionRate || tier.directCommissionRate || 0);
+          });
+          setCommissionRates(prev => ({ ...prev, ...rates }));
+        }
+      } catch (error: any) {
+        if (error?.status !== 404 && error?.status !== 403) {
+          console.error('Error fetching commission rates:', error.message || error);
+        }
+      }
+    };
+
+    fetchCommissionRates();
+  }, []);
+
+  // Fetch current user's sales data
+  useEffect(() => {
+    const fetchCurrentUserData = async () => {
+      try {
+        // Try to get user ID from auth context first
+        let userId: string | null = user?.id || null;
+        
+        // If not in context, try to fetch from API
+        if (!userId) {
+          try {
+            const userResponse = await apiClient.get<any>('/users/me');
+            if (userResponse) {
+              userId = userResponse.id;
+              // Check if user has a rank field
+              if (userResponse.rank) {
+                setCurrentUserRank(userResponse.rank);
+              }
+            }
+          } catch (error) {
+            // If we can't get user info, use defaults
+            console.log('Using default values - unable to fetch user info');
+            return;
+          }
+        }
+
+        // If we have a user ID, fetch their orders
+        if (userId) {
+          try {
+            // Use proper Strapi filter syntax
+            const ordersResponse = await apiClient.get<{ data: any[] }>(
+              `/orders?filters[user][id][$eq]=${userId}&filters[status][$eq]=COMPLETED&populate=*`
+            );
+            
+            if (ordersResponse.data && Array.isArray(ordersResponse.data)) {
+              // Calculate total sales from completed orders
+              const totalSales = ordersResponse.data.reduce((sum, order) => {
+                const orderData = order.attributes || order;
+                return sum + parseFloat(orderData.totalAmount || orderData.total || 0);
+              }, 0);
+              
+              setCurrentUserSales(totalSales);
+              // Only update rank if not already set from user profile
+              if (currentUserRank === 'Bronze') {
+                setCurrentUserRank(determineRank(totalSales));
+              }
+            }
+          } catch (orderError: any) {
+            // Orders might not exist, which is fine
+            if (orderError?.status !== 404) {
+              console.log('Unable to fetch orders:', orderError.message);
+            }
+          }
+        }
+      } catch (error: any) {
+        if (error?.status !== 404 && error?.status !== 403 && error?.status !== 500) {
+          console.error('Error in fetchCurrentUserData:', error.message || error);
+        }
+        // Keep default values on error
+      }
+    };
+
+    fetchCurrentUserData();
+  }, [user]);
+
+  // Fetch rank thresholds from Strapi
+  useEffect(() => {
+    const fetchRankThresholds = async () => {
+      try {
+        // Try to fetch user role types which might contain sales thresholds
+        const response = await apiClient.get<{ data: any[] }>('/user-role-types?populate=*');
+        if (response.data && response.data.length > 0) {
+          // For now, use default thresholds since user-role-types doesn't have sales thresholds
+          // You might need to add a new content type in Strapi for rank thresholds
+          console.log('User role types fetched:', response.data.length);
+        }
+      } catch (error: any) {
+        // Silently handle if endpoint doesn't exist or user doesn't have permission
+        if (error?.status !== 404 && error?.status !== 403) {
+          console.error('Error fetching role types:', error.message || error);
+        }
+        // Keep default thresholds
+      }
+    };
+
+    fetchRankThresholds();
+  }, []);
+
   const zoomIn = () => {
     if (zoomLevel < 1.5) {
       setZoomLevel((prev) => prev + 0.1);
@@ -93,35 +255,53 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
     }
   };
 
-  // Sample data for the network visualization
+  // Helper function to determine rank based on sales or level
+  const determineRank = (sales?: number, level?: number): string => {
+    if (sales !== undefined && sales !== null) {
+      if (sales >= rankThresholds.platinum) return 'Platinum';
+      if (sales >= rankThresholds.gold) return 'Gold';
+      if (sales >= rankThresholds.silver) return 'Silver';
+      return 'Bronze';
+    }
+    // Fallback based on relationship level
+    if (level === 1) return 'Gold';
+    if (level === 2) return 'Silver';
+    return 'Bronze';
+  };
+
+  // Helper function to format sales amount
+  const formatSales = (amount?: number): string => {
+    if (!amount) return '$0';
+    return `$${amount.toLocaleString()}`;
+  };
+
+  // Process the actual data from Strapi
   const networkData = {
     currentUser: {
-      id: 1,
+      id: 'current',
       name: 'You',
-      rank: 'Gold Partner',
-      sales: '$5,200',
-      referralLink: 'https://grabhealth.com/register?ref=user1',
+      rank: currentUserRank,
+      sales: formatSales(currentUserSales),
+      referralLink: referralLink,
     },
     uplineMembers: upline
       ? [
           {
-            id: upline.upline_id || 0,
-            name: upline.user_name || 'Upline Member',
-            rank: 'Platinum',
-            sales: '$5,200',
+            id: upline.id || upline.upline_id || 0,
+            name: upline.name || upline.user_name || upline.email || 'Upline Member',
+            rank: upline.rank || determineRank(upline.sales || memberDetails[upline.user_id] || 0, 0),
+            sales: formatSales(upline.sales || memberDetails[upline.user_id] || 0),
           },
         ]
       : [],
     downlineMembers: downlines.map((d) => ({
-      id: d.user_id,
-      name: d.user_name || `Member #${d.user_id}`,
-      rank: 'Silver',
-      sales: '$1,800',
-    })) || [
-      { id: 3, name: 'Team Member 1', rank: 'Silver', sales: '$1,800' },
-      { id: 4, name: 'Team Member 2', rank: 'Bronze', sales: '$950' },
-      { id: 5, name: 'Team Member 3', rank: 'Silver', sales: '$1,650' },
-    ],
+      id: d.id || d.user_id,
+      name: d.name || d.user_name || d.email || `Member #${d.user_id}`,
+      rank: d.rank || determineRank(d.sales || memberDetails[d.user_id] || 0, d.relationship_level),
+      sales: formatSales(d.sales || memberDetails[d.user_id] || 0),
+      joinedDate: d.created_at,
+      relationshipLevel: d.relationship_level,
+    })),
   };
 
   // Determine node colors based on rank
@@ -293,7 +473,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                     </p>
                     <p className="flex justify-between mt-1">
                       <span className="text-gray-500">Team Size:</span>
-                      <span>12 members</span>
+                      <span>{downlines.length} members</span>
                     </p>
                   </div>
                 )}
@@ -411,7 +591,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                     </p>
                     <p className="flex justify-between mt-1">
                       <span className="text-gray-500">Joined:</span>
-                      <span>3 months ago</span>
+                      <span>{member.joinedDate ? new Date(member.joinedDate).toLocaleDateString() : 'N/A'}</span>
                     </p>
                   </div>
                 )}
@@ -697,7 +877,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 Tier 1 (Direct Sales)
               </h4>
               <p className="text-sm">
-                30% commission on all direct sales you make to customers.
+                {commissionRates.tier1}% commission on all direct sales you make to customers.
               </p>
             </div>
 
@@ -706,7 +886,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 Tier 2 (Indirect Sales)
               </h4>
               <p className="text-sm">
-                10% commission on all sales made by your direct recruits (Tier 2
+                {commissionRates.tier2}% commission on all sales made by your direct recruits (Tier 2
                 members).
               </p>
             </div>
@@ -716,16 +896,15 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 Tier 3+ (Deep Network)
               </h4>
               <p className="text-sm">
-                5% commission on deeper tiers (3, 4, etc.) with decreasing
+                {commissionRates.tier3}% commission on deeper tiers (3, 4, etc.) with decreasing
                 percentages for deeper levels.
               </p>
             </div>
 
             <div className="p-4 bg-amber-50 rounded-lg">
-              <h4 className="font-semibold text-amber-700">Points System</h4>
+              <h4 className="font-semibold text-amber-700">Network Growth</h4>
               <p className="text-sm">
-                Earn points based on your network's performance. Points can be
-                redeemed for rewards.
+                Build your network by recruiting new members. Your earnings grow as your network expands.
               </p>
             </div>
           </div>

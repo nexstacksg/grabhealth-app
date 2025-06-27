@@ -22,40 +22,18 @@ import {
 import { useRouter } from 'next/navigation';
 import { IPartner } from '@app/shared-types';
 import services from '@/services';
+import { apiClient } from '@/services/api-client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
-// Sample gift items data
-const giftItems = [
-  {
-    id: 1,
-    name: 'Annual Free Body Check',
-    description: 'Comprehensive health screening - Available once per year',
-    required_purchases: 0,
-    tier_name: 'All Members',
-  },
-  {
-    id: 2,
-    name: 'Monthly Wellness Package',
-    description: 'Curated selection of seasonal health products',
-    required_purchases: 1,
-    tier_name: 'Active Member',
-  },
-  {
-    id: 3,
-    name: 'Premium Supplement Set',
-    description: 'High-quality supplements and immunity boosters',
-    required_purchases: 3,
-    tier_name: 'Silver Member',
-  },
-  {
-    id: 4,
-    name: 'Elite Health Bundle',
-    description: 'Exclusive products with personal health consultation',
-    required_purchases: 5,
-    tier_name: 'Gold Member',
-  },
-];
+// Gift items interface
+interface GiftItem {
+  id: number;
+  name: string;
+  description: string;
+  required_purchases: number;
+  tier_name: string;
+}
 
 export default function PartnersPage() {
   const router = useRouter();
@@ -63,10 +41,12 @@ export default function PartnersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const gifts = giftItems;
+  const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
+  const [giftItemsLoading, setGiftItemsLoading] = useState(true);
 
   useEffect(() => {
     fetchPartners();
+    fetchGiftItems();
   }, [searchTerm, selectedCity]);
 
   const fetchPartners = async () => {
@@ -76,13 +56,43 @@ export default function PartnersPage() {
         search: searchTerm,
         location: selectedCity,
         page: 1,
-        limit: 20
+        limit: 20,
       });
       setPartners(response.partners);
     } catch (error) {
       console.error('Failed to fetch partners:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchGiftItems = async () => {
+    try {
+      setGiftItemsLoading(true);
+      // Fetch gift items from Strapi
+      const response = await apiClient.get<{ data: any[] }>('/gift-items?sort=requiredPurchases:asc');
+      
+      if (response.data && response.data.length > 0) {
+        // Transform Strapi data to match our interface
+        const transformedGiftItems = response.data.map((item: any) => {
+          const itemData = item.attributes || item;
+          return {
+            id: item.id,
+            name: itemData.name,
+            description: itemData.description || '',
+            required_purchases: itemData.requiredPurchases,
+            tier_name: `${itemData.requiredPurchases} purchases`,
+          };
+        });
+        setGiftItems(transformedGiftItems);
+      } else {
+        setGiftItems([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch gift items:', error);
+      setGiftItems([]);
+    } finally {
+      setGiftItemsLoading(false);
     }
   };
 
@@ -216,34 +226,47 @@ export default function PartnersPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {gifts?.map((gift) => (
-            <Card key={gift.id} className="h-full">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{gift.name}</CardTitle>
-                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                    {gift.tier_name}
-                  </span>
-                </div>
-                <CardDescription>{gift.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-gray-600">
-                  <strong>Required:</strong>{' '}
-                  {gift.required_purchases === 0
-                    ? 'Free for new members'
-                    : `${gift.required_purchases} purchase(s)`}
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  Learn More
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        {giftItemsLoading ? (
+          <div className="flex justify-center py-8">
+            <p className="text-gray-500">Loading gift items...</p>
+          </div>
+        ) : giftItems.length === 0 ? (
+          <div className="text-center py-8">
+            <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">
+              No gift items available at the moment.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {giftItems.map((gift) => (
+              <Card key={gift.id} className="h-full">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{gift.name}</CardTitle>
+                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                      {gift.tier_name}
+                    </span>
+                  </div>
+                  <CardDescription>{gift.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-gray-600">
+                    <strong>Required:</strong>{' '}
+                    {gift.required_purchases === 0
+                      ? 'Free for new members'
+                      : `${gift.required_purchases} purchase(s)`}
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">
+                    Learn More
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
