@@ -59,7 +59,7 @@ export default function Header() {
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Products', href: '/products' },
-    { label: 'Partners', href: '/partners' },
+    { label: 'clinics', href: '/clinics' },
     { label: 'Membership', href: '/membership' },
     { label: 'Commission', href: '/commission' },
     { label: 'Rank & Rewards', href: '/rank-rewards' },
