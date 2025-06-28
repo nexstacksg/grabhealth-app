@@ -80,15 +80,6 @@ class BookingsService extends BaseService {
     totalPages: number;
   }> {
     try {
-      // For now, return empty bookings until we implement proper user filtering
-      // TODO: Implement custom controller in Strapi or pass user ID from frontend
-      return {
-        bookings: [],
-        total: 0,
-        page: 1,
-        totalPages: 0,
-      };
-      
       // Build query params for Strapi
       const queryParams = new URLSearchParams();
       

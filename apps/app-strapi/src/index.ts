@@ -153,12 +153,69 @@ export default {
       }
 
       console.log('✅ Public permissions setup completed');
+
+      // Setup authenticated user permissions for bookings
+      const authenticatedRole = await strapi
+        .query('plugin::users-permissions.role')
+        .findOne({
+          where: { type: 'authenticated' },
+        });
+
+      if (authenticatedRole) {
+        const authPermissions = [
+          {
+            action: 'api::booking.booking.find',
+            subject: null,
+          },
+          {
+            action: 'api::booking.booking.findOne',
+            subject: null,
+          },
+          {
+            action: 'api::booking.booking.create',
+            subject: null,
+          },
+          {
+            action: 'api::booking.booking.update',
+            subject: null,
+          },
+        ];
+
+        for (const permission of authPermissions) {
+          const existingPermission = await strapi
+            .query('plugin::users-permissions.permission')
+            .findOne({
+              where: {
+                action: permission.action,
+                role: authenticatedRole.id,
+              },
+            });
+
+          if (!existingPermission) {
+            await strapi.query('plugin::users-permissions.permission').create({
+              data: {
+                action: permission.action,
+                subject: permission.subject,
+                role: authenticatedRole.id,
+                conditions: [],
+              },
+            });
+            console.log(`✅ Granted authenticated permission: ${permission.action}`);
+          }
+        }
+      }
     } catch (error) {
       console.error('❌ Error setting up public permissions:', error);
     }
 
-    // Seed partner data in development
+    // Seed data in development
     if (process.env.NODE_ENV === 'development') {
+      // Seed products and categories
+      const seedProducts = await import('./seed/seed-products');
+      console.log('\n🌱 Running product seed in development mode...');
+      await seedProducts.default(strapi);
+
+      // Seed partners
       const seedPartners = await import('./seed/seed-partners');
       console.log('\n🌱 Running partner seed in development mode...');
       await seedPartners.default(strapi);
