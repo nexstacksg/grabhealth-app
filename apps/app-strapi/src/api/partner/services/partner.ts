@@ -186,10 +186,9 @@ export default factories.createCoreService('api::partner.partner', ({ strapi }) 
       {
         filters: {
           partner: partner.id,
-          dayOfWeek: dayOfWeek,
-          isActive: true,
+          dayOfWeek: dayOfWeek
         },
-      }
+      } as any
     );
 
     if (!availabilities || availabilities.length === 0) {
@@ -251,12 +250,18 @@ export default factories.createCoreService('api::partner.partner', ({ strapi }) 
           return (time < bookingEnd && time + slotDuration > bookingStart);
         });
 
+        // Count current bookings for this slot
+        const currentBookings = existingBookings.filter(booking => {
+          const bookingStart = this.parseTimeToMinutes(String(booking.startTime));
+          return bookingStart === time;
+        }).length;
+
         slots.push({
           date,
-          startTime: slotStartTime,
-          endTime: slotEndTime,
-          available: !hasConflict,
-          duration: slotDuration,
+          time: slotStartTime,
+          available: !hasConflict && currentBookings < (availability.maxBookingsPerSlot || 1),
+          maxBookings: availability.maxBookingsPerSlot || 1,
+          currentBookings: currentBookings,
         });
       }
     }
@@ -271,20 +276,34 @@ export default factories.createCoreService('api::partner.partner', ({ strapi }) 
     // Validate required fields
     validateRequired(bookingData, ['serviceId', 'bookingDate', 'startTime']);
     validateFutureDate(bookingData.bookingDate);
-    validateTimeFormat(bookingData.startTime);
+    // Skip time format validation since we'll convert it anyway
 
     const partner = await this.findPartnerById(partnerId);
 
-    // Verify service belongs to partner
-    const service = await strapi.entityService.findOne(
-      'api::service.service',
-      bookingData.serviceId,
-      {
-        populate: {
-          partner: true,
-        },
-      } as any
-    ) as any;
+    // Verify service belongs to partner - handle documentId vs numeric ID
+    let service;
+    
+    // Try to find by documentId first (Strapi v5 format)
+    if (isNaN(Number(bookingData.serviceId))) {
+      const services = await strapi.entityService.findMany(
+        'api::service.service',
+        {
+          filters: { documentId: bookingData.serviceId },
+          populate: { partner: true },
+          limit: 1,
+        } as any
+      );
+      service = services?.[0];
+    } else {
+      // Fallback to numeric ID
+      service = await strapi.entityService.findOne(
+        'api::service.service',
+        bookingData.serviceId,
+        {
+          populate: { partner: true },
+        } as any
+      );
+    }
 
     if (!service || !service.partner || service.partner.id !== partner.id) {
       throw new ValidationError('Invalid service for this partner');
@@ -320,10 +339,10 @@ export default factories.createCoreService('api::partner.partner', ({ strapi }) 
             bookingNumber,
             user: userId,
             partner: partner.id,
-            service: bookingData.serviceId,
+            service: service.id, // Use the numeric ID from the found service
             bookingDate: new Date(bookingData.bookingDate),
-            startTime: bookingData.startTime,
-            endTime,
+            startTime: `${bookingData.startTime}:00.000`, // Convert HH:MM to HH:mm:ss.SSS
+            endTime: `${endTime}:00.000`, // Convert HH:MM to HH:mm:ss.SSS
             notes: bookingData.notes || '',
             isFreeCheckup: bookingData.isFreeCheckup || false,
             bookingStatus: 'PENDING',

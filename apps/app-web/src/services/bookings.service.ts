@@ -165,45 +165,24 @@ class BookingsService extends BaseService {
 
   async createBooking(data: CreateBookingData): Promise<IBooking> {
     try {
-      // For now, throw an error until we implement proper booking creation
-      const error: any = new Error('Booking feature is coming soon. Please check back later.');
-      error.code = 'NOT_IMPLEMENTED';
-      throw error;
-      
-      // TODO: Implement proper booking creation with user context
-      // Calculate end time based on service duration
-      const service = await apiClient.get(`/services/${data.serviceId}`);
-      const duration = service.data?.duration || 60;
-      
-      const [hours, minutes] = data.startTime.split(':').map(Number);
-      const endHour = Math.floor((hours * 60 + minutes + duration) / 60);
-      const endMinute = (hours * 60 + minutes + duration) % 60;
-      const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-      
-      const strapiData = {
-        data: {
-          // Need to get actual user ID from context or implement custom controller
-          // user: userId,
-          partner: data.partnerId, // Use documentId directly
-          service: data.serviceId, // Use documentId directly
+      // Use the partner's booking endpoint
+      const response = await apiClient.post(
+        `/partners/${data.partnerId}/book`,
+        {
+          serviceId: data.serviceId,
           bookingDate: data.bookingDate,
           startTime: data.startTime,
-          endTime: endTime,
-          bookingStatus: 'PENDING', // Use bookingStatus instead of status
           notes: data.notes || '',
           isFreeCheckup: data.isFreeCheckup || false,
-          totalAmount: service.data?.price || 0,
-          paymentStatus: 'PENDING',
-          paymentMethod: 'cash',
         }
-      };
-
-      const response = await apiClient.post<StrapiBookingResponse>(
-        '/bookings',
-        strapiData
       );
 
-      return transformStrapiBooking(response.data);
+      // Transform the response - it might be in a different format from the partner endpoint
+      if (response.data) {
+        return transformStrapiBooking(response.data);
+      }
+      
+      throw new Error('Failed to create booking');
     } catch (error) {
       this.handleError(error);
     }
