@@ -5,11 +5,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch", 
+    "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit",
-    "generate:prisma": "tsx scripts/generate-from-prisma.ts",
-    "sync": "bun run generate:prisma && bun run build"
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

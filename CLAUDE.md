@@ -30,24 +30,24 @@ grabhealth-app/              # Turborepo monorepo root
 
 ```bash
 # Development
-bun install              # Install all dependencies
-bun run dev              # Run web + strapi concurrently
-bun run dev:web          # Web app only
-bun run dev:strapi       # Strapi only
+pnpm install              # Install all dependencies
+pnpm run dev              # Run web + strapi concurrently
+pnpm run dev:web          # Web app only
+pnpm run dev:strapi       # Strapi only
 
 # Build & Test
-bun run build            # Build all apps
-bun run lint             # Lint all apps
-bun run format           # Format all code
+pnpm run build            # Build all apps
+pnpm run lint             # Lint all apps
+pnpm run format           # Format all code
 ```
 
 ### Strapi Backend (app-strapi)
 
 ```bash
 # Development
-bun run dev              # Start Strapi dev server
-bun run build            # Build Strapi admin panel
-bun run start            # Start production server
+pnpm run dev              # Start Strapi dev server
+pnpm run build            # Build Strapi admin panel
+pnpm run start            # Start production server
 
 # Content Types (simplified)
 - User (with upline/downline relations)
@@ -60,9 +60,9 @@ bun run start            # Start production server
 ### Web App (app-web)
 
 ```bash
-bun run dev             # Start Next.js dev server
-bun run build           # Build for production
-bun run start           # Start production server
+pnpm run dev             # Start Next.js dev server
+pnpm run build           # Build for production
+pnpm run start           # Start production server
 ```
 
 ## Architecture Overview
@@ -134,6 +134,6 @@ Bookings → Users + Services
 ## Common Issues & Solutions
 
 - **Port 1337 in use**: Kill existing Strapi process
-- **Type errors**: Run `bun run build` in Strapi to regenerate types
+- **Type errors**: Run `pnpm run build` in Strapi to regenerate types
 - **Auth issues**: Check JWT token in cookies and Bearer header
 - **CORS errors**: Strapi CORS is configured for localhost:3000

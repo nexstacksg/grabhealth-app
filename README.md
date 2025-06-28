@@ -38,15 +38,15 @@ This is a **Turbo-powered monorepo** using Bun workspaces for efficient dependen
 2. **Install all dependencies** (from root directory)
 
    ```bash
-   bun install
+   pnpm install
    ```
 
 3. **Set up the backend**
    ```bash
    cd apps/app-be
    cp .env.example .env  # Configure your environment variables
-   bun run prisma:migrate
-   bun run prisma:seed
+   pnpm run prisma:migrate
+   pnpm run prisma:seed
    ```
 
 ### Running the Applications
@@ -54,7 +54,7 @@ This is a **Turbo-powered monorepo** using Bun workspaces for efficient dependen
 #### Run All Applications (from root)
 
 ```bash
-bun run dev  # Starts all apps concurrently
+pnpm run dev  # Starts all apps concurrently
 ```
 
 #### Run Individual Applications
@@ -63,35 +63,35 @@ bun run dev  # Starts all apps concurrently
 
    ```bash
    # From root directory
-   bun run dev:be
+   pnpm run dev:be
    # OR
-   bun run dev --filter=app-be
+   pnpm run dev --filter=app-be
    ```
 
 2. **Web Portal** (Port 3000)
 
    ```bash
    # From root directory
-   bun run dev:web
+   pnpm run dev:web
    # OR
-   bun run dev --filter=app-web
+   pnpm run dev --filter=app-web
    ```
 
 3. **Admin Portal** (Port 3100)
 
    ```bash
    # From root directory
-   bun run dev:admin
+   pnpm run dev:admin
    # OR
-   bun run dev --filter=app-admin
+   pnpm run dev --filter=app-admin
    ```
 
 4. **Mobile App**
    ```bash
    # From root directory
-   bun run dev:mobile
+   pnpm run dev:mobile
    # OR
-   bun run dev --filter=app-mobile
+   pnpm run dev --filter=app-mobile
    # Press 'i' for iOS or 'a' for Android
    ```
 
@@ -154,16 +154,16 @@ The template supports three user roles with different access levels:
 
 ```bash
 # Run migrations
-bun run prisma:migrate
+pnpm run prisma:migrate
 
 # Open Prisma Studio
-bun run prisma:studio
+pnpm run prisma:studio
 
 # Seed the database
-bun run prisma:seed
+pnpm run prisma:seed
 
 # Generate Prisma client
-bun run prisma:generate
+pnpm run prisma:generate
 ```
 
 ### Build Commands
@@ -172,24 +172,24 @@ bun run prisma:generate
 
 ```bash
 # From root directory
-bun run build  # Builds all apps in dependency order
+pnpm run build  # Builds all apps in dependency order
 ```
 
 #### Build Individual Applications
 
 ```bash
 # Build specific app (from root)
-bun run build --filter=app-be      # Backend only
-bun run build --filter=app-web     # Web app only
-bun run build --filter=app-admin   # Admin app only
+pnpm run build --filter=app-be      # Backend only
+pnpm run build --filter=app-web     # Web app only
+pnpm run build --filter=app-admin   # Admin app only
 
 # Or use the convenience scripts
-bun run build:be     # Build backend
-bun run build:web    # Build web app
-bun run build:admin  # Build admin app
+pnpm run build:be     # Build backend
+pnpm run build:web    # Build web app
+pnpm run build:admin  # Build admin app
 
 # Build shared packages
-bun run build --filter=@app/shared-types
+pnpm run build --filter=@app/shared-types
 
 # Build mobile app (requires EAS CLI)
 cd apps/app-mobile && eas build
@@ -199,29 +199,29 @@ cd apps/app-mobile && eas build
 
 ```bash
 # Run linting across all apps
-bun run lint
+pnpm run lint
 
 # Run linting for specific app
-bun run lint --filter=app-be
+pnpm run lint --filter=app-be
 
 # Format all code
-bun run format
+pnpm run format
 
 # Run tests
-bun run test
+pnpm run test
 
 # Clean all build artifacts
-bun run clean
+pnpm run clean
 ```
 
 ### Testing
 
 ```bash
 # Run backend tests
-cd app-be && bun run test
+cd app-be && pnpm run test
 
 # Run web app tests
-cd app-web && bun run test
+cd app-web && pnpm run test
 ```
 
 ## 🔒 Security Features

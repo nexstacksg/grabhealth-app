@@ -2,7 +2,7 @@
   "name": "app-monorepo",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "bun@1.2.2",
+  "packageManager": "pnpm@10.12.4",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -47,24 +47,24 @@
   },
   "lint-staged": {
     "apps/app-be/**/*.{ts,js}": [
-      "cd apps/app-be && bun run format",
-      "cd apps/app-be && bun run lint"
+      "cd apps/app-be && pnpm run format",
+      "cd apps/app-be && pnpm run lint"
     ],
     "apps/app-web/**/*.{ts,tsx,js,jsx,json,css}": [
-      "cd apps/app-web && bun run format",
-      "cd apps/app-web && bun run lint"
+      "cd apps/app-web && pnpm run format",
+      "cd apps/app-web && pnpm run lint"
     ],
     "apps/app-admin/**/*.{ts,tsx,js,jsx,json,css}": [
-      "cd apps/app-admin && bun run format",
-      "cd apps/app-admin && bun run lint"
+      "cd apps/app-admin && pnpm run format",
+      "cd apps/app-admin && pnpm run lint"
     ],
     "apps/app-mobile/**/*.{ts,tsx,js,jsx,json}": [
-      "cd apps/app-mobile && bun run format",
-      "cd apps/app-mobile && bun run lint"
+      "cd apps/app-mobile && pnpm run format",
+      "cd apps/app-mobile && pnpm run lint"
     ],
     "apps/app-strapi/**/*.{ts,js,json}": [
-      "cd apps/app-strapi && bun run format",
-      "cd apps/app-strapi && bun run lint"
+      "cd apps/app-strapi && pnpm run format",
+      "cd apps/app-strapi && pnpm run lint"
     ]
   },
   "trustedDependencies": [
