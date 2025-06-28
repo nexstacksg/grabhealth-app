@@ -73,6 +73,24 @@ export default {
           action: 'api::service.service.findOne',
           subject: null,
         },
+        // Partner availability permissions
+        {
+          action: 'api::partner-availability.partner-availability.find',
+          subject: null,
+        },
+        {
+          action: 'api::partner-availability.partner-availability.findOne',
+          subject: null,
+        },
+        // Partner days off permissions
+        {
+          action: 'api::partner-days-off.partner-days-off.find',
+          subject: null,
+        },
+        {
+          action: 'api::partner-days-off.partner-days-off.findOne',
+          subject: null,
+        },
         // Commission structure permissions (read-only)
         {
           action: 'api::commission-tier.commission-tier.find',
@@ -137,6 +155,18 @@ export default {
       console.log('✅ Public permissions setup completed');
     } catch (error) {
       console.error('❌ Error setting up public permissions:', error);
+    }
+
+    // Seed partner data in development
+    if (process.env.NODE_ENV === 'development') {
+      const seedPartners = await import('./seed/seed-partners');
+      console.log('\n🌱 Running partner seed in development mode...');
+      await seedPartners.default(strapi);
+
+      // Manual fix for services
+      const manualFix = await import('./seed/manual-fix-services');
+      console.log('\n🔧 Running manual service fix...');
+      await manualFix.default(strapi);
     }
   },
 };

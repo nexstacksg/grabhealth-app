@@ -1,30 +1,29 @@
 /**
- * Refactored partner controller
+ * partner controller
  */
 
 import { factories } from '@strapi/strapi';
-import { handleError, asyncHandler } from '../../../utils/error-handler';
 
-export default factories.createCoreController(
-  'api::partner.partner',
-  ({ strapi }) => ({
-    /**
-     * Get all partners with filtering and pagination
-     */
-    find: asyncHandler(async function(ctx) {
+export default factories.createCoreController('api::partner.partner', ({ strapi }) => ({
+  // Override default find to add custom filtering
+  async find(ctx) {
+    try {
       const result = await strapi
         .service('api::partner.partner')
         .findWithFilters(ctx.query);
 
+      // Return in the format that frontend expects
       return {
-        data: result,
+        data: result
       };
-    }),
+    } catch (error) {
+      return ctx.badRequest(error.message);
+    }
+  },
 
-    /**
-     * Get single partner with services
-     */
-    findOne: asyncHandler(async function(ctx) {
+  // Override default findOne to add more details
+  async findOne(ctx) {
+    try {
       const { id } = ctx.params;
       
       const partner = await strapi
@@ -32,12 +31,14 @@ export default factories.createCoreController(
         .findOneWithDetails(id);
 
       return { data: partner };
-    }),
+    } catch (error) {
+      return ctx.notFound(error.message);
+    }
+  },
 
-    /**
-     * Get partner services
-     */
-    getServices: asyncHandler(async function(ctx) {
+  // Custom methods for the custom routes
+  async getServices(ctx) {
+    try {
       const { id } = ctx.params;
       
       const services = await strapi
@@ -45,12 +46,13 @@ export default factories.createCoreController(
         .getPartnerServices(id);
 
       return { data: services };
-    }),
+    } catch (error) {
+      return ctx.badRequest(error.message);
+    }
+  },
 
-    /**
-     * Get partner availability for a specific date
-     */
-    getAvailableSlots: asyncHandler(async function(ctx) {
+  async getAvailableSlots(ctx) {
+    try {
       const { id, date } = ctx.params;
       
       const slots = await strapi
@@ -58,12 +60,13 @@ export default factories.createCoreController(
         .calculateAvailableSlots(id, date);
 
       return { data: slots };
-    }),
+    } catch (error) {
+      return ctx.badRequest(error.message);
+    }
+  },
 
-    /**
-     * Book appointment with partner
-     */
-    bookAppointment: asyncHandler(async function(ctx) {
+  async bookAppointment(ctx) {
+    try {
       const { id } = ctx.params;
       const user = ctx.state.user;
 
@@ -76,6 +79,8 @@ export default factories.createCoreController(
         .createBooking(id, user.id, ctx.request.body);
 
       return { data: booking };
-    }),
-  })
-);
+    } catch (error) {
+      return ctx.badRequest(error.message);
+    }
+  },
+}));

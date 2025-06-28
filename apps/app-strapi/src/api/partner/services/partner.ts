@@ -126,11 +126,11 @@ export default factories.createCoreService('api::partner.partner', ({ strapi }) 
   async findOneWithDetails(id: string | number) {
     const partner = await this.findPartnerById(id);
     
-    // Fetch with full relations
-    const detailedPartner = await strapi.entityService.findOne(
+    // Fetch with full relations - use documentId for v5
+    const partners = await strapi.entityService.findMany(
       'api::partner.partner',
-      partner.id,
       {
+        filters: { documentId: partner.documentId },
         populate: {
           services: {
             filters: { isActive: true },
@@ -138,10 +138,11 @@ export default factories.createCoreService('api::partner.partner', ({ strapi }) 
           availabilities: true,
           daysOff: true,
         },
+        limit: 1,
       } as any
     );
 
-    return detailedPartner;
+    return partners?.[0] || partner;
   },
 
   /**
