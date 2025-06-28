@@ -1,23 +1,19 @@
-# App Template - Full-Stack Application Template
+# GrabHealth AI - E-commerce Platform
 
-A modern full-stack application template with authentication and user management. Built with Next.js, Express.js, React Native, and TypeScript.
+A simplified wellness e-commerce platform with referral system and partner services. Built with Next.js and Strapi.
 
 ## 🏗️ Monorepo Structure
 
 ```
-app-template/
+grabhealth-app/
 ├── apps/
-│   ├── app-be/                # Backend API (Express.js + TypeScript + Prisma)
 │   ├── app-web/               # Customer web portal (Next.js)
-│   ├── app-admin/             # Admin portal (Next.js)
-│   └── app-mobile/            # Mobile app (React Native/Expo)
+│   └── app-strapi/            # Backend CMS + Admin (Strapi)
 ├── packages/
 │   └── shared-types/          # Shared TypeScript types and interfaces
-└── docs/                      # Documentation files
-    ├── CLAUDE.md             # AI assistant instructions
-    ├── architecture.md       # System architecture
-    ├── developer.md          # Developer guide
-    └── project.md            # Project overview
+└── documents/                 # Documentation files
+    ├── features.md           # Feature list
+    └── setup-production.md   # Production setup guide
 ```
 
 This is a **Turbo-powered monorepo** using Bun workspaces for efficient dependency management and build orchestration.

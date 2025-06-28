@@ -1,111 +1,90 @@
-# Backend Features
+# GrabHealth AI Features (Simplified Architecture)
 
-## 1. Booking System
+## Core Features
 
-- [x] Appointment scheduling and management
-- [x] Basic availability checking (day of week and time slots)
-- [x] Service duration handling
-- [x] Booking status tracking (pending, confirmed, completed, cancelled)
-- [ ] Buffer time between appointments
-- [ ] Multi-timezone support
-- [ ] Recurring appointments
-- [ ] Waitlist functionality
-- [x] Partner and service-based availability
-- [ ] Dynamic commission calculation
-- [ ] Dynamic price calculation
-- [ ] Dynamic discount calculation
-- [ ] Dynamic commission calculation
-- [ ] Dynamic price calculation
-- [ ] Dynamic discount calculation
+### 1. E-commerce System
+- **Product Management**
+  - [x] Product catalog with categories
+  - [x] Product images and descriptions
+  - [x] Pricing management
+  - [x] Stock tracking
+  - [x] Product search and filtering
 
-## 2. Partner Management
+- **Order Management**
+  - [x] Shopping cart functionality
+  - [x] Order creation and checkout
+  - [x] Order status tracking
+  - [x] Order history
+  - [ ] Payment integration
+  - [ ] Refund handling
 
-- [x] Partner onboarding and profile management
-- [x] Service listing and management
-- [x] Availability and schedule management
-- [x] Partner performance metrics
-- [x] Commission tracking
-- [x] Partner dashboard with analytics
-- [ ] Document verification
-- [ ] Partner rating and reviews and special days off
+### 2. Referral System
+- **User Registration**
+  - [x] Register with email/password
+  - [x] Register under referral code
+  - [x] Automatic upline/downline tracking
+  - [x] Unique referral code generation
+  
+- **Network Management**
+  - [x] View downline network
+  - [x] Track referral relationships
+  - [ ] Commission calculation (planned)
+  - [ ] Network visualization (planned)
 
-## 3. Commission System
+### 3. Partner Services
+- **Partner Management**
+  - [x] Partner profiles
+  - [x] Service listings
+  - [x] Availability schedules
+  - [x] Days off management
+  
+- **Booking System**
+  - [x] Service booking
+  - [x] Appointment scheduling
+  - [x] Booking status tracking
+  - [x] Partner dashboard
 
-- [x] Multi-level commission structure
-- [x] Commission calculation and tracking
-- [x] Payout management
-- [x] Commission reports and analytics
-- [x] Tier-based commission rates
-- [x] Real-time commission updates
-- [x] Pending/approved/paid status tracking
-  - Commission reports and payouts
+## Technical Architecture
 
-## 4. Order Processing
+### Backend (Strapi)
+- **Content Types**
+  - User (with upline/downline relations)
+  - Product & Category
+  - Order & Order Items
+  - Partner & Services
+  - Booking & Availability
 
-- [x] Order creation and management
-- [x] Shopping cart functionality
-- [x] Order status tracking
-- [x] Payment processing integration
-- [x] Order history and receipts
-- [ ] Refund and cancellation handling
-- [ ] Inventory management
-- [ ] Tax calculation and shipments
+- **Authentication**
+  - JWT-based authentication
+  - Role-based access (using Strapi's built-in roles)
+  - Bearer token in headers
 
-## 5. Membership System
+### Frontend (Next.js)
+- **Pages**
+  - Products catalog
+  - Shopping cart
+  - User profile
+  - Partner services
+  - Booking system
+  
+- **State Management**
+  - Auth context
+  - Cart management
+  - User session
 
-- [x] Multiple membership levels/tiers
-- [x] Membership signup and management
-- [x] Auto-renewal functionality
-- [x] Membership benefits and perks
-- [ ] Member-only content/features
-- [x] Membership expiration handling
-- [x] Member analytics
+## Removed Features (Simplification)
+- ❌ Complex commission tiers
+- ❌ Multiple membership levels
+- ❌ User role types
+- ❌ Audit logging
+- ❌ Promotions system
+- ❌ Points/rewards system
+- ❌ Email verification flow
+- ❌ Gift items
 
-## 6. User Management
-
-- [x] User registration and authentication
-- [x] Role-based access control (RBAC)
-- [x] Profile management
-- [x] Password reset and account recovery
-- [x] Email verification
-- [x] User activity logging
-- [x] Session management
-- [ ] Social login integration
-
-## 7. Product Management
-
-- **Inventory System**
-  - Product catalog management
-  - Category and subcategory support
-  - Stock level tracking
-  - Product variants and options
-
-## 8. Reporting & Analytics
-
-- [x] Sales and revenue reports
-- [x] Commission payout reports
-- [x] User activity tracking
-- [x] Booking and service analytics
-- [x] Partner performance metrics
-- [ ] Custom report generation
-- [ ] Data export functionality
-
-## 9. Integration Services
-
-- [x] Payment gateway integration
-- [x] Email/SMS notification system
-- [ ] Calendar integration
-- [ ] Webhook support
-- [ ] API for third-party access
-- [ ] File storage integration
-- [ ] Analytics integration
-
-## 10. API Endpoints
-
-- [x] RESTful API design
-- [x] Authentication and authorization
-- [x] Rate limiting
-- [x] Request validation
-- [x] Error handling
-- [ ] API documentation
-- [ ] Versioning
+## Future Roadmap
+1. **Phase 1**: Stabilize core e-commerce and referral
+2. **Phase 2**: Add commission calculation
+3. **Phase 3**: Network visualization
+4. **Phase 4**: Payment integration
+5. **Phase 5**: Mobile app support

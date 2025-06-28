@@ -21,12 +21,7 @@ export default [
       headers: '*',
       origin: [
         'http://localhost:3000', // app-web
-        'http://localhost:3100', // app-admin (future)
-        'http://localhost:4000', // app-be (if needed during migration)
-        'http://localhost:19006', // Expo web default
-        'exp://localhost:8081', // Expo development
-        'https://localhost:3000', // HTTPS variants
-        'https://localhost:3100',
+        'https://localhost:3000', // HTTPS variant
         // Add production URLs when deployed
         process.env.FRONTEND_URL || 'http://localhost:3000',
       ].filter(Boolean),
