@@ -85,7 +85,7 @@ export function ServiceCard({
             onSelect(service);
           }}
         >
-          {isSelected ? '✓ Selected - Book Now' : 'Select Service'}
+          {isSelected ? '✓ Selected - Book Now' : 'Booking Now'}
         </Button>
       </CardContent>
     </Card>

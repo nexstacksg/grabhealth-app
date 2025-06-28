@@ -242,11 +242,9 @@ export default function PartnerDetailPage() {
       </Card>
 
       {/* Services and Booking Section */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-5 gap-6 lg:gap-0 relative">
         {/* Services Column */}
-        <div
-          className={`${selectedService ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}
-        >
+        <div className="lg:col-span-3 lg:pr-8">
           <div className="space-y-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
@@ -258,11 +256,6 @@ export default function PartnerDetailPage() {
                   </p>
                 )}
               </div>
-              {!selectedService && totalServices > 0 && (
-                <p className="text-sm text-gray-500">
-                  Select a service to book an appointment
-                </p>
-              )}
             </div>
 
             {/* Filter Controls */}
@@ -420,59 +413,77 @@ export default function PartnerDetailPage() {
           )}
         </div>
 
-        {/* Booking Column - Shows when service is selected */}
-        {selectedService && (
-          <div
-            id="booking-section"
-            className="lg:col-span-1 space-y-4 animate-in slide-in-from-right-4 lg:slide-in-from-bottom-4 duration-300"
-          >
-            <div className="lg:sticky lg:top-4">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-semibold">Book Appointment</h3>
+        {/* Booking Column - Always visible */}
+        <div
+          id="booking-section"
+          className="lg:col-span-2 space-y-4 lg:pl-8 lg:border-l lg:border-gray-200"
+        >
+          <div className="lg:sticky lg:top-4">
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-lg font-semibold">Book Appointment</h3>
+              {selectedService && (
                 <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-              </div>
+              )}
+            </div>
 
-              {/* Selected Service Summary */}
-              <Card className="mb-4 bg-blue-50 border-blue-200">
-                <CardContent className="pt-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-semibold text-blue-900 text-sm">
-                        {selectedService.name}
-                      </h4>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedService(null)}
-                        className="text-blue-600 hover:text-blue-800 h-6 w-6 p-0"
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-blue-600">
-                      <span>⏱️ {selectedService.duration}min</span>
-                      <span>💰 ${selectedService.price.toFixed(2)}</span>
-                    </div>
-                    {selectedService.requiresApproval && (
-                      <div className="text-xs text-orange-600">
-                        ⚠️ Requires approval
+            {selectedService ? (
+              <>
+                {/* Selected Service Summary */}
+                <Card className="mb-4 bg-blue-50 border-blue-200">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-semibold text-blue-900 text-sm">
+                          {selectedService.name}
+                        </h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedService(null)}
+                          className="text-blue-600 hover:text-blue-800 h-6 w-6 p-0"
+                        >
+                          ✕
+                        </Button>
                       </div>
-                    )}
+                      <div className="grid grid-cols-2 gap-2 text-xs text-blue-600">
+                        <span>⏱️ {selectedService.duration}min</span>
+                        <span>💰 ${selectedService.price.toFixed(2)}</span>
+                      </div>
+                      {selectedService.requiresApproval && (
+                        <div className="text-xs text-orange-600">
+                          ⚠️ Requires approval
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Booking Calendar */}
+                <div className="lg:max-h-[600px] lg:overflow-y-auto">
+                  <BookingCalendar
+                    partnerId={partner.id}
+                    service={selectedService}
+                    onBookingComplete={handleBookingComplete}
+                  />
+                </div>
+              </>
+            ) : (
+              /* Placeholder when no service is selected */
+              <Card className="border-dashed">
+                <CardContent className="pt-6">
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm">Select a service to book an appointment</p>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Booking Calendar */}
-              <div className="lg:max-h-[600px] lg:overflow-y-auto">
-                <BookingCalendar
-                  partnerId={partner.id}
-                  service={selectedService}
-                  onBookingComplete={handleBookingComplete}
-                />
-              </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
