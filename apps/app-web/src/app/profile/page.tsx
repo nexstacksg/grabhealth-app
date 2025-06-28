@@ -23,7 +23,7 @@ import { IProfileUpdateRequest } from '@app/shared-types';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, updateProfile, updateProfileImage } = useAuth();
+  const { user, updateProfile, updateProfileImage, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +45,14 @@ export default function ProfilePage() {
         email: user.email,
       }));
       setIsLoading(false);
-    } else {
-      // If no user, redirect to login
+    } else if (!authLoading && !user) {
+      // Only redirect if auth check is complete and there's no user
       router.push('/auth/login');
+    } else if (!authLoading) {
+      // Auth is loaded but waiting for user data
+      setIsLoading(false);
     }
-  }, [user, router]);
+  }, [user, router, authLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -187,7 +190,7 @@ export default function ProfilePage() {
     return null;
   }
 
-  if (isLoading && !user) {
+  if (isLoading || authLoading) {
     return (
       <div className="container max-w-4xl py-16 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />

@@ -35,13 +35,13 @@ const useAuthProvider = () => {
       setUser(userProfile);
     } catch (error: any) {
       // User is not authenticated or there was an error
-      // Don't log anything for 401 errors on initial auth check
-      if (error.status !== 401) {
-        console.log('Auth check failed:', error.message || 'Not authenticated');
+      if (error.status === 401) {
+        // Clear cookies and user data on 401
+        cookieUtils.clear();
+        sessionStorage.removeItem('user');
       }
+      
       setUser(null);
-      // Clear cookies on auth failure
-      cookieUtils.clear();
     } finally {
       setIsLoading(false);
     }

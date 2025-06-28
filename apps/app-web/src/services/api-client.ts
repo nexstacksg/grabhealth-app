@@ -55,23 +55,6 @@ axiosInstance.interceptors.response.use(
     return response.data;
   },
   async (error: AxiosError<any>) => {
-    // Handle 401 errors by redirecting to login
-    if (
-      error.response?.status === 401 &&
-      !isServer &&
-      typeof window !== 'undefined'
-    ) {
-      // Clear stored tokens and user data from cookies
-      cookieUtils.clear();
-      sessionStorage.removeItem('user');
-
-      // Only redirect if not already on auth pages
-      const currentPath = window.location.pathname;
-      if (!currentPath.startsWith('/auth/')) {
-        window.location.href = '/auth/login';
-      }
-    }
-
     // Handle different error types
     const errorDetails: Record<string, unknown> = {
       method: error.config?.method?.toUpperCase(),
@@ -85,18 +68,17 @@ axiosInstance.interceptors.response.use(
       errorDetails.statusText = error.response.statusText;
       errorDetails.data = error.response.data;
 
-      console.error('API Response Error:', errorDetails);
-
       // Handle Strapi error format
       const strapiError = error.response.data?.error;
+
       const customError = {
         message:
           strapiError?.message ||
           error.response.data?.message ||
-          'An error occurred',
-        status: error.response.status,
-        code: strapiError?.status || error.response.status,
-        details: strapiError?.details,
+          `Error ${error.response.status}: ${error.response.statusText}`,
+        status: strapiError?.status || error.response.status,
+        code: strapiError?.name || error.response.status,
+        details: strapiError?.details || error.response.data,
         response: error.response,
       };
       return Promise.reject(customError);

@@ -11,42 +11,41 @@ export abstract class BaseService {
    * Standard error handler for all services
    */
   protected handleError(error: any): never {
+    // If error has already been processed by api-client interceptor
+    if (error?.message && error?.status !== undefined) {
+      throw error;
+    }
+    
     // If it's already a structured error from our API
     if (error?.error?.message) {
       throw error;
     }
 
-    // Handle Strapi error format
+    // Handle Strapi error format (from response)
     if (error?.response?.data?.error) {
       const strapiError = error.response.data.error;
       throw {
-        status: error.response.status || strapiError.status || 400,
-        error: {
-          message: strapiError.message || 'An error occurred',
-          code: strapiError.name || 'STRAPI_ERROR',
-          details: strapiError.details || {},
-        },
+        message: strapiError.message || 'An error occurred',
+        status: strapiError.status || error.response.status || 400,
+        code: strapiError.name || 'STRAPI_ERROR',
+        details: strapiError.details || {},
       };
     }
 
     // If it's an axios error with response data
     if (error?.response?.data?.message) {
       throw {
+        message: error.response.data.message,
         status: error.response.status,
-        error: {
-          message: error.response.data.message,
-          code: error.response.data.code,
-        },
+        code: error.response.data.code || 'API_ERROR',
       };
     }
 
     // Generic error
     throw {
+      message: error?.message || 'An unexpected error occurred',
       status: error?.status || 500,
-      error: {
-        message: error?.message || 'An unexpected error occurred',
-        code: error?.code || 'UNKNOWN_ERROR',
-      },
+      code: error?.code || 'UNKNOWN_ERROR',
     };
   }
 

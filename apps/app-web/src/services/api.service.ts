@@ -44,9 +44,19 @@ class Api implements IApi {
       userId: string,
       data: Partial<IUser>
     ): Promise<IUserPublic> {
+      // Filter out fields that Strapi doesn't accept for user updates
+      const allowedFields = ['username', 'email', 'firstName', 'lastName', 'profileImage'];
+      const updateData: any = {};
+      
+      for (const [key, value] of Object.entries(data)) {
+        if (allowedFields.includes(key) && value !== undefined) {
+          updateData[key] = value;
+        }
+      }
+      
       const strapiUser = await apiClient.put<StrapiUser>(
         `/users/${userId}`,
-        data
+        updateData
       );
       return transformStrapiUser(strapiUser);
     },
