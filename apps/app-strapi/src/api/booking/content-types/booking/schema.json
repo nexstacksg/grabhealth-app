@@ -31,7 +31,12 @@
     },
     "bookingStatus": {
       "type": "enumeration",
-      "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"],
+      "enum": [
+        "PENDING",
+        "CONFIRMED",
+        "CANCELLED",
+        "COMPLETED"
+      ],
       "default": "PENDING",
       "required": true
     },
@@ -52,7 +57,11 @@
     },
     "paymentStatus": {
       "type": "enumeration",
-      "enum": ["PENDING", "PAID", "REFUNDED"],
+      "enum": [
+        "PENDING",
+        "PAID",
+        "REFUNDED"
+      ],
       "default": "PENDING",
       "required": true
     },
@@ -67,7 +76,8 @@
     "partner": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::partner.partner"
+      "target": "api::partner.partner",
+      "inversedBy": "bookings"
     },
     "service": {
       "type": "relation",

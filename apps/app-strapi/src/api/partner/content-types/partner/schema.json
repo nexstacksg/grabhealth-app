@@ -10,6 +10,7 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {},
   "attributes": {
     "name": {
       "type": "string",
@@ -51,14 +52,20 @@
     "website": {
       "type": "string"
     },
-    "imageUrl": {
-      "type": "string"
-    },
     "rating": {
       "type": "decimal",
       "default": 0,
       "min": 0,
       "max": 5
+    },
+    "image": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ]
     },
     "totalReviews": {
       "type": "integer",

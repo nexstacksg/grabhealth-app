@@ -83,7 +83,12 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["ACTIVE", "PENDING_VERIFICATION", "SUSPENDED", "INACTIVE"],
+      "enum": [
+        "ACTIVE",
+        "PENDING_VERIFICATION",
+        "SUSPENDED",
+        "INACTIVE"
+      ],
       "default": "PENDING_VERIFICATION",
       "required": true
     },
@@ -122,7 +127,8 @@
     "partner": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::partner.partner"
+      "target": "api::partner.partner",
+      "inversedBy": "users"
     }
   }
 }
