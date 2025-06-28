@@ -53,7 +53,6 @@ export default function PartnersPage() {
     }
   };
 
-
   return (
     <div className="container mx-auto px-4 py-6 md:py-16 md:px-6">
       <div className="text-center mb-8 md:mb-12">
@@ -162,7 +161,7 @@ export default function PartnersPage() {
               <CardFooter>
                 <Button
                   className="w-full"
-                  onClick={() => router.push(`/partners/${partner.id}`)}
+                  onClick={() => router.push(`/clinics/${partner.id}`)}
                 >
                   View Details & Book
                 </Button>
@@ -171,7 +170,6 @@ export default function PartnersPage() {
           ))}
         </div>
       )}
-
     </div>
   );
 }
