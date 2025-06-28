@@ -80,11 +80,20 @@ class BookingsService extends BaseService {
     totalPages: number;
   }> {
     try {
+      // For now, return empty bookings until we implement proper user filtering
+      // TODO: Implement custom controller in Strapi or pass user ID from frontend
+      return {
+        bookings: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      };
+      
       // Build query params for Strapi
       const queryParams = new URLSearchParams();
       
-      // Filter by current user
-      queryParams.append('filters[user][id][$eq]', 'me');
+      // Filter by current user - Strapi doesn't support 'me', need actual user ID
+      // queryParams.append('filters[user][id][$eq]', userId);
       
       if (filters?.status) {
         queryParams.append('filters[bookingStatus][$eq]', filters.status);
@@ -156,6 +165,12 @@ class BookingsService extends BaseService {
 
   async createBooking(data: CreateBookingData): Promise<IBooking> {
     try {
+      // For now, throw an error until we implement proper booking creation
+      const error: any = new Error('Booking feature is coming soon. Please check back later.');
+      error.code = 'NOT_IMPLEMENTED';
+      throw error;
+      
+      // TODO: Implement proper booking creation with user context
       // Calculate end time based on service duration
       const service = await apiClient.get(`/services/${data.serviceId}`);
       const duration = service.data?.duration || 60;
@@ -167,13 +182,14 @@ class BookingsService extends BaseService {
       
       const strapiData = {
         data: {
-          user: 'me', // Will be set by backend from auth
-          partner: parseInt(data.partnerId),
-          service: parseInt(data.serviceId),
+          // Need to get actual user ID from context or implement custom controller
+          // user: userId,
+          partner: data.partnerId, // Use documentId directly
+          service: data.serviceId, // Use documentId directly
           bookingDate: data.bookingDate,
           startTime: data.startTime,
           endTime: endTime,
-          status: 'PENDING',
+          bookingStatus: 'PENDING', // Use bookingStatus instead of status
           notes: data.notes || '',
           isFreeCheckup: data.isFreeCheckup || false,
           totalAmount: service.data?.price || 0,
@@ -272,26 +288,8 @@ class BookingsService extends BaseService {
     reason?: string;
   }> {
     try {
-      // Check if user has claimed free checkup this year
-      const currentYear = new Date().getFullYear();
-      const fromDate = `${currentYear}-01-01`;
-      const toDate = `${currentYear}-12-31`;
-      
-      const { bookings } = await this.getMyBookings({
-        fromDate,
-        toDate,
-        limit: 100,
-      });
-      
-      const freeCheckupsClaimed = bookings.filter(b => b.isFreeCheckup).length;
-      
-      if (freeCheckupsClaimed > 0) {
-        return {
-          eligible: false,
-          reason: 'You have already claimed your free annual checkup',
-        };
-      }
-      
+      // For now, always return eligible until we implement proper user filtering
+      // TODO: Implement proper check once user filtering is available
       return {
         eligible: true,
       };

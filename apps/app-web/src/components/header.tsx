@@ -61,7 +61,7 @@ export default function Header() {
     { label: 'Products', href: '/products' },
     { label: 'clinics', href: '/clinics' },
     { label: 'Membership', href: '/membership' },
-    { label: 'Commission', href: '/commission' },
+    // { label: 'Commission', href: '/commission' },
     { label: 'Rank & Rewards', href: '/rank-rewards' },
   ];
 
