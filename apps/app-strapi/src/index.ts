@@ -17,6 +17,7 @@ export default {
    * run jobs, or perform some special logic.
    */
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+
     console.log(
       '🚀 Setting up public permissions for categories and products...'
     );
@@ -142,10 +143,6 @@ export default {
       }
 
       console.log('✅ Public permissions setup completed');
-
-      // No automatic seeding of partners and services
-      // Partners and services should be created through Strapi admin panel
-      console.log('ℹ️  Partner and service data should be managed through Strapi admin panel');
     } catch (error) {
       console.error('❌ Error setting up public permissions:', error);
     }

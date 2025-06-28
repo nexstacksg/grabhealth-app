@@ -56,5 +56,20 @@ export default ({ env }) => {
       ...connections[client],
       acquireConnectionTimeout: env.int('DATABASE_CONNECTION_TIMEOUT', 60000),
     },
+    // Enable synchronize in development to force database sync
+    ...(env('NODE_ENV') === 'development' && {
+      pool: {
+        ...connections[client]?.pool,
+        afterCreate: (conn, cb) => {
+          console.log('Database connection created, synchronizing schema...');
+          cb(null, conn);
+        },
+      },
+      options: {
+        autoMigration: true,
+        // This will force Strapi to sync the database schema
+        synchronize: env.bool('DATABASE_SYNCHRONIZE', true),
+      },
+    }),
   };
 };

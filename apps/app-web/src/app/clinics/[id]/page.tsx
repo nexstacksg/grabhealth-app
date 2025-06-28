@@ -141,8 +141,8 @@ export default function PartnerDetailPage() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-red-500">{error || 'Partner not found'}</p>
-            <Button onClick={() => router.push('/partners')} className="mt-4">
-              Back to Partners
+            <Button onClick={() => router.push('/clinics')} className="mt-4">
+              Back to Clinics
             </Button>
           </CardContent>
         </Card>
@@ -155,11 +155,11 @@ export default function PartnerDetailPage() {
       {/* Back Button */}
       <Button
         variant="ghost"
-        onClick={() => router.push('/partners')}
+        onClick={() => router.push('/clinics')}
         className="mb-4"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Partners
+        Back to Clinics
       </Button>
 
       {/* Partner Header */}

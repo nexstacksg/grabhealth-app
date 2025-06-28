@@ -386,6 +386,11 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
   };
   attributes: {
     bookingDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    bookingStatus: Schema.Attribute.Enumeration<
+      ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PENDING'>;
     cancellationReason: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -409,11 +414,6 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     service: Schema.Attribute.Relation<'manyToOne', 'api::service.service'>;
     startTime: Schema.Attribute.String & Schema.Attribute.Required;
-    status: Schema.Attribute.Enumeration<
-      ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'PENDING'>;
     totalAmount: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<

@@ -44,7 +44,7 @@ function transformStrapiPartner(strapiPartner: any): IPartner {
   };
 
   return {
-    id: strapiPartner.id?.toString() || '',
+    id: strapiPartner.documentId || strapiPartner.id?.toString() || '',
     name: strapiPartner.name || '',
     description: strapiPartner.description || '',
     address: strapiPartner.address || '',
@@ -93,8 +93,8 @@ function transformStrapiService(strapiService: any): IService {
   }
 
   return {
-    id: strapiService.id?.toString() || '',
-    partnerId: strapiService.partner?.id?.toString() || '',
+    id: strapiService.documentId || strapiService.id?.toString() || '',
+    partnerId: strapiService.partner?.documentId || strapiService.partner?.id?.toString() || '',
     partner: strapiService.partner
       ? transformStrapiPartner(strapiService.partner)
       : undefined,

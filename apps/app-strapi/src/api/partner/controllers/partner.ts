@@ -91,19 +91,42 @@ export default factories.createCoreController(
       try {
         const { id } = ctx.params;
 
-        const partner = await strapi.entityService.findOne(
-          'api::partner.partner',
-          id,
-          {
-            populate: {
-              services: {
-                filters: { isActive: true },
+        // Check if the id is a documentId (string) or numeric id
+        let partner;
+        
+        // Try to find by documentId first (Strapi v5 format)
+        if (isNaN(Number(id))) {
+          const partners = await strapi.entityService.findMany(
+            'api::partner.partner',
+            {
+              filters: { documentId: id },
+              populate: {
+                services: {
+                  filters: { isActive: true },
+                },
+                availabilities: true,
+                daysOff: true,
               },
-              availabilities: true,
-              daysOff: true,
-            },
-          } as any
-        );
+              limit: 1,
+            } as any
+          );
+          partner = partners?.[0];
+        } else {
+          // Fallback to numeric ID
+          partner = await strapi.entityService.findOne(
+            'api::partner.partner',
+            id,
+            {
+              populate: {
+                services: {
+                  filters: { isActive: true },
+                },
+                availabilities: true,
+                daysOff: true,
+              },
+            } as any
+          );
+        }
 
         if (!partner) {
           return ctx.notFound('Partner not found');
@@ -122,11 +145,24 @@ export default factories.createCoreController(
         const { id } = ctx.params;
 
         // Verify partner exists
-        const partner = await strapi.entityService.findOne(
-          'api::partner.partner',
-          id,
-          {} as any
-        );
+        let partner;
+        if (isNaN(Number(id))) {
+          const partners = await strapi.entityService.findMany(
+            'api::partner.partner',
+            {
+              filters: { documentId: id },
+              limit: 1,
+            } as any
+          );
+          partner = partners?.[0];
+        } else {
+          partner = await strapi.entityService.findOne(
+            'api::partner.partner',
+            id,
+            {} as any
+          );
+        }
+        
         if (!partner) {
           return ctx.notFound('Partner not found');
         }
@@ -135,7 +171,7 @@ export default factories.createCoreController(
           'api::service.service',
           {
             filters: {
-              partner: id,
+              partner: partner.id, // Use the partner's internal ID
               isActive: true,
             },
             populate: {
@@ -157,11 +193,24 @@ export default factories.createCoreController(
         const { id, date } = ctx.params;
 
         // Verify partner exists
-        const partner = await strapi.entityService.findOne(
-          'api::partner.partner',
-          id,
-          {} as any
-        );
+        let partner;
+        if (isNaN(Number(id))) {
+          const partners = await strapi.entityService.findMany(
+            'api::partner.partner',
+            {
+              filters: { documentId: id },
+              limit: 1,
+            } as any
+          );
+          partner = partners?.[0];
+        } else {
+          partner = await strapi.entityService.findOne(
+            'api::partner.partner',
+            id,
+            {} as any
+          );
+        }
+        
         if (!partner) {
           return ctx.notFound('Partner not found');
         }
@@ -282,11 +331,24 @@ export default factories.createCoreController(
         }
 
         // Verify partner exists
-        const partner = await strapi.entityService.findOne(
-          'api::partner.partner',
-          id,
-          {} as any
-        );
+        let partner;
+        if (isNaN(Number(id))) {
+          const partners = await strapi.entityService.findMany(
+            'api::partner.partner',
+            {
+              filters: { documentId: id },
+              limit: 1,
+            } as any
+          );
+          partner = partners?.[0];
+        } else {
+          partner = await strapi.entityService.findOne(
+            'api::partner.partner',
+            id,
+            {} as any
+          );
+        }
+        
         if (!partner) {
           return ctx.notFound('Partner not found');
         }
@@ -304,7 +366,7 @@ export default factories.createCoreController(
         if (
           !service ||
           !service.partner ||
-          service.partner.id !== parseInt(id)
+          service.partner.id !== partner.id
         ) {
           return ctx.badRequest('Invalid service for this partner');
         }
@@ -323,14 +385,14 @@ export default factories.createCoreController(
           {
             data: {
               user: user.id,
-              partner: id,
+              partner: partner.id, // Use the partner's internal ID
               service: serviceId,
               bookingDate: new Date(bookingDate),
               startTime,
               endTime,
               notes: notes || '',
               isFreeCheckup: isFreeCheckup || false,
-              status: 'PENDING',
+              bookingStatus: 'PENDING',
               totalAmount: isFreeCheckup ? 0 : service.price,
               paymentStatus: 'PENDING',
             },

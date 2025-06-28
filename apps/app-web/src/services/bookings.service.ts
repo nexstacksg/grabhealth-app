@@ -50,17 +50,17 @@ function transformStrapiBooking(strapiBooking: any): IBooking {
   }
 
   return {
-    id: strapiBooking.id?.toString() || '',
-    userId: strapiBooking.user?.id?.toString() || '',
+    id: strapiBooking.documentId || strapiBooking.id?.toString() || '',
+    userId: strapiBooking.user?.documentId || strapiBooking.user?.id?.toString() || '',
     user: strapiBooking.user ? transformStrapiUser(strapiBooking.user) : undefined,
-    partnerId: strapiBooking.partner?.id?.toString() || '',
+    partnerId: strapiBooking.partner?.documentId || strapiBooking.partner?.id?.toString() || '',
     partner: strapiBooking.partner || undefined,
-    serviceId: strapiBooking.service?.id?.toString() || '',
+    serviceId: strapiBooking.service?.documentId || strapiBooking.service?.id?.toString() || '',
     service: strapiBooking.service || undefined,
     bookingDate: strapiBooking.bookingDate,
     startTime: strapiBooking.startTime || '',
     endTime: strapiBooking.endTime || '',
-    status: strapiBooking.status || 'PENDING',
+    status: strapiBooking.bookingStatus || strapiBooking.status || 'PENDING',
     notes: strapiBooking.notes || null,
     cancellationReason: strapiBooking.cancellationReason || null,
     isFreeCheckup: strapiBooking.isFreeCheckup || false,
@@ -87,7 +87,7 @@ class BookingsService extends BaseService {
       queryParams.append('filters[user][id][$eq]', 'me');
       
       if (filters?.status) {
-        queryParams.append('filters[status][$eq]', filters.status);
+        queryParams.append('filters[bookingStatus][$eq]', filters.status);
       }
       
       if (filters?.fromDate) {

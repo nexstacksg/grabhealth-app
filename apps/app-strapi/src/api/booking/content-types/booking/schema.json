@@ -24,7 +24,7 @@
       "type": "string",
       "required": true
     },
-    "status": {
+    "bookingStatus": {
       "type": "enumeration",
       "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"],
       "default": "PENDING",
