@@ -39,6 +39,12 @@
     "node": ">=18.0.0 <=22.x.x",
     "npm": ">=6.0.0"
   },
+  "overrides": {
+    "is-stream": "2.0.1"
+  },
+  "resolutions": {
+    "is-stream": "2.0.1"
+  },
   "strapi": {
     "uuid": "410afdb2-b5a5-43d8-8e94-d68ca563e4cc",
     "installId": "f0942474b115d9547c85fefa6772827db47141825f7b598266b93dc8ec40d085"
