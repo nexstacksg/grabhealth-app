@@ -64,14 +64,6 @@ export default {
           action: 'api::partner.partner.findOne',
           subject: null,
         },
-        {
-          action: 'api::partner.partner.getServices',
-          subject: null,
-        },
-        {
-          action: 'api::partner.partner.getAvailableSlots',
-          subject: null,
-        },
         // Service permissions
         {
           action: 'api::service.service.find',

@@ -110,10 +110,10 @@ class BookingsService extends BaseService {
         queryParams.append('pagination[pageSize]', filters.limit.toString());
       }
       
-      // Populate relations
-      queryParams.append('populate[user]', '*');
-      queryParams.append('populate[partner]', '*');
-      queryParams.append('populate[service]', '*');
+      // Populate relations - be specific to avoid nested relation issues
+      queryParams.append('populate[user][fields]', 'id,username,email');
+      queryParams.append('populate[partner][fields]', 'id,documentId,name,address,city,phone');
+      queryParams.append('populate[service][fields]', 'id,documentId,name,price,duration');
       
       // Sort by booking date (newest first)
       queryParams.append('sort', 'bookingDate:desc');
@@ -145,7 +145,7 @@ class BookingsService extends BaseService {
   async getBooking(id: string): Promise<IBooking> {
     try {
       const response = await apiClient.get<StrapiBookingResponse>(
-        `/bookings/${id}?populate[user]=*&populate[partner]=*&populate[service]=*`
+        `/bookings/${id}?populate[user][fields]=id,username,email&populate[partner][fields]=id,documentId,name,address,city,phone&populate[service][fields]=id,documentId,name,price,duration`
       );
       
       return transformStrapiBooking(response.data);
