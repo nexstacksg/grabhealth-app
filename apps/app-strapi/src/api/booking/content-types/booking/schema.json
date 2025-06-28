@@ -12,16 +12,21 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "bookingNumber": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
     "bookingDate": {
       "type": "datetime",
       "required": true
     },
     "startTime": {
-      "type": "string",
+      "type": "time",
       "required": true
     },
     "endTime": {
-      "type": "string",
+      "type": "time",
       "required": true
     },
     "bookingStatus": {

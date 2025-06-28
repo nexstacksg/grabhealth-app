@@ -21,13 +21,14 @@
     },
     "sku": {
       "type": "string",
+      "required": true,
       "unique": true
     },
     "inStock": {
       "type": "boolean",
       "default": true
     },
-    "product_status": {
+    "productStatus": {
       "type": "enumeration",
       "default": "ACTIVE",
       "enum": [
@@ -46,17 +47,22 @@
       "type": "media",
       "multiple": true,
       "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
+        "images"
       ]
     },
     "price": {
-      "type": "decimal"
+      "type": "decimal",
+      "required": true,
+      "min": 0
     },
     "qty": {
-      "type": "integer"
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name"
     }
   }
 }

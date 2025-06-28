@@ -386,6 +386,9 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
   };
   attributes: {
     bookingDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    bookingNumber: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     bookingStatus: Schema.Attribute.Enumeration<
       ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']
     > &
@@ -395,7 +398,7 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    endTime: Schema.Attribute.String & Schema.Attribute.Required;
+    endTime: Schema.Attribute.Time & Schema.Attribute.Required;
     isFreeCheckup: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -413,7 +416,7 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<'PENDING'>;
     publishedAt: Schema.Attribute.DateTime;
     service: Schema.Attribute.Relation<'manyToOne', 'api::service.service'>;
-    startTime: Schema.Attribute.String & Schema.Attribute.Required;
+    startTime: Schema.Attribute.Time & Schema.Attribute.Required;
     totalAmount: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -565,6 +568,9 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
     notes: Schema.Attribute.Text;
+    orderNumber: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     paymentMethod: Schema.Attribute.String;
     paymentStatus: Schema.Attribute.Enumeration<
       ['PENDING', 'PAID', 'FAILED', 'REFUNDED']
@@ -719,15 +725,30 @@ export interface ApiPartnerPartner extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    operatingHours: Schema.Attribute.Text;
+    operatingHours: Schema.Attribute.JSON;
     phone: Schema.Attribute.String & Schema.Attribute.Required;
     postalCode: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
-    rating: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
+    rating: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
     services: Schema.Attribute.Relation<'oneToMany', 'api::service.service'>;
     specializations: Schema.Attribute.JSON;
     state: Schema.Attribute.String & Schema.Attribute.Required;
-    totalReviews: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    totalReviews: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -756,10 +777,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
-    imageUrl: Schema.Attribute.Media<
-      'images' | 'files' | 'videos' | 'audios',
-      true
-    >;
+    imageUrl: Schema.Attribute.Media<'images', true>;
     inStock: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -768,14 +786,31 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    price: Schema.Attribute.Decimal;
-    product_status: Schema.Attribute.Enumeration<
+    price: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    productStatus: Schema.Attribute.Enumeration<
       ['ACTIVE', 'INACTIVE', 'DISCONTINUED']
     > &
       Schema.Attribute.DefaultTo<'ACTIVE'>;
     publishedAt: Schema.Attribute.DateTime;
-    qty: Schema.Attribute.Integer;
-    sku: Schema.Attribute.String & Schema.Attribute.Unique;
+    qty: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    sku: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    slug: Schema.Attribute.UID<'name'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

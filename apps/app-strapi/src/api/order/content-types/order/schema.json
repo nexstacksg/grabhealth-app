@@ -12,6 +12,11 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "orderNumber": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
     "total": {
       "type": "decimal",
       "default": 0,

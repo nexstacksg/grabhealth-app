@@ -13,8 +13,12 @@
     "strapi": "strapi",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry",
-    "lint": "echo 'No linting configured for Strapi'",
-    "format": "echo 'No formatting configured for Strapi'"
+    "lint": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{js,ts,json}\" \"config/**/*.{js,ts,json}\"",
+    "test": "echo 'No tests configured yet'",
+    "seed": "strapi console --silent < scripts/seed.js",
+    "clean": "rm -rf .cache build .tmp",
+    "rebuild": "npm run clean && npm run build"
   },
   "dependencies": {
     "@strapi/plugin-cloud": "5.16.0",
