@@ -11,31 +11,34 @@ App Template is a modern full-stack application template that provides a solid f
 **Key Needs**: Access to application features and personal profile management
 
 **User Journey:**
+
 - **Registration**: Create account with email and password
 - **Email Verification**: Verify email address to activate account
 - **Profile Setup**: Complete profile with name and optional profile photo
 - **Daily Usage**: Access application features based on user permissions
 - **Profile Management**: Update personal information and settings
 
-### 2. **Manager** (Web + Mobile)
+### 2. **Manager** (Web)
 
 **Role**: Application manager with elevated permissions
 **Primary Device**: Web dashboard with mobile access
 **Key Needs**: User management and oversight capabilities
 
 **Manager Journey:**
+
 - **User Oversight**: View and manage user accounts
 - **Role Management**: Assign and modify user roles
 - **Monitoring**: Track user activity and system usage
 - **Administration**: Handle user-related tasks and approvals
 
-### 3. **Super Admin** (Web Dashboard)
+### 3. **Super Admin** (Strapi Dashboard)
 
 **Role**: Platform administrator with full system access
 **Primary Device**: Web dashboard
 **Key Needs**: Complete platform control and system administration
 
 **Admin Journey:**
+
 - **System Administration**: Full platform management capabilities
 - **User Management**: Create, modify, and manage all user accounts
 - **Platform Oversight**: Monitor system health and performance
@@ -80,6 +83,7 @@ App Template is a modern full-stack application template that provides a solid f
 ## Key Features
 
 ### Authentication System
+
 - Email/password registration and login
 - Email verification workflow
 - Password reset functionality
@@ -87,12 +91,14 @@ App Template is a modern full-stack application template that provides a solid f
 - Secure session management
 
 ### User Management
+
 - User profile creation and editing
 - Profile photo upload
 - Role-based access control (User, Manager, Super Admin)
 - Account status management (Active, Inactive, Suspended, Pending Verification)
 
 ### Security Features
+
 - Password hashing and encryption
 - JWT token authentication
 - Role-based authorization
@@ -102,18 +108,21 @@ App Template is a modern full-stack application template that provides a solid f
 ## Success Metrics
 
 ### User Experience
+
 - Registration completion rate: >95%
 - Email verification rate: >90%
 - User satisfaction with auth flow: >4.5/5
 - Password reset success rate: >98%
 
 ### Technical Performance
+
 - API response time: <200ms
 - System uptime: >99.9%
 - Authentication success rate: >99.5%
 - Security incidents: 0
 
 ### Platform Growth
+
 - User registration growth rate
 - Active user retention
 - Feature adoption rates
@@ -122,11 +131,13 @@ App Template is a modern full-stack application template that provides a solid f
 ## Technology Stack
 
 ### Frontend Applications
+
 - **Web App**: Next.js with TypeScript
 - **Admin Portal**: Next.js with TypeScript
 - **Mobile App**: React Native with Expo
 
 ### Backend Platform
+
 - **API**: Express.js with TypeScript
 - **Database**: SQLite (development), PostgreSQL (production)
 - **Authentication**: JWT tokens
@@ -134,6 +145,7 @@ App Template is a modern full-stack application template that provides a solid f
 - **File Upload**: Multer for profile photos
 
 ### Shared Infrastructure
+
 - **Types**: Centralized TypeScript types via @app/shared-types
 - **Styling**: Tailwind CSS
 - **Development**: Bun for package management
@@ -142,6 +154,7 @@ App Template is a modern full-stack application template that provides a solid f
 ## Development Workflow
 
 ### Getting Started
+
 1. Clone the repository
 2. Install dependencies with `bun install`
 3. Set up environment variables
@@ -149,6 +162,7 @@ App Template is a modern full-stack application template that provides a solid f
 5. Start development servers
 
 ### Adding Features
+
 1. Define types in shared-types package
 2. Implement backend API endpoints
 3. Add frontend components

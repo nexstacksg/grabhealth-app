@@ -36,6 +36,9 @@
     "pm2:monit": "pm2 monit",
     "pm2:status": "pm2 list"
   },
+  "resolutions": {
+    "is-stream": "2.0.1"
+  },
   "devDependencies": {
     "turbo": "^2.3.3",
     "typescript": "^5.8.3",
