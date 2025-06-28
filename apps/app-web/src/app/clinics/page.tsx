@@ -22,18 +22,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { IPartner } from '@app/shared-types';
 import services from '@/services';
-import { apiClient } from '@/services/api-client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
-// Gift items interface
-interface GiftItem {
-  id: number;
-  name: string;
-  description: string;
-  required_purchases: number;
-  tier_name: string;
-}
 
 export default function PartnersPage() {
   const router = useRouter();
@@ -41,12 +31,9 @@ export default function PartnersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
-  const [giftItemsLoading, setGiftItemsLoading] = useState(true);
 
   useEffect(() => {
     fetchPartners();
-    fetchGiftItems();
   }, [searchTerm, selectedCity]);
 
   const fetchPartners = async () => {
@@ -66,35 +53,6 @@ export default function PartnersPage() {
     }
   };
 
-  const fetchGiftItems = async () => {
-    try {
-      setGiftItemsLoading(true);
-      // Fetch gift items from Strapi
-      const response = await apiClient.get<{ data: any[] }>('/gift-items?sort=requiredPurchases:asc');
-      
-      if (response.data && response.data.length > 0) {
-        // Transform Strapi data to match our interface
-        const transformedGiftItems = response.data.map((item: any) => {
-          const itemData = item.attributes || item;
-          return {
-            id: item.id,
-            name: itemData.name,
-            description: itemData.description || '',
-            required_purchases: itemData.requiredPurchases,
-            tier_name: `${itemData.requiredPurchases} purchases`,
-          };
-        });
-        setGiftItems(transformedGiftItems);
-      } else {
-        setGiftItems([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch gift items:', error);
-      setGiftItems([]);
-    } finally {
-      setGiftItemsLoading(false);
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-16 md:px-6">
@@ -214,60 +172,6 @@ export default function PartnersPage() {
         </div>
       )}
 
-      {/* Gift Items Section */}
-      <div className="mt-16">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-4">
-            Available Gifts
-          </h2>
-          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
-            Claim these exclusive gifts when you visit our partner locations.
-            Requirements vary by membership tier.
-          </p>
-        </div>
-
-        {giftItemsLoading ? (
-          <div className="flex justify-center py-8">
-            <p className="text-gray-500">Loading gift items...</p>
-          </div>
-        ) : giftItems.length === 0 ? (
-          <div className="text-center py-8">
-            <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">
-              No gift items available at the moment.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {giftItems.map((gift) => (
-              <Card key={gift.id} className="h-full">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{gift.name}</CardTitle>
-                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                      {gift.tier_name}
-                    </span>
-                  </div>
-                  <CardDescription>{gift.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-gray-600">
-                    <strong>Required:</strong>{' '}
-                    {gift.required_purchases === 0
-                      ? 'Free for new members'
-                      : `${gift.required_purchases} purchase(s)`}
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    Learn More
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

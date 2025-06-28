@@ -4,7 +4,6 @@ import React from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
-import { CommissionProvider } from '@/components/commission/commission-provider';
 
 interface RootProviderProps {
   children: React.ReactNode;
@@ -24,7 +23,7 @@ export function RootProvider({ children }: RootProviderProps) {
     >
       <AuthProvider>
         <CartProvider>
-          <CommissionProvider>{children}</CommissionProvider>
+          {children}
         </CartProvider>
       </AuthProvider>
     </ThemeProvider>
