@@ -16,7 +16,7 @@ import { IService, IAvailableSlot, ICalendarDay } from '@app/shared-types';
 import services from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { createBookingAction } from '@/app/bookings/actions';
+import { createBookingAction } from '@/app/actions';
 
 interface BookingCalendarProps {
   partnerId: string;

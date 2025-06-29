@@ -1,9 +1,12 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { serverApiGet, serverApiPost } from '@/lib/server-api';
 import { authService } from '@/services';
 import { LoginRequest, RegisterRequest } from '@app/shared-types';
 import { transformStrapiUser } from '@/services/strapi-base';
+
+// ============ Authentication Actions ============
 
 export async function loginAction(data: LoginRequest) {
   try {
@@ -82,32 +85,61 @@ export async function logoutAction() {
 }
 
 export async function getCurrentUserAction() {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('accessToken');
-    
-    if (!token) {
-      return { success: false, user: null };
-    }
-    
-    // Make direct API call with token
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337'}/api/users/me?populate=*`, {
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch user');
-    }
-    
-    const userData = await response.json();
-    const transformedUser = transformStrapiUser(userData);
-    
+  const result = await serverApiGet('/users/me?populate=*');
+  
+  if (result.success && result.data) {
+    const transformedUser = transformStrapiUser(result.data);
     return { success: true, user: transformedUser };
-  } catch (error) {
-    console.error('Failed to get current user:', error);
-    return { success: false, user: null };
   }
+  
+  return { success: false, user: null };
+}
+
+// ============ Booking Actions ============
+
+interface CreateBookingData {
+  partnerId: string;
+  serviceId: string;
+  bookingDate: string;
+  startTime: string;
+  notes?: string;
+  isFreeCheckup?: boolean;
+}
+
+export async function createBookingAction(data: CreateBookingData) {
+  const result = await serverApiPost(
+    `/partners/${data.partnerId}/book`,
+    {
+      serviceId: data.serviceId,
+      bookingDate: data.bookingDate,
+      startTime: data.startTime,
+      notes: data.notes || '',
+      isFreeCheckup: data.isFreeCheckup || false,
+    }
+  );
+  
+  if (result.success) {
+    return { success: true, booking: result.data };
+  }
+  
+  return { 
+    success: false, 
+    error: result.error || 'Failed to create booking',
+    details: result.details
+  };
+}
+
+// ============ Generic API Action ============
+
+/**
+ * Generic server action for any authenticated API call
+ * This can be used for any endpoint that requires authentication
+ */
+export async function apiAction<T = any>(
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+  endpoint: string,
+  body?: any
+) {
+  const { serverApi } = await import('@/lib/server-api');
+  return serverApi<T>(endpoint, { method, body });
 }

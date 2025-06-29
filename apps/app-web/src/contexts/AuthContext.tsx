@@ -16,7 +16,7 @@ import {
   IProfileUpdateRequest,
 } from '@app/shared-types';
 import { cookieUtils } from '@/lib/cookies';
-import { loginAction, registerAction, logoutAction, getCurrentUserAction } from '@/app/auth/actions';
+import { loginAction, registerAction, logoutAction, getCurrentUserAction } from '@/app/actions';
 
 // Create context without explicit type definition to avoid unused warnings
 const AuthContext = createContext<
