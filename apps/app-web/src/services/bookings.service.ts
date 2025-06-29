@@ -156,6 +156,8 @@ class BookingsService extends BaseService {
 
   async createBooking(data: CreateBookingData): Promise<IBooking> {
     try {
+      console.log('Creating booking with data:', data);
+      
       // Use the partner's booking endpoint
       const response = await apiClient.post(
         `/partners/${data.partnerId}/book`,
@@ -168,13 +170,21 @@ class BookingsService extends BaseService {
         }
       );
 
+      console.log('Booking response:', response);
+
       // Transform the response - it might be in a different format from the partner endpoint
       if (response.data) {
         return transformStrapiBooking(response.data);
       }
       
-      throw new Error('Failed to create booking');
+      // If response is successful but has different structure
+      if (response.id || response.documentId) {
+        return transformStrapiBooking(response);
+      }
+      
+      throw new Error('Failed to create booking - invalid response format');
     } catch (error) {
+      console.error('Booking creation error:', error);
       this.handleError(error);
     }
   }

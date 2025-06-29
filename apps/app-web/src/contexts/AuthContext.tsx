@@ -16,6 +16,7 @@ import {
   IProfileUpdateRequest,
 } from '@app/shared-types';
 import { cookieUtils } from '@/lib/cookies';
+import { loginAction, registerAction, logoutAction, getCurrentUserAction } from '@/app/auth/actions';
 
 // Create context without explicit type definition to avoid unused warnings
 const AuthContext = createContext<
@@ -30,17 +31,16 @@ const useAuthProvider = () => {
 
   const checkAuth = useCallback(async () => {
     try {
-      // Try to get user profile - the API client will check for tokens in cookies
-      const userProfile = await authService.getProfile();
-      setUser(userProfile);
-    } catch (error: any) {
-      // User is not authenticated or there was an error
-      if (error.status === 401) {
-        // Clear cookies and user data on 401
-        cookieUtils.clear();
-        sessionStorage.removeItem('user');
-      }
+      // Use server action to check authentication with httpOnly cookies
+      const result = await getCurrentUserAction();
       
+      if (result.success && result.user) {
+        setUser(result.user);
+      } else {
+        setUser(null);
+      }
+    } catch (error: any) {
+      console.error('Auth check failed:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -67,21 +67,19 @@ const useAuthProvider = () => {
   const login = useCallback(
     async (email: string, password: string) => {
       try {
-        const authData = await authService.login({ email, password });
-        setUser(authData.user);
-
-        // Store tokens in cookies only
-        if (authData.accessToken) {
-          cookieUtils.set('accessToken', authData.accessToken, 1); // 1 day expiry
+        // Use server action to set httpOnly cookies
+        const result = await loginAction({ email, password });
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Invalid email or password');
         }
-        if (authData.refreshToken) {
-          cookieUtils.set('refreshToken', authData.refreshToken, 7); // 7 days expiry
-        }
+        
+        setUser(result.user);
 
         // Skip email verification for now and redirect to home
         if (
-          authData.user.role === 'PARTNER' &&
-          authData.user.partnerId
+          result.user.role === 'PARTNER' &&
+          result.user.partnerId
         ) {
           // Redirect partner users to partner dashboard
           router.push('/partner');
@@ -98,11 +96,11 @@ const useAuthProvider = () => {
 
   const logout = useCallback(async () => {
     try {
-      await authService.logout();
+      await logoutAction();
     } catch {
       // Ignore logout errors
     } finally {
-      // Clear cookies
+      // Clear client-side cookies too (if any)
       cookieUtils.clear();
       setUser(null);
 
@@ -114,26 +112,24 @@ const useAuthProvider = () => {
   const register = useCallback(
     async (data: RegisterRequest) => {
       try {
-        const authData = await authService.register({
+        // Use server action to set httpOnly cookies
+        const result = await registerAction({
           email: data.email,
           password: data.password,
           firstName: data.firstName || '',
           lastName: data.lastName || '',
         });
-        setUser(authData.user);
-
-        // Store tokens in cookies only
-        if (authData.accessToken) {
-          cookieUtils.set('accessToken', authData.accessToken, 1); // 1 day expiry
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Registration failed');
         }
-        if (authData.refreshToken) {
-          cookieUtils.set('refreshToken', authData.refreshToken, 7); // 7 days expiry
-        }
+        
+        setUser(result.user);
 
         // Skip email verification for now and redirect to home
         if (
-          authData.user.role === 'PARTNER' &&
-          authData.user.partnerId
+          result.user.role === 'PARTNER' &&
+          result.user.partnerId
         ) {
           // Redirect partner users to partner dashboard
           router.push('/partner');
@@ -189,6 +185,7 @@ const useAuthProvider = () => {
       refreshAuth,
       updateProfile,
       updateProfileImage,
+      checkAuth,
     }),
     [
       user,
@@ -199,6 +196,7 @@ const useAuthProvider = () => {
       refreshAuth,
       updateProfile,
       updateProfileImage,
+      checkAuth,
     ]
   );
 };

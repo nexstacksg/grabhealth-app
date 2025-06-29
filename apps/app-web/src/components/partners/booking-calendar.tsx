@@ -263,10 +263,21 @@ export function BookingCalendar({
         throw new Error('This time slot is no longer available');
       }
 
-      await services.bookings.createBooking({
+      // Format date as YYYY-MM-DD for the API
+      const bookingDateStr = format(selectedDate, 'yyyy-MM-dd');
+      
+      console.log('Booking request data:', {
         partnerId,
         serviceId: service.id,
-        bookingDate: selectedDate.toISOString(),
+        bookingDate: bookingDateStr,
+        startTime: selectedSlot,
+        notes: `Booking for ${service.name}`,
+      });
+
+      const bookingResult = await services.bookings.createBooking({
+        partnerId,
+        serviceId: service.id,
+        bookingDate: bookingDateStr,
         startTime: selectedSlot,
         notes: `Booking for ${service.name}`,
         isFreeCheckup:
@@ -274,6 +285,7 @@ export function BookingCalendar({
           (freeCheckupStatus?.eligible && service.category === 'Body Check'),
       });
 
+      console.log('Booking created successfully:', bookingResult);
       onBookingComplete();
     } catch (error) {
       // Handle the case where error is an empty object or undefined

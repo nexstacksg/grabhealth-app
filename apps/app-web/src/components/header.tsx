@@ -86,19 +86,8 @@ export default function Header() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/auth/login">
-                <Button variant="ghost" className="text-sm font-medium">
-                  Login
-                </Button>
-              </Link>
-              <Link href="/auth/register">
-                <Button
-                  variant="outline"
-                  className="text-sm font-medium border-emerald-500 text-emerald-500 hover:bg-emerald-50"
-                >
-                  Register
-                </Button>
-              </Link>
+              {/* Show loading state during initial auth check */}
+              <div className="h-10 w-32"></div>
             </div>
           </div>
         </div>
@@ -140,7 +129,10 @@ export default function Header() {
               </nav>
 
               <div className="hidden md:flex items-center space-x-4">
-                {isMounted && !isLoading && user ? (
+                {isLoading ? (
+                  // Show loading state while checking auth
+                  <div className="h-10 w-32 bg-gray-100 rounded animate-pulse"></div>
+                ) : user ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="gap-2">
@@ -215,7 +207,10 @@ export default function Header() {
                       </SheetClose>
                     ))}
                     <div className="h-px bg-gray-200 my-2"></div>
-                    {isMounted && !isLoading && user ? (
+                    {isLoading ? (
+                      // Show loading state while checking auth
+                      <div className="h-10 w-full bg-gray-100 rounded animate-pulse"></div>
+                    ) : user ? (
                       <>
                         <div className="flex items-center space-x-2 mb-4">
                           <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">

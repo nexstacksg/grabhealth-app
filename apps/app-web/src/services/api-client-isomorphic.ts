@@ -6,22 +6,32 @@ const isServer = typeof window === 'undefined';
 
 // Helper to get auth token based on environment
 async function getAuthToken(): Promise<string | null> {
+  console.log('[ApiClientIsomorphic] Getting auth token, isServer:', isServer);
+  
   if (isServer) {
     // Server-side: use Next.js cookies
     try {
       // Dynamic import for server-only modules
       const { cookies } = await import('next/headers');
       const cookieStore = await cookies();
+      const allCookies = cookieStore.getAll();
+      console.log('[ApiClientIsomorphic] Server-side cookies count:', allCookies.length);
+      
       const accessToken = cookieStore.get('accessToken');
+      console.log('[ApiClientIsomorphic] AccessToken found:', !!accessToken);
+      console.log('[ApiClientIsomorphic] AccessToken value:', accessToken?.value?.substring(0, 20) + '...' || 'NONE');
+      
       return accessToken?.value || null;
     } catch (error) {
       // If cookies() throws (e.g., in non-server environment), return null
-      console.error('Failed to get server-side cookie:', error);
+      console.error('[ApiClientIsomorphic] Failed to get server-side cookie:', error);
       return null;
     }
   } else {
     // Client-side: use cookieUtils
-    return cookieUtils.get('accessToken');
+    const token = cookieUtils.get('accessToken');
+    console.log('[ApiClientIsomorphic] Client-side token found:', !!token);
+    return token;
   }
 }
 
@@ -52,11 +62,17 @@ class IsomorphicApiClient {
     // Request interceptor for auth headers
     this.axiosInstance.interceptors.request.use(
       async (config) => {
+        console.log('[ApiClientIsomorphic] Request interceptor - URL:', config.url);
+        
         // Get auth token based on environment
         const token = await getAuthToken();
+        console.log('[ApiClientIsomorphic] Token in interceptor:', token?.substring(0, 20) + '...' || 'NONE');
         
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('[ApiClientIsomorphic] Added Authorization header');
+        } else {
+          console.log('[ApiClientIsomorphic] No token - no Authorization header added');
         }
         
         // Don't override Content-Type if it's FormData (let axios handle multipart/form-data)
@@ -64,6 +80,7 @@ class IsomorphicApiClient {
           delete config.headers['Content-Type'];
         }
         
+        console.log('[ApiClientIsomorphic] Final headers:', JSON.stringify(config.headers, null, 2));
         return config;
       },
       (error) => {

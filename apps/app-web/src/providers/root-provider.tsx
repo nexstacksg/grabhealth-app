@@ -4,6 +4,7 @@ import React from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { AuthInitializer } from '@/components/auth/auth-initializer';
 
 interface RootProviderProps {
   children: React.ReactNode;
@@ -22,9 +23,11 @@ export function RootProvider({ children }: RootProviderProps) {
       disableTransitionOnChange
     >
       <AuthProvider>
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <AuthInitializer>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </AuthInitializer>
       </AuthProvider>
     </ThemeProvider>
   );
