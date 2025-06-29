@@ -145,3 +145,6 @@ export default ApiClient;
 
 // Export axios for type imports
 export { AxiosError } from 'axios';
+
+// Export isomorphic client for gradual migration
+export { apiClientIsomorphic } from './api-client-isomorphic';

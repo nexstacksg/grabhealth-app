@@ -2,7 +2,7 @@
  * Product Service - Handles all product related API calls
  */
 
-import { apiClient } from './api-client';
+import { apiClientIsomorphic as apiClient } from './api-client-isomorphic';
 import { BaseService } from './base.service';
 import { IProduct as BaseIProduct, ICategory, ProductSearchParams, ApiResponse } from '@app/shared-types';
 
@@ -97,21 +97,40 @@ class ProductService extends BaseService {
     totalPages: number;
   }> {
     try {
-      // Fetch products with relations
-      const fullUrl =
-        'http://localhost:1337/api/products?populate=*';
-
-      const response = await fetch(fullUrl);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.append('populate', '*');
+      
+      if (params) {
+        if (params.limit) {
+          queryParams.append('pagination[pageSize]', params.limit.toString());
+        }
+        if (params.page) {
+          queryParams.append('pagination[page]', params.page.toString());
+        }
+        if (params.search) {
+          queryParams.append('filters[name][$containsi]', params.search);
+        }
+        if (params.category) {
+          queryParams.append('filters[category][id][$eq]', params.category);
+        }
+        if (params.minPrice !== undefined) {
+          queryParams.append('filters[price][$gte]', params.minPrice.toString());
+        }
+        if (params.maxPrice !== undefined) {
+          queryParams.append('filters[price][$lte]', params.maxPrice.toString());
+        }
+        if (params.inStock !== undefined) {
+          queryParams.append('filters[inStock][$eq]', params.inStock.toString());
+        }
       }
 
-      const strapiData = await response.json();
+      // Fetch products with relations using apiClient
+      const strapiData = await apiClient.get<StrapiResponse<any[]>>(`/products?${queryParams.toString()}`);
 
       // Handle Strapi v5 format
-      const products = strapiData.data || [];
-      const meta = strapiData.meta || {};
+      const products = (strapiData as any).data || [];
+      const meta = (strapiData as any).meta || {};
       const pagination = meta.pagination || {};
 
       const transformedProducts = products.map(transformStrapiProduct);

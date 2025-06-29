@@ -1,34 +1,19 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import ProfileClient from './profile-client';
-import { api } from '@/services/api.service';
+import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
 
 async function getUser() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('accessToken');
-  
+
   if (!token) {
     redirect('/auth/login');
   }
 
   try {
-    // Server-side API call with token
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337'}/api/users/me?populate=*`, {
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        redirect('/auth/login');
-      }
-      throw new Error('Failed to fetch user');
-    }
-
-    const data = await response.json();
+    // Server-side API call using isomorphic client
+    const data = await apiClientIsomorphic.get('/users/me?populate=*');
     return data;
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -38,6 +23,6 @@ async function getUser() {
 
 export default async function ProfilePage() {
   const userData = await getUser();
-  
+
   return <ProfileClient initialUser={userData} />;
 }

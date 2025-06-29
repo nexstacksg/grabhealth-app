@@ -2,15 +2,14 @@
 
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
 
 export async function updateProfileAction(data: {
   userId: string;
   username: string;
   email: string;
 }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('accessToken');
 
   if (!token) {
@@ -18,34 +17,22 @@ export async function updateProfileAction(data: {
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/users/${data.userId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: data.username,
-        email: data.email,
-        firstName: data.username, // Use username as firstName
-      }),
+    await apiClientIsomorphic.put(`/users/${data.userId}`, {
+      username: data.username,
+      email: data.email,
+      firstName: data.username, // Use username as firstName
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return { error: errorData.error?.message || 'Failed to update profile' };
-    }
 
     revalidatePath('/profile');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Profile update error:', error);
-    return { error: 'Failed to update profile' };
+    return { error: error.message || 'Failed to update profile' };
   }
 }
 
 export async function uploadProfileImageAction(formData: FormData) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('accessToken');
 
   if (!token) {
@@ -64,19 +51,12 @@ export async function uploadProfileImageAction(formData: FormData) {
     const uploadFormData = new FormData();
     uploadFormData.append('files', file);
 
-    const uploadResponse = await fetch(`${API_URL}/api/upload`, {
-      method: 'POST',
+    const uploadedFiles = await apiClientIsomorphic.post('/upload', uploadFormData, {
       headers: {
-        'Authorization': `Bearer ${token.value}`,
+        // Let axios handle the Content-Type for FormData
       },
-      body: uploadFormData,
     });
 
-    if (!uploadResponse.ok) {
-      return { error: 'Failed to upload image' };
-    }
-
-    const uploadedFiles = await uploadResponse.json();
     const imageUrl = uploadedFiles[0]?.url;
 
     if (!imageUrl) {
@@ -84,26 +64,15 @@ export async function uploadProfileImageAction(formData: FormData) {
     }
 
     // Then, update the user's profile image
-    const updateResponse = await fetch(`${API_URL}/api/users/${userId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token.value}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        profileImage: imageUrl,
-      }),
+    await apiClientIsomorphic.put(`/users/${userId}`, {
+      profileImage: imageUrl,
     });
-
-    if (!updateResponse.ok) {
-      return { error: 'Failed to update profile image' };
-    }
 
     revalidatePath('/profile');
     return { success: true, imageUrl };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image upload error:', error);
-    return { error: 'Failed to upload image' };
+    return { error: error.message || 'Failed to upload image' };
   }
 }
 
