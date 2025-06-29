@@ -38,7 +38,7 @@ export interface ICommissionSummary {
     totalOrders: number;
   };
   topEarners: Array<{
-    userId: number;
+    userId: string; // Reference to user documentId
     username: string;
     totalEarned: number;
     rank: number;

@@ -1,8 +1,8 @@
 import { CommissionStatus, CommissionType, RoleType } from '../enums/commission';
 
 export interface ICommission {
-  id: number;
-  orderId: number;
+  documentId: string; // Strapi 5 document ID
+  orderId: string; // Reference to order documentId
   userId: string; // Changed to string to match backend User model
   recipientId: string; // Changed to string to match backend User model
   amount: number;
@@ -15,7 +15,7 @@ export interface ICommission {
 }
 
 export interface IUserRelationship {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   userId: string; // Changed to string to match backend User model
   uplineId?: string; // Changed to string to match backend User model
   relationshipLevel: number;
@@ -24,7 +24,7 @@ export interface IUserRelationship {
 }
 
 export interface ICommissionTier {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   tierLevel: number;
   tierName: string;
   directCommissionRate: number;
@@ -35,7 +35,7 @@ export interface ICommissionTier {
 }
 
 export interface IUserPoints {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   userId: string; // Changed to string to match backend User model
   points: number;
   createdAt: Date;
@@ -43,7 +43,7 @@ export interface IUserPoints {
 }
 
 export interface IUserRoleType {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   roleName: RoleType;
   description?: string;
   commissionMultiplier: number;
@@ -52,7 +52,7 @@ export interface IUserRoleType {
 }
 
 export interface ICommissionCreate {
-  orderId: number;
+  orderId: string; // Reference to order documentId
   userId: string; // Changed to string to match backend User model
   recipientId: string; // Changed to string to match backend User model
   amount: number;

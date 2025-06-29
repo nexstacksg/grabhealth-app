@@ -3,8 +3,7 @@ import { IProduct } from './product';
 import { IUser } from './user';
 
 export interface IOrder {
-  id: number | string; // Can be either number or string
-  documentId?: string; // Strapi 5 document ID
+  documentId: string; // Strapi 5 document ID
   orderNumber: string; // Unique order identifier
   userId: string; // Changed to string to match backend User model
   total: number;
@@ -29,9 +28,9 @@ export interface IOrder {
 }
 
 export interface IOrderItem {
-  id: number | string; // Can be either number or string
-  orderId: number | string; // Can be either number or string
-  productId: number;
+  documentId: string; // Strapi 5 document ID
+  orderId: string; // Reference to order documentId
+  productId: string; // Reference to product documentId
   quantity: number;
   price: number;
   discount?: number;
@@ -60,7 +59,7 @@ export interface IOrderCreate {
 }
 
 export interface IOrderItemCreate {
-  productId: number;
+  productId: string; // Reference to product documentId
   quantity: number;
   price: number;
   discount?: number;
@@ -68,7 +67,7 @@ export interface IOrderItemCreate {
 }
 
 export interface IOrderUpdate {
-  id: number;
+  documentId: string;
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
   shippingAddress?: string;

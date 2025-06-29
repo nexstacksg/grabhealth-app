@@ -29,8 +29,8 @@ export async function getMyOrdersAction(params?: {
     // Build query params
     const queryParams = new URLSearchParams();
     
-    // Filter by current user ID
-    queryParams.append('filters[user][id][$eq]', userResult.user.id.toString());
+    // Filter by current user documentId
+    queryParams.append('filters[user][documentId][$eq]', userResult.user.documentId);
     
     if (params?.status) {
       queryParams.append('filters[status][$eq]', params.status);
@@ -55,12 +55,8 @@ export async function getMyOrdersAction(params?: {
     
     if (result.success && result.data) {
       const pagination = result.data.meta?.pagination || {};
-      // Transform orders to include documentId
-      const orders = (result.data.data || []).map((order: any) => ({
-        ...order,
-        documentId: order.documentId, // Strapi 5 documentId
-        id: order.id // Keep numeric id for backward compatibility
-      }));
+      // Transform orders - Strapi 5 already provides documentId
+      const orders = result.data.data || [];
       return {
         success: true,
         orders,
@@ -113,21 +109,17 @@ export async function getOrderAction(orderId: string) {
       
       const order = result.data.data || result.data;
       // Check user ownership - handle both string and number IDs
-      const orderUserId = order.user?.id?.toString();
-      const currentUserId = userResult.user.id.toString();
+      const orderUserId = order.user?.documentId?.toString();
+      const currentUserId = userResult.user.documentId.toString();
       
       if (!orderUserId || orderUserId !== currentUserId) {
         return { success: false, error: 'Order not found' };
       }
       
-      // Include documentId in the response
+      // Return order as-is (already has documentId from Strapi)
       return { 
         success: true, 
-        order: {
-          ...order,
-          documentId: order.documentId, // Strapi 5 documentId
-          id: order.id // Keep numeric id for backward compatibility
-        }
+        order
       };
     }
     
@@ -147,7 +139,7 @@ export async function getOrderAction(orderId: string) {
 export async function createOrderAction(data: IOrderCreate) {
   try {
     // Generate a unique order number
-    const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     
     // Transform data to Strapi format
     // For Strapi 5, relations should use connect syntax
@@ -179,27 +171,36 @@ export async function createOrderAction(data: IOrderCreate) {
       if (data.items && data.items.length > 0) {
         for (const item of data.items) {
           try {
-            await serverApiPost('/order-items', {
+            const itemData = {
               data: {
                 order: {
-                  connect: [parseInt(order.id)] // Use numeric ID for relations
+                  // Strapi 5 requires documentId
+                  connect: [order.documentId]
                 },
                 product: {
-                  connect: [item.productId] // Use connect syntax for relations
+                  connect: [item.productId] // Product IDs are still numeric
                 },
                 quantity: item.quantity,
                 price: item.price,
                 discount: item.discount || 0,
                 pvPoints: item.pvPoints || 0,
               }
-            });
+            };
+            
+            await serverApiPost('/order-items', itemData);
           } catch (error) {
             console.error('Failed to create order item:', error);
           }
         }
       }
       
-      return { success: true, order };
+      return { 
+        success: true, 
+        order: {
+          ...order,
+          documentId: order.documentId // Strapi 5 uses documentId
+        }
+      };
     }
     
     return { 

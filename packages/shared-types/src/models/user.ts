@@ -1,7 +1,7 @@
 import { UserRole, UserStatus } from '../enums';
 
 export interface IUser {
-  id: string;
+  documentId: string; // Strapi 5 document ID
   email: string;
   password: string;
   firstName: string;
@@ -24,7 +24,7 @@ export interface IUser {
 }
 
 export interface IUserPublic {
-  id: string;
+  documentId: string; // Strapi 5 document ID
   email: string;
   firstName: string;
   lastName: string;
@@ -37,14 +37,14 @@ export interface IUserPublic {
   createdAt: Date;
   partnerId?: string; // Link to partner organization
   partner?: {
-    id: string;
+    documentId: string; // Strapi 5 document ID
     name: string;
     email: string;
   };
 }
 
 export interface IUserAuth {
-  id: string;
+  documentId: string; // Strapi 5 document ID
   email: string;
   role: UserRole;
   status: UserStatus;

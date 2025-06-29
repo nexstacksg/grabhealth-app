@@ -189,6 +189,9 @@ export async function handlePaymentSuccess(sessionId: string) {
     
     // Parse product IDs and quantities from line items
     const productIds = metadata.productIds?.split(',').map(id => parseInt(id)) || [];
+    console.log('Product IDs from metadata:', productIds);
+    console.log('Line items from Stripe:', session.line_items?.data);
+    
     const items = session.line_items?.data.map((lineItem: any, index: number) => {
       // Get product ID from the metadata array or from product metadata
       let productId = productIds[index] || 1;
@@ -206,6 +209,8 @@ export async function handlePaymentSuccess(sessionId: string) {
       };
     }) || [];
 
+    console.log('Items to create:', items);
+    
     // Calculate totals
     const subtotal = session.amount_subtotal ? session.amount_subtotal / 100 : 0;
     const total = session.amount_total ? session.amount_total / 100 : 0;

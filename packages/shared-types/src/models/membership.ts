@@ -6,7 +6,7 @@ import {
 } from '../enums/membership';
 
 export interface IMembershipTier {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   name: MembershipTier;
   description?: string;
   price: number; // Now 0 for free membership
@@ -16,9 +16,9 @@ export interface IMembershipTier {
 }
 
 export interface IUserMembership {
-  id: number;
-  userId: string; // Changed to string to match backend User model
-  tierId: number;
+  documentId: string; // Strapi 5 document ID
+  userId: string; // Reference to user documentId
+  tierId: string; // Reference to membership tier documentId
   status: MembershipStatus;
   startDate: Date;
   endDate?: Date;
@@ -28,7 +28,7 @@ export interface IUserMembership {
 }
 
 export interface IGiftItem {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   name: string;
   description?: string;
   requiredPurchases: number;
@@ -38,7 +38,7 @@ export interface IGiftItem {
 }
 
 export interface IPromotion {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   title: string;
   description?: string;
   discountType: string;
@@ -52,7 +52,7 @@ export interface IPromotion {
 }
 
 export interface IAccountRequest {
-  id: number;
+  documentId: string; // Strapi 5 document ID
   userId: string; // Changed to string to match backend User model
   requestType: AccountRequestType;
   requestDetails?: string;
