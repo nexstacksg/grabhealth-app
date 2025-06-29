@@ -15,6 +15,7 @@ export { profileService } from './profile.service';
 export { aiService } from './ai.service';
 export { bookingsService } from './bookings.service';
 export { promotionService } from './promotion.service';
+export { paymentService } from './payment.service';
 
 // Export unified API client from lib
 export { apiClient } from '@/lib/api-client';

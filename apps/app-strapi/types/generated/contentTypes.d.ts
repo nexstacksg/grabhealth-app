@@ -553,10 +553,6 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   };
   attributes: {
     billingAddress: Schema.Attribute.Text;
-    commissions: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::commission.commission'
-    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

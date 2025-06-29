@@ -26,6 +26,14 @@ export {
   createBookingAction,
 } from './booking.actions';
 
+// Payment actions
+export {
+  createStripeCheckoutSession,
+  verifyStripePayment,
+  handlePaymentSuccess,
+  getPaymentIntent,
+} from './payment.actions';
+
 // Generic API action
 export {
   apiAction,

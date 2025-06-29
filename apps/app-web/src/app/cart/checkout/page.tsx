@@ -8,7 +8,6 @@ import {
   CreditCard,
   MapPin,
   ShoppingBag,
-  CheckCircle,
   Loader2,
   Award,
   BadgePercent,
@@ -42,176 +41,143 @@ import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import services from '@/services';
+import { createStripeCheckoutSession } from '@/app/actions';
+import { PaymentMethod } from '@app/shared-types';
 
 // Form validation schema
 const checkoutFormSchema = z.object({
   // Shipping details
   fullName: z.string().min(2, { message: 'Full name is required' }),
   email: z.string().email({ message: 'Invalid email address' }),
-  phone: z.string().min(10, { message: 'Valid phone number is required' }),
-  address: z.string().min(5, { message: 'Address is required' }),
+  phone: z.string().min(8, { message: 'Phone number is required' }),
+  address: z.string().min(10, { message: 'Shipping address is required' }),
   city: z.string().min(2, { message: 'City is required' }),
-  state: z.string().min(2, { message: 'State is required' }),
-  zipCode: z.string().min(5, { message: 'Valid zip code is required' }),
-
-  // Payment details
-  paymentMethod: z.enum(['credit', 'debit', 'paypal']),
-  cardName: z.string().min(2, { message: 'Name on card is required' }),
-  cardNumber: z
-    .string()
-    .min(16, { message: 'Card number must be 16 digits' })
-    .max(16, { message: 'Card number must be 16 digits' })
-    .regex(/^\d+$/, { message: 'Card number must contain only digits' }),
-  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, {
-    message: 'Expiry date must be in MM/YY format',
+  postalCode: z.string().min(6, { message: 'Postal code is required' }),
+  notes: z.string().optional(),
+  
+  // Payment method selection
+  paymentMethod: z.enum(['stripe', 'cod'], {
+    required_error: 'Please select a payment method',
   }),
-  cvv: z
-    .string()
-    .min(3, { message: 'CVV must be 3 or 4 digits' })
-    .max(4, { message: 'CVV must be 3 or 4 digits' })
-    .regex(/^\d+$/, { message: 'CVV must contain only digits' }),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-  const {
-    cartItems,
-    cartCount,
-    cartTotal,
-    isLoading: cartLoading,
-    clearCart,
-  } = useCart();
+  const { cart, clearCart } = useCart();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const isLoading = cartLoading;
-
-  // Initialize form with react-hook-form
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
-      fullName: user ? `${user.firstName} ${user.lastName}` : '',
+      fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
       email: user?.email || '',
       phone: '',
       address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      paymentMethod: 'credit',
-      cardName: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
+      city: 'Singapore',
+      postalCode: '',
+      notes: '',
+      paymentMethod: 'stripe',
     },
   });
 
-  // Handle form submission
-  const onSubmit = async (data: CheckoutFormValues) => {
-    if (cartItems.length === 0) {
+  const onSubmit = async (values: CheckoutFormValues) => {
+    if (!cart || cart.items.length === 0) {
       toast.error('Your cart is empty');
       return;
     }
 
-    if (!user) {
-      toast.error('Please login to place an order');
-      router.push('/login');
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      setIsSubmitting(true);
-
-      // Format shipping address
-      const shippingAddress = `${data.address}, ${data.city}, ${data.state} ${data.zipCode}`;
-      const billingAddress = shippingAddress; // Using same as shipping for now
-
-      // Process the order through backend
-      const order = await services.order.checkoutFromCart({
-        cartItems: cartItems.map(item => ({
+      const shippingAddress = `${values.address}, ${values.city} ${values.postalCode}`;
+      
+      if (values.paymentMethod === 'stripe') {
+        // Create Stripe checkout session
+        const items = cart.items.map(item => ({
+          name: item.product?.name || `Product ${item.productId}`,
+          price: item.product?.price || item.price || 0,
+          quantity: item.quantity,
           productId: item.productId,
-          quantity: item.quantity
-        })),
-        paymentMethod: data.paymentMethod,
-        shippingAddress,
-        billingAddress,
-      });
+          image: item.product?.imageUrl || undefined,
+        }));
 
-      // Clear the cart after successful order
-      await clearCart();
-
-      // Show success message
-      toast.success('Order placed successfully!');
-
-      // Redirect to order details page
-      router.push(`/orders/${order.id}`);
+        const result = await createStripeCheckoutSession({ 
+          items,
+          shippingAddress,
+          billingAddress: shippingAddress, // Use same as shipping for now
+          notes: values.notes,
+        });
+        
+        if (result.success && result.url) {
+          // Clear cart before redirecting to Stripe
+          await clearCart();
+          
+          // Redirect to Stripe checkout
+          window.location.href = result.url;
+        } else {
+          throw new Error(result.error || 'Failed to create checkout session');
+        }
+      } else {
+        // Cash on delivery - create order directly
+        toast.info('Cash on delivery is not yet implemented');
+        // TODO: Implement COD order creation
+      }
     } catch (error) {
-      console.error('Error during checkout:', error);
-      toast.error('Failed to complete checkout');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Checkout error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process checkout');
+      setIsLoading(false);
     }
   };
 
-  // Calculate totals
-  const subtotal = cartTotal;
-  const tax = subtotal * 0.07;
-  const total = subtotal + tax;
-
-  // If cart is empty, redirect to cart page
-  if (!isLoading && cartItems.length === 0) {
+  if (!cart || cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-6 md:py-16 md:px-6">
-        <div className="max-w-md mx-auto text-center">
-          <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
-          <p className="text-muted-foreground mb-6">
-            You need to add items to your cart before proceeding to checkout.
-          </p>
-          <Button
-            className="min-w-[200px]"
-            onClick={() => router.push('/products')}
-          >
-            Browse Products
-          </Button>
-        </div>
+      <div className="container max-w-2xl py-16 text-center">
+        <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">Your cart is empty</h2>
+        <p className="text-gray-600 mb-6">Add some products to get started</p>
+        <Button asChild>
+          <Link href="/products">Browse Products</Link>
+        </Button>
       </div>
     );
   }
 
+  const subtotal = cart.subtotal || 0;
+  const discount = cart.discount || 0;
+  const tax = cart.tax || 0;
+  const total = cart.total || subtotal - discount + tax;
+
   return (
-    <div className="container mx-auto px-4 py-2 md:py-12 md:px-6">
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          className="mb-4"
-          onClick={() => router.push('/cart')}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Cart
+    <div className="container max-w-6xl py-6 md:py-10">
+      <div className="mb-6">
+        <Button variant="ghost" asChild className="gap-2">
+          <Link href="/cart">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Cart
+          </Link>
         </Button>
-        <h1 className="text-2xl md:text-3xl font-bold">Checkout</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* Shipping Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MapPin className="mr-2 h-5 w-5 text-emerald-500" />
-                    Shipping Information
-                  </CardTitle>
-                  <CardDescription>
-                    Enter your shipping details for delivery
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Checkout Form */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Shipping Information
+              </CardTitle>
+              <CardDescription>
+                Enter your delivery details
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="fullName"
@@ -232,7 +198,7 @@ export default function CheckoutPage() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="john@example.com" {...field} />
+                            <Input type="email" placeholder="john@example.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -247,7 +213,7 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="(123) 456-7890" {...field} />
+                          <Input type="tel" placeholder="+65 9123 4567" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -259,10 +225,55 @@ export default function CheckoutPage() {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel>Shipping Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Orchard Road, #01-01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Singapore" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="postalCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Postal Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="238801" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Order Notes (Optional)</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="123 Main St, Apt 4B"
+                            placeholder="Any special instructions for delivery..."
+                            className="resize-none"
+                            rows={3}
                             {...field}
                           />
                         </FormControl>
@@ -271,261 +282,162 @@ export default function CheckoutPage() {
                     )}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="New York" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input placeholder="NY" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="zipCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Zip Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="10001" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                  <Separator className="my-6" />
 
-              {/* Payment Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="mr-2 h-5 w-5 text-emerald-500" />
-                    Payment Information
-                  </CardTitle>
-                  <CardDescription>
-                    Enter your payment details to complete your purchase
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex space-x-4"
-                          >
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <RadioGroupItem value="credit" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                Credit Card
-                              </FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <RadioGroupItem value="debit" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                Debit Card
-                              </FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <RadioGroupItem value="paypal" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                PayPal
-                              </FormLabel>
-                            </FormItem>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="cardName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name on Card</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="cardNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Card Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="1234 5678 9012 3456" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Payment Method
+                    </h3>
                     <FormField
                       control={form.control}
-                      name="expiryDate"
+                      name="paymentMethod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Expiry Date (MM/YY)</FormLabel>
                           <FormControl>
-                            <Input placeholder="12/25" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cvv"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CVV</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123" {...field} />
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="space-y-3"
+                            >
+                              <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                                <RadioGroupItem value="stripe" />
+                                <div className="flex-1">
+                                  <div className="font-medium">Pay with Card</div>
+                                  <div className="text-sm text-gray-600">
+                                    Secure payment via Stripe (Cards, PayNow, GrabPay)
+                                  </div>
+                                </div>
+                              </label>
+                              <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50 opacity-50">
+                                <RadioGroupItem value="cod" disabled />
+                                <div className="flex-1">
+                                  <div className="font-medium">Cash on Delivery</div>
+                                  <div className="text-sm text-gray-600">
+                                    Pay when you receive your order (Coming soon)
+                                  </div>
+                                </div>
+                              </label>
+                            </RadioGroup>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-                </CardContent>
-              </Card>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Place Order
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Proceed to Payment'
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
+        {/* Order Summary */}
+        <div className="space-y-6">
+          <Card>
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
-              <CardDescription>
-                {cartCount} {cartCount === 1 ? 'item' : 'items'} in your cart
-              </CardDescription>
+              <CardDescription>{cart.items.length} items</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="max-h-[300px] overflow-auto space-y-4 pr-2">
-                {cartItems.map((item, index) => (
-                  <div
-                    key={`${item.productId}-${index}`}
-                    className="flex gap-3 pb-3 border-b last:border-0 last:pb-0"
-                  >
-                    <div className="h-16 w-16 rounded-md bg-secondary flex-shrink-0 flex items-center justify-center">
-                      {item.product?.imageUrl ? (
-                        <img
-                          src={item.product.imageUrl}
-                          alt={item.product.name}
-                          className="h-full w-full object-cover rounded-md"
-                        />
-                      ) : (
-                        <ShoppingBag className="h-6 w-6 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium line-clamp-1">
-                        {item.product?.name || 'Unknown Product'}
-                      </h4>
-                      <div className="text-sm text-muted-foreground">
-                        {item.quantity} x {formatPrice(item.price || 0)}
-                      </div>
-                      <div className="text-sm font-medium">
-                        {formatPrice((item.price || 0) * item.quantity)}
-                      </div>
-                    </div>
+              {cart.items.map((item) => (
+                <div key={item.productId} className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <h4 className="font-medium">
+                      {item.product?.name || `Product ${item.productId}`}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {formatPrice(item.price || 0)} × {item.quantity}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <p className="font-medium">
+                    {formatPrice((item.price || 0) * item.quantity)}
+                  </p>
+                </div>
+              ))}
 
               <Separator />
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span className="flex items-center gap-1">
+                      <BadgePercent className="h-3 w-3" />
+                      Discount
+                    </span>
+                    <span>-{formatPrice(discount)}</span>
+                  </div>
+                )}
+                {tax > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Tax</span>
+                    <span>{formatPrice(tax)}</span>
+                  </div>
+                )}
+              </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax (7%)</span>
-                  <span>{formatPrice(tax)}</span>
+              <Separator />
+
+              <div className="flex justify-between text-lg font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(total)}</span>
+              </div>
+
+              {user?.membershipTier && (
+                <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm">
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4" />
+                    <span className="font-medium">
+                      {user.membershipTier.replace('_', ' ')} Member Discount Applied
+                    </span>
+                  </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span>Free</span>
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-emerald-100 p-2">
+                    <CreditCard className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Secure Payment</p>
+                    <p className="text-gray-600">Your payment info is encrypted</p>
+                  </div>
                 </div>
-
-                <Separator />
-
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-emerald-100 p-2">
+                    <MapPin className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Fast Delivery</p>
+                    <p className="text-gray-600">Free shipping on orders above $50</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Link
-                href="/cart"
-                className="text-emerald-600 hover:text-emerald-700 text-sm w-full text-center"
-              >
-                Edit Cart
-              </Link>
-            </CardFooter>
           </Card>
         </div>
       </div>

@@ -70,6 +70,8 @@ function transformStrapiOrder(strapiOrder: any): IOrder {
 
   return {
     id: strapiOrder.id?.toString() || '',
+    documentId: strapiOrder.documentId, // Strapi 5 documentId
+    orderNumber: strapiOrder.orderNumber || '',
     userId: strapiOrder.user?.id?.toString() || '',
     user: strapiOrder.user ? transformStrapiUser(strapiOrder.user) : undefined,
     total: parseFloat(strapiOrder.total || 0),
@@ -109,10 +111,17 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
 class OrderService extends BaseService {
   async createOrder(data: IOrderCreate): Promise<IOrder> {
     try {
+      // Generate a unique order number
+      const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
       // Transform data to Strapi format
+      // For Strapi 5, relations should use connect syntax
       const strapiData = {
         data: {
-          user: parseInt(data.userId), // Strapi uses numeric IDs
+          orderNumber, // Add the required orderNumber field
+          user: {
+            connect: [parseInt(data.userId)] // Strapi 5 relation format
+          },
           total: data.total,
           subtotal: data.subtotal,
           discount: data.discount || 0,
@@ -131,15 +140,21 @@ class OrderService extends BaseService {
         strapiData
       );
 
-      const order = transformStrapiOrder(response.data);
+      // Handle Strapi 5 response format
+      const responseData = response.data || response;
+      const order = transformStrapiOrder(responseData.data || responseData);
 
       // Create order items
       if (data.items && data.items.length > 0) {
         for (const item of data.items) {
           await this.api.post('/order-items', {
             data: {
-              order: order.id,
-              product: item.productId,
+              order: {
+                connect: [order.id] // Use connect syntax for relations
+              },
+              product: {
+                connect: [item.productId] // Use connect syntax for relations
+              },
               quantity: item.quantity,
               price: item.price,
               discount: item.discount || 0,
@@ -206,8 +221,10 @@ class OrderService extends BaseService {
         `/orders?${queryParams.toString()}`
       );
 
-      const orders = response.data.map(transformStrapiOrder);
-      const pagination = response.meta?.pagination || {};
+      // Handle Strapi 5 response format
+      const responseData = response.data || response;
+      const orders = (responseData.data || responseData || []).map(transformStrapiOrder);
+      const pagination = responseData.meta?.pagination || response.meta?.pagination || {};
 
       return {
         orders,
@@ -237,7 +254,9 @@ class OrderService extends BaseService {
         `/orders/${id}?${queryParams.toString()}`
       );
       
-      return transformStrapiOrder(response.data);
+      // Handle Strapi 5 response format
+      const responseData = response.data || response;
+      return transformStrapiOrder(responseData.data || responseData);
     } catch (error) {
       this.handleError(error);
     }

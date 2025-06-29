@@ -85,12 +85,6 @@
       "relation": "oneToMany",
       "target": "api::order-item.order-item",
       "mappedBy": "order"
-    },
-    "commissions": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::commission.commission",
-      "mappedBy": "order"
     }
   }
 }

@@ -81,16 +81,17 @@ export default function OrdersPage() {
 
   // Filter orders based on search term and status
   const filteredOrders = orders && Array.isArray(orders) ? orders.filter((order) => {
-    const orderIdString = order.id.toString();
-    const matchesSearch = orderIdString.includes(searchTerm);
+    const searchString = (order.orderNumber || order.id || '').toString().toLowerCase();
+    const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) : [];
 
-  const handleViewOrder = (orderId: number | string) => {
-    // Navigate to the order details page
-    router.push(`/orders/${orderId}`);
+  const handleViewOrder = (order: IOrderWithItems) => {
+    // IMPORTANT: Strapi 5 requires documentId for API calls
+    const documentId = (order as any).documentId || order.id;
+    router.push(`/orders/${documentId}`);
   };
 
   // Calculate number of items for each order
@@ -186,7 +187,7 @@ export default function OrdersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order ID</TableHead>
+                    <TableHead>Order Number</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Items</TableHead>
@@ -197,7 +198,7 @@ export default function OrdersPage() {
                 <TableBody>
                   {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
+                      <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                       <TableCell>
                         {order.createdAt
                           ? new Date(order.createdAt).toLocaleDateString()
@@ -216,7 +217,7 @@ export default function OrdersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleViewOrder(order.id)}
+                          onClick={() => handleViewOrder(order)}
                         >
                           View
                         </Button>

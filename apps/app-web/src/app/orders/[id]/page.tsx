@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -32,7 +31,7 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react';
-import services from '@/services';
+import { getOrderAction } from '@/app/actions';
 import { useAuth } from '@/contexts/AuthContext';
 import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
 import { formatPrice } from '@/lib/utils';
@@ -60,20 +59,25 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
   useEffect(() => {
     async function fetchOrderDetails() {
       if (!user) {
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
       try {
         setIsLoading(true);
-        const orderId = Number(unwrappedParams.id);
+        const orderId = unwrappedParams.id;
 
-        if (isNaN(orderId)) {
+        if (!orderId) {
           throw new Error('Invalid order ID');
         }
 
-        const orderData = await services.order.getOrder(orderId.toString());
-        setOrder(orderData as IOrderWithItems);
+        const result = await getOrderAction(orderId);
+        
+        if (result.success && result.order) {
+          setOrder(result.order as IOrderWithItems);
+        } else {
+          throw new Error(result.error || 'Failed to load order');
+        }
       } catch (error) {
         console.error('Error fetching order details:', error);
         setError(
@@ -200,7 +204,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
 
       <div className="flex flex-col md:flex-row items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Order #{order.id}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Order #{order.orderNumber || order.id}</h1>
           <p className="text-gray-500">
             Placed on {formatDate(order.createdAt)}
           </p>

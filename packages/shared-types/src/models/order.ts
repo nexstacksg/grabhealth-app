@@ -4,6 +4,7 @@ import { IUser } from './user';
 
 export interface IOrder {
   id: number | string; // Can be either number or string
+  documentId?: string; // Strapi 5 document ID
   orderNumber: string; // Unique order identifier
   userId: string; // Changed to string to match backend User model
   total: number;

@@ -55,9 +55,15 @@ export async function getMyOrdersAction(params?: {
     
     if (result.success && result.data) {
       const pagination = result.data.meta?.pagination || {};
+      // Transform orders to include documentId
+      const orders = (result.data.data || []).map((order: any) => ({
+        ...order,
+        documentId: order.documentId, // Strapi 5 documentId
+        id: order.id // Keep numeric id for backward compatibility
+      }));
       return {
         success: true,
-        orders: result.data.data || [],
+        orders,
         total: pagination.total || 0,
         page: pagination.page || 1,
         totalPages: pagination.pageCount || 1,
@@ -109,7 +115,15 @@ export async function getOrderAction(orderId: string) {
         return { success: false, error: 'Order not found' };
       }
       
-      return { success: true, order };
+      // Include documentId in the response
+      return { 
+        success: true, 
+        order: {
+          ...order,
+          documentId: order.documentId, // Strapi 5 documentId
+          id: order.id // Keep numeric id for backward compatibility
+        }
+      };
     }
     
     return { success: false, error: 'Order not found' };
@@ -127,10 +141,17 @@ export async function getOrderAction(orderId: string) {
  */
 export async function createOrderAction(data: IOrderCreate) {
   try {
+    // Generate a unique order number
+    const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    
     // Transform data to Strapi format
+    // For Strapi 5, relations should use connect syntax
     const strapiData = {
       data: {
-        user: parseInt(data.userId), // Strapi uses numeric IDs
+        orderNumber, // Add the required orderNumber field
+        user: {
+          connect: [parseInt(data.userId)] // Strapi 5 relation format
+        },
         total: data.total,
         subtotal: data.subtotal,
         discount: data.discount || 0,
@@ -152,16 +173,24 @@ export async function createOrderAction(data: IOrderCreate) {
       // Create order items
       if (data.items && data.items.length > 0) {
         for (const item of data.items) {
-          await serverApiPost('/order-items', {
-            data: {
-              order: order.id,
-              product: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-              discount: item.discount || 0,
-              pvPoints: item.pvPoints || 0,
-            }
-          });
+          try {
+            await serverApiPost('/order-items', {
+              data: {
+                order: {
+                  connect: [parseInt(order.id)] // Use numeric ID for relations
+                },
+                product: {
+                  connect: [item.productId] // Use connect syntax for relations
+                },
+                quantity: item.quantity,
+                price: item.price,
+                discount: item.discount || 0,
+                pvPoints: item.pvPoints || 0,
+              }
+            });
+          } catch (error) {
+            console.error('Failed to create order item:', error);
+          }
         }
       }
       
