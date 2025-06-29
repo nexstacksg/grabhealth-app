@@ -30,10 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import services from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { IOrder, IOrderItem, OrderStatus } from '@app/shared-types';
 import { formatPrice } from '@/lib/utils';
+import { getMyOrdersAction } from '@/app/actions';
 
 interface IOrderWithItems extends IOrder {
   items?: (IOrderItem & { product?: { name: string } })[];
@@ -61,9 +61,13 @@ export default function OrdersPage() {
 
       try {
         setIsLoading(true);
-        // Fetch all orders (using a high limit)
-        const response = await services.order.getMyOrders({ page: 1, limit: 100 });
-        setOrders(response.orders || []);
+        // Fetch all orders using server action (using a high limit)
+        const response = await getMyOrdersAction({ page: 1, limit: 100 });
+        if (response.success) {
+          setOrders(response.orders || []);
+        } else {
+          setError(response.error || 'Failed to load orders. Please try again later.');
+        }
       } catch (error) {
         console.error('Error fetching orders:', error);
         setError('Failed to load orders. Please try again later.');
@@ -84,7 +88,7 @@ export default function OrdersPage() {
     return matchesSearch && matchesStatus;
   }) : [];
 
-  const handleViewOrder = (orderId: number) => {
+  const handleViewOrder = (orderId: number | string) => {
     // Navigate to the order details page
     router.push(`/orders/${orderId}`);
   };

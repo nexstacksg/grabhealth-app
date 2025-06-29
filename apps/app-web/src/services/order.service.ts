@@ -12,6 +12,7 @@ import {
   IUserPublic,
 } from '@app/shared-types';
 import { transformStrapiUser } from './strapi-base';
+import { api } from './api.service';
 
 interface OrderStats {
   totalOrders: number;
@@ -165,12 +166,22 @@ class OrderService extends BaseService {
     totalPages: number;
   }> {
     try {
+      // First, get the current authenticated user
+      const currentUser = await api.auth.getCurrentUser();
+      if (!currentUser) {
+        return {
+          orders: [],
+          total: 0,
+          page: 1,
+          totalPages: 0,
+        };
+      }
+
       // Build query params for Strapi
       const queryParams = new URLSearchParams();
       
-      // Get current user ID - this would come from auth context
-      // For now, using 'me' filter which Strapi controllers might support
-      queryParams.append('filters[user][id][$eq]', 'me');
+      // Filter by current user ID
+      queryParams.append('filters[user][id][$eq]', currentUser.id.toString());
       
       if (params?.status) {
         queryParams.append('filters[status][$eq]', params.status);
@@ -184,9 +195,9 @@ class OrderService extends BaseService {
         queryParams.append('pagination[pageSize]', params.limit.toString());
       }
       
-      // Populate relations
-      queryParams.append('populate[user]', '*');
-      queryParams.append('populate[items][populate][product]', '*');
+      // Populate relations using Strapi 5 syntax with specific fields
+      queryParams.append('populate[user][fields]', 'id,username,email');
+      queryParams.append('populate[items][populate]', 'product');
       
       // Sort by creation date (newest first)
       queryParams.append('sort', 'createdAt:desc');
@@ -217,8 +228,13 @@ class OrderService extends BaseService {
 
   async getOrder(id: string): Promise<IOrder> {
     try {
+      // Build query params for proper population
+      const queryParams = new URLSearchParams();
+      queryParams.append('populate[user][fields]', 'id,username,email');
+      queryParams.append('populate[items][populate]', 'product');
+      
       const response = await this.api.get<StrapiOrderResponse>(
-        `/orders/${id}?populate[user]=*&populate[items][populate][product]=*`
+        `/orders/${id}?${queryParams.toString()}`
       );
       
       return transformStrapiOrder(response.data);

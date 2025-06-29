@@ -91,6 +91,84 @@ export async function createBookingAction(data: CreateBookingData) {
   };
 }
 
+// ============ Order Actions ============
+
+export async function getMyOrdersAction(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+}) {
+  try {
+    // Get current user first
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || !userResult.user) {
+      return {
+        success: false,
+        orders: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      };
+    }
+
+    // Build query params
+    const queryParams = new URLSearchParams();
+    
+    // Filter by current user ID
+    queryParams.append('filters[user][id][$eq]', userResult.user.id.toString());
+    
+    if (params?.status) {
+      queryParams.append('filters[status][$eq]', params.status);
+    }
+    
+    if (params?.page) {
+      queryParams.append('pagination[page]', params.page.toString());
+    }
+    
+    if (params?.limit) {
+      queryParams.append('pagination[pageSize]', params.limit.toString());
+    }
+    
+    // Populate relations using Strapi 5 syntax
+    queryParams.append('populate[user][fields]', 'id,username,email');
+    queryParams.append('populate[items][populate]', 'product');
+    
+    // Sort by creation date (newest first)
+    queryParams.append('sort', 'createdAt:desc');
+
+    const result = await serverApiGet(`/orders?${queryParams.toString()}`);
+    
+    if (result.success && result.data) {
+      const pagination = result.data.meta?.pagination || {};
+      return {
+        success: true,
+        orders: result.data.data || [],
+        total: pagination.total || 0,
+        page: pagination.page || 1,
+        totalPages: pagination.pageCount || 1,
+      };
+    }
+    
+    return {
+      success: false,
+      orders: [],
+      total: 0,
+      page: 1,
+      totalPages: 0,
+    };
+  } catch (error: any) {
+    console.error('Error fetching orders:', error);
+    return {
+      success: false,
+      orders: [],
+      total: 0,
+      page: 1,
+      totalPages: 0,
+      error: error.message || 'Failed to fetch orders',
+    };
+  }
+}
+
 // ============ Generic API Action ============
 
 /**

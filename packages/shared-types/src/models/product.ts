@@ -9,8 +9,6 @@ export interface ICategory {
   parentId?: number | null;
   isActive: boolean;
   sortOrder: number;
-  createdAt: Date;
-  updatedAt: Date;
   parent?: ICategory | null;
   children?: ICategory[];
   products?: IProduct[];
@@ -31,7 +29,7 @@ export interface ICategoryUpdate extends Partial<ICategoryCreate> {
 }
 
 export interface IProduct {
-  id: number;
+  id: number | string; // Can be either number or string
   name: string;
   description?: string | null;
   price: number;
@@ -39,9 +37,12 @@ export interface IProduct {
   category?: ICategory | null;
   imageUrl?: string | null;
   inStock: boolean;
-  status?: ProductStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  status?: ProductStatus | string;
+  // Additional Strapi fields
+  sku?: string;
+  qty?: number;
+  slug?: string;
+  productStatus?: string;
 }
 
 export interface IProductCreate {
