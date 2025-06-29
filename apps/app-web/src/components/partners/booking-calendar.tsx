@@ -16,6 +16,7 @@ import { IService, IAvailableSlot, ICalendarDay } from '@app/shared-types';
 import services from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { createBookingAction } from '@/app/bookings/actions';
 
 interface BookingCalendarProps {
   partnerId: string;
@@ -274,7 +275,8 @@ export function BookingCalendar({
         notes: `Booking for ${service.name}`,
       });
 
-      const bookingResult = await services.bookings.createBooking({
+      // Use server action for booking to handle httpOnly cookies
+      const result = await createBookingAction({
         partnerId,
         serviceId: service.id,
         bookingDate: bookingDateStr,
@@ -285,11 +287,16 @@ export function BookingCalendar({
           (freeCheckupStatus?.eligible && service.category === 'Body Check'),
       });
 
-      console.log('Booking created successfully:', bookingResult);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create booking');
+      }
+
+      console.log('Booking created successfully:', result.booking);
       onBookingComplete();
-    } catch (error) {
+    } catch (error: any) {
       // Handle the case where error is an empty object or undefined
       const errorToHandle = error || { message: 'Unknown error occurred' };
+      console.error('Booking error:', errorToHandle);
       await handleBookingError(errorToHandle, selectedDate, selectedSlot);
     } finally {
       setIsBooking(false);
