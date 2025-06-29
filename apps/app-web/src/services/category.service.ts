@@ -2,7 +2,7 @@
  * Category Service - Handles all category related API calls
  */
 
-import { apiClient } from './api-client';
+
 import { BaseService } from './base.service';
 import { ICategory } from '@app/shared-types';
 
@@ -37,7 +37,7 @@ class CategoryService extends BaseService {
   async getCategories(): Promise<ICategory[]> {
     try {
       const response =
-        await apiClient.get<StrapiResponse<any[]>>('/categories');
+        await this.api.get<StrapiResponse<any[]>>('/categories');
       const strapiData = response.data as any;
 
       // Handle Strapi v5 format
@@ -55,7 +55,7 @@ class CategoryService extends BaseService {
 
   async getCategory(id: string): Promise<ICategory> {
     try {
-      const response = await apiClient.get<StrapiResponse<any>>(
+      const response = await this.api.get<StrapiResponse<any>>(
         `/categories/${id}`
       );
       const strapiData = response.data as any;

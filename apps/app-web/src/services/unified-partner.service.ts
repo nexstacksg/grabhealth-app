@@ -1,13 +1,21 @@
 /**
- * Partners Service - Handles healthcare partners related API calls for Strapi backend
+ * Unified Partner Service
+ * 
+ * Consolidates functionality from both partner.service.ts and partners.service.ts
+ * Provides a single interface for all partner-related operations
  */
 
-import { apiClient } from './api-client';
 import { BaseService } from './base.service';
-import { IPartner, IService, IAvailableSlot } from '@app/shared-types';
+import { 
+  IPartner, 
+  IService, 
+  IAvailableSlot,
+  ApiResponse,
+  PartnerAuthResult,
+  PartnerInfo 
+} from '@app/shared-types';
 
-// Note: Using direct API calls to Strapi without ApiResponse wrapper
-
+// Request/Response types
 interface PartnerFilters {
   search?: string;
   category?: string;
@@ -25,23 +33,30 @@ interface BookingRequest {
   isFreeCheckup?: boolean;
 }
 
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+// Safe JSON parsing helper
+const safeJsonParse = (jsonString: string, fallback: any = {}) => {
+  if (!jsonString || typeof jsonString !== 'string') {
+    return fallback;
+  }
+  try {
+    return JSON.parse(jsonString);
+  } catch {
+    return fallback;
+  }
+};
+
 // Transform Strapi partner to our IPartner format
 function transformStrapiPartner(strapiPartner: any): IPartner {
   if (!strapiPartner) {
     throw new Error('Invalid partner data: partner is null or undefined');
   }
-
-  // Safe JSON parsing helper
-  const safeJsonParse = (jsonString: string, fallback: any = {}) => {
-    if (!jsonString || typeof jsonString !== 'string') {
-      return fallback;
-    }
-    try {
-      return JSON.parse(jsonString);
-    } catch {
-      return fallback;
-    }
-  };
 
   return {
     id: strapiPartner.documentId || strapiPartner.id?.toString() || '',
@@ -70,7 +85,7 @@ function transformStrapiPartner(strapiPartner: any): IPartner {
     services:
       strapiPartner.services && Array.isArray(strapiPartner.services)
         ? strapiPartner.services
-            .filter((service: any) => service) // Include all services for now
+            .filter((service: any) => service)
             .map((service: any) => {
               try {
                 return transformStrapiService(service);
@@ -79,7 +94,7 @@ function transformStrapiPartner(strapiPartner: any): IPartner {
                 return null;
               }
             })
-            .filter(Boolean) // Remove failed transformations
+            .filter(Boolean)
         : undefined,
     createdAt: new Date(strapiPartner.createdAt || Date.now()),
     updatedAt: new Date(strapiPartner.updatedAt || Date.now()),
@@ -111,17 +126,67 @@ function transformStrapiService(strapiService: any): IService {
   };
 }
 
-class PartnersService extends BaseService {
-  async getPartners(filters?: PartnerFilters): Promise<{
-    partners: IPartner[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
+class UnifiedPartnerService extends BaseService {
+  // ============ Partner Authentication & Profile ============
+  
+  async checkPartnerAuth(): Promise<PartnerAuthResult> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>('/partner/profile');
+      
+      if (response.success && response.data) {
+        return {
+          success: true,
+          partnerInfo: {
+            id: response.data.id,
+            name: response.data.name,
+            email: response.data.email,
+            isPartner: true,
+          },
+        };
+      } else {
+        return {
+          success: false,
+          error: 'You need to be a partner to access this page',
+          shouldRedirect: true,
+          redirectPath: '/',
+        };
+      }
+    } catch (error: any) {
+      if (error.status === 401) {
+        return {
+          success: false,
+          error: 'Please log in as a partner to access this page',
+          shouldRedirect: true,
+          redirectPath: '/auth/login',
+        };
+      } else if (error.status === 403) {
+        return {
+          success: false,
+          error: 'You do not have partner privileges',
+          shouldRedirect: true,
+          redirectPath: '/',
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Failed to verify partner status',
+        shouldRedirect: false,
+      };
+    }
+  }
+
+  async getPartnerProfile(): Promise<PartnerInfo | null> {
+    const result = await this.checkPartnerAuth();
+    return result.success ? result.partnerInfo || null : null;
+  }
+
+  // ============ Partner Listings & Search ============
+
+  async getPartners(filters?: PartnerFilters): Promise<PaginatedResponse<IPartner>> {
     try {
       const queryParams = new URLSearchParams();
 
-      // Add filters to query params
       if (filters?.search) {
         queryParams.append('search', filters.search);
       }
@@ -141,18 +206,16 @@ class PartnersService extends BaseService {
         queryParams.append('limit', filters.limit.toString());
       }
 
-      // Always populate services and availabilities
       queryParams.append('populate', 'services,availabilities');
 
-      const queryString = queryParams.toString();
-      const url = `/partners${queryString ? `?${queryString}` : ''}`;
+      const url = `/partners${this.api.buildQueryString(Object.fromEntries(queryParams))}`;
+      const strapiData = await this.api.get(url) as any;
 
-      const strapiData = (await apiClient.get(url)) as any;
-
-      // Handle Strapi response format - check for custom controller response first
+      // Handle different response formats
       if (strapiData.data && strapiData.data.partners) {
+        // Custom controller response
         const partners = strapiData.data.partners
-          .filter((partner: any) => partner) // Filter out null/undefined partners
+          .filter((partner: any) => partner)
           .map((partner: any) => {
             try {
               return transformStrapiPartner(partner);
@@ -161,22 +224,22 @@ class PartnersService extends BaseService {
               return null;
             }
           })
-          .filter(Boolean); // Remove failed transformations
+          .filter(Boolean);
 
         const pagination = strapiData.data.pagination || {};
 
         return {
-          partners,
+          data: partners,
           total: pagination.total || partners.length,
           page: pagination.page || 1,
           totalPages: pagination.totalPages || 1,
         };
       }
 
-      // Handle standard Strapi response format (direct array)
+      // Standard Strapi response
       if (Array.isArray(strapiData.data)) {
         const partners = strapiData.data
-          .filter((partner: any) => partner) // Filter out null/undefined partners
+          .filter((partner: any) => partner)
           .map((partner: any) => {
             try {
               return transformStrapiPartner(partner);
@@ -185,40 +248,19 @@ class PartnersService extends BaseService {
               return null;
             }
           })
-          .filter(Boolean); // Remove failed transformations
+          .filter(Boolean);
 
         return {
-          partners,
+          data: partners,
           total: partners.length,
           page: 1,
           totalPages: 1,
         };
       }
 
-      // Handle single partner response wrapped in data
-      if (strapiData.data && !Array.isArray(strapiData.data)) {
-        try {
-          const partner = transformStrapiPartner(strapiData.data);
-          return {
-            partners: [partner],
-            total: 1,
-            page: 1,
-            totalPages: 1,
-          };
-        } catch (error) {
-          console.warn('Failed to transform single partner:', error);
-          return {
-            partners: [],
-            total: 0,
-            page: 1,
-            totalPages: 0,
-          };
-        }
-      }
-
-      // Fallback for empty response
+      // Fallback
       return {
-        partners: [],
+        data: [],
         total: 0,
         page: 1,
         totalPages: 0,
@@ -226,7 +268,7 @@ class PartnersService extends BaseService {
     } catch (error) {
       console.error('Error fetching partners:', error);
       return {
-        partners: [],
+        data: [],
         total: 0,
         page: 1,
         totalPages: 0,
@@ -236,9 +278,9 @@ class PartnersService extends BaseService {
 
   async getPartner(id: string): Promise<IPartner> {
     try {
-      const strapiData = (await apiClient.get(
+      const strapiData = await this.api.get(
         `/partners/${id}?populate=services,availabilities,daysOff`
-      )) as any;
+      ) as any;
 
       if (strapiData.data) {
         return transformStrapiPartner(strapiData.data);
@@ -251,16 +293,28 @@ class PartnersService extends BaseService {
     }
   }
 
+  async getFeaturedPartners(limit: number = 6): Promise<IPartner[]> {
+    const result = await this.getPartners({ limit });
+    return result.data;
+  }
+
+  async searchPartners(query: string): Promise<IPartner[]> {
+    const result = await this.getPartners({ search: query });
+    return result.data;
+  }
+
+  // ============ Partner Services ============
+
   async getPartnerServices(partnerId: string): Promise<IService[]> {
     try {
-      const strapiData = (await apiClient.get(
+      const strapiData = await this.api.get(
         `/partners/${partnerId}/services`
-      )) as any;
+      ) as any;
 
       if (strapiData.data) {
         if (Array.isArray(strapiData.data)) {
           return strapiData.data
-            .filter((service: any) => service) // Filter out null/undefined services
+            .filter((service: any) => service)
             .map((service: any) => {
               try {
                 return transformStrapiService(service);
@@ -269,9 +323,8 @@ class PartnersService extends BaseService {
                 return null;
               }
             })
-            .filter(Boolean); // Remove failed transformations
+            .filter(Boolean);
         }
-        return [];
       }
 
       return [];
@@ -281,15 +334,17 @@ class PartnersService extends BaseService {
     }
   }
 
+  // ============ Availability & Scheduling ============
+
   async getPartnerAvailability(
     partnerId: string,
-    _serviceId: string, // Note: serviceId kept for API compatibility but not used in current implementation
+    _serviceId: string,
     date: string
   ): Promise<IAvailableSlot[]> {
     try {
-      const strapiData = (await apiClient.get(
+      const strapiData = await this.api.get(
         `/partners/${partnerId}/available-slots/${date}`
-      )) as any;
+      ) as any;
 
       if (strapiData.data) {
         return Array.isArray(strapiData.data) ? strapiData.data : [];
@@ -302,12 +357,31 @@ class PartnersService extends BaseService {
     }
   }
 
+  async getAvailability(date?: string): Promise<ApiResponse<any>> {
+    try {
+      const queryString = date ? `?date=${date}` : '';
+      return await this.api.get<ApiResponse<any>>(`/partner/availability${queryString}`);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async updateAvailability(data: any): Promise<ApiResponse<any>> {
+    try {
+      return await this.api.post<ApiResponse<any>>('/partner/availability', data);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  // ============ Bookings ============
+
   async bookAppointment(partnerId: string, data: BookingRequest): Promise<any> {
     try {
-      const strapiData = (await apiClient.post(
+      const strapiData = await this.api.post(
         `/partners/${partnerId}/book`,
         data
-      )) as any;
+      ) as any;
 
       if (strapiData.data) {
         return strapiData.data;
@@ -320,103 +394,45 @@ class PartnersService extends BaseService {
     }
   }
 
-  async getFeaturedPartners(limit: number = 6): Promise<IPartner[]> {
+  async getBookings(params?: {
+    status?: string;
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
     try {
-      const queryParams = new URLSearchParams();
-      queryParams.append('limit', limit.toString());
-      queryParams.append('populate', 'services,availabilities');
-
-      const queryString = queryParams.toString();
-      const url = `/partners${queryString ? `?${queryString}` : ''}`;
-
-      const strapiData = (await apiClient.get(url)) as any;
-
-      // Handle custom controller response format
-      if (strapiData.data && strapiData.data.partners) {
-        return strapiData.data.partners
-          .filter((partner: any) => partner)
-          .map((partner: any) => {
-            try {
-              return transformStrapiPartner(partner);
-            } catch (error) {
-              console.warn('Failed to transform featured partner:', error);
-              return null;
-            }
-          })
-          .filter(Boolean)
-          .slice(0, limit);
-      }
-
-      // Handle standard Strapi response format
-      if (Array.isArray(strapiData.data)) {
-        return strapiData.data
-          .filter((partner: any) => partner)
-          .map((partner: any) => {
-            try {
-              return transformStrapiPartner(partner);
-            } catch (error) {
-              console.warn('Failed to transform featured partner:', error);
-              return null;
-            }
-          })
-          .filter(Boolean)
-          .slice(0, limit);
-      }
-
-      return [];
+      const queryString = this.buildQueryString(params);
+      return await this.api.get<ApiResponse<any>>(`/partner/bookings${queryString}`);
     } catch (error) {
-      console.error('Error fetching featured partners:', error);
-      return [];
+      this.handleError(error);
     }
   }
 
-  async searchPartners(query: string): Promise<IPartner[]> {
+  async updateBookingStatus(bookingId: string, status: string): Promise<ApiResponse<any>> {
     try {
-      const queryParams = new URLSearchParams();
-      queryParams.append('search', query);
-      queryParams.append('populate', 'services,availabilities');
-
-      const queryString = queryParams.toString();
-      const url = `/partners${queryString ? `?${queryString}` : ''}`;
-
-      const strapiData = (await apiClient.get(url)) as any;
-
-      // Handle custom controller response format
-      if (strapiData.data && strapiData.data.partners) {
-        return strapiData.data.partners
-          .filter((partner: any) => partner)
-          .map((partner: any) => {
-            try {
-              return transformStrapiPartner(partner);
-            } catch (error) {
-              console.warn('Failed to transform search result partner:', error);
-              return null;
-            }
-          })
-          .filter(Boolean);
-      }
-
-      // Handle standard Strapi response format
-      if (Array.isArray(strapiData.data)) {
-        return strapiData.data
-          .filter((partner: any) => partner)
-          .map((partner: any) => {
-            try {
-              return transformStrapiPartner(partner);
-            } catch (error) {
-              console.warn('Failed to transform search result partner:', error);
-              return null;
-            }
-          })
-          .filter(Boolean);
-      }
-
-      return [];
+      return await this.api.patch<ApiResponse<any>>(
+        `/partner/bookings/${bookingId}/status`,
+        { status }
+      );
     } catch (error) {
-      console.error('Error searching partners:', error);
-      return [];
+      this.handleError(error);
+    }
+  }
+
+  // ============ Calendar ============
+
+  async getCalendar(params?: {
+    month?: number;
+    year?: number;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const queryString = this.buildQueryString(params);
+      return await this.api.get<ApiResponse<any>>(`/partner/calendar${queryString}`);
+    } catch (error) {
+      this.handleError(error);
     }
   }
 }
 
-export const partnersService = new PartnersService('/partners');
+export const partnerService = new UnifiedPartnerService('/partners');

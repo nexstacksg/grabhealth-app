@@ -8,13 +8,12 @@ import { productService } from './product.service';
 import { categoryService } from './category.service';
 import { cartService } from './cart.service';
 import { orderService } from './order.service';
-import { partnerService } from './partner.service';
+import { partnerService } from './unified-partner.service';
 import { commissionService } from './commission.service';
 import { dashboardService } from './dashboard.service';
 import { profileService } from './profile.service';
 import { aiService } from './ai.service';
 import { bookingsService } from './bookings.service';
-import { partnersService } from './partners.service';
 import { promotionService } from './promotion.service';
 
 const services = {
@@ -24,12 +23,12 @@ const services = {
   cart: cartService,
   order: orderService,
   partner: partnerService,
+  partners: partnerService, // Same service, aliased for backward compatibility
   commission: commissionService,
   dashboard: dashboardService,
   profile: profileService,
   ai: aiService,
   bookings: bookingsService,
-  partners: partnersService,
   promotion: promotionService,
   // Note: 'user' service is not created as it seems to be handled by profile/auth
 };

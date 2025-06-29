@@ -1,4 +1,5 @@
 import { ApiResponse } from '@app/shared-types';
+import { apiClient, ApiError } from '@/lib/api-client';
 
 export abstract class BaseService {
   protected baseUrl: string;
@@ -8,45 +9,35 @@ export abstract class BaseService {
   }
 
   /**
+   * Get the API client instance
+   * This allows services to use the unified client
+   */
+  protected get api() {
+    return apiClient;
+  }
+
+  /**
    * Standard error handler for all services
+   * Now simplified since ApiError is already properly formatted
    */
   protected handleError(error: any): never {
-    // If error has already been processed by api-client interceptor
+    // If it's already an ApiError, just re-throw
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    // If error has already been processed with our format
     if (error?.message && error?.status !== undefined) {
       throw error;
     }
     
-    // If it's already a structured error from our API
-    if (error?.error?.message) {
-      throw error;
-    }
-
-    // Handle Strapi error format (from response)
-    if (error?.response?.data?.error) {
-      const strapiError = error.response.data.error;
-      throw {
-        message: strapiError.message || 'An error occurred',
-        status: strapiError.status || error.response.status || 400,
-        code: strapiError.name || 'STRAPI_ERROR',
-        details: strapiError.details || {},
-      };
-    }
-
-    // If it's an axios error with response data
-    if (error?.response?.data?.message) {
-      throw {
-        message: error.response.data.message,
-        status: error.response.status,
-        code: error.response.data.code || 'API_ERROR',
-      };
-    }
-
     // Generic error
-    throw {
-      message: error?.message || 'An unexpected error occurred',
-      status: error?.status || 500,
-      code: error?.code || 'UNKNOWN_ERROR',
-    };
+    throw new ApiError(
+      error?.message || 'An unexpected error occurred',
+      error?.status || 500,
+      error?.code || 'UNKNOWN_ERROR',
+      error?.details
+    );
   }
 
   /**
@@ -68,18 +59,9 @@ export abstract class BaseService {
 
   /**
    * Build query string from params object
+   * Delegates to the unified API client
    */
   protected buildQueryString(params?: Record<string, any>): string {
-    if (!params) return '';
-    
-    const queryParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, String(value));
-      }
-    });
-    
-    const queryString = queryParams.toString();
-    return queryString ? `?${queryString}` : '';
+    return this.api.buildQueryString(params);
   }
 }

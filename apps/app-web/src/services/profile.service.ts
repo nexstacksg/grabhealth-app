@@ -2,7 +2,7 @@
  * Profile Service - Handles all profile related API calls for Strapi
  */
 
-import { apiClient } from './api-client';
+
 import { BaseService } from './base.service';
 import {
   IUserPublic,
@@ -90,7 +90,7 @@ class ProfileService extends BaseService {
 
   async deleteAccount(): Promise<void> {
     try {
-      await apiClient.delete('/auth/profile');
+      await this.api.delete('/auth/profile');
     } catch (error) {
       this.handleError(error);
     }

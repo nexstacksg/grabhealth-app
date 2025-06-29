@@ -2,7 +2,6 @@
  * Product Service - Handles all product related API calls
  */
 
-import { apiClientIsomorphic as apiClient } from './api-client-isomorphic';
 import { BaseService } from './base.service';
 import { IProduct as BaseIProduct, ICategory, ProductSearchParams, ApiResponse } from '@app/shared-types';
 
@@ -126,7 +125,7 @@ class ProductService extends BaseService {
       }
 
       // Fetch products with relations using apiClient
-      const strapiData = await apiClient.get<StrapiResponse<any[]>>(`/products?${queryParams.toString()}`);
+      const strapiData = await this.api.get<StrapiResponse<any[]>>(`/products?${queryParams.toString()}`);
 
       // Handle Strapi v5 format
       const products = (strapiData as any).data || [];
@@ -206,7 +205,7 @@ class ProductService extends BaseService {
         ? `/products/${id}?populate=*` 
         : `/products/${id}?populate=*`;
       
-      const response = await apiClient.get<StrapiResponse<any>>(endpoint);
+      const response = await this.api.get<StrapiResponse<any>>(endpoint);
       const strapiData = response.data as any;
 
       // Handle Strapi v5 format
@@ -220,7 +219,7 @@ class ProductService extends BaseService {
 
   async getFeaturedProducts(limit: number = 4): Promise<IProduct[]> {
     try {
-      const response = await apiClient.get<ApiResponse<IProduct[]>>(
+      const response = await this.api.get<ApiResponse<IProduct[]>>(
         '/products/featured',
         { params: { limit } }
       );
@@ -242,7 +241,7 @@ class ProductService extends BaseService {
   async getCategories(): Promise<ICategory[]> {
     try {
       const response =
-        await apiClient.get<StrapiResponse<any[]>>('/categories');
+        await this.api.get<StrapiResponse<any[]>>('/categories');
       const strapiData = response.data as any;
 
       // Handle Strapi v5 format

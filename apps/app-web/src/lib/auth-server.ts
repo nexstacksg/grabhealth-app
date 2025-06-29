@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { apiClient } from '@/services/api-client';
+import { apiClient } from '@/lib/api-client';
 import { IUserPublic, ApiResponse } from '@app/shared-types';
+import { transformStrapiUser } from '@/services/strapi-base';
 
 /**
  * Server-side authentication utilities for use in Server Components and Server Actions
@@ -20,20 +21,9 @@ export async function getServerUser(): Promise<IUserPublic | null> {
       return null;
     }
 
-    // Call backend with auth header
-    const response = await apiClient.get<ApiResponse<{ user: IUserPublic }>>('/auth/profile', {
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`,
-      },
-    });
-
-    const data = response as unknown as ApiResponse<{ user: IUserPublic }>;
-
-    if (!data.success || !data.data) {
-      return null;
-    }
-
-    return data.data.user;
+    // Get user profile using unified client (it handles auth automatically)
+    const strapiUser = await apiClient.get('/users/me?populate=*');
+    return transformStrapiUser(strapiUser);
   } catch (error) {
     console.error('Failed to get server user:', error);
     return null;

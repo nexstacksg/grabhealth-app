@@ -1,44 +1,29 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
+import { apiClient } from '@/lib/api-client';
+import { serverApiPut, serverApiPost } from '@/lib/server-api';
 
 export async function updateProfileAction(data: {
   userId: string;
   username: string;
   email: string;
 }) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken');
+  const result = await serverApiPut(`/users/${data.userId}`, {
+    username: data.username,
+    email: data.email,
+    firstName: data.username, // Use username as firstName
+  });
 
-  if (!token) {
-    return { error: 'Unauthorized' };
-  }
-
-  try {
-    await apiClientIsomorphic.put(`/users/${data.userId}`, {
-      username: data.username,
-      email: data.email,
-      firstName: data.username, // Use username as firstName
-    });
-
+  if (result.success) {
     revalidatePath('/profile');
     return { success: true };
-  } catch (error: any) {
-    console.error('Profile update error:', error);
-    return { error: error.message || 'Failed to update profile' };
   }
+
+  return { error: result.error || 'Failed to update profile' };
 }
 
 export async function uploadProfileImageAction(formData: FormData) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken');
-
-  if (!token) {
-    return { error: 'Unauthorized' };
-  }
-
   const file = formData.get('file') as File;
   const userId = formData.get('userId') as string;
 
@@ -47,15 +32,11 @@ export async function uploadProfileImageAction(formData: FormData) {
   }
 
   try {
-    // First, upload the file to Strapi
+    // Use the unified API client which handles auth automatically
     const uploadFormData = new FormData();
     uploadFormData.append('files', file);
 
-    const uploadedFiles = await apiClientIsomorphic.post('/upload', uploadFormData, {
-      headers: {
-        // Let axios handle the Content-Type for FormData
-      },
-    });
+    const uploadedFiles = await apiClient.post('/upload', uploadFormData);
 
     const imageUrl = uploadedFiles[0]?.url;
 
@@ -63,10 +44,14 @@ export async function uploadProfileImageAction(formData: FormData) {
       return { error: 'No image URL returned' };
     }
 
-    // Then, update the user's profile image
-    await apiClientIsomorphic.put(`/users/${userId}`, {
+    // Update the user's profile image
+    const updateResult = await serverApiPut(`/users/${userId}`, {
       profileImage: imageUrl,
     });
+
+    if (!updateResult.success) {
+      return { error: updateResult.error || 'Failed to update profile image' };
+    }
 
     revalidatePath('/profile');
     return { success: true, imageUrl };

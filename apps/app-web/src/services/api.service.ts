@@ -5,12 +5,10 @@
  * Currently implements Strapi, but can be swapped for any backend
  */
 
-import { apiClient } from './api-client';
+import { apiClient } from '@/lib/api-client';
 import {
   IUserPublic,
   IUser,
-  IProfileUpdateRequest,
-  ApiResponse,
 } from '@app/shared-types';
 import {
   StrapiUser,

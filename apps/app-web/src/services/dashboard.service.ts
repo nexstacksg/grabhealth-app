@@ -2,7 +2,7 @@
  * Dashboard Service - Handles all dashboard related API calls
  */
 
-import { apiClient } from './api-client';
+
 import { BaseService } from './base.service';
 import { ApiResponse } from '@app/shared-types';
 
@@ -62,7 +62,7 @@ interface AdminDashboard {
 class DashboardService extends BaseService {
   async getOrderStats(): Promise<OrderStats> {
     try {
-      const response = await apiClient.get<ApiResponse<OrderStats>>('/dashboard/order-stats');
+      const response = await this.api.get<ApiResponse<OrderStats>>('/dashboard/order-stats');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -71,7 +71,7 @@ class DashboardService extends BaseService {
 
   async getCommissionStats(): Promise<CommissionStats> {
     try {
-      const response = await apiClient.get<ApiResponse<CommissionStats>>('/dashboard/commission-stats');
+      const response = await this.api.get<ApiResponse<CommissionStats>>('/dashboard/commission-stats');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -80,7 +80,7 @@ class DashboardService extends BaseService {
 
   async getNetworkStats(): Promise<NetworkStats> {
     try {
-      const response = await apiClient.get<ApiResponse<NetworkStats>>('/dashboard/network-stats');
+      const response = await this.api.get<ApiResponse<NetworkStats>>('/dashboard/network-stats');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -89,7 +89,7 @@ class DashboardService extends BaseService {
 
   async getCommissionSummary(): Promise<CommissionSummary[]> {
     try {
-      const response = await apiClient.get<ApiResponse<CommissionSummary[]>>('/dashboard/commission-summary');
+      const response = await this.api.get<ApiResponse<CommissionSummary[]>>('/dashboard/commission-summary');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -98,7 +98,7 @@ class DashboardService extends BaseService {
 
   async getMembershipStats(): Promise<MembershipStats> {
     try {
-      const response = await apiClient.get<ApiResponse<MembershipStats>>('/dashboard/membership-stats');
+      const response = await this.api.get<ApiResponse<MembershipStats>>('/dashboard/membership-stats');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -107,7 +107,7 @@ class DashboardService extends BaseService {
 
   async getNetworkVisualization(): Promise<NetworkVisualization> {
     try {
-      const response = await apiClient.get<ApiResponse<NetworkVisualization>>('/dashboard/network-visualization');
+      const response = await this.api.get<ApiResponse<NetworkVisualization>>('/dashboard/network-visualization');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -116,7 +116,7 @@ class DashboardService extends BaseService {
 
   async getDashboardOverview(): Promise<DashboardOverview> {
     try {
-      const response = await apiClient.get<ApiResponse<DashboardOverview>>('/dashboard');
+      const response = await this.api.get<ApiResponse<DashboardOverview>>('/dashboard');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);
@@ -125,7 +125,7 @@ class DashboardService extends BaseService {
 
   async getAdminDashboard(): Promise<AdminDashboard> {
     try {
-      const response = await apiClient.get<ApiResponse<AdminDashboard>>('/admin/dashboard');
+      const response = await this.api.get<ApiResponse<AdminDashboard>>('/admin/dashboard');
       return this.extractData(response);
     } catch (error) {
       this.handleError(error);

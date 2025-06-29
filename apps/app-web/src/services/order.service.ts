@@ -2,7 +2,7 @@
  * Order Service - Handles all order related API calls for Strapi backend
  */
 
-import { apiClient } from './api-client';
+
 import { BaseService } from './base.service';
 import {
   IOrder,
@@ -125,7 +125,7 @@ class OrderService extends BaseService {
         }
       };
 
-      const response = await apiClient.post<StrapiOrderResponse>(
+      const response = await this.api.post<StrapiOrderResponse>(
         '/orders',
         strapiData
       );
@@ -135,7 +135,7 @@ class OrderService extends BaseService {
       // Create order items
       if (data.items && data.items.length > 0) {
         for (const item of data.items) {
-          await apiClient.post('/order-items', {
+          await this.api.post('/order-items', {
             data: {
               order: order.id,
               product: item.productId,
@@ -191,7 +191,7 @@ class OrderService extends BaseService {
       // Sort by creation date (newest first)
       queryParams.append('sort', 'createdAt:desc');
 
-      const response = await apiClient.get<StrapiOrdersResponse>(
+      const response = await this.api.get<StrapiOrdersResponse>(
         `/orders?${queryParams.toString()}`
       );
 
@@ -217,7 +217,7 @@ class OrderService extends BaseService {
 
   async getOrder(id: string): Promise<IOrder> {
     try {
-      const response = await apiClient.get<StrapiOrderResponse>(
+      const response = await this.api.get<StrapiOrderResponse>(
         `/orders/${id}?populate[user]=*&populate[items][populate][product]=*`
       );
       
@@ -230,7 +230,7 @@ class OrderService extends BaseService {
   async cancelOrder(id: string): Promise<IOrder> {
     try {
       // Update order status to CANCELLED
-      const response = await apiClient.put<StrapiOrderResponse>(
+      const response = await this.api.put<StrapiOrderResponse>(
         `/orders/${id}`,
         {
           data: {
@@ -278,7 +278,7 @@ class OrderService extends BaseService {
       
       // Note: This would need product price lookup in real implementation
       for (const item of data.cartItems) {
-        const product = await apiClient.get(`/products/${item.productId}`);
+        const product = await this.api.get(`/products/${item.productId}`);
         const price = product.data.price || 0;
         subtotal += price * item.quantity;
         

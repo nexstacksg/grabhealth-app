@@ -3,7 +3,7 @@
  */
 
 export { authService } from './auth.service';
-export { partnerService } from './partner.service';
+export { partnerService } from './unified-partner.service';
 export { productService, type PriceRange } from './product.service';
 export { categoryService } from './category.service';
 export { cartService } from './cart.service';
@@ -14,9 +14,13 @@ export { dashboardService } from './dashboard.service';
 export { profileService } from './profile.service';
 export { aiService } from './ai.service';
 export { bookingsService } from './bookings.service';
-export { partnersService } from './partners.service';
 export { promotionService } from './promotion.service';
-export { apiClient } from './api-client';
+
+// Export unified API client from lib
+export { apiClient } from '@/lib/api-client';
+
+// Export for backward compatibility (will be removed later)
+export { partnerService as partnersService } from './unified-partner.service';
 
 // Export the clean API interface
 export { api } from './api.service';

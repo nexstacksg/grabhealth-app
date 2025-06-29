@@ -2,7 +2,7 @@
  * Commission Service - Handles all commission related API calls for Strapi backend
  */
 
-import { apiClient } from './api-client';
+
 import { BaseService } from './base.service';
 import { ICommission, ApiResponse } from '@app/shared-types';
 import { transformStrapiUser } from './strapi-base';
@@ -114,7 +114,7 @@ class CommissionService extends BaseService {
       // Sort by creation date (newest first)
       queryParams.append('sort', 'createdAt:desc');
 
-      const response = await apiClient.get<StrapiCommissionsResponse>(
+      const response = await this.api.get<StrapiCommissionsResponse>(
         `/commissions?${queryParams.toString()}`
       );
 
@@ -178,7 +178,7 @@ class CommissionService extends BaseService {
       queryParams.append('populate[user]', '*');
       queryParams.append('populate[upline]', '*');
       
-      const response = await apiClient.get<StrapiCommissionsResponse>(
+      const response = await this.api.get<StrapiCommissionsResponse>(
         `/user-relationships?${queryParams.toString()}`
       );
 
@@ -248,7 +248,7 @@ class CommissionService extends BaseService {
 
   async getCommission(id: string): Promise<ICommission> {
     try {
-      const response = await apiClient.get<StrapiCommissionResponse>(
+      const response = await this.api.get<StrapiCommissionResponse>(
         `/commissions/${id}?populate=*`
       );
       
@@ -275,9 +275,9 @@ class CommissionService extends BaseService {
       // Fetch multiple data points in parallel
       const [commissionsData, currentUserResp, uplineResp, downlineResp] = await Promise.all([
         this.getMyCommissions({ limit: 50 }),
-        apiClient.get('/users/me').catch(() => ({ id: null })),
-        apiClient.get('/user-relationships?filters[user][id][$eq]=me&populate[upline]=*').catch(() => ({ data: [] })),
-        apiClient.get('/user-relationships?filters[upline][id][$eq]=me&populate[user]=*').catch(() => ({ data: [] }))
+        this.api.get('/users/me').catch(() => ({ id: null })),
+        this.api.get('/user-relationships?filters[user][id][$eq]=me&populate[upline]=*').catch(() => ({ data: [] })),
+        this.api.get('/user-relationships?filters[upline][id][$eq]=me&populate[user]=*').catch(() => ({ data: [] }))
       ]);
       
       const currentUser = currentUserResp as any;
@@ -347,7 +347,7 @@ class CommissionService extends BaseService {
   async getCommissionStructure(): Promise<CommissionStructure> {
     try {
       // Fetch commission tiers from Strapi
-      const tiersResponse = await apiClient.get<StrapiCommissionsResponse>('/commission-tiers?sort=tierLevel:asc');
+      const tiersResponse = await this.api.get<StrapiCommissionsResponse>('/commission-tiers?sort=tierLevel:asc');
       const tiers = (tiersResponse as any).data || [];
       
       // Transform Strapi data to our structure

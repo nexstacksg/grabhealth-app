@@ -2,7 +2,6 @@
  * Bookings Service - Handles all booking related API calls for Strapi backend
  */
 
-import { apiClient } from './api-client';
 import { BaseService } from './base.service';
 import { IBooking, ApiResponse, IUserPublic } from '@app/shared-types';
 import { transformStrapiUser } from './strapi-base';
@@ -118,7 +117,7 @@ class BookingsService extends BaseService {
       // Sort by booking date (newest first)
       queryParams.append('sort', 'bookingDate:desc');
 
-      const response = await apiClient.get<StrapiBookingsResponse>(
+      const response = await this.api.get<StrapiBookingsResponse>(
         `/bookings?${queryParams.toString()}`
       );
 
@@ -144,7 +143,7 @@ class BookingsService extends BaseService {
 
   async getBooking(id: string): Promise<IBooking> {
     try {
-      const response = await apiClient.get<StrapiBookingResponse>(
+      const response = await this.api.get<StrapiBookingResponse>(
         `/bookings/${id}?populate[user][fields]=id,username,email&populate[partner][fields]=id,documentId,name,address,city,phone&populate[service][fields]=id,documentId,name,price,duration`
       );
       
@@ -159,7 +158,7 @@ class BookingsService extends BaseService {
       console.log('Creating booking with data:', data);
       
       // Use the partner's booking endpoint
-      const response = await apiClient.post(
+      const response = await this.api.post(
         `/partners/${data.partnerId}/book`,
         {
           serviceId: data.serviceId,
@@ -191,7 +190,7 @@ class BookingsService extends BaseService {
 
   async cancelBooking(id: string, reason?: string): Promise<IBooking> {
     try {
-      const response = await apiClient.put<StrapiBookingResponse>(
+      const response = await this.api.put<StrapiBookingResponse>(
         `/bookings/${id}`,
         {
           data: {
@@ -225,7 +224,7 @@ class BookingsService extends BaseService {
       const endMinute = (hours * 60 + minutes + duration) % 60;
       const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
       
-      const response = await apiClient.put<StrapiBookingResponse>(
+      const response = await this.api.put<StrapiBookingResponse>(
         `/bookings/${id}`,
         {
           data: {

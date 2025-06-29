@@ -1,10 +1,10 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { serverApiGet, serverApiPost } from '@/lib/server-api';
 import { authService } from '@/services';
 import { LoginRequest, RegisterRequest } from '@app/shared-types';
 import { transformStrapiUser } from '@/services/strapi-base';
+import { setAuthCookies, clearAuthCookies } from '@/lib/auth-utils-server';
 
 // ============ Authentication Actions ============
 
@@ -12,26 +12,8 @@ export async function loginAction(data: LoginRequest) {
   try {
     const authData = await authService.login(data);
     
-    const cookieStore = await cookies();
-    
     // Set httpOnly cookies for security
-    cookieStore.set('accessToken', authData.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 1 day
-      path: '/',
-    });
-    
-    if (authData.refreshToken) {
-      cookieStore.set('refreshToken', authData.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      });
-    }
+    await setAuthCookies(authData.accessToken, authData.refreshToken);
     
     return { success: true as const, user: authData.user };
   } catch (error: any) {
@@ -46,26 +28,8 @@ export async function registerAction(data: RegisterRequest) {
   try {
     const authData = await authService.register(data);
     
-    const cookieStore = await cookies();
-    
     // Set httpOnly cookies for security
-    cookieStore.set('accessToken', authData.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 1 day
-      path: '/',
-    });
-    
-    if (authData.refreshToken) {
-      cookieStore.set('refreshToken', authData.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      });
-    }
+    await setAuthCookies(authData.accessToken, authData.refreshToken);
     
     return { success: true as const, user: authData.user };
   } catch (error: any) {
@@ -77,9 +41,7 @@ export async function registerAction(data: RegisterRequest) {
 }
 
 export async function logoutAction() {
-  const cookieStore = await cookies();
-  cookieStore.delete('accessToken');
-  cookieStore.delete('refreshToken');
+  await clearAuthCookies();
   
   return { success: true };
 }

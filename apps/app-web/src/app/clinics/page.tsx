@@ -45,7 +45,7 @@ export default function PartnersPage() {
         page: 1,
         limit: 20,
       });
-      setPartners(response.partners);
+      setPartners(response.data);
     } catch (error) {
       console.error('Failed to fetch partners:', error);
     } finally {

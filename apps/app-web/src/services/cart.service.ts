@@ -2,7 +2,7 @@
  * Cart Service - Handles all cart related API calls for Strapi backend
  */
 
-import { apiClient } from './api-client';
+
 import { BaseService } from './base.service';
 import { ICart, ICartItem } from '@app/shared-types';
 
@@ -64,7 +64,7 @@ class CartService extends BaseService {
   async getCart(): Promise<ICart> {
     try {
       // For authenticated users, get their cart using the correct Strapi endpoint
-      const strapiData = (await apiClient.get('/cart')) as any;
+      const strapiData = (await this.api.get('/cart')) as any;
 
       if (strapiData.data) {
         return transformStrapiCart(strapiData.data);
@@ -95,7 +95,7 @@ class CartService extends BaseService {
 
   async addToCart(productId: number, quantity: number = 1): Promise<ICart> {
     try {
-      const strapiData = (await apiClient.post('/cart/add', {
+      const strapiData = (await this.api.post('/cart/add', {
         productId: productId.toString(),
         quantity,
       })) as any;
@@ -108,7 +108,7 @@ class CartService extends BaseService {
 
   async updateCartItem(itemId: string, quantity: number): Promise<ICart> {
     try {
-      await apiClient.put(`/cart/items/${itemId}`, {
+      await this.api.put(`/cart/items/${itemId}`, {
         quantity,
       });
 
@@ -122,7 +122,7 @@ class CartService extends BaseService {
 
   async removeFromCart(itemId: string): Promise<ICart> {
     try {
-      await apiClient.delete(`/cart/items/${itemId}`);
+      await this.api.delete(`/cart/items/${itemId}`);
 
       // After removing item, get the updated cart
       return await this.getCart();
@@ -134,7 +134,7 @@ class CartService extends BaseService {
 
   async clearCart(): Promise<void> {
     try {
-      await apiClient.delete('/cart/clear');
+      await this.api.delete('/cart/clear');
     } catch (error) {
       console.error('Error clearing cart:', error);
       throw error;
@@ -143,7 +143,7 @@ class CartService extends BaseService {
 
   async syncCart(guestCartId: string): Promise<ICart> {
     try {
-      const strapiData = (await apiClient.post('/cart/sync', {
+      const strapiData = (await this.api.post('/cart/sync', {
         guestCartId,
       })) as any;
       return transformStrapiCart(strapiData.data);

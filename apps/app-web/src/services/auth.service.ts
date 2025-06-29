@@ -2,7 +2,6 @@
  * Auth Service - Handles all authentication related API calls for Strapi
  */
 
-import { apiClient } from './api-client';
 import { BaseService } from './base.service';
 import {
   IUserPublic,
@@ -10,9 +9,8 @@ import {
   RegisterRequest,
   AuthResponse,
 } from '@app/shared-types';
-import { api } from './api.service';
 import { StrapiUser, transformStrapiUser } from './strapi-base';
-import { cookieUtils } from '@/lib/cookies';
+import { clientAuth } from '@/lib/auth-utils-client';
 
 // Strapi auth response types
 interface StrapiAuthResponse {
@@ -39,7 +37,7 @@ class AuthService extends BaseService {
         password: data.password,
       };
 
-      const response = await apiClient.post<StrapiAuthResponse>(
+      const response = await this.api.post<StrapiAuthResponse>(
         '/auth/local',
         strapiRequest
       );
@@ -69,7 +67,7 @@ class AuthService extends BaseService {
 
       console.log('Registering with Strapi:', { email: data.email });
 
-      const response = await apiClient.post<StrapiAuthResponse>(
+      const response = await this.api.post<StrapiAuthResponse>(
         '/auth/local/register',
         strapiRequest
       );
@@ -95,7 +93,7 @@ class AuthService extends BaseService {
     try {
       // Strapi doesn't have a logout endpoint, just clear cookies
       if (typeof window !== 'undefined') {
-        cookieUtils.clear();
+        clientAuth.clearCookies();
       }
     } catch (error) {
       this.handleError(error);
@@ -104,7 +102,8 @@ class AuthService extends BaseService {
 
   async getProfile(): Promise<IUserPublic> {
     try {
-      return await api.auth.getCurrentUser();
+      const strapiUser = await this.api.get<StrapiUser>('/users/me?populate=*');
+      return transformStrapiUser(strapiUser);
     } catch (error) {
       console.error('Failed to get user profile:', error);
       this.handleError(error);
@@ -117,7 +116,7 @@ class AuthService extends BaseService {
       // The JWT token is long-lived, so we just return the current token
       const currentToken =
         typeof window !== 'undefined'
-          ? cookieUtils.get('accessToken')
+          ? clientAuth.getToken()
           : null;
 
       if (!currentToken) {
@@ -143,7 +142,7 @@ class AuthService extends BaseService {
   async requestPasswordReset(email: string): Promise<void> {
     try {
       // Strapi has a forgot password endpoint
-      await apiClient.post('/auth/forgot-password', { email });
+      await this.api.post('/auth/forgot-password', { email });
     } catch (error) {
       this.handleError(error);
     }
@@ -156,7 +155,7 @@ class AuthService extends BaseService {
   ): Promise<void> {
     try {
       // Strapi reset password endpoint
-      await apiClient.post('/auth/reset-password', {
+      await this.api.post('/auth/reset-password', {
         code,
         password,
         passwordConfirmation,
@@ -169,7 +168,7 @@ class AuthService extends BaseService {
   async verifyEmail(email: string): Promise<void> {
     try {
       // Strapi email confirmation resend
-      await apiClient.post('/auth/send-email-confirmation', { email });
+      await this.api.post('/auth/send-email-confirmation', { email });
     } catch (error) {
       this.handleError(error);
     }
@@ -178,7 +177,7 @@ class AuthService extends BaseService {
   async verifyEmailCode(_email: string, confirmation: string): Promise<void> {
     try {
       // Strapi email confirmation
-      await apiClient.get(
+      await this.api.get(
         `/auth/email-confirmation?confirmation=${confirmation}`
       );
     } catch (error) {
