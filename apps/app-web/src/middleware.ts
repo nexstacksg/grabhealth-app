@@ -8,8 +8,7 @@ const protectedPaths = [
   '/commission',
   '/orders',
   '/cart/checkout',
-  '/membership',
-  '/rank-rewards'
+  '/membership'
 ];
 
 // Auth pages that should redirect to home if already authenticated

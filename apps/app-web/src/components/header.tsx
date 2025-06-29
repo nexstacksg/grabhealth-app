@@ -62,7 +62,6 @@ export default function Header() {
     { label: 'Clinics', href: '/clinics' },
     { label: 'Membership', href: '/membership' },
     // { label: 'Commission', href: '/commission' },
-    { label: 'Rank & Rewards', href: '/rank-rewards' },
   ];
 
   // Return a consistent structure during SSR and initial client render
