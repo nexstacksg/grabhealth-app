@@ -58,9 +58,9 @@ function transformStrapiOrder(strapiOrder: any): IOrder {
 
   // Transform order items
   const items = strapiOrder.items?.map((item: any) => ({
-    id: item.id?.toString() || '',
-    orderId: strapiOrder.id?.toString() || '',
-    productId: item.product?.id || item.productId,
+    documentId: item.documentId || item.id?.toString() || '',
+    orderId: strapiOrder.documentId || strapiOrder.id?.toString() || '',
+    productId: item.product?.documentId || item.product?.id || item.productId,
     product: item.product ? transformStrapiProduct(item.product) : undefined,
     quantity: item.quantity || 0,
     price: parseFloat(item.price || 0),
@@ -69,10 +69,9 @@ function transformStrapiOrder(strapiOrder: any): IOrder {
   })) || [];
 
   return {
-    id: strapiOrder.id?.toString() || '',
-    documentId: strapiOrder.documentId, // Strapi 5 documentId
+    documentId: strapiOrder.documentId || strapiOrder.id?.toString() || '', // Strapi 5 documentId
     orderNumber: strapiOrder.orderNumber || '',
-    userId: strapiOrder.user?.id?.toString() || '',
+    userId: strapiOrder.user?.documentId || strapiOrder.user?.id?.toString() || '',
     user: strapiOrder.user ? transformStrapiUser(strapiOrder.user) : undefined,
     total: parseFloat(strapiOrder.total || 0),
     subtotal: parseFloat(strapiOrder.subtotal || 0),
@@ -94,11 +93,11 @@ function transformStrapiOrder(strapiOrder: any): IOrder {
 // Transform Strapi product (minimal transformation for order items)
 function transformStrapiProduct(strapiProduct: any): IProduct {
   return {
-    id: strapiProduct.id?.toString() || '',
+    documentId: strapiProduct.documentId || strapiProduct.id?.toString() || '',
     name: strapiProduct.name || '',
     description: strapiProduct.description || '',
     price: parseFloat(strapiProduct.price || 0),
-    categoryId: strapiProduct.category?.id || null,
+    categoryId: strapiProduct.category?.documentId || strapiProduct.category?.id || null,
     category: null, // Not needed for order items
     imageUrl: strapiProduct.imageUrl || '',
     inStock: strapiProduct.inStock ?? true,

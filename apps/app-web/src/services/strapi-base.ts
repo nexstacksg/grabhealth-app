@@ -68,10 +68,10 @@ export interface StrapiUser {
 }
 
 // Transform Strapi user to our IUserPublic format
-// IMPORTANT: For users, we use the numeric ID for API operations, not documentId
+// IMPORTANT: Strapi 5 uses documentId for all API operations
 export function transformStrapiUser(strapiUser: StrapiUser): IUserPublic {
   return {
-    id: strapiUser.id.toString(), // Use numeric id for users (needed for API operations)
+    documentId: strapiUser.documentId || strapiUser.id.toString(), // Strapi 5 uses documentId
     email: strapiUser.email,
     firstName: strapiUser.firstName || strapiUser.username || '',
     lastName: strapiUser.lastName || '',

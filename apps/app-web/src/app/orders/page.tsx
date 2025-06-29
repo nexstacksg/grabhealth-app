@@ -61,8 +61,8 @@ export default function OrdersPage() {
 
       try {
         setIsLoading(true);
-        // Fetch all orders using server action (using a high limit)
-        const response = await getMyOrdersAction({ page: 1, limit: 100 });
+        // Fetch all orders using server action (using a very high limit)
+        const response = await getMyOrdersAction({ page: 1, limit: 1000 });
         if (response.success) {
           setOrders(response.orders || []);
         } else {
@@ -81,7 +81,7 @@ export default function OrdersPage() {
 
   // Filter orders based on search term and status
   const filteredOrders = orders && Array.isArray(orders) ? orders.filter((order) => {
-    const searchString = (order.orderNumber || order.id || '').toString().toLowerCase();
+    const searchString = (order.orderNumber || order.documentId || '').toString().toLowerCase();
     const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === 'all' || order.status === statusFilter;
@@ -90,8 +90,7 @@ export default function OrdersPage() {
 
   const handleViewOrder = (order: IOrderWithItems) => {
     // IMPORTANT: Strapi 5 requires documentId for API calls
-    const documentId = (order as any).documentId || order.id;
-    router.push(`/orders/${documentId}`);
+    router.push(`/orders/${order.documentId}`);
   };
 
   // Calculate number of items for each order
@@ -197,8 +196,8 @@ export default function OrdersPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
+                    <TableRow key={order.documentId}>
+                      <TableCell className="font-medium">{order.orderNumber || order.documentId}</TableCell>
                       <TableCell>
                         {order.createdAt
                           ? new Date(order.createdAt).toLocaleDateString()

@@ -10,7 +10,7 @@ interface CreateCheckoutSessionParams {
     name: string;
     price: number;
     quantity: number;
-    productId: number;
+    productId: string; // documentId for Strapi 5
     image?: string;
   }>;
   orderId?: string;
@@ -36,6 +36,11 @@ export async function createStripeCheckoutSession(params: CreateCheckoutSessionP
     }
 
     const user = userResult.user;
+    
+    // Get the raw user data to access numeric ID for relations
+    const { serverApiGet } = await import('@/lib/server-api');
+    const rawUserResult = await serverApiGet('/users/me');
+    const numericUserId = rawUserResult.data?.id?.toString() || '1';
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:3000';
     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
@@ -49,7 +54,7 @@ export async function createStripeCheckoutSession(params: CreateCheckoutSessionP
           name: item.name,
           ...(item.image && { images: [item.image] }),
           metadata: {
-            productId: item.productId.toString(),
+            productId: item.productId, // Already a string
           },
         },
         unit_amount: Math.round(item.price * 100), // Convert to cents
@@ -72,7 +77,7 @@ export async function createStripeCheckoutSession(params: CreateCheckoutSessionP
       cancel_url: params.cancelUrl || `${baseUrl}/payment/cancel`,
       customer_email: user.email,
       metadata: {
-        userId: user.id.toString(),
+        userId: numericUserId, // Store numeric ID for user relations
         orderId: params.orderId || '',
         // Add product IDs for reference
         productIds: params.items.map(item => item.productId).join(','),
@@ -95,7 +100,7 @@ export async function createStripeCheckoutSession(params: CreateCheckoutSessionP
       // Set payment intent data
       payment_intent_data: {
         metadata: {
-          userId: user.id.toString(),
+          userId: numericUserId, // Use numeric ID for user relations
           orderId: params.orderId || '',
         },
       },
@@ -165,7 +170,7 @@ export async function handlePaymentSuccess(sessionId: string) {
 
     // Extract metadata
     const metadata = session.metadata || {};
-    const userId = metadata.userId;
+    const userId = metadata.userId; // This is the numeric user ID
     const shippingAddress = metadata.shippingAddress || session.shipping_details?.address 
       ? `${session.shipping_details.address.line1}, ${session.shipping_details.address.city} ${session.shipping_details.address.postal_code}`
       : '';
@@ -188,17 +193,15 @@ export async function handlePaymentSuccess(sessionId: string) {
     const { createOrderAction } = await import('./order.actions');
     
     // Parse product IDs and quantities from line items
-    const productIds = metadata.productIds?.split(',').map(id => parseInt(id)) || [];
-    console.log('Product IDs from metadata:', productIds);
-    console.log('Line items from Stripe:', session.line_items?.data);
+    const productIds = metadata.productIds?.split(',') || [];
     
     const items = session.line_items?.data.map((lineItem: any, index: number) => {
       // Get product ID from the metadata array or from product metadata
-      let productId = productIds[index] || 1;
+      let productId = productIds[index] || '1';
       
       // Try to get from product metadata if available
       if (lineItem.price?.product?.metadata?.productId) {
-        productId = parseInt(lineItem.price.product.metadata.productId);
+        productId = lineItem.price.product.metadata.productId;
       }
       
       return {
@@ -209,8 +212,6 @@ export async function handlePaymentSuccess(sessionId: string) {
       };
     }) || [];
 
-    console.log('Items to create:', items);
-    
     // Calculate totals
     const subtotal = session.amount_subtotal ? session.amount_subtotal / 100 : 0;
     const total = session.amount_total ? session.amount_total / 100 : 0;
@@ -219,7 +220,7 @@ export async function handlePaymentSuccess(sessionId: string) {
 
     // Create the order
     const orderResult = await createOrderAction({
-      userId: userId || '1', // Fallback to a default user ID if needed
+      userId: userId || '1', // Now userId is already the numeric ID
       items,
       total,
       subtotal,
@@ -247,7 +248,7 @@ export async function handlePaymentSuccess(sessionId: string) {
     }
 
     // Update the order with payment details
-    const orderId = orderResult.order.id;
+    const orderId = orderResult.order.documentId; // Use documentId for Strapi 5
     const paymentIntentId = typeof session.payment_intent === 'string' 
       ? session.payment_intent 
       : session.payment_intent?.id;
@@ -256,7 +257,7 @@ export async function handlePaymentSuccess(sessionId: string) {
 
     return {
       success: true,
-      orderId: orderId.toString(),
+      orderId: orderId, // Already a string
       amount: total,
       paymentIntentId,
     };

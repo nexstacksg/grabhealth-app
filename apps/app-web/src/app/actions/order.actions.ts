@@ -29,8 +29,12 @@ export async function getMyOrdersAction(params?: {
     // Build query params
     const queryParams = new URLSearchParams();
     
-    // Filter by current user documentId
-    queryParams.append('filters[user][documentId][$eq]', userResult.user.documentId);
+    // Get the raw user data to access the numeric ID
+    const rawUserResult = await serverApiGet('/users/me');
+    if (rawUserResult.success && rawUserResult.data) {
+      const userId = rawUserResult.data.id;
+      queryParams.append('filters[user][id][$eq]', userId.toString());
+    }
     
     if (params?.status) {
       queryParams.append('filters[status][$eq]', params.status);
@@ -147,7 +151,7 @@ export async function createOrderAction(data: IOrderCreate) {
       data: {
         orderNumber, // Add the required orderNumber field
         user: {
-          connect: [parseInt(data.userId)] // Strapi 5 relation format
+          connect: [data.userId] // Strapi 5 uses documentId
         },
         total: data.total,
         subtotal: data.subtotal,
@@ -178,7 +182,7 @@ export async function createOrderAction(data: IOrderCreate) {
                   connect: [order.documentId]
                 },
                 product: {
-                  connect: [item.productId] // Product IDs are still numeric
+                  connect: [item.productId] // Products use documentId
                 },
                 quantity: item.quantity,
                 price: item.price,
