@@ -48,7 +48,7 @@ interface OrderDetailsProps {
 
 export default function OrderDetailsPage({ params }: OrderDetailsProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [order, setOrder] = useState<IOrderWithItems | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +58,10 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
 
   useEffect(() => {
     async function fetchOrderDetails() {
+      // Don't fetch if auth is still loading
+      if (isAuthLoading) return;
+      
+      // Redirect if not authenticated
       if (!user) {
         router.push('/auth/login');
         return;
@@ -91,7 +95,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
     }
 
     fetchOrderDetails();
-  }, [unwrappedParams.id, router, user]);
+  }, [unwrappedParams.id, router, user, isAuthLoading]);
 
   const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
@@ -134,7 +138,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
     }).format(dateObj);
   };
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <div className="container max-w-4xl py-6 md:py-16 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />

@@ -112,7 +112,7 @@ class OrderService extends BaseService {
   async createOrder(data: IOrderCreate): Promise<IOrder> {
     try {
       // Generate a unique order number
-      const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       
       // Transform data to Strapi format
       // For Strapi 5, relations should use connect syntax
@@ -122,8 +122,8 @@ class OrderService extends BaseService {
           user: {
             connect: [parseInt(data.userId)] // Strapi 5 relation format
           },
-          total: data.total,
-          subtotal: data.subtotal,
+          total: data.total || 0,
+          subtotal: data.subtotal || 0,
           discount: data.discount || 0,
           tax: data.tax || 0,
           status: data.status || 'PENDING',
@@ -158,7 +158,7 @@ class OrderService extends BaseService {
               quantity: item.quantity,
               price: item.price,
               discount: item.discount || 0,
-              pvPoints: item.pvPoints || 0,
+              pvPoints: (item as any).pvPoints || 0,
             }
           });
         }
@@ -223,8 +223,18 @@ class OrderService extends BaseService {
 
       // Handle Strapi 5 response format
       const responseData = response.data || response;
-      const orders = (responseData.data || responseData || []).map(transformStrapiOrder);
-      const pagination = responseData.meta?.pagination || response.meta?.pagination || {};
+      let orders: any[] = [];
+      let pagination: any = {};
+      
+      if (Array.isArray(responseData)) {
+        orders = responseData.map(transformStrapiOrder);
+      } else if ((responseData as any)?.data) {
+        orders = ((responseData as any).data || []).map(transformStrapiOrder);
+        pagination = (responseData as any).meta?.pagination || {};
+      } else if (Array.isArray((response as any).data)) {
+        orders = ((response as any).data || []).map(transformStrapiOrder);
+        pagination = (response as any).meta?.pagination || {};
+      }
 
       return {
         orders,
@@ -335,7 +345,7 @@ class OrderService extends BaseService {
         tax: 0,
         status: 'PENDING',
         paymentStatus: 'PENDING',
-        paymentMethod: data.paymentMethod,
+        paymentMethod: data.paymentMethod || 'card',
         shippingAddress: data.shippingAddress,
         billingAddress: data.billingAddress,
         notes: data.notes,

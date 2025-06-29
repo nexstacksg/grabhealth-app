@@ -101,6 +101,7 @@ export async function getOrderAction(orderId: string) {
     queryParams.append('populate[user][fields]', 'id,username,email');
     queryParams.append('populate[items][populate]', 'product');
     
+    // In Strapi 5, we use documentId in the URL
     const result = await serverApiGet(`/orders/${orderId}?${queryParams.toString()}`);
     
     if (result.success && result.data) {
@@ -111,7 +112,11 @@ export async function getOrderAction(orderId: string) {
       }
       
       const order = result.data.data || result.data;
-      if (order.user?.id !== userResult.user.id) {
+      // Check user ownership - handle both string and number IDs
+      const orderUserId = order.user?.id?.toString();
+      const currentUserId = userResult.user.id.toString();
+      
+      if (!orderUserId || orderUserId !== currentUserId) {
         return { success: false, error: 'Order not found' };
       }
       
