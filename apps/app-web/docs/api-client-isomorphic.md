@@ -1,8 +1,16 @@
-# Isomorphic API Client Documentation
+# API Client Documentation
 
 ## Overview
 
-The isomorphic API client (`api-client-isomorphic.ts`) is designed to work seamlessly in both server-side (Server Components, Server Actions) and client-side (Client Components) environments in Next.js.
+The GrabHealth app provides a comprehensive API client system that works seamlessly across different Next.js environments. The main API client (`api-client.ts`) is designed to work in both server-side (Server Components, Server Actions) and client-side (Client Components) environments.
+
+## API Client Options
+
+The app provides three ways to make API calls:
+
+1. **Unified API Client** (`apiClient`) - Works in both client and server environments
+2. **Server API Wrapper** (`serverApi*`) - Server-side only with structured responses 
+3. **API Service Layer** (`api`) - High-level, domain-specific interface
 
 ## Key Features
 
@@ -10,8 +18,11 @@ The isomorphic API client (`api-client-isomorphic.ts`) is designed to work seaml
 2. **Unified API**: Same methods work in both environments
 3. **Automatic Auth Handling**: 
    - Server-side: Uses Next.js `cookies()` from `next/headers`
-   - Client-side: Uses `cookieUtils` from browser cookies
-4. **Drop-in Replacement**: Compatible with existing `apiClient` interface
+   - Client-side: Uses `document.cookie` from browser
+4. **Built-in Error Handling**: Custom `ApiError` class with detailed error information
+5. **Request/Response Interceptors**: For logging and error handling
+6. **FormData Support**: Automatic handling for file uploads
+7. **30-second Timeout**: Configurable request timeout
 
 ## Table of Contents
 
