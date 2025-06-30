@@ -11,6 +11,9 @@ const protectedPaths = [
   '/membership'
 ];
 
+// Partner paths that require partner role
+const partnerPaths = ['/partner'];
+
 // Auth pages that should redirect to home if already authenticated
 const authPaths = ['/auth/login', '/auth/register', '/auth/forgot-password'];
 
@@ -30,15 +33,31 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const accessToken = request.cookies.get('accessToken');
   const refreshToken = request.cookies.get('refreshToken');
+  const userRole = request.cookies.get('userRole')?.value;
 
   // Check if the path requires authentication
   const isProtectedPath = protectedPaths.some((path) =>
     pathname.startsWith(path)
   );
-  const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
-  const isPublicPath = publicPaths.some((path) => 
-    pathname === path || pathname.startsWith(`${path}/`)
+  const isPartnerPath = partnerPaths.some((path) =>
+    pathname.startsWith(path)
   );
+  const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
+
+  // Handle partner routes - require both authentication and partner role
+  if (isPartnerPath) {
+    if (!accessToken && !refreshToken) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    // Check if user has partner role (role is stored in uppercase)
+    if (userRole !== 'PARTNER') {
+      // Redirect to home page if not a partner
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
 
   // Redirect to login if accessing protected path without token
   if (isProtectedPath && !accessToken && !refreshToken) {
@@ -60,7 +79,7 @@ export function middleware(request: NextRequest) {
   }
 
   // For protected paths, add cache headers to prevent stale content
-  if (isProtectedPath) {
+  if (isProtectedPath || isPartnerPath) {
     const response = NextResponse.next();
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     response.headers.set('Pragma', 'no-cache');

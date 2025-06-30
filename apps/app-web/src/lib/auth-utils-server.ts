@@ -23,7 +23,7 @@ const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 /**
  * Set authentication cookies (server-side only)
  */
-export async function setAuthCookies(accessToken: string, refreshToken?: string) {
+export async function setAuthCookies(accessToken: string, refreshToken?: string, userRole?: string) {
   const cookieStore = await cookies();
   
   cookieStore.set('accessToken', accessToken, {
@@ -37,6 +37,13 @@ export async function setAuthCookies(accessToken: string, refreshToken?: string)
       maxAge: REFRESH_TOKEN_MAX_AGE,
     });
   }
+  
+  if (userRole) {
+    cookieStore.set('userRole', userRole, {
+      ...COOKIE_OPTIONS,
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+  }
 }
 
 /**
@@ -46,6 +53,7 @@ export async function clearAuthCookies() {
   const cookieStore = await cookies();
   cookieStore.delete('accessToken');
   cookieStore.delete('refreshToken');
+  cookieStore.delete('userRole');
 }
 
 /**

@@ -1,8 +1,16 @@
-# Isomorphic API Client Documentation
+# API Client Documentation
 
 ## Overview
 
-The isomorphic API client (`api-client-isomorphic.ts`) is designed to work seamlessly in both server-side (Server Components, Server Actions) and client-side (Client Components) environments in Next.js.
+The GrabHealth app provides a comprehensive API client system that works seamlessly across different Next.js environments. The main API client (`api-client.ts`) is designed to work in both server-side (Server Components, Server Actions) and client-side (Client Components) environments.
+
+## API Client Options
+
+The app provides three ways to make API calls:
+
+1. **Unified API Client** (`apiClient`) - Works in both client and server environments
+2. **Server API Wrapper** (`serverApi*`) - Server-side only with structured responses 
+3. **API Service Layer** (`api`) - High-level, domain-specific interface
 
 ## Key Features
 
@@ -10,38 +18,41 @@ The isomorphic API client (`api-client-isomorphic.ts`) is designed to work seaml
 2. **Unified API**: Same methods work in both environments
 3. **Automatic Auth Handling**: 
    - Server-side: Uses Next.js `cookies()` from `next/headers`
-   - Client-side: Uses `cookieUtils` from browser cookies
-4. **Drop-in Replacement**: Compatible with existing `apiClient` interface
+   - Client-side: Uses `document.cookie` from browser
+4. **Built-in Error Handling**: Custom `ApiError` class with detailed error information
+5. **Request/Response Interceptors**: For logging and error handling
+6. **FormData Support**: Automatic handling for file uploads
+7. **30-second Timeout**: Configurable request timeout
 
 ## Table of Contents
 
 - [Usage Examples](#usage-examples)
-  - [Server Components](#server-components)
-  - [Client Components](#client-components)
-  - [Server Actions](#server-actions)
-  - [API Route Handlers](#api-route-handlers)
-  - [Custom Auth Token](#custom-auth-token)
-- [Migration Guide](#migration-guide)
-- [API Reference](#api-reference)
-- [Benefits](#benefits)
-- [Common Patterns](#common-patterns)
+  - [1. Unified API Client](#1-unified-api-client)
+  - [2. Server API Wrapper](#2-server-api-wrapper)
+  - [3. API Service Layer](#3-api-service-layer)
+- [Authentication](#authentication)
 - [Error Handling](#error-handling)
+- [Common Patterns](#common-patterns)
+- [API Reference](#api-reference)
+- [File Structure](#file-structure)
 
 ## Usage Examples
 
-### Server Components
+### 1. Unified API Client
 
-Server Components run on the server during SSR/SSG. The isomorphic client automatically uses Next.js cookies for authentication.
+The main API client (`/lib/api-client.ts`) works in both client and server environments.
+
+#### Server Components
 
 ```tsx
 // app/products/page.tsx
-import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
+import { apiClient } from '@/lib/api-client';
 import { IProduct } from '@app/shared-types';
 
 export default async function ProductsPage() {
   try {
-    // No need to manually handle cookies or auth headers
-    const response = await apiClientIsomorphic.get<{ data: IProduct[] }>('/products?populate=*');
+    // Auth headers are automatically added from cookies
+    const response = await apiClient.get<{ data: IProduct[] }>('/products?populate=*');
     
     return (
       <div>
@@ -58,27 +69,25 @@ export default async function ProductsPage() {
 }
 ```
 
-### Client Components
-
-Client Components run in the browser. The isomorphic client automatically uses browser cookies for authentication.
+#### Client Components
 
 ```tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
-import { IUserPublic } from '@app/shared-types';
+import { apiClient } from '@/lib/api-client';
+import { IUser } from '@app/shared-types';
 
 export function UserProfile() {
-  const [user, setUser] = useState<IUserPublic | null>(null);
+  const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         // Same API call works in client components
-        const response = await apiClientIsomorphic.get<{ user: IUserPublic }>('/users/me');
-        setUser(response.user);
+        const response = await apiClient.get<IUser>('/users/me?populate=*');
+        setUser(response);
       } catch (error) {
         console.error('Failed to fetch user:', error);
       } finally {
@@ -101,362 +110,282 @@ export function UserProfile() {
 }
 ```
 
-### Server Actions
-
-Server Actions are functions that run on the server and can be called from client components.
+#### Server Actions
 
 ```tsx
 'use server';
 
-import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
+import { apiClient } from '@/lib/api-client';
 import { revalidatePath } from 'next/cache';
 
-export async function updateUserProfile(formData: FormData) {
+export async function updateUserProfile(userId: string, formData: FormData) {
   try {
     const data = {
       name: formData.get('name') as string,
       phone: formData.get('phone') as string,
-      bio: formData.get('bio') as string,
     };
 
-    // Auth is handled automatically in server actions
-    const response = await apiClientIsomorphic.put('/users/me', data);
+    // Auth is handled automatically
+    const response = await apiClient.put(`/users/${userId}`, { data });
     
-    // Revalidate the profile page
     revalidatePath('/profile');
-    
     return { success: true, user: response };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to update profile:', error);
-    return { success: false, error: error.message || 'Failed to update profile' };
-  }
-}
-
-// File upload example
-export async function uploadAvatar(formData: FormData) {
-  try {
-    const file = formData.get('file') as File;
-    if (!file) {
-      return { success: false, error: 'No file provided' };
-    }
-
-    // Create FormData for upload
-    const uploadData = new FormData();
-    uploadData.append('files', file);
-
-    // Upload file to Strapi
-    const uploadResponse = await apiClientIsomorphic.post('/upload', uploadData);
-    const imageUrl = uploadResponse[0]?.url;
-
-    if (!imageUrl) {
-      return { success: false, error: 'Upload failed' };
-    }
-
-    // Update user profile with new avatar
-    await apiClientIsomorphic.put('/users/me', { avatar: imageUrl });
-    
-    revalidatePath('/profile');
-    return { success: true, imageUrl };
-  } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
 ```
 
-### API Route Handlers
+### 2. Server API Wrapper
 
-The isomorphic client also works in Next.js API route handlers.
+The server API wrapper (`/lib/server-api.ts`) provides structured responses for server-side usage.
 
 ```tsx
-// app/api/products/featured/route.ts
-import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
-import { NextResponse } from 'next/server';
+import { serverApiGet, serverApiPost, serverApiPut } from '@/lib/server-api';
 
-export async function GET() {
-  try {
-    // Fetch featured products from Strapi
-    const products = await apiClientIsomorphic.get('/products?filters[featured][$eq]=true&populate=*');
-    
-    return NextResponse.json({ products });
-  } catch (error) {
-    console.error('API route error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch featured products' },
-      { status: 500 }
-    );
+// Returns { success: boolean, data?: T, error?: string }
+const result = await serverApiGet('/products?populate=*');
+
+if (result.success) {
+  console.log(result.data); // Products array
+} else {
+  console.error(result.error); // Error message
+}
+
+// POST with Strapi data format
+const orderResult = await serverApiPost('/orders', {
+  data: {
+    items: [...],
+    total: 100,
+    user: userId
   }
-}
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    
-    // Create a new product
-    const product = await apiClientIsomorphic.post('/products', body);
-    
-    return NextResponse.json({ product });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Failed to create product' },
-      { status: error.status || 500 }
-    );
-  }
-}
-```
-
-### Custom Auth Token
-
-Sometimes you may need to use a specific token (e.g., from a third-party service or testing).
-
-```tsx
-// Using a custom token
-export async function customAuthExample() {
-  // Get token from somewhere else
-  const customToken = await getTokenFromThirdParty();
-  
-  // Use the withAuthHeader helper
-  const config = apiClientIsomorphic.withAuthHeader(customToken);
-  const response = await apiClientIsomorphic.get('/protected-endpoint', config);
-  
-  return response;
-}
-
-// Or manually in config
-export async function manualAuthExample() {
-  const response = await apiClientIsomorphic.get('/protected-endpoint', {
-    headers: {
-      Authorization: 'Bearer custom-token-here'
-    }
-  });
-  
-  return response;
-}
-```
-
-## Migration Guide
-
-### Step 1: Import the isomorphic client
-
-Replace:
-```tsx
-import { apiClient } from '@/services/api-client';
-```
-
-With:
-```tsx
-import { apiClientIsomorphic } from '@/services/api-client-isomorphic';
-```
-
-Or use the alias if you want minimal code changes:
-```tsx
-import { apiClientIsomorphic as apiClient } from '@/services/api-client-isomorphic';
-```
-
-### Step 2: Remove manual auth handling
-
-The isomorphic client handles auth automatically, so you can remove manual auth header additions:
-
-```tsx
-// Before (in server components)
-const cookieStore = await cookies();
-const token = cookieStore.get('accessToken');
-const response = await fetch(`${API_URL}/api/users/me`, {
-  headers: {
-    Authorization: `Bearer ${token.value}`,
-    'Content-Type': 'application/json',
-  },
 });
-const data = await response.json();
 
-// After
-const data = await apiClientIsomorphic.get('/users/me');
-```
-
-### Step 3: Update error handling
-
-The isomorphic client provides consistent error handling:
-
-```tsx
-// Before
-try {
-  const response = await fetch(...);
-  if (!response.ok) {
-    throw new Error('Failed');
-  }
-  const data = await response.json();
-} catch (error) {
-  console.error(error);
-}
-
-// After
-try {
-  const data = await apiClientIsomorphic.get('/endpoint');
-} catch (error: any) {
-  console.error(error.message); // Structured error message
-  console.error(error.status);  // HTTP status code
-  console.error(error.details); // Additional error details
-}
-```
-
-## API Reference
-
-### Methods
-
-All methods return the response data directly (not wrapped in a Response object):
-
-```typescript
-// GET request
-get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T>
-
-// POST request
-post<T>(endpoint: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
-
-// PUT request
-put<T>(endpoint: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
-
-// DELETE request
-delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T>
-
-// PATCH request
-patch<T>(endpoint: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
-
-// Helper for custom auth
-withAuthHeader(token: string, config?: AxiosRequestConfig): AxiosRequestConfig
-```
-
-### Configuration
-
-The client uses these environment variables:
-- `NEXT_PUBLIC_API_URL`: Base URL for the API (defaults to `http://localhost:1337`)
-
-## Benefits
-
-1. **Simplified Code**: No need to handle server/client auth differently
-2. **Type Safety**: Full TypeScript support with generics
-3. **Consistent Error Handling**: Same error format across all environments
-4. **Automatic Auth**: No need to manually add auth headers
-5. **FormData Support**: Automatically handles file uploads
-6. **Interceptors**: Request/response interceptors for logging and error handling
-7. **Timeout Handling**: 30-second timeout by default
-
-## Common Patterns
-
-### Fetching with Query Parameters
-
-```tsx
-// Using URLSearchParams
-const params = new URLSearchParams({
-  page: '1',
-  limit: '10',
-  sort: 'createdAt:desc'
+// PUT to update
+const updateResult = await serverApiPut(`/users/${userId}`, {
+  data: { name: 'New Name' }
 });
-const products = await apiClientIsomorphic.get(`/products?${params.toString()}`);
-
-// Or build manually
-const products = await apiClientIsomorphic.get('/products?page=1&limit=10&sort=createdAt:desc');
 ```
 
-### Strapi-specific Queries
+### 3. API Service Layer
+
+The API service layer (`/services/api.service.ts`) provides high-level, domain-specific methods.
 
 ```tsx
-// Populate relations
-const product = await apiClientIsomorphic.get('/products/1?populate=*');
+import { api } from '@/services/api.service';
 
-// Filter
-const activeProducts = await apiClientIsomorphic.get(
-  '/products?filters[status][$eq]=active&populate=category'
-);
+// Get current user with all relations
+const user = await api.auth.getCurrentUser();
 
-// Complex filters
-const params = new URLSearchParams();
-params.append('filters[price][$gte]', '100');
-params.append('filters[price][$lte]', '500');
-params.append('filters[category][name][$eq]', 'Electronics');
-const products = await apiClientIsomorphic.get(`/products?${params.toString()}`);
+// Update user profile  
+const updated = await api.auth.updateUser(userId, {
+  name: 'New Name',
+  email: 'new@email.com'
+});
+
+// Upload files
+const files = [file1, file2];
+const uploaded = await api.upload.uploadFiles(files);
+
 ```
 
-### Handling Pagination
+## Authentication
+
+Authentication is handled automatically via httpOnly cookies:
+
+- `accessToken`: JWT token (1 day expiry)
+- `refreshToken`: For token renewal (7 days expiry)  
+- `userRole`: Cached user role
+
+### Server-side Auth Utilities
 
 ```tsx
-interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    pagination: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
-}
+import { getServerUser, isServerAuthenticated } from '@/lib/auth-utils-server';
 
-async function fetchAllProducts() {
-  let page = 1;
-  let hasMore = true;
-  const allProducts = [];
+// Check if user is authenticated
+const isAuth = await isServerAuthenticated();
 
-  while (hasMore) {
-    const response = await apiClientIsomorphic.get<PaginatedResponse<IProduct>>(
-      `/products?pagination[page]=${page}&pagination[pageSize]=100`
-    );
-    
-    allProducts.push(...response.data);
-    hasMore = page < response.meta.pagination.pageCount;
-    page++;
-  }
+// Get current user
+const user = await getServerUser();
 
-  return allProducts;
-}
+// Set auth cookies (after login)
+import { setAuthCookies } from '@/lib/auth-utils-server';
+await setAuthCookies({
+  jwt: response.jwt,
+  user: response.user
+});
+
+// Clear auth cookies (logout)
+import { clearAuthCookies } from '@/lib/auth-utils-server';
+await clearAuthCookies();
 ```
 
 ## Error Handling
 
-The isomorphic client provides structured error handling:
+The API client provides structured error handling with the `ApiError` class:
 
 ```tsx
-try {
-  const data = await apiClientIsomorphic.get('/protected-resource');
-} catch (error: any) {
-  // Error structure
-  console.error({
-    message: error.message,     // Human-readable error message
-    status: error.status,       // HTTP status code (e.g., 404, 500)
-    code: error.code,          // Error code (e.g., 'NETWORK_ERROR', 'BadRequestError')
-    details: error.details,    // Additional error details from server
-  });
+import { ApiError } from '@/lib/api-client';
+import { useApiErrorHandler } from '@/hooks/use-api-error-handler';
 
-  // Handle specific errors
-  if (error.status === 401) {
-    // Redirect to login
-    redirect('/auth/login');
-  } else if (error.status === 404) {
-    // Resource not found
-    notFound();
-  } else {
-    // Generic error handling
-    throw error;
+// In try-catch blocks
+try {
+  const data = await apiClient.get('/protected-route');
+} catch (error) {
+  if (error instanceof ApiError) {
+    console.log(error.status);   // HTTP status code
+    console.log(error.message);  // Error message
+    console.log(error.code);     // Error code
+    console.log(error.details);  // Additional details
   }
+}
+
+// In React components (handles 401 automatically)
+const { handleApiError } = useApiErrorHandler();
+
+try {
+  const data = await apiClient.get('/products');
+} catch (error) {
+  handleApiError(error); // Redirects to login on 401
 }
 ```
 
-### Network Errors
+## Common Patterns
+
+### Strapi Query Parameters
 
 ```tsx
-try {
-  const data = await apiClientIsomorphic.get('/endpoint');
-} catch (error: any) {
-  if (error.code === 'NETWORK_ERROR') {
-    // Handle network issues
-    console.error('Network error - check your connection');
-  }
-}
+// Populate relations
+const user = await apiClient.get('/users/me?populate=upline');
+const userWithAll = await apiClient.get('/users/me?populate=*');
+
+// Nested relations
+const order = await apiClient.get('/orders/1?populate[items][populate]=product');
+
+// Filtering
+const activeProducts = await apiClient.get(
+  '/products?filters[status][$eq]=active&populate=category'
+);
+
+// Pagination
+const products = await apiClient.get(
+  '/products?pagination[page]=1&pagination[pageSize]=10'
+);
+
+// Sorting
+const sortedProducts = await apiClient.get(
+  '/products?sort=createdAt:desc'
+);
 ```
 
-## Notes
+### Query String Builder
 
-- The client automatically handles FormData for file uploads (removes Content-Type header)
-- Strapi error formats are properly parsed and normalized
-- Network errors and timeouts are handled consistently
-- The base URL is configured from `NEXT_PUBLIC_API_URL` environment variable
-- Auth tokens are automatically refreshed from cookies on each request
-- Server-side dynamic import of `next/headers` prevents client-side import errors
+```tsx
+import { buildQueryString } from '@/lib/api-client';
+
+const query = buildQueryString({
+  filters: {
+    category: { name: 'Health' },
+    price: { $gte: 10, $lte: 100 }
+  },
+  sort: ['createdAt:desc'],
+  pagination: { page: 1, pageSize: 20 },
+  populate: ['category', 'images']
+});
+
+const products = await apiClient.get(`/products?${query}`);
+```
+
+### File Uploads
+
+```tsx
+// Simple file upload
+const formData = new FormData();
+formData.append('files', file);
+const uploaded = await apiClient.post('/upload', formData);
+
+// Upload with Strapi relations
+const formData = new FormData();
+formData.append('files', file);
+formData.append('ref', 'api::product.product');
+formData.append('refId', productId);
+formData.append('field', 'images');
+
+const result = await apiClient.post('/upload', formData);
+```
+
+## API Reference
+
+### Unified API Client Methods
+
+```typescript
+// GET request
+apiClient.get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T>
+
+// POST request
+apiClient.post<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+
+// PUT request
+apiClient.put<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+
+// DELETE request
+apiClient.delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T>
+
+// PATCH request
+apiClient.patch<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+```
+
+### Server API Wrapper Methods
+
+```typescript
+// All methods return { success: boolean, data?: T, error?: string }
+serverApiGet<T>(endpoint: string): Promise<ApiResponse<T>>
+serverApiPost<T>(endpoint: string, data?: any): Promise<ApiResponse<T>>
+serverApiPut<T>(endpoint: string, data?: any): Promise<ApiResponse<T>>
+serverApiDelete<T>(endpoint: string): Promise<ApiResponse<T>>
+serverApiPatch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>>
+```
+
+### API Service Layer Methods
+
+```typescript
+// Authentication
+api.auth.getCurrentUser(): Promise<IUser>
+api.auth.updateUser(userId: string, data: Partial<IUser>): Promise<IUser>
+
+// File Upload
+api.upload.uploadFiles(files: File[]): Promise<UploadResponse[]>
+```
+
+### Configuration
+
+The API clients use these environment variables:
+- `NEXT_PUBLIC_API_URL`: Base URL for the API (defaults to `http://localhost:1337`)
+
+## File Structure
+
+```
+app-web/
+├── lib/
+│   ├── api-client.ts           # Unified API client (axios-based)
+│   ├── server-api.ts           # Server-side wrapper with structured responses
+│   └── auth-utils-server.ts    # Server-side auth utilities
+├── services/
+│   └── api.service.ts          # High-level API service layer
+└── hooks/
+    └── use-api-error-handler.ts # React hook for error handling
+```
+
+## Key Features Summary
+
+1. **Environment Agnostic**: Works seamlessly in both server and client environments
+2. **Automatic Authentication**: JWT tokens from cookies are automatically included
+3. **Type Safety**: Full TypeScript support with proper typing
+4. **Error Handling**: Structured error responses with `ApiError` class
+5. **Strapi Integration**: Built for Strapi's REST API conventions
+6. **File Upload Support**: Automatic FormData handling
+7. **Request/Response Interceptors**: For logging and error processing
+8. **Query String Builder**: Helper for complex Strapi queries
+9. **30-second Timeout**: Configurable request timeout
+10. **Cookie-based Auth**: Secure httpOnly cookies for JWT storage

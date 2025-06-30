@@ -15,7 +15,9 @@ export async function loginAction(data: LoginRequest) {
     const authData = await authService.login(data);
     
     // Set httpOnly cookies for security
-    await setAuthCookies(authData.accessToken, authData.refreshToken);
+    // Extract role properly - authData.user.role is already a string after transformation
+    const userRole = authData.user.role || 'authenticated';
+    await setAuthCookies(authData.accessToken, authData.refreshToken, userRole);
     
     return { success: true as const, user: authData.user };
   } catch (error: any) {
@@ -35,7 +37,9 @@ export async function registerAction(data: RegisterRequest) {
     const authData = await authService.register(data);
     
     // Set httpOnly cookies for security
-    await setAuthCookies(authData.accessToken, authData.refreshToken);
+    // Extract role properly - authData.user.role is already a string after transformation
+    const userRole = authData.user.role || 'authenticated';
+    await setAuthCookies(authData.accessToken, authData.refreshToken, userRole);
     
     return { success: true as const, user: authData.user };
   } catch (error: any) {

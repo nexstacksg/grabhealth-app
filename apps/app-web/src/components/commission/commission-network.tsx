@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/dialog';
 import ReferralLink from './referral-link';
 import { useCommission } from './commission-provider';
-import { apiClient } from '@/services/api-client';
+import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/contexts/AuthContext';
 // Authentication is now handled at the page level
 
@@ -75,18 +75,28 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
   const [showQRCode, setShowQRCode] = useState(false);
   const { referralLink } = useCommission();
   const { user } = useAuth();
-  const [memberDetails, setMemberDetails] = useState<{[key: string]: any}>({});
-  const [commissionRates, setCommissionRates] = useState<{tier1: number; tier2: number; tier3: number}>({
+  const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>(
+    {}
+  );
+  const [commissionRates, setCommissionRates] = useState<{
+    tier1: number;
+    tier2: number;
+    tier3: number;
+  }>({
     tier1: 30,
     tier2: 10,
-    tier3: 5
+    tier3: 5,
   });
   const [currentUserSales, setCurrentUserSales] = useState<number>(0);
   const [currentUserRank, setCurrentUserRank] = useState<string>('Bronze');
-  const [rankThresholds, setRankThresholds] = useState<{platinum: number; gold: number; silver: number}>({
+  const [rankThresholds, setRankThresholds] = useState<{
+    platinum: number;
+    gold: number;
+    silver: number;
+  }>({
     platinum: 10000,
     gold: 5000,
-    silver: 2000
+    silver: 2000,
   });
 
   // Update window width on resize for responsive behavior
@@ -107,24 +117,30 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
     const fetchMemberSalesData = async () => {
       try {
         // Fetch sales data for all members in the network
-        const memberIds = [...downlines.map(d => d.user_id), upline?.user_id].filter(Boolean);
-        
+        const memberIds = [
+          ...downlines.map((d) => d.user_id),
+          upline?.user_id,
+        ].filter(Boolean);
+
         if (memberIds.length > 0) {
           // Fetch actual sales data for each member
-          const salesData: {[key: string]: number} = {};
-          
+          const salesData: { [key: string]: number } = {};
+
           // For now, skip fetching individual member sales to avoid server errors
           // This would need a custom Strapi endpoint to efficiently fetch sales for multiple users
           // Just use the sales data if it's already provided in the relationship data
-          memberIds.forEach(memberId => {
+          memberIds.forEach((memberId) => {
             salesData[memberId || ''] = 0; // Default to 0
           });
-          
-          setMemberDetails(prev => ({ ...prev, ...salesData }));
+
+          setMemberDetails((prev) => ({ ...prev, ...salesData }));
         }
       } catch (error: any) {
         if (error?.status !== 404 && error?.status !== 403) {
-          console.error('Error fetching member sales data:', error.message || error);
+          console.error(
+            'Error fetching member sales data:',
+            error.message || error
+          );
         }
       }
     };
@@ -136,19 +152,26 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
   useEffect(() => {
     const fetchCommissionRates = async () => {
       try {
-        const response = await apiClient.get<{ data: any[] }>('/commission-tiers?sort=tierLevel:asc');
+        const response = await apiClient.get<{ data: any[] }>(
+          '/commission-tiers?sort=tierLevel:asc'
+        );
         if (response.data && response.data.length > 0) {
           const rates: any = {};
           response.data.forEach((tier: any) => {
             const tierData = tier.attributes || tier;
             const level = tierData.tierLevel || tier.tierLevel;
-            rates[`tier${level}`] = parseFloat(tierData.directCommissionRate || tier.directCommissionRate || 0);
+            rates[`tier${level}`] = parseFloat(
+              tierData.directCommissionRate || tier.directCommissionRate || 0
+            );
           });
-          setCommissionRates(prev => ({ ...prev, ...rates }));
+          setCommissionRates((prev) => ({ ...prev, ...rates }));
         }
       } catch (error: any) {
         if (error?.status !== 404 && error?.status !== 403) {
-          console.error('Error fetching commission rates:', error.message || error);
+          console.error(
+            'Error fetching commission rates:',
+            error.message || error
+          );
         }
       }
     };
@@ -162,7 +185,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
       try {
         // Try to get user ID from auth context first
         let userId: string | null = user?.id || null;
-        
+
         // If not in context, try to fetch from API
         if (!userId) {
           try {
@@ -188,14 +211,17 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
             const ordersResponse = await apiClient.get<{ data: any[] }>(
               `/orders?filters[user][id][$eq]=${userId}&filters[status][$eq]=COMPLETED&populate=*`
             );
-            
+
             if (ordersResponse.data && Array.isArray(ordersResponse.data)) {
               // Calculate total sales from completed orders
               const totalSales = ordersResponse.data.reduce((sum, order) => {
                 const orderData = order.attributes || order;
-                return sum + parseFloat(orderData.totalAmount || orderData.total || 0);
+                return (
+                  sum +
+                  parseFloat(orderData.totalAmount || orderData.total || 0)
+                );
               }, 0);
-              
+
               setCurrentUserSales(totalSales);
               // Only update rank if not already set from user profile
               if (currentUserRank === 'Bronze') {
@@ -210,8 +236,15 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
           }
         }
       } catch (error: any) {
-        if (error?.status !== 404 && error?.status !== 403 && error?.status !== 500) {
-          console.error('Error in fetchCurrentUserData:', error.message || error);
+        if (
+          error?.status !== 404 &&
+          error?.status !== 403 &&
+          error?.status !== 500
+        ) {
+          console.error(
+            'Error in fetchCurrentUserData:',
+            error.message || error
+          );
         }
         // Keep default values on error
       }
@@ -225,7 +258,9 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
     const fetchRankThresholds = async () => {
       try {
         // Try to fetch user role types which might contain sales thresholds
-        const response = await apiClient.get<{ data: any[] }>('/user-role-types?populate=*');
+        const response = await apiClient.get<{ data: any[] }>(
+          '/user-role-types?populate=*'
+        );
         if (response.data && response.data.length > 0) {
           // For now, use default thresholds since user-role-types doesn't have sales thresholds
           // You might need to add a new content type in Strapi for rank thresholds
@@ -288,16 +323,32 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
       ? [
           {
             id: upline.id || upline.upline_id || 0,
-            name: upline.name || upline.user_name || upline.email || 'Upline Member',
-            rank: upline.rank || determineRank(upline.sales || memberDetails[upline.user_id] || 0, 0),
-            sales: formatSales(upline.sales || memberDetails[upline.user_id] || 0),
+            name:
+              upline.name ||
+              upline.user_name ||
+              upline.email ||
+              'Upline Member',
+            rank:
+              upline.rank ||
+              determineRank(
+                upline.sales || memberDetails[upline.user_id] || 0,
+                0
+              ),
+            sales: formatSales(
+              upline.sales || memberDetails[upline.user_id] || 0
+            ),
           },
         ]
       : [],
     downlineMembers: downlines.map((d) => ({
       id: d.id || d.user_id,
       name: d.name || d.user_name || d.email || `Member #${d.user_id}`,
-      rank: d.rank || determineRank(d.sales || memberDetails[d.user_id] || 0, d.relationship_level),
+      rank:
+        d.rank ||
+        determineRank(
+          d.sales || memberDetails[d.user_id] || 0,
+          d.relationship_level
+        ),
       sales: formatSales(d.sales || memberDetails[d.user_id] || 0),
       joinedDate: d.created_at,
       relationshipLevel: d.relationship_level,
@@ -591,7 +642,11 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                     </p>
                     <p className="flex justify-between mt-1">
                       <span className="text-gray-500">Joined:</span>
-                      <span>{member.joinedDate ? new Date(member.joinedDate).toLocaleDateString() : 'N/A'}</span>
+                      <span>
+                        {member.joinedDate
+                          ? new Date(member.joinedDate).toLocaleDateString()
+                          : 'N/A'}
+                      </span>
                     </p>
                   </div>
                 )}
@@ -877,7 +932,8 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 Tier 1 (Direct Sales)
               </h4>
               <p className="text-sm">
-                {commissionRates.tier1}% commission on all direct sales you make to customers.
+                {commissionRates.tier1}% commission on all direct sales you make
+                to customers.
               </p>
             </div>
 
@@ -886,8 +942,8 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 Tier 2 (Indirect Sales)
               </h4>
               <p className="text-sm">
-                {commissionRates.tier2}% commission on all sales made by your direct recruits (Tier 2
-                members).
+                {commissionRates.tier2}% commission on all sales made by your
+                direct recruits (Tier 2 members).
               </p>
             </div>
 
@@ -896,15 +952,16 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 Tier 3+ (Deep Network)
               </h4>
               <p className="text-sm">
-                {commissionRates.tier3}% commission on deeper tiers (3, 4, etc.) with decreasing
-                percentages for deeper levels.
+                {commissionRates.tier3}% commission on deeper tiers (3, 4, etc.)
+                with decreasing percentages for deeper levels.
               </p>
             </div>
 
             <div className="p-4 bg-amber-50 rounded-lg">
               <h4 className="font-semibold text-amber-700">Network Growth</h4>
               <p className="text-sm">
-                Build your network by recruiting new members. Your earnings grow as your network expands.
+                Build your network by recruiting new members. Your earnings grow
+                as your network expands.
               </p>
             </div>
           </div>
