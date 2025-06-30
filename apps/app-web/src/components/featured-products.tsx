@@ -64,7 +64,7 @@ export default function FeaturedProducts() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.documentId} product={product} />
       ))}
     </div>
   );
@@ -75,7 +75,7 @@ function ProductCard({ product }: { product: IProduct }) {
   const [isAdding, setIsAdding] = useState(false);
 
   // Ensure product has valid data
-  if (!product || !product.id || !product.name) {
+  if (!product || !product.documentId || !product.name) {
     return null;
   }
 

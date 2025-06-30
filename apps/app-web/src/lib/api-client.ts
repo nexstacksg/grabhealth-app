@@ -1,14 +1,19 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
+import axios, {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosError,
+  AxiosResponse,
+} from 'axios';
 
 /**
  * Unified API Client
- * 
+ *
  * A single API client that works seamlessly in all environments:
  * - Server Components (RSC)
  * - Client Components
  * - Server Actions
  * - API Routes
- * 
+ *
  * Automatically handles authentication based on the environment.
  */
 
@@ -27,20 +32,28 @@ async function getAuthToken(): Promise<string | null> {
       return accessToken?.value || null;
     } catch (error) {
       // If cookies() throws (e.g., in non-request context), return null
+      // This can happen during build time or in non-request contexts
+      console.debug('Could not access cookies in server context:', error);
       return null;
     }
   } else {
     // Client-side: use document.cookie
-    const nameEQ = 'accessToken=';
-    const cookies = document.cookie.split(';');
-    
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.indexOf(nameEQ) === 0) {
-        return cookie.substring(nameEQ.length);
+    try {
+      const nameEQ = 'accessToken=';
+      const cookies = document.cookie.split(';');
+
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+          return cookie.substring(nameEQ.length);
+        }
       }
+      return null;
+    } catch (error) {
+      // Handle cases where document.cookie might not be available
+      console.debug('Could not access cookies in client context:', error);
+      return null;
     }
-    return null;
   }
 }
 
@@ -79,9 +92,27 @@ function transformError(error: AxiosError<any>): ApiError {
   if (error.response) {
     // Server responded with error
     const strapiError = error.response.data?.error;
-    
+
+    // Log detailed error information for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error Details:', {
+        url: error.config?.url || 'unknown',
+        method: (error.config?.method || 'unknown').toUpperCase(),
+        status: error.response.status,
+        statusText: error.response.statusText,
+        responseData: error.response.data,
+        strapiError: strapiError || null,
+        fullError: error.message,
+      });
+
+      // Also log the raw response for debugging
+      console.error('Raw API Response:', error.response.data);
+    }
+
     return new ApiError(
-      strapiError?.message || error.response.data?.message || `Error ${error.response.status}: ${error.response.statusText}`,
+      strapiError?.message ||
+        error.response.data?.message ||
+        `Error ${error.response.status}: ${error.response.statusText}`,
       strapiError?.status || error.response.status,
       strapiError?.name || error.response.status.toString(),
       strapiError?.details || error.response.data,
@@ -89,6 +120,9 @@ function transformError(error: AxiosError<any>): ApiError {
     );
   } else if (error.request) {
     // Network error
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Network Error:', error.request);
+    }
     return new ApiError(
       'No response from server. Please check your connection.',
       0,
@@ -96,11 +130,10 @@ function transformError(error: AxiosError<any>): ApiError {
     );
   } else {
     // Request setup error
-    return new ApiError(
-      error.message || 'Request failed',
-      0,
-      'REQUEST_ERROR'
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Request Setup Error:', error.message);
+    }
+    return new ApiError(error.message || 'Request failed', 0, 'REQUEST_ERROR');
   }
 }
 
@@ -117,19 +150,25 @@ class UnifiedApiClient {
     // Request interceptor for auth
     this.axiosInstance.interceptors.request.use(
       async (config) => {
-        // Get auth token
-        const token = await getAuthToken();
-        
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        try {
+          // Get auth token
+          const token = await getAuthToken();
+
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+
+          // Don't override Content-Type for FormData
+          if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+          }
+
+          return config;
+        } catch (error) {
+          // If token retrieval fails, continue without auth
+          console.debug('Failed to get auth token:', error);
+          return config;
         }
-        
-        // Don't override Content-Type for FormData
-        if (config.data instanceof FormData) {
-          delete config.headers['Content-Type'];
-        }
-        
-        return config;
       },
       (error) => {
         return Promise.reject(error);
@@ -151,47 +190,68 @@ class UnifiedApiClient {
   }
 
   // HTTP methods
-  async get<T = any>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
+  async get<T = any>(
+    endpoint: string,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.axiosInstance.get(endpoint, config);
   }
 
-  async post<T = any>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T = any>(
+    endpoint: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.axiosInstance.post(endpoint, data, config);
   }
 
-  async put<T = any>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T = any>(
+    endpoint: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.axiosInstance.put(endpoint, data, config);
   }
 
-  async patch<T = any>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T = any>(
+    endpoint: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.axiosInstance.patch(endpoint, data, config);
   }
 
-  async delete<T = any>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
+  async delete<T = any>(
+    endpoint: string,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.axiosInstance.delete(endpoint, config);
   }
 
   // Helper method to build query strings
   buildQueryString(params?: Record<string, any>): string {
     if (!params) return '';
-    
+
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         if (Array.isArray(value)) {
-          value.forEach(v => queryParams.append(key, String(v)));
+          value.forEach((v) => queryParams.append(key, String(v)));
         } else {
           queryParams.append(key, String(value));
         }
       }
     });
-    
+
     const queryString = queryParams.toString();
     return queryString ? `?${queryString}` : '';
   }
 
   // Helper to add auth header manually (for special cases)
-  withAuthHeader(token: string, config?: AxiosRequestConfig): AxiosRequestConfig {
+  withAuthHeader(
+    token: string,
+    config?: AxiosRequestConfig
+  ): AxiosRequestConfig {
     return {
       ...config,
       headers: {
@@ -200,10 +260,50 @@ class UnifiedApiClient {
       },
     };
   }
+
+  // Helper to check if error is retryable
+  private isRetryableError(error: ApiError): boolean {
+    // Retry on network errors or 5xx server errors
+    return (
+      error.code === 'NETWORK_ERROR' ||
+      (error.status >= 500 && error.status < 600)
+    );
+  }
+
+  // Method to make requests with retry logic
+  async withRetry<T>(
+    requestFn: () => Promise<T>,
+    maxRetries: number = 3,
+    delay: number = 1000
+  ): Promise<T> {
+    let lastError: ApiError;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await requestFn();
+      } catch (error) {
+        lastError = error as ApiError;
+
+        // Don't retry if it's not a retryable error or if it's the last attempt
+        if (!this.isRetryableError(lastError) || attempt === maxRetries) {
+          throw lastError;
+        }
+
+        // Wait before retrying (exponential backoff)
+        const waitTime = delay * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            `Retrying request (attempt ${attempt + 1}/${maxRetries + 1}) after ${waitTime}ms`
+          );
+        }
+      }
+    }
+
+    throw lastError!;
+  }
 }
 
 // Export singleton instance
 export const apiClient = new UnifiedApiClient();
-
-// Export types
-export type { ApiError };

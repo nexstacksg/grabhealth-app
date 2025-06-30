@@ -3,12 +3,7 @@
  */
 
 import { BaseService } from './base.service';
-import { IProduct as BaseIProduct, ICategory, ProductSearchParams, ApiResponse } from '@app/shared-types';
-
-// Extend IProduct to include documentId for Strapi v5
-interface IProduct extends BaseIProduct {
-  documentId?: string;
-}
+import { IProduct, ICategory, ProductSearchParams } from '@app/shared-types';
 
 export type PriceRange = '0-50' | '50-100' | '100-200' | '200+';
 
@@ -34,14 +29,15 @@ function transformStrapiCategory(strapiCategory: any): ICategory | null {
   if (!strapiCategory) return null;
 
   return {
-    id: strapiCategory.id,
-    name: strapiCategory.name,
-    slug: strapiCategory.slug,
-    description: strapiCategory.description || '',
+    documentId:
+      strapiCategory.documentId || strapiCategory.id?.toString() || '',
+    name: strapiCategory.name || '',
+    slug: strapiCategory.slug || '',
+    description: strapiCategory.description || null,
+    imageUrl: strapiCategory.imageUrl || null,
+    parentId: strapiCategory.parentId || null,
     isActive: strapiCategory.isActive ?? true,
     sortOrder: strapiCategory.sortOrder || 0,
-    createdAt: new Date(strapiCategory.createdAt),
-    updatedAt: new Date(strapiCategory.updatedAt),
   };
 }
 
@@ -55,11 +51,15 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
     strapiProduct.imageUrl.length > 0
   ) {
     const imageData = strapiProduct.imageUrl[0];
-    
+
     // Check if it's a DigitalOcean Spaces URL (already full URL)
-    if (imageData.url && (imageData.url.startsWith('http://') || imageData.url.startsWith('https://'))) {
+    if (
+      imageData.url &&
+      (imageData.url.startsWith('http://') ||
+        imageData.url.startsWith('https://'))
+    ) {
       imageUrl = imageData.url;
-    } 
+    }
     // Check if provider is 'aws-s3' (DigitalOcean Spaces uses aws-s3 provider)
     else if (imageData.provider === 'aws-s3' && imageData.url) {
       // URL should already be complete from Strapi
@@ -67,24 +67,29 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
     }
     // Fallback for local uploads
     else if (imageData.url) {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
       imageUrl = `${baseUrl}${imageData.url}`;
     }
   }
 
   return {
-    id: strapiProduct.id,
-    documentId: strapiProduct.documentId, // Add documentId for Strapi v5
+    documentId: strapiProduct.documentId || strapiProduct.id?.toString() || '',
     name: strapiProduct.name || '',
-    description: strapiProduct.description || '',
+    description: strapiProduct.description || null,
     price: strapiProduct.price || 0,
-    categoryId: strapiProduct.category?.id || null,
+    categoryId:
+      strapiProduct.category?.documentId ||
+      strapiProduct.category?.id?.toString() ||
+      null,
     category: transformStrapiCategory(strapiProduct.category),
     imageUrl,
     inStock: strapiProduct.inStock ?? true,
-    status: strapiProduct.product_status || strapiProduct.status || 'ACTIVE',
-    createdAt: new Date(strapiProduct.createdAt),
-    updatedAt: new Date(strapiProduct.updatedAt),
+    status: strapiProduct.productStatus || strapiProduct.status || 'ACTIVE',
+    sku: strapiProduct.sku || undefined,
+    qty: strapiProduct.qty || undefined,
+    slug: strapiProduct.slug || undefined,
+    productStatus: strapiProduct.productStatus || undefined,
   };
 }
 
@@ -98,8 +103,10 @@ class ProductService extends BaseService {
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
-      queryParams.append('populate', '*');
-      
+      // Populate both category and imageUrl for product lists
+      queryParams.append('populate[category]', 'true');
+      queryParams.append('populate[imageUrl]', 'true');
+
       if (params) {
         if (params.limit) {
           queryParams.append('pagination[pageSize]', params.limit.toString());
@@ -107,25 +114,42 @@ class ProductService extends BaseService {
         if (params.page) {
           queryParams.append('pagination[page]', params.page.toString());
         }
-        if (params.search) {
-          queryParams.append('filters[name][$containsi]', params.search);
+        if (params.query) {
+          // Simple search on name field only for now
+          queryParams.append('filters[name][$containsi]', params.query);
         }
         if (params.category) {
-          queryParams.append('filters[category][id][$eq]', params.category);
+          // Use documentId for Strapi v5 category filtering
+          queryParams.append(
+            'filters[category][documentId][$eq]',
+            params.category
+          );
         }
         if (params.minPrice !== undefined) {
-          queryParams.append('filters[price][$gte]', params.minPrice.toString());
+          queryParams.append(
+            'filters[price][$gte]',
+            params.minPrice.toString()
+          );
         }
         if (params.maxPrice !== undefined) {
-          queryParams.append('filters[price][$lte]', params.maxPrice.toString());
+          queryParams.append(
+            'filters[price][$lte]',
+            params.maxPrice.toString()
+          );
         }
         if (params.inStock !== undefined) {
-          queryParams.append('filters[inStock][$eq]', params.inStock.toString());
+          queryParams.append(
+            'filters[inStock][$eq]',
+            params.inStock.toString()
+          );
         }
       }
 
       // Fetch products with relations using apiClient
-      const strapiData = await this.api.get<StrapiResponse<any[]>>(`/products?${queryParams.toString()}`);
+      const queryString = queryParams.toString();
+      const strapiData = await this.api.get<StrapiResponse<any[]>>(
+        `/products?${queryString}`
+      );
 
       // Handle Strapi v5 format
       const products = (strapiData as any).data || [];
@@ -201,10 +225,8 @@ class ProductService extends BaseService {
   async getProduct(id: number | string): Promise<IProduct> {
     try {
       // For Strapi v5, use documentId if it's a string
-      const endpoint = typeof id === 'string' 
-        ? `/products/${id}?populate=*` 
-        : `/products/${id}?populate=*`;
-      
+      const endpoint = `/products/${id}?populate=*`;
+
       const response = await this.api.get<StrapiResponse<any>>(endpoint);
       const strapiData = response.data as any;
 
@@ -213,19 +235,19 @@ class ProductService extends BaseService {
 
       return transformStrapiProduct(product);
     } catch (error) {
-      this.handleError(error);
+      console.error('❌ Error in getProduct:', error);
+      throw error; // Re-throw for proper error handling in components
     }
   }
 
   async getFeaturedProducts(limit: number = 4): Promise<IProduct[]> {
     try {
-      const response = await this.api.get<ApiResponse<IProduct[]>>(
-        '/products/featured',
-        { params: { limit } }
-      );
-      return this.extractData(response);
+      // Use the regular products endpoint with a limit for featured products
+      const response = await this.searchProducts({ limit });
+      return response.products;
     } catch (error) {
-      this.handleError(error);
+      console.error('❌ Error in getFeaturedProducts:', error);
+      return [];
     }
   }
 
@@ -240,20 +262,22 @@ class ProductService extends BaseService {
 
   async getCategories(): Promise<ICategory[]> {
     try {
-      const response =
-        await this.api.get<StrapiResponse<any[]>>('/categories');
+      const response = await this.api.get<StrapiResponse<any[]>>('/categories');
       const strapiData = response.data as any;
 
       // Handle Strapi v5 format
       const categories = strapiData.data || strapiData;
 
       if (Array.isArray(categories)) {
-        return categories.map(transformStrapiCategory).filter((cat): cat is ICategory => cat !== null);
+        return categories
+          .map(transformStrapiCategory)
+          .filter((cat): cat is ICategory => cat !== null);
       }
 
       return [];
     } catch (error) {
-      this.handleError(error);
+      console.error('❌ Error in getCategories:', error);
+      return [];
     }
   }
 
