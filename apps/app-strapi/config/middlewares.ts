@@ -22,6 +22,8 @@ export default [
       origin: [
         'http://localhost:3000', // app-web
         'https://localhost:3000', // HTTPS variant
+        'https://api.grabhealth.ai', // Production API
+        'https://grabhealth.ai', // Production frontend
         // Add production URLs when deployed
         process.env.FRONTEND_URL || 'http://localhost:3000',
       ].filter(Boolean),
