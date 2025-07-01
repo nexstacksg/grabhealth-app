@@ -119,14 +119,12 @@ export default function ProductsPage() {
 
         // Add "All" category at the beginning
         const allCategory: ICategory = {
-          id: 0,
+          documentId: '0',
           name: 'All Products',
           slug: 'all',
           description: 'Browse all products',
           isActive: true,
           sortOrder: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         };
 
         setCategories([allCategory, ...filteredCategories]);
@@ -135,14 +133,12 @@ export default function ProductsPage() {
         // Set default categories on error
         setCategories([
           {
-            id: 0,
+            documentId: '0',
             name: 'All Products',
             slug: 'all',
             description: 'Browse all products',
             isActive: true,
             sortOrder: 0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
           },
         ]);
       }

@@ -128,9 +128,9 @@ const ProductFiltersComponent = ({
               />
             </div>
             <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
-              {displayedCategories.map((category: any) => (
+              {displayedCategories.map((category: any, index: number) => (
                 <div
-                  key={category.id}
+                  key={category.documentId || category.slug || index}
                   className={`cursor-pointer rounded px-3 py-1.5 text-sm ${activeCategory === category.slug || (category.slug === 'all' && activeCategory === 'all') ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}`}
                   onClick={() => onCategoryChange(category.slug)}
                 >
