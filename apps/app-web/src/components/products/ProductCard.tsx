@@ -12,12 +12,18 @@ interface ProductCardProps {
 }
 
 export const ProductCard = React.memo(({ product }: ProductCardProps) => {
-  // Use documentId for Strapi v5, fallback to id
-  const productId = (product as any).documentId || product.id;
+  // Use documentId as the primary identifier
+  const productId = product.documentId;
+  
+  // Handle click on Add to Cart button to prevent navigation
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
   
   return (
-    <Link href={`/products/${productId}`}>
-      <Card className="overflow-hidden transition-all hover:shadow-md">
+    <Card className="overflow-hidden transition-all hover:shadow-md">
+      <Link href={`/products/${productId}`} className="block">
         <div className="relative">
           <Image
             src={product.imageUrl || '/placeholder.svg?height=200&width=200'}
@@ -65,18 +71,20 @@ export const ProductCard = React.memo(({ product }: ProductCardProps) => {
               </Badge>
             )}
           </div>
-          <AddToCartButton
-            product={{
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              image_url: product.imageUrl || undefined,
-            }}
-            className="w-full"
-            disabled={!product.inStock}
-          />
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      <div onClick={handleAddToCartClick} className="px-4 pb-4">
+        <AddToCartButton
+          product={{
+            id: product.documentId,
+            name: product.name,
+            price: product.price,
+            image_url: product.imageUrl || undefined,
+          } as any}
+          className="w-full"
+          disabled={!product.inStock}
+        />
+      </div>
+    </Card>
   );
 });
