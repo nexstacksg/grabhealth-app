@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,14 +20,7 @@ import {
 export default function MembershipPage() {
   const router = useRouter();
 
-  useEffect(() => {
-    // Since all users are automatically members, redirect to products page
-    const timer = setTimeout(() => {
-      router.push('/products');
-    }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [router]);
 
   return (
     <div className="container mx-auto px-4 py-16 md:px-6">
@@ -75,9 +68,7 @@ export default function MembershipPage() {
               >
                 Browse Products
               </Button>
-              <p className="text-sm text-gray-500">
-                You will be redirected to products page in a few seconds...
-              </p>
+
             </div>
           </CardContent>
         </Card>
