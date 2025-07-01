@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import services from '@/services';
 import { IBooking } from '@app/shared-types';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function BookingsPage() {
   const { user } = useAuth();
@@ -79,13 +80,28 @@ export default function BookingsPage() {
     }
   };
 
+  const { toast } = useToast();
+
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      await services.bookings.cancelBooking(bookingId);
+      console.debug('Attempting to cancel booking:', bookingId);
+      const result = await services.bookings.cancelBooking(bookingId);
+      console.debug('Booking cancellation successful:', result);
       fetchBookings();
-      // You could add a success toast here if you have a toast system
+      toast({
+        title: 'Booking Cancelled',
+        description: 'Your booking has been successfully cancelled.',
+        variant: 'default',
+      });
     } catch (error: any) {
       console.error('Failed to cancel booking:', error);
+      console.error('Error details:', {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        name: error.name
+      });
       
       // Check if it's an authentication error
       if (error.status === 401 || error.code === 'NETWORK_ERROR') {

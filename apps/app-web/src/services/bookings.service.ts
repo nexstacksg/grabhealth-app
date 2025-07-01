@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.service';
-import { IBooking, ApiResponse, IUserPublic } from '@app/shared-types';
+import { IBooking, ApiResponse, IUserPublic, IUser } from '@app/shared-types';
 import { transformStrapiUser } from './strapi-base';
 
 interface CreateBookingData {
@@ -51,7 +51,7 @@ function transformStrapiBooking(strapiBooking: any): IBooking {
   return {
     id: strapiBooking.documentId || strapiBooking.id?.toString() || '',
     userId: strapiBooking.user?.documentId || strapiBooking.user?.id?.toString() || '',
-    user: strapiBooking.user ? transformStrapiUser(strapiBooking.user) : undefined,
+    user: strapiBooking.user ? transformStrapiUser(strapiBooking.user) as IUser : undefined,
     partnerId: strapiBooking.partner?.documentId || strapiBooking.partner?.id?.toString() || '',
     partner: strapiBooking.partner || undefined,
     serviceId: strapiBooking.service?.documentId || strapiBooking.service?.id?.toString() || '',
@@ -122,7 +122,7 @@ class BookingsService extends BaseService {
       );
 
       const bookings = response.data.map(transformStrapiBooking);
-      const pagination = response.meta?.pagination || {};
+      const pagination = response.meta?.pagination || { total: bookings.length, page: 1, pageCount: 1 };
 
       return {
         bookings,
@@ -190,6 +190,27 @@ class BookingsService extends BaseService {
 
   async cancelBooking(id: string, reason?: string): Promise<IBooking> {
     try {
+      // First, check if the booking exists and belongs to the current user
+      let booking: IBooking | null = null;
+      try {
+        booking = await this.getBooking(id);
+      } catch (err) {
+        console.error('Error fetching booking before cancellation:', err);
+        throw new Error('Unable to verify booking details before cancellation');
+      }
+      
+      if (!booking) {
+        throw new Error('Booking not found');
+      }
+      
+      console.debug('Attempting to cancel booking:', id, 'Current booking status:', booking.status);
+      
+      // Some bookings might not be cancellable based on their status
+      if (booking.status === 'COMPLETED' || booking.status === 'CANCELLED') {
+        throw new Error(`Cannot cancel a booking with status: ${booking.status}`);
+      }
+      
+      // Proceed with cancellation
       const response = await this.api.put<StrapiBookingResponse>(
         `/bookings/${id}`,
         {
@@ -200,9 +221,21 @@ class BookingsService extends BaseService {
         }
       );
       
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server when cancelling booking');
+      }
+      
       return transformStrapiBooking(response.data);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      
+      // Enhance error message for forbidden errors
+      if (error.status === 403 || error.message?.includes('Forbidden')) {
+        throw new Error('You do not have permission to cancel this booking. Please contact support for assistance.');
+      }
+      
       this.handleError(error);
+      throw error; // Re-throw to propagate to UI
     }
   }
 

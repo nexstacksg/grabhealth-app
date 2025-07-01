@@ -56,7 +56,20 @@ export function BookingCalendar({
   const refreshAvailableSlots = async (date: Date) => {
     try {
       setIsLoadingSlots(true);
+      
+      // Ensure the date is in the future
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (date < startOfToday) {
+        console.error('Cannot fetch availability for past dates');
+        setError('Please select a future date');
+        return [];
+      }
+      
       const dateStr = format(date, 'yyyy-MM-dd');
+      console.debug('Fetching availability for date:', dateStr, 'Current time:', new Date().toISOString());
+      
       const slots = await services.partners.getPartnerAvailability(
         partnerId,
         service.id,
@@ -228,9 +241,18 @@ export function BookingCalendar({
   // Fetch available slots when a date is selected
   useEffect(() => {
     if (selectedDate) {
-      refreshAvailableSlots(selectedDate);
-      setSelectedSlot(null);
-      setError(null);
+      // Ensure the selected date is not in the past
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (selectedDate >= startOfToday) {
+        refreshAvailableSlots(selectedDate);
+        setSelectedSlot(null);
+        setError(null);
+      } else {
+        setError('Please select a future date');
+        setAvailableSlots([]);
+      }
     }
   }, [partnerId, selectedDate]);
 
