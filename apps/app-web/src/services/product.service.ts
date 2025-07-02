@@ -119,9 +119,9 @@ class ProductService extends BaseService {
           queryParams.append('filters[name][$containsi]', params.query);
         }
         if (params.category) {
-          // Use documentId for Strapi v5 category filtering
+          // Use slug for category filtering
           queryParams.append(
-            'filters[category][documentId][$eq]',
+            'filters[category][slug][$eq]',
             params.category
           );
         }
