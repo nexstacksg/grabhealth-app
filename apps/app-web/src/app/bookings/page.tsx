@@ -230,7 +230,7 @@ export default function BookingsPage() {
               <CardContent className="text-center py-8">
                 <p className="text-gray-500">No upcoming bookings</p>
                 <Button
-                  onClick={() => router.push('/partners')}
+                  onClick={() => router.push('/clinics')}
                   className="mt-4"
                 >
                   Book an Appointment
