@@ -23,6 +23,7 @@ import { formatPrice } from '@/lib/utils';
 export default function CartPage() {
   const router = useRouter();
   const {
+    cart,
     cartItems,
     cartCount,
     cartTotal,
@@ -168,7 +169,7 @@ export default function CartPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>{formatPrice(cartTotal)}</span>
+                  <span>{formatPrice(cart?.subtotal || 0)}</span>
                 </div>
 
 
@@ -178,9 +179,9 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax</span>
+                  <span className="text-muted-foreground">Tax (9%)</span>
                   <span>
-                    {formatPrice(cartTotal * 0.07)}
+                    {formatPrice((cart?.subtotal || 0) * 0.09)}
                   </span>
                 </div>
 
@@ -189,7 +190,7 @@ export default function CartPage() {
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>
-                    {formatPrice(cartTotal * 1.07)}
+                    {formatPrice((cart?.subtotal || 0) + ((cart?.subtotal || 0) * 0.09))}
                   </span>
                 </div>
 

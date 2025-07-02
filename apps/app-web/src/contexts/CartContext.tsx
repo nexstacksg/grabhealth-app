@@ -97,18 +97,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           const guestCart = getGuestCart();
           if (guestCart && guestCart.items.length > 0) {
             // Migrate guest cart to authenticated cart
-            const migratedCart = {
+            const migratedCart: ICartWithId = {
               ...guestCart,
-              userId: user.id?.toString() || '',
+              userId: user?.documentId || '',
             };
             setCart(migratedCart);
             saveAuthenticatedCart(migratedCart);
             clearGuestCart();
           } else {
             // Create empty authenticated cart
-            const emptyCart = {
+            const emptyCart: ICartWithId = {
               id: 0,
-              userId: user.id?.toString() || '',
+              userId: user?.documentId || '',
               items: [],
               total: 0,
               tax: 0,
@@ -172,7 +172,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         // Use local storage for both authenticated and guest users
         const currentCart = cart || {
           id: 0,
-          userId: user?.id?.toString() || '',
+          userId: user?.documentId || '',
           items: [],
           total: 0,
           tax: 0,
@@ -204,14 +204,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             quantity,
             price: product.price,
             product: {
-              id: product.id,
+              documentId: (product.id || '')?.toString(),
               name: product.name,
               price: product.price,
-              imageUrl: product.image_url || '',
+              imageUrl: product?.image_url || '',
               description: '',
               inStock: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              status: 'active',
             },
           };
           updatedCart.items.push(newItem);
@@ -222,7 +221,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           (sum, item) => sum + (item.price || 0) * item.quantity,
           0
         );
-        updatedCart.tax = updatedCart.subtotal * 0.07; // 7% GST
+        updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
         updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
         setCart(updatedCart);
@@ -251,7 +250,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const currentCart = cart || {
       id: 0,
-      userId: user?.id?.toString() || '',
+      userId: user?.documentId || '',
       items: [],
       total: 0,
       tax: 0,
@@ -279,7 +278,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         (sum, item) => sum + (item.price || 0) * item.quantity,
         0
       );
-      updatedCart.tax = updatedCart.subtotal * 0.07;
+      updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
       updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
       setCart(updatedCart);
@@ -300,7 +299,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Use local storage for both authenticated and guest users
     const currentCart = cart || {
       id: 0,
-      userId: user?.id?.toString() || '',
+      userId: user?.documentId || '',
       items: [],
       total: 0,
       tax: 0,
@@ -319,7 +318,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       (sum, item) => sum + (item.price || 0) * item.quantity,
       0
     );
-    updatedCart.tax = updatedCart.subtotal * 0.07; // 7% GST
+    updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
     updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
     setCart(updatedCart);
@@ -338,7 +337,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = async () => {
     const emptyCart = {
       id: 0,
-      userId: user?.id?.toString() || '',
+      userId: user?.documentId || '',
       items: [],
       total: 0,
       tax: 0,

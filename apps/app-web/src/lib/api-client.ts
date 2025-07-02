@@ -69,7 +69,7 @@ function createAxiosInstance(): AxiosInstance {
     headers: {
       'Content-Type': 'application/json',
     },
-    withCredentials: false, // Strapi uses Bearer tokens, not cookies
+    withCredentials: true, // Enable sending cookies with cross-origin requests
   });
 }
 
