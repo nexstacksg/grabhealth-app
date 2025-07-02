@@ -54,25 +54,42 @@ const checkoutFormSchema = z.object({
   city: z.string().min(2, { message: 'City is required' }),
   postalCode: z.string().min(6, { message: 'Postal code is required' }),
   notes: z.string().optional(),
-  
+
   // Payment method selection
   paymentMethod: z.enum(['stripe', 'cod'], {
     required_error: 'Please select a payment method',
   }),
 });
 
-type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
+// Define the form values type directly without using z.infer
+type CheckoutFormValues = {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  notes?: string;
+  paymentMethod: 'stripe' | 'cod';
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<
+    Partial<Record<keyof CheckoutFormValues, string>>
+  >({});
 
+  // Use react-hook-form without zod resolver
   const form = useForm<CheckoutFormValues>({
-    resolver: zodResolver(checkoutFormSchema),
+    // No resolver to avoid type instantiation issues
     defaultValues: {
-      fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
+      fullName:
+        user?.firstName && user?.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : '',
       email: user?.email || '',
       phone: '',
       address: '',
@@ -83,7 +100,76 @@ export default function CheckoutPage() {
     },
   });
 
+  // Custom validation function that mimics zod schema validation
+  const validateForm = (
+    data: CheckoutFormValues
+  ): {
+    valid: boolean;
+    errors: Partial<Record<keyof CheckoutFormValues, string>>;
+  } => {
+    const errors: Partial<Record<keyof CheckoutFormValues, string>> = {};
+
+    // Validate fullName
+    if (!data.fullName || data.fullName.length < 2) {
+      errors.fullName = 'Full name is required';
+    }
+
+    // Validate email
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      errors.email = 'Invalid email address';
+    }
+
+    // Validate phone
+    if (!data.phone || data.phone.length < 8) {
+      errors.phone = 'Phone number is required';
+    }
+
+    // Validate address
+    if (!data.address || data.address.length < 10) {
+      errors.address = 'Shipping address is required';
+    }
+
+    // Validate city
+    if (!data.city || data.city.length < 2) {
+      errors.city = 'City is required';
+    }
+
+    // Validate postalCode
+    if (!data.postalCode || data.postalCode.length < 6) {
+      errors.postalCode = 'Postal code is required';
+    }
+
+    // Validate paymentMethod
+    if (
+      !data.paymentMethod ||
+      !['stripe', 'cod'].includes(data.paymentMethod)
+    ) {
+      errors.paymentMethod = 'Please select a payment method';
+    }
+
+    return {
+      valid: Object.keys(errors).length === 0,
+      errors,
+    };
+  };
+
   const onSubmit = async (values: CheckoutFormValues) => {
+    // Validate form data manually
+    const validation = validateForm(values);
+    if (!validation.valid) {
+      setFormErrors(validation.errors);
+      // Set form errors
+      Object.entries(validation.errors).forEach(([field, message]) => {
+        form.setError(field as keyof CheckoutFormValues, {
+          type: 'manual',
+          message: message,
+        });
+      });
+      return;
+    }
+
+    // Clear any previous errors
+    setFormErrors({});
     if (!cart || cart.items.length === 0) {
       toast.error('Your cart is empty');
       return;
@@ -93,28 +179,33 @@ export default function CheckoutPage() {
 
     try {
       const shippingAddress = `${values.address}, ${values.city} ${values.postalCode}`;
-      
+
       if (values.paymentMethod === 'stripe') {
-        // Create Stripe checkout session
-        const items = cart.items.map(item => ({
+        const items: Array<{
+          name: string;
+          price: number;
+          quantity: number;
+          productId: string;
+          image?: string;
+        }> = cart.items.map((item) => ({
           name: item.product?.name || `Product ${item.productId}`,
           price: item.product?.price || item.price || 0,
           quantity: item.quantity,
-          productId: item.productId,
+          productId: String(item.productId),
           image: item.product?.imageUrl || undefined,
         }));
 
-        const result = await createStripeCheckoutSession({ 
+        const result = await createStripeCheckoutSession({
           items,
           shippingAddress,
           billingAddress: shippingAddress, // Use same as shipping for now
           notes: values.notes,
         });
-        
+
         if (result.success && result.url) {
           // Clear cart before redirecting to Stripe
           await clearCart();
-          
+
           // Redirect to Stripe checkout
           window.location.href = result.url;
         } else {
@@ -123,11 +214,12 @@ export default function CheckoutPage() {
       } else {
         // Cash on delivery - create order directly
         toast.info('Cash on delivery is not yet implemented');
-        // TODO: Implement COD order creation
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to process checkout');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to process checkout'
+      );
       setIsLoading(false);
     }
   };
@@ -170,13 +262,14 @@ export default function CheckoutPage() {
                 <MapPin className="h-5 w-5" />
                 Shipping Information
               </CardTitle>
-              <CardDescription>
-                Enter your delivery details
-              </CardDescription>
+              <CardDescription>Enter your delivery details</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -198,7 +291,11 @@ export default function CheckoutPage() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="john@example.com" {...field} />
+                            <Input
+                              type="email"
+                              placeholder="john@example.com"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -213,7 +310,11 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder="+65 9123 4567" {...field} />
+                          <Input
+                            type="tel"
+                            placeholder="+65 9123 4567"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -227,7 +328,10 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormLabel>Shipping Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="123 Orchard Road, #01-01" {...field} />
+                          <Input
+                            placeholder="123 Orchard Road, #01-01"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -303,18 +407,24 @@ export default function CheckoutPage() {
                               <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
                                 <RadioGroupItem value="stripe" />
                                 <div className="flex-1">
-                                  <div className="font-medium">Pay with Card</div>
+                                  <div className="font-medium">
+                                    Pay with Card
+                                  </div>
                                   <div className="text-sm text-gray-600">
-                                    Secure payment via Stripe (Cards, PayNow, GrabPay)
+                                    Secure payment via Stripe (Cards, PayNow,
+                                    GrabPay)
                                   </div>
                                 </div>
                               </label>
                               <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50 opacity-50">
                                 <RadioGroupItem value="cod" disabled />
                                 <div className="flex-1">
-                                  <div className="font-medium">Cash on Delivery</div>
+                                  <div className="font-medium">
+                                    Cash on Delivery
+                                  </div>
                                   <div className="text-sm text-gray-600">
-                                    Pay when you receive your order (Coming soon)
+                                    Pay when you receive your order (Coming
+                                    soon)
                                   </div>
                                 </div>
                               </label>
@@ -355,8 +465,11 @@ export default function CheckoutPage() {
               <CardDescription>{cart.items.length} items</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {cart.items.map((item) => (
-                <div key={item.productId} className="flex items-start gap-4">
+              {cart.items.map((item, index) => (
+                <div
+                  key={`${item.productId}-${index}`}
+                  className="flex items-start gap-4"
+                >
                   <div className="flex-1">
                     <h4 className="font-medium">
                       {item.product?.name || `Product ${item.productId}`}
@@ -402,12 +515,13 @@ export default function CheckoutPage() {
                 <span>{formatPrice(total)}</span>
               </div>
 
-              {user?.membershipTier && (
+              {/* Display discount if user has a partner */}
+              {user && user.partner && (
                 <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm">
                   <div className="flex items-center gap-2">
                     <Award className="h-4 w-4" />
                     <span className="font-medium">
-                      {user.membershipTier.replace('_', ' ')} Member Discount Applied
+                      Partner Member Discount Applied
                     </span>
                   </div>
                 </div>
@@ -424,7 +538,9 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <p className="font-medium">Secure Payment</p>
-                    <p className="text-gray-600">Your payment info is encrypted</p>
+                    <p className="text-gray-600">
+                      Your payment info is encrypted
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -433,7 +549,9 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <p className="font-medium">Fast Delivery</p>
-                    <p className="text-gray-600">Free shipping on orders above $50</p>
+                    <p className="text-gray-600">
+                      Free shipping on orders above $50
+                    </p>
                   </div>
                 </div>
               </div>
