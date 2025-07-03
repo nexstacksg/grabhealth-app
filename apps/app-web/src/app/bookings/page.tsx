@@ -20,7 +20,7 @@ import { IBooking } from '@app/shared-types';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function BookingsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +29,9 @@ export default function BookingsPage() {
   const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
+    // Don't redirect if auth is still loading
+    if (isAuthLoading) return;
+    
     if (!user) {
       router.push('/auth/login');
       return;
@@ -41,7 +44,7 @@ export default function BookingsPage() {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   const fetchBookings = async () => {
     try {
