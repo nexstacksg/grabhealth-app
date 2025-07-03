@@ -47,6 +47,8 @@ export default function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     async function fetchOrders() {
@@ -87,6 +89,22 @@ export default function OrdersPage() {
       statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) : [];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Handle page changes
+  const goToPage = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const handleViewOrder = (order: IOrderWithItems) => {
     // IMPORTANT: Strapi 5 requires documentId for API calls
@@ -195,7 +213,7 @@ export default function OrdersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
+                  {currentItems.map((order) => (
                     <TableRow key={order.documentId}>
                       <TableCell className="font-medium">{order.orderNumber || order.documentId}</TableCell>
                       <TableCell>
@@ -228,10 +246,43 @@ export default function OrdersPage() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.push('/')}>
+        <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <Button variant="outline" onClick={() => router.push('/products')}>
             Continue Shopping
           </Button>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    className="w-8 h-8 p-0"
+                    onClick={() => goToPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>
