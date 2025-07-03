@@ -28,10 +28,18 @@ export default function BookingsPage() {
   const [freeCheckupStatus, setFreeCheckupStatus] = useState<any>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<Record<string, number>>({
+    upcoming: 1,
+    past: 1,
+    cancelled: 1,
+  });
+  const itemsPerPage = 3;
+
   useEffect(() => {
     // Don't redirect if auth is still loading
     if (isAuthLoading) return;
-    
+
     if (!user) {
       router.push('/auth/login');
       return;
@@ -103,16 +111,16 @@ export default function BookingsPage() {
         code: error.code,
         message: error.message,
         details: error.details,
-        name: error.name
+        name: error.name,
       });
-      
+
       // Check if it's an authentication error
       if (error.status === 401 || error.code === 'NETWORK_ERROR') {
         alert('Your session has expired. Please log in again.');
         router.push('/auth/login');
         return;
       }
-      
+
       // You could add an error toast here if you have a toast system
       alert(error.message || 'Failed to cancel booking. Please try again.');
     }
@@ -138,7 +146,7 @@ export default function BookingsPage() {
 
     const config = statusConfig[status as keyof typeof statusConfig] || {
       variant: 'outline' as const,
-      label: status
+      label: status,
     };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
@@ -147,24 +155,44 @@ export default function BookingsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    let filteredBookings: IBooking[] = [];
+
     switch (status) {
       case 'upcoming':
-        return bookings.filter(
+        filteredBookings = bookings?.filter(
           (b) =>
             new Date(b.bookingDate) >= today &&
             !['CANCELLED', 'COMPLETED', 'NO_SHOW'].includes(b.status)
         );
+        break;
       case 'past':
-        return bookings.filter(
+        filteredBookings = bookings.filter(
           (b) =>
             new Date(b.bookingDate) < today ||
             ['COMPLETED', 'NO_SHOW'].includes(b.status)
         );
+        break;
       case 'cancelled':
-        return bookings.filter((b) => b.status === 'CANCELLED');
+        filteredBookings = bookings.filter((b) => b.status === 'CANCELLED');
+        break;
       default:
-        return bookings;
+        filteredBookings = bookings;
     }
+
+    return filteredBookings;
+  };
+
+  const getPaginatedBookings = (status: string) => {
+    const filteredBookings = filterBookings(status);
+    const page = currentPage[status];
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    return {
+      bookings: filteredBookings.slice(startIndex, endIndex),
+      totalPages: Math.ceil(filteredBookings.length / itemsPerPage),
+      totalItems: filteredBookings.length,
+    };
   };
 
   if (isLoading || isRetrying) {
@@ -241,14 +269,64 @@ export default function BookingsPage() {
               </CardContent>
             </Card>
           ) : (
-            filterBookings('upcoming').map((booking) => (
-              <BookingCard
-                key={booking.id}
-                booking={booking}
-                onCancel={() => handleCancelBooking(booking.id)}
-                showActions
-              />
-            ))
+            <>
+              {getPaginatedBookings('upcoming').bookings.map((booking) => (
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  onCancel={() => handleCancelBooking(booking.id)}
+                  showActions
+                />
+              ))}
+
+              {/* Pagination */}
+              {getPaginatedBookings('upcoming').totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => ({
+                          ...prev,
+                          upcoming: Math.max(prev.upcoming - 1, 1),
+                        }))
+                      }
+                      disabled={currentPage.upcoming === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center justify-center px-4 py-1 bg-gray-100 rounded-md">
+                      <span className="text-sm">
+                        {currentPage.upcoming} of{' '}
+                        {getPaginatedBookings('upcoming').totalPages}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => ({
+                          ...prev,
+                          upcoming: Math.min(
+                            prev.upcoming + 1,
+                            getPaginatedBookings('upcoming').totalPages
+                          ),
+                        }))
+                      }
+                      disabled={
+                        currentPage.upcoming ===
+                        getPaginatedBookings('upcoming').totalPages
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -260,9 +338,59 @@ export default function BookingsPage() {
               </CardContent>
             </Card>
           ) : (
-            filterBookings('past').map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
-            ))
+            <>
+              {getPaginatedBookings('past').bookings.map((booking) => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))}
+
+              {/* Pagination */}
+              {getPaginatedBookings('past').totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => ({
+                          ...prev,
+                          past: Math.max(prev.past - 1, 1),
+                        }))
+                      }
+                      disabled={currentPage.past === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center justify-center px-4 py-1 bg-gray-100 rounded-md">
+                      <span className="text-sm">
+                        {currentPage.past} of{' '}
+                        {getPaginatedBookings('past').totalPages}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => ({
+                          ...prev,
+                          past: Math.min(
+                            prev.past + 1,
+                            getPaginatedBookings('past').totalPages
+                          ),
+                        }))
+                      }
+                      disabled={
+                        currentPage.past ===
+                        getPaginatedBookings('past').totalPages
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -274,9 +402,59 @@ export default function BookingsPage() {
               </CardContent>
             </Card>
           ) : (
-            filterBookings('cancelled').map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
-            ))
+            <>
+              {getPaginatedBookings('cancelled').bookings.map((booking) => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))}
+
+              {/* Pagination */}
+              {getPaginatedBookings('cancelled').totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => ({
+                          ...prev,
+                          cancelled: Math.max(prev.cancelled - 1, 1),
+                        }))
+                      }
+                      disabled={currentPage.cancelled === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center justify-center px-4 py-1 bg-gray-100 rounded-md">
+                      <span className="text-sm">
+                        {currentPage.cancelled} of{' '}
+                        {getPaginatedBookings('cancelled').totalPages}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => ({
+                          ...prev,
+                          cancelled: Math.min(
+                            prev.cancelled + 1,
+                            getPaginatedBookings('cancelled').totalPages
+                          ),
+                        }))
+                      }
+                      disabled={
+                        currentPage.cancelled ===
+                        getPaginatedBookings('cancelled').totalPages
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
@@ -369,7 +547,7 @@ function getStatusBadge(status: string) {
 
   const config = statusConfig[status as keyof typeof statusConfig] || {
     variant: 'outline' as const,
-    label: status
+    label: status,
   };
   return <Badge variant={config.variant}>{config.label}</Badge>;
 }
