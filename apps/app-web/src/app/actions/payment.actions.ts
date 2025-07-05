@@ -323,12 +323,10 @@ export async function createHitPayCheckoutSession(params: CreateCheckoutSessionP
     
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:3000';
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
     
-    // HitPay doesn't accept localhost URLs, use the public domain for redirect
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? `${protocol}://${host}`
-      : 'https://grabhealth.ai'; // Use production URL for HitPay redirects in development
+    // For HitPay, always use HTTPS and the production domain
+    // HitPay doesn't accept localhost URLs
+    const baseUrl = 'https://grabhealth.ai';
 
     // Calculate total amount
     const totalAmount = params.items.reduce(
@@ -340,11 +338,16 @@ export async function createHitPayCheckoutSession(params: CreateCheckoutSessionP
     const orderReference = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Log the request details for debugging
+    const redirectUrl = params.successUrl || `${baseUrl}/payment/success`;
+    const webhookUrl = `${baseUrl}/api/webhooks/hitpay`;
+      
     console.log('Creating HitPay payment request:', {
       amount: totalAmount.toFixed(2), // HitPay expects amount as string in dollars (not cents)
       currency: 'SGD',
       email: user.email,
       baseUrl,
+      redirectUrl,
+      webhookUrl,
     });
 
     // Create HitPay payment request
@@ -354,28 +357,33 @@ export async function createHitPayCheckoutSession(params: CreateCheckoutSessionP
       purpose: `Order from ${user.name || user.email}`,
       email: user.email,
       name: user.name || undefined,
-      redirect_url: params.successUrl || `${baseUrl}/payment/success?payment_request_id={payment_request_id}&reference_number=${orderReference}`,
-      webhook: process.env.NODE_ENV === 'production' 
-        ? `${baseUrl}/api/webhooks/hitpay`
-        : 'https://grabhealth.ai/api/webhooks/hitpay', // Use production URL for webhooks in development
+      redirect_url: redirectUrl,
+      webhook: webhookUrl,
       reference_number: orderReference,
       allow_repeated_payments: false,
     });
 
-    // Store metadata in session or cache for webhook processing
-    // For now, we'll encode it in the reference number
-    const metadata = {
+    // Store pending order data for webhook processing
+    const { storePendingOrder } = await import('@/lib/pending-orders');
+    
+    storePendingOrder({
+      referenceNumber: orderReference,
       userId: numericUserId,
-      orderId: params.orderId || '',
-      productIds: params.items.map(item => item.productId).join(','),
+      items: params.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        pvPoints: 0, // You can add PV points calculation if needed
+      })),
+      total: totalAmount,
+      subtotal: totalAmount, // You can calculate actual subtotal if needed
+      discount: 0, // Add discount calculation if applicable
+      tax: 0, // Add tax calculation if applicable
       shippingAddress: params.shippingAddress || '',
       billingAddress: params.billingAddress || params.shippingAddress || '',
       notes: params.notes || '',
-      items: params.items,
-    };
-
-    // Store metadata temporarily (you might want to use Redis or database)
-    // For MVP, we'll use the reference number to retrieve order details later
+      createdAt: new Date(),
+    });
 
     return {
       success: true,

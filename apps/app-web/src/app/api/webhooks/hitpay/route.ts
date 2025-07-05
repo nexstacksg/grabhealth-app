@@ -39,20 +39,7 @@ export async function POST(request: NextRequest) {
     // Handle different payment statuses
     if (payload.status === 'completed') {
       // Payment successful
-      // Extract order metadata from reference number
       const reference = payload.reference_number || '';
-      
-      // For MVP, we're using the reference number to track the order
-      // In production, you'd want to store this mapping in a database
-      
-      // Get the payment details to retrieve metadata
-      const paymentDetails = await hitpayClient.getPaymentStatus(payload.payment_request_id);
-      
-      // Create order in Strapi
-      // Since we can't store complex metadata in HitPay, we need to handle this differently
-      // Option 1: Store pending order data in database before redirect
-      // Option 2: Create order after webhook confirmation
-      // For now, we'll log the successful payment
       
       console.log('Payment completed successfully:', {
         paymentId: payload.payment_id,
@@ -62,14 +49,61 @@ export async function POST(request: NextRequest) {
         reference: reference,
       });
 
-      // TODO: Implement order creation based on reference number
-      // This would require storing order data temporarily before payment
+      // Retrieve pending order data
+      const { getPendingOrder, deletePendingOrder } = await import('@/lib/pending-orders');
+      const pendingOrder = getPendingOrder(reference);
+
+      if (!pendingOrder) {
+        console.error('No pending order found for reference:', reference);
+        // Still return success to HitPay to prevent retries
+        return NextResponse.json({ success: true });
+      }
+
+      try {
+        // Create the order using the stored data
+        const { createOrderAction } = await import('@/app/actions/order.actions');
+        
+        const orderResult = await createOrderAction({
+          userId: pendingOrder.userId,
+          items: pendingOrder.items,
+          total: parseFloat(payload.amount), // Use actual paid amount from HitPay
+          subtotal: pendingOrder.subtotal,
+          discount: pendingOrder.discount,
+          tax: pendingOrder.tax,
+          status: 'PROCESSING', // Order is paid and processing
+          paymentStatus: 'PAID',
+          paymentMethod: 'hitpay',
+          shippingAddress: pendingOrder.shippingAddress,
+          billingAddress: pendingOrder.billingAddress,
+          notes: pendingOrder.notes,
+        });
+
+        if (orderResult.success) {
+          console.log('Order created successfully:', {
+            orderId: orderResult.order.documentId,
+            reference: reference,
+          });
+          
+          // Delete the pending order data
+          deletePendingOrder(reference);
+        } else {
+          console.error('Failed to create order:', orderResult.error);
+        }
+      } catch (error) {
+        console.error('Error creating order from webhook:', error);
+      }
     } else if (payload.status === 'failed') {
       // Payment failed
       console.log('Payment failed:', {
         paymentId: payload.payment_id,
         requestId: payload.payment_request_id,
       });
+      
+      // Clean up pending order
+      const { deletePendingOrder } = await import('@/lib/pending-orders');
+      if (payload.reference_number) {
+        deletePendingOrder(payload.reference_number);
+      }
     } else if (payload.status === 'pending') {
       // Payment is pending
       console.log('Payment pending:', {

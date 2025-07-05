@@ -30,6 +30,7 @@ export default function PaymentSuccessPage() {
     amount?: number;
     customerEmail?: string;
     warning?: string;
+    reference?: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,13 +46,12 @@ export default function PaymentSuccessPage() {
             throw new Error(verificationResult.error || 'Payment verification failed');
           }
 
-          // For HitPay, we need to handle order creation differently
-          // Since HitPay doesn't support complex metadata, we'll show success
-          // and let the webhook handle order creation
+          // For HitPay, order creation is handled by webhook
+          // We show success message and let users know order is being processed
           setPaymentDetails({
             amount: verificationResult.amount,
             customerEmail: verificationResult.customerEmail || undefined,
-            warning: 'Your payment is being processed. You will receive an order confirmation email shortly.',
+            reference: referenceNumber,
           });
         } catch (error) {
           console.error('HitPay payment verification error:', error);
@@ -181,6 +181,13 @@ export default function PaymentSuccessPage() {
                   <span className="font-medium break-all">{paymentDetails.customerEmail}</span>
                 </div>
               )}
+              
+              {paymentDetails.reference && (
+                <div className="flex flex-wrap justify-between gap-1">
+                  <span className="text-gray-600">Reference:</span>
+                  <span className="font-medium break-all">{paymentDetails.reference}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -189,6 +196,13 @@ export default function PaymentSuccessPage() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {paymentDetails.warning}
+              </AlertDescription>
+            </Alert>
+          ) : paymentRequestId ? (
+            <Alert>
+              <Package className="h-4 w-4" />
+              <AlertDescription>
+                Your payment has been received and is being processed. You will receive an order confirmation email shortly with your order details.
               </AlertDescription>
             </Alert>
           ) : (

@@ -137,4 +137,35 @@ export class HitPayClient {
   }
 }
 
-export const hitpayClient = new HitPayClient();
+// Lazy initialization to avoid build errors when env vars are not available
+let _hitpayClient: HitPayClient | null = null;
+
+export const hitpayClient = {
+  createPaymentRequest: async (params: HitPayPaymentRequest): Promise<HitPayPaymentResponse> => {
+    if (!_hitpayClient) {
+      _hitpayClient = new HitPayClient();
+    }
+    return _hitpayClient.createPaymentRequest(params);
+  },
+  
+  getPaymentStatus: async (paymentRequestId: string): Promise<any> => {
+    if (!_hitpayClient) {
+      _hitpayClient = new HitPayClient();
+    }
+    return _hitpayClient.getPaymentStatus(paymentRequestId);
+  },
+  
+  verifyWebhookSignature: (payload: any, signature: string): boolean => {
+    if (!_hitpayClient) {
+      _hitpayClient = new HitPayClient();
+    }
+    return _hitpayClient.verifyWebhookSignature(payload, signature);
+  },
+  
+  generateSignature: (params: Record<string, any>): string => {
+    if (!_hitpayClient) {
+      _hitpayClient = new HitPayClient();
+    }
+    return _hitpayClient.generateSignature(params);
+  }
+};
