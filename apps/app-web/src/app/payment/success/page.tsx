@@ -20,7 +20,7 @@ import { formatPrice } from '@/lib/utils';
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams?.get('session_id') || '';
   
   const [isLoading, setIsLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState<{
@@ -54,7 +54,7 @@ export default function PaymentSuccessPage() {
           setPaymentDetails({
             orderId: successResult.orderId,
             amount: verificationResult.amount || successResult.amount,
-            customerEmail: verificationResult.customerEmail,
+            customerEmail: verificationResult.customerEmail || undefined,
             warning: successResult.warning,
           });
         } else {
@@ -62,7 +62,7 @@ export default function PaymentSuccessPage() {
           // Still show success but with a note
           setPaymentDetails({
             amount: verificationResult.amount,
-            customerEmail: verificationResult.customerEmail,
+            customerEmail: verificationResult.customerEmail || undefined,
             warning: 'Payment successful but order creation failed. Please contact support.',
           });
         }
@@ -130,23 +130,25 @@ export default function PaymentSuccessPage() {
               <h3 className="font-semibold text-lg mb-3">Order Details</h3>
               
               {paymentDetails.orderId && (
-                <div className="flex justify-between">
+                <div className="flex flex-wrap justify-between gap-1">
                   <span className="text-gray-600">Order ID:</span>
-                  <span className="font-medium">#{paymentDetails.orderId}</span>
+                  <span className="font-medium break-all">
+                    #{paymentDetails.orderId}
+                  </span>
                 </div>
               )}
               
               {paymentDetails.amount !== undefined && (
-                <div className="flex justify-between">
+                <div className="flex flex-wrap justify-between gap-1">
                   <span className="text-gray-600">Amount Paid:</span>
                   <span className="font-medium">{formatPrice(paymentDetails.amount)}</span>
                 </div>
               )}
               
               {paymentDetails.customerEmail && (
-                <div className="flex justify-between">
+                <div className="flex flex-wrap justify-between gap-1">
                   <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{paymentDetails.customerEmail}</span>
+                  <span className="font-medium break-all">{paymentDetails.customerEmail}</span>
                 </div>
               )}
             </div>
