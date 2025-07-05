@@ -36,10 +36,8 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
 
     const user = userResult.user;
     
-    // Get the raw user data to access numeric ID for relations
-    const { serverApiGet } = await import('@/lib/server-api');
-    const rawUserResult = await serverApiGet('/users/me');
-    const numericUserId = rawUserResult.data?.id?.toString() || '1';
+    // For Strapi 5, we need to use documentId for relations
+    const userDocumentId = user.documentId;
     
     // Use environment variable for base URL, fallback to production domain
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai';
@@ -88,7 +86,7 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
     
     storePendingOrder({
       referenceNumber: orderReference,
-      userId: numericUserId,
+      userId: userDocumentId, // Use documentId for Strapi 5
       items: params.items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,

@@ -63,6 +63,13 @@ export async function POST(request: NextRequest) {
         // Create the order using the stored data
         const { createOrderAction } = await import('@/app/actions/order.actions');
         
+        console.log('Creating order from webhook with data:', {
+          userId: pendingOrder.userId,
+          itemCount: pendingOrder.items.length,
+          total: parseFloat(payload.amount),
+          reference: reference,
+        });
+        
         const orderResult = await createOrderAction({
           userId: pendingOrder.userId,
           items: pendingOrder.items,
@@ -81,16 +88,26 @@ export async function POST(request: NextRequest) {
         if (orderResult.success) {
           console.log('Order created successfully:', {
             orderId: orderResult.order.documentId,
+            orderNumber: orderResult.order.orderNumber,
             reference: reference,
+            userId: pendingOrder.userId,
           });
           
           // Delete the pending order data
           deletePendingOrder(reference);
         } else {
-          console.error('Failed to create order:', orderResult.error);
+          console.error('Failed to create order:', {
+            error: orderResult.error,
+            userId: pendingOrder.userId,
+            reference: reference,
+          });
         }
       } catch (error) {
-        console.error('Error creating order from webhook:', error);
+        console.error('Error creating order from webhook:', {
+          error: error instanceof Error ? error.message : error,
+          stack: error instanceof Error ? error.stack : undefined,
+          reference: reference,
+        });
       }
     } else if (payload.status === 'failed') {
       // Payment failed
