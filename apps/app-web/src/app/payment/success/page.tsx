@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Package, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { clearCart } = useCart();
+  const cartClearedRef = useRef(false); // Track if cart has been cleared
   const paymentRequestId = searchParams?.get('payment_request_id') || '';
   const referenceNumber = searchParams?.get('reference_number') || searchParams?.get('reference') || '';
   const status = searchParams?.get('status') || '';
@@ -47,8 +48,11 @@ export default function PaymentSuccessPage() {
             // We don't have amount/email from the redirect, but that's OK
           });
           
-          // Clear the cart after successful payment
-          await clearCart();
+          // Clear the cart after successful payment (only once)
+          if (!cartClearedRef.current) {
+            cartClearedRef.current = true;
+            await clearCart();
+          }
         } catch (error) {
           console.error('HitPay payment error:', error);
           setError(error instanceof Error ? error.message : 'Failed to process payment');
@@ -76,8 +80,11 @@ export default function PaymentSuccessPage() {
             reference: verificationResult.reference || referenceNumber,
           });
           
-          // Clear the cart after successful payment
-          await clearCart();
+          // Clear the cart after successful payment (only once)
+          if (!cartClearedRef.current) {
+            cartClearedRef.current = true;
+            await clearCart();
+          }
         } catch (error) {
           console.error('HitPay payment verification error:', error);
           setError(error instanceof Error ? error.message : 'Failed to verify payment');
@@ -93,7 +100,7 @@ export default function PaymentSuccessPage() {
     }
 
     verifyPayment();
-  }, [paymentRequestId, referenceNumber, status, clearCart]);
+  }, [paymentRequestId, referenceNumber, status]); // clearCart removed to prevent infinite loop
 
   if (isLoading) {
     return (
