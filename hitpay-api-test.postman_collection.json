@@ -1,0 +1,167 @@
+{
+  "info": {
+    "name": "HitPay API Test Collection",
+    "description": "Collection for testing HitPay payment gateway integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Payment Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-BUSINESS-API-KEY",
+            "value": "test_d677552fb9105cd44b7f1c253591fe606cd8c7552dbf09a4d252088a937d1a27",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-Requested-With",
+            "value": "XMLHttpRequest",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": \"10.00\",\n  \"currency\": \"SGD\",\n  \"purpose\": \"Test Order from Postman\",\n  \"email\": \"test@example.com\",\n  \"name\": \"Test Customer\",\n  \"redirect_url\": \"https://grabhealth.ai/payment/success?payment_request_id={payment_request_id}\",\n  \"webhook\": \"https://grabhealth.ai/api/webhooks/hitpay\",\n  \"reference_number\": \"ORDER-TEST-123\",\n  \"allow_repeated_payments\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://api.sandbox.hit-pay.com/v1/payment-requests",
+          "protocol": "https",
+          "host": [
+            "api",
+            "sandbox",
+            "hit-pay",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "payment-requests"
+          ]
+        },
+        "description": "Creates a new payment request in HitPay sandbox"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Payment Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-BUSINESS-API-KEY",
+            "value": "test_d677552fb9105cd44b7f1c253591fe606cd8c7552dbf09a4d252088a937d1a27",
+            "type": "text"
+          },
+          {
+            "key": "X-Requested-With",
+            "value": "XMLHttpRequest",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://api.sandbox.hit-pay.com/v1/payment-requests/{{payment_request_id}}",
+          "protocol": "https",
+          "host": [
+            "api",
+            "sandbox",
+            "hit-pay",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "payment-requests",
+            "{{payment_request_id}}"
+          ]
+        },
+        "description": "Gets the status of a payment request. Replace {{payment_request_id}} with the actual ID from create payment response."
+      },
+      "response": []
+    },
+    {
+      "name": "Test Webhook Signature",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-HitPay-Signature",
+            "value": "{{webhook_signature}}",
+            "type": "text",
+            "description": "HMAC-SHA256 signature"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"payment_id\": \"pay_123456\",\n  \"payment_request_id\": \"pr_123456\",\n  \"phone\": \"+6591234567\",\n  \"amount\": \"10.00\",\n  \"currency\": \"SGD\",\n  \"status\": \"completed\",\n  \"reference_number\": \"ORDER-TEST-123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/webhooks/hitpay",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "webhooks",
+            "hitpay"
+          ]
+        },
+        "description": "Tests your webhook endpoint locally"
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "payment_request_id",
+      "value": "REPLACE_WITH_ACTUAL_ID",
+      "type": "string"
+    },
+    {
+      "key": "webhook_signature",
+      "value": "CALCULATE_BASED_ON_PAYLOAD",
+      "type": "string"
+    }
+  ]
+}

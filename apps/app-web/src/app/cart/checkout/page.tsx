@@ -41,7 +41,7 @@ import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createStripeCheckoutSession } from '@/app/actions';
+import { createCheckoutSession } from '@/app/actions';
 import { PaymentMethod } from '@app/shared-types';
 
 // Form validation schema
@@ -56,9 +56,10 @@ const checkoutFormSchema = z.object({
   notes: z.string().optional(),
 
   // Payment method selection
-  paymentMethod: z.enum(['stripe', 'cod'], {
+  paymentMethod: z.enum(['stripe', 'hitpay', 'cod'], {
     required_error: 'Please select a payment method',
   }),
+  paymentProvider: z.enum(['stripe', 'hitpay']).optional(),
 });
 
 // Define the form values type directly without using z.infer
@@ -70,7 +71,8 @@ type CheckoutFormValues = {
   city: string;
   postalCode: string;
   notes?: string;
-  paymentMethod: 'stripe' | 'cod';
+  paymentMethod: 'stripe' | 'hitpay' | 'cod';
+  paymentProvider?: 'stripe' | 'hitpay';
 };
 
 export default function CheckoutPage() {
@@ -97,6 +99,7 @@ export default function CheckoutPage() {
       postalCode: '',
       notes: '',
       paymentMethod: 'stripe',
+      paymentProvider: 'stripe',
     },
   });
 
@@ -142,7 +145,7 @@ export default function CheckoutPage() {
     // Validate paymentMethod
     if (
       !data.paymentMethod ||
-      !['stripe', 'cod'].includes(data.paymentMethod)
+      !['stripe', 'hitpay', 'cod'].includes(data.paymentMethod)
     ) {
       errors.paymentMethod = 'Please select a payment method';
     }
@@ -180,7 +183,7 @@ export default function CheckoutPage() {
     try {
       const shippingAddress = `${values.address}, ${values.city} ${values.postalCode}`;
 
-      if (values.paymentMethod === 'stripe') {
+      if (values.paymentMethod === 'stripe' || values.paymentMethod === 'hitpay') {
         const items: Array<{
           name: string;
           price: number;
@@ -195,11 +198,12 @@ export default function CheckoutPage() {
           image: item.product?.imageUrl || undefined,
         }));
 
-        const result = await createStripeCheckoutSession({
+        const result = await createCheckoutSession({
           items,
           shippingAddress,
           billingAddress: shippingAddress, // Use same as shipping for now
           notes: values.notes,
+          paymentProvider: values.paymentMethod as 'stripe' | 'hitpay',
         });
 
         if (result.success && result.url) {
@@ -408,11 +412,21 @@ export default function CheckoutPage() {
                                 <RadioGroupItem value="stripe" />
                                 <div className="flex-1">
                                   <div className="font-medium">
-                                    Pay with Card
+                                    Pay with Stripe
                                   </div>
                                   <div className="text-sm text-gray-600">
-                                    Secure payment via Stripe (Cards, PayNow,
-                                    GrabPay)
+                                    International cards (Visa, Mastercard, Amex)
+                                  </div>
+                                </div>
+                              </label>
+                              <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                                <RadioGroupItem value="hitpay" />
+                                <div className="flex-1">
+                                  <div className="font-medium">
+                                    Pay with HitPay
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    PayNow, GrabPay, Cards, and more local payment methods
                                   </div>
                                 </div>
                               </label>

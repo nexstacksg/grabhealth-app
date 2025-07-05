@@ -1,6 +1,8 @@
 'use server';
 
 import { stripe, createLineItems } from '@/lib/stripe-server';
+import { hitpayClient } from '@/lib/hitpay-server';
+import { formatAmount } from '@/lib/hitpay';
 import { getCurrentUserAction } from './auth.actions';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
@@ -19,6 +21,7 @@ interface CreateCheckoutSessionParams {
   shippingAddress?: string;
   billingAddress?: string;
   notes?: string;
+  paymentProvider?: 'stripe' | 'hitpay';
 }
 
 /**
@@ -294,5 +297,135 @@ export async function getPaymentIntent(paymentIntentId: string) {
       success: false,
       error: error.message || 'Failed to retrieve payment details',
     };
+  }
+}
+
+/**
+ * Server action to create a HitPay payment request
+ */
+export async function createHitPayCheckoutSession(params: CreateCheckoutSessionParams) {
+  try {
+    // Get current user
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || !userResult.user) {
+      return {
+        success: false,
+        error: 'Authentication required',
+      };
+    }
+
+    const user = userResult.user;
+    
+    // Get the raw user data to access numeric ID for relations
+    const { serverApiGet } = await import('@/lib/server-api');
+    const rawUserResult = await serverApiGet('/users/me');
+    const numericUserId = rawUserResult.data?.id?.toString() || '1';
+    
+    const headersList = await headers();
+    const host = headersList.get('host') || 'localhost:3000';
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    
+    // HitPay doesn't accept localhost URLs, use the public domain for redirect
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? `${protocol}://${host}`
+      : 'https://grabhealth.ai'; // Use production URL for HitPay redirects in development
+
+    // Calculate total amount
+    const totalAmount = params.items.reduce(
+      (sum, item) => sum + (item.price * item.quantity),
+      0
+    );
+
+    // Generate order reference
+    const orderReference = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Log the request details for debugging
+    console.log('Creating HitPay payment request:', {
+      amount: totalAmount.toFixed(2), // HitPay expects amount as string in dollars (not cents)
+      currency: 'SGD',
+      email: user.email,
+      baseUrl,
+    });
+
+    // Create HitPay payment request
+    const paymentRequest = await hitpayClient.createPaymentRequest({
+      amount: totalAmount.toFixed(2), // HitPay expects amount as string in dollars, not cents
+      currency: 'SGD',
+      purpose: `Order from ${user.name || user.email}`,
+      email: user.email,
+      name: user.name || undefined,
+      redirect_url: params.successUrl || `${baseUrl}/payment/success?payment_request_id={payment_request_id}&reference_number=${orderReference}`,
+      webhook: process.env.NODE_ENV === 'production' 
+        ? `${baseUrl}/api/webhooks/hitpay`
+        : 'https://grabhealth.ai/api/webhooks/hitpay', // Use production URL for webhooks in development
+      reference_number: orderReference,
+      allow_repeated_payments: false,
+    });
+
+    // Store metadata in session or cache for webhook processing
+    // For now, we'll encode it in the reference number
+    const metadata = {
+      userId: numericUserId,
+      orderId: params.orderId || '',
+      productIds: params.items.map(item => item.productId).join(','),
+      shippingAddress: params.shippingAddress || '',
+      billingAddress: params.billingAddress || params.shippingAddress || '',
+      notes: params.notes || '',
+      items: params.items,
+    };
+
+    // Store metadata temporarily (you might want to use Redis or database)
+    // For MVP, we'll use the reference number to retrieve order details later
+
+    return {
+      success: true,
+      paymentRequestId: paymentRequest.id,
+      url: paymentRequest.url,
+      reference: orderReference,
+    };
+  } catch (error: any) {
+    console.error('Error creating HitPay payment request:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to create payment request',
+    };
+  }
+}
+
+/**
+ * Server action to verify HitPay payment status
+ */
+export async function verifyHitPayPayment(paymentRequestId: string) {
+  try {
+    const paymentStatus = await hitpayClient.getPaymentStatus(paymentRequestId);
+
+    return {
+      success: true,
+      paid: paymentStatus.status === 'completed',
+      amount: parseFloat(paymentStatus.amount),
+      currency: paymentStatus.currency,
+      customerEmail: paymentStatus.email,
+      reference: paymentStatus.reference_number,
+      paymentMethod: paymentStatus.payment_methods?.[0] || 'hitpay',
+    };
+  } catch (error: any) {
+    console.error('Error verifying HitPay payment:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to verify payment',
+    };
+  }
+}
+
+/**
+ * Server action to create a checkout session based on payment provider
+ */
+export async function createCheckoutSession(params: CreateCheckoutSessionParams) {
+  const provider = params.paymentProvider || 'stripe';
+  
+  if (provider === 'hitpay') {
+    return createHitPayCheckoutSession(params);
+  } else {
+    return createStripeCheckoutSession(params);
   }
 }

@@ -29,7 +29,10 @@ export {
 // Payment actions
 export {
   createStripeCheckoutSession,
+  createHitPayCheckoutSession,
+  createCheckoutSession,
   verifyStripePayment,
+  verifyHitPayPayment,
   handlePaymentSuccess,
   getPaymentIntent,
 } from './payment.actions';

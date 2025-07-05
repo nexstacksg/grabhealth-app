@@ -153,3 +153,4 @@ public/uploads/
 .app-admin.env
 .app-be.env
 .app-web.env
+.app-strapi.env

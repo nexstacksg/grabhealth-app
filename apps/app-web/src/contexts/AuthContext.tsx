@@ -76,15 +76,22 @@ const useAuthProvider = () => {
         
         setUser(result.user);
 
-        // Skip email verification for now and redirect to home
+        // Check for redirect parameter in URL
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectPath = searchParams.get('redirect');
+
+        // Skip email verification for now and redirect appropriately
         if (
           result.user.role === 'PARTNER' &&
           result.user.partnerId
         ) {
           // Redirect partner users to partner dashboard
           router.push('/partner');
+        } else if (redirectPath) {
+          // If there's a redirect parameter, use it
+          router.push(redirectPath);
         } else {
-          // Always redirect to home page, even if status is PENDING_VERIFICATION
+          // Otherwise redirect to home page
           router.push('/');
         }
       } catch (error: any) {

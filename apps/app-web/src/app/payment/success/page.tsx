@@ -14,13 +14,15 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
-import { verifyStripePayment, handlePaymentSuccess } from '@/app/actions';
+import { verifyStripePayment, verifyHitPayPayment, handlePaymentSuccess } from '@/app/actions';
 import { formatPrice } from '@/lib/utils';
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams?.get('session_id') || '';
+  const paymentRequestId = searchParams?.get('payment_request_id') || '';
+  const referenceNumber = searchParams?.get('reference_number') || '';
   
   const [isLoading, setIsLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState<{
@@ -33,6 +35,34 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     async function verifyPayment() {
+      // Check if it's a HitPay payment
+      if (paymentRequestId) {
+        try {
+          // Verify HitPay payment
+          const verificationResult = await verifyHitPayPayment(paymentRequestId);
+          
+          if (!verificationResult.success || !verificationResult.paid) {
+            throw new Error(verificationResult.error || 'Payment verification failed');
+          }
+
+          // For HitPay, we need to handle order creation differently
+          // Since HitPay doesn't support complex metadata, we'll show success
+          // and let the webhook handle order creation
+          setPaymentDetails({
+            amount: verificationResult.amount,
+            customerEmail: verificationResult.customerEmail || undefined,
+            warning: 'Your payment is being processed. You will receive an order confirmation email shortly.',
+          });
+        } catch (error) {
+          console.error('HitPay payment verification error:', error);
+          setError(error instanceof Error ? error.message : 'Failed to verify payment');
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Stripe payment verification
       if (!sessionId) {
         setError('No payment session found');
         setIsLoading(false);
@@ -75,7 +105,7 @@ export default function PaymentSuccessPage() {
     }
 
     verifyPayment();
-  }, [sessionId]);
+  }, [sessionId, paymentRequestId, referenceNumber]);
 
   if (isLoading) {
     return (
