@@ -58,7 +58,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('userId', user.id);
+      formData.append('userId', user.documentId);
 
       const result = await uploadProfileImageAction(formData);
       
@@ -83,7 +83,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     startTransition(async () => {
       try {
         const result = await updateProfileAction({
-          userId: user.id,
+          userId: user.documentId,
           username: formData.username,
           email: formData.email,
         });
@@ -119,7 +119,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     startTransition(async () => {
       try {
         const result = await changePasswordAction({
-          userId: user.id,
+          userId: user.documentId,
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,
         });
@@ -173,10 +173,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             </CardHeader>
             <form onSubmit={handleProfileUpdate}>
               <CardContent className="space-y-4">
-                <div className="flex flex-row gap-8 mb-6">
-                  <div className="flex flex-col items-center">
+                <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 mb-6">
+                  <div className="flex flex-col items-center self-center sm:self-start">
                     <label className="relative cursor-pointer group">
-                      <div className="relative h-32 w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-4">
+                      <div className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-3 sm:mb-4">
                         {user?.profileImage ? (
                           <Image
                             src={user.profileImage}
@@ -186,10 +186,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <User className="h-16 w-16 text-emerald-500" />
+                          <User className="h-14 w-14 sm:h-16 sm:w-16 text-emerald-500" />
                         )}
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <Upload className="h-8 w-8 text-white" />
+                          <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                         </div>
                       </div>
                       <input
@@ -200,7 +200,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                         disabled={isUploading}
                       />
                     </label>
-                    <div className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                    <div className="text-sm text-emerald-600 hover:text-emerald-700 font-medium text-center">
                       {isUploading ? (
                         <span className="flex items-center">
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -212,7 +212,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     </div>
                   </div>
 
-                  <div className="flex-1 space-y-4">
+                  <div className="flex-1 space-y-4 w-full">
                     <div className="space-y-2">
                       <Label htmlFor="username">Username</Label>
                       <Input
