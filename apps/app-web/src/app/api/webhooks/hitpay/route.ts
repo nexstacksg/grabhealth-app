@@ -42,12 +42,13 @@ export async function POST(request: NextRequest) {
       // Payment successful
       const reference = payload.reference_number || '';
       
-      console.log('Payment completed successfully:', {
+      console.log('=== WEBHOOK: Payment completed ===', {
         paymentId: payload.payment_id,
         requestId: payload.payment_request_id,
         amount: payload.amount,
         currency: payload.currency,
         reference: reference,
+        rawPayload: JSON.stringify(payload),
       });
 
       // Retrieve pending order data
@@ -55,10 +56,19 @@ export async function POST(request: NextRequest) {
       const pendingOrder = getPendingOrder(reference);
 
       if (!pendingOrder) {
-        console.error('No pending order found for reference:', reference);
+        console.error('=== WEBHOOK ERROR: No pending order found ===', {
+          reference: reference,
+          allPayloadData: payload,
+        });
         // Still return success to HitPay to prevent retries
         return NextResponse.json({ success: true });
       }
+      
+      console.log('=== WEBHOOK: Found pending order ===', {
+        userId: pendingOrder.userId,
+        itemCount: pendingOrder.items.length,
+        total: pendingOrder.total,
+      });
 
       try {
         // Get full payment details from HitPay to retrieve payment method
@@ -95,7 +105,13 @@ export async function POST(request: NextRequest) {
         });
         
         // Get the base URL for internal API call
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai';
+        // For webhooks, we need to use localhost since it's server-to-server
+        const baseUrl = process.env.WEBHOOK_BASE_URL || 'http://localhost:3000';
+        
+        console.log('=== WEBHOOK: Creating order via internal API ===', {
+          url: `${baseUrl}/api/internal/create-order`,
+          orderNumber: orderNumber,
+        });
         
         // Create order via internal API endpoint
         const orderResponse = await fetch(`${baseUrl}/api/internal/create-order`, {
@@ -121,17 +137,33 @@ export async function POST(request: NextRequest) {
           }),
         });
         
-        const orderResult = await orderResponse.json();
+        let orderResult;
+        const responseText = await orderResponse.text();
+        
+        try {
+          orderResult = JSON.parse(responseText);
+        } catch (e) {
+          console.error('=== WEBHOOK ERROR: Failed to parse response ===', {
+            status: orderResponse.status,
+            responseText: responseText,
+          });
+          throw new Error('Invalid response from internal API');
+        }
         
         if (!orderResponse.ok) {
-          console.error('Failed to create order via internal API:', {
+          console.error('=== WEBHOOK ERROR: Failed to create order ===', {
             status: orderResponse.status,
             error: orderResult,
+            responseText: responseText,
           });
           throw new Error(orderResult?.error || 'Failed to create order');
         }
         
         const createdOrder = orderResult.order;
+        console.log('=== WEBHOOK: Internal API response ===', {
+          success: orderResult.success,
+          hasOrder: !!createdOrder,
+        });
 
         if (createdOrder) {
           console.log('Order created successfully:', {

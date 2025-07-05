@@ -31,12 +31,19 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json() as CreateOrderRequest;
     
+    console.log('=== INTERNAL API: Order creation request received ===', {
+      userId: data.userId,
+      orderNumber: data.orderNumber,
+      total: data.total,
+      itemCount: data.items.length,
+    });
+    
     // Verify internal secret to ensure this endpoint is only called by our webhooks
     const internalSecret = process.env.INTERNAL_API_SECRET || 'dev-secret-change-in-production';
     const expectedSecret = crypto.createHash('sha256').update(internalSecret).digest('hex');
     
     if (data.secret !== expectedSecret) {
-      console.error('Invalid internal API secret');
+      console.error('=== INTERNAL API ERROR: Invalid secret ===');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -45,33 +52,16 @@ export async function POST(request: NextRequest) {
     
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
     
-    // First, we need to get an API token or use a service account
-    // For now, we'll use the admin credentials to create the order
-    // In production, you should use a proper service account or API token
+    // Use the Strapi API token from environment variable
+    const strapiApiToken = process.env.STRAPI_API_TOKEN;
     
-    // Authenticate as admin to get a token
-    const authResponse = await fetch(`${baseUrl}/api/auth/local`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        identifier: process.env.STRAPI_ADMIN_EMAIL || 'admin@example.com',
-        password: process.env.STRAPI_ADMIN_PASSWORD || 'Admin123!',
-      }),
-    });
-    
-    if (!authResponse.ok) {
-      const authError = await authResponse.json();
-      console.error('Failed to authenticate for order creation:', authError);
+    if (!strapiApiToken) {
+      console.error('STRAPI_API_TOKEN not configured');
       return NextResponse.json(
-        { error: 'Authentication failed' },
+        { error: 'API token not configured' },
         { status: 500 }
       );
     }
-    
-    const authData = await authResponse.json();
-    const token = authData.jwt;
     
     // Create the order with authentication
     const orderData = {
@@ -93,17 +83,19 @@ export async function POST(request: NextRequest) {
       }
     };
     
-    console.log('Creating order via internal API:', {
+    console.log('=== INTERNAL API: Sending to Strapi ===', {
+      url: `${baseUrl}/api/orders`,
       orderNumber: data.orderNumber,
       userId: data.userId,
       total: data.total,
+      hasToken: !!strapiApiToken,
     });
     
     const orderResponse = await fetch(`${baseUrl}/api/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${strapiApiToken}`,
       },
       body: JSON.stringify(orderData),
     });
@@ -111,9 +103,11 @@ export async function POST(request: NextRequest) {
     const orderResult = await orderResponse.json();
     
     if (!orderResponse.ok) {
-      console.error('Failed to create order:', {
+      console.error('=== INTERNAL API ERROR: Strapi order creation failed ===', {
         status: orderResponse.status,
+        statusText: orderResponse.statusText,
         error: orderResult,
+        orderData: orderData,
       });
       return NextResponse.json(
         { error: orderResult?.error?.message || 'Failed to create order' },
@@ -146,7 +140,7 @@ export async function POST(request: NextRequest) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${strapiApiToken}`,
             },
             body: JSON.stringify(itemData),
           });
@@ -161,9 +155,10 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('Order created successfully via internal API:', {
-      orderId: createdOrder.documentId,
+    console.log('=== INTERNAL API: Order created successfully ===', {
+      orderId: createdOrder?.documentId || createdOrder?.id,
       orderNumber: data.orderNumber,
+      fullResponse: JSON.stringify(createdOrder),
     });
     
     return NextResponse.json({
