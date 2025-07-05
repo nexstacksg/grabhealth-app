@@ -26,13 +26,13 @@ interface CheckoutSession {
 
 class PaymentService extends BaseService {
   /**
-   * Create a Stripe checkout session
+   * Create a checkout session
    * This should be called from a server action, not directly from client
    */
   async createCheckoutSession(params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
     try {
       // This endpoint should be implemented in your Strapi backend
-      // or called via a server action that uses stripe-server.ts
+      // or called via a server action
       const response = await this.api.post<CheckoutSession>(
         '/payments/create-checkout-session',
         params

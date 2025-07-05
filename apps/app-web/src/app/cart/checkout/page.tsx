@@ -56,10 +56,9 @@ const checkoutFormSchema = z.object({
   notes: z.string().optional(),
 
   // Payment method selection
-  paymentMethod: z.enum(['stripe', 'hitpay', 'cod'], {
+  paymentMethod: z.enum(['hitpay', 'cod'], {
     required_error: 'Please select a payment method',
   }),
-  paymentProvider: z.enum(['stripe', 'hitpay']).optional(),
 });
 
 // Define the form values type directly without using z.infer
@@ -71,8 +70,7 @@ type CheckoutFormValues = {
   city: string;
   postalCode: string;
   notes?: string;
-  paymentMethod: 'stripe' | 'hitpay' | 'cod';
-  paymentProvider?: 'stripe' | 'hitpay';
+  paymentMethod: 'hitpay' | 'cod';
 };
 
 export default function CheckoutPage() {
@@ -98,8 +96,7 @@ export default function CheckoutPage() {
       city: 'Singapore',
       postalCode: '',
       notes: '',
-      paymentMethod: 'stripe',
-      paymentProvider: 'stripe',
+      paymentMethod: 'hitpay',
     },
   });
 
@@ -145,7 +142,7 @@ export default function CheckoutPage() {
     // Validate paymentMethod
     if (
       !data.paymentMethod ||
-      !['stripe', 'hitpay', 'cod'].includes(data.paymentMethod)
+      !['hitpay', 'cod'].includes(data.paymentMethod)
     ) {
       errors.paymentMethod = 'Please select a payment method';
     }
@@ -183,7 +180,7 @@ export default function CheckoutPage() {
     try {
       const shippingAddress = `${values.address}, ${values.city} ${values.postalCode}`;
 
-      if (values.paymentMethod === 'stripe' || values.paymentMethod === 'hitpay') {
+      if (values.paymentMethod === 'hitpay') {
         const items: Array<{
           name: string;
           price: number;
@@ -203,14 +200,13 @@ export default function CheckoutPage() {
           shippingAddress,
           billingAddress: shippingAddress, // Use same as shipping for now
           notes: values.notes,
-          paymentProvider: values.paymentMethod as 'stripe' | 'hitpay',
         });
 
         if (result.success && result.url) {
-          // Clear cart before redirecting to Stripe
+          // Clear cart before redirecting to payment gateway
           await clearCart();
 
-          // Redirect to Stripe checkout
+          // Redirect to HitPay checkout
           window.location.href = result.url;
         } else {
           throw new Error(result.error || 'Failed to create checkout session');
@@ -408,17 +404,6 @@ export default function CheckoutPage() {
                               defaultValue={field.value}
                               className="space-y-3"
                             >
-                              <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
-                                <RadioGroupItem value="stripe" />
-                                <div className="flex-1">
-                                  <div className="font-medium">
-                                    Pay with Stripe
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    International cards (Visa, Mastercard, Amex)
-                                  </div>
-                                </div>
-                              </label>
                               <label className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
                                 <RadioGroupItem value="hitpay" />
                                 <div className="flex-1">

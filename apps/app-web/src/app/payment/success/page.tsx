@@ -14,13 +14,12 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
-import { verifyStripePayment, verifyHitPayPayment, handlePaymentSuccess } from '@/app/actions';
+import { verifyHitPayPayment } from '@/app/actions';
 import { formatPrice } from '@/lib/utils';
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const sessionId = searchParams?.get('session_id') || '';
   const paymentRequestId = searchParams?.get('payment_request_id') || '';
   const referenceNumber = searchParams?.get('reference_number') || searchParams?.get('reference') || '';
   const status = searchParams?.get('status') || '';
@@ -30,17 +29,16 @@ export default function PaymentSuccessPage() {
     orderId?: string;
     amount?: number;
     customerEmail?: string;
-    warning?: string;
     reference?: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function verifyPayment() {
-      // Check if it's a HitPay payment (by reference number and status)
+      // Check if it's a HitPay payment redirect (by reference number and status)
       if (referenceNumber && status === 'completed') {
         try {
-          // For HitPay, we just show success since webhook handles order creation
+          // For HitPay redirect, we just show success since webhook handles order creation
           // The reference number confirms this is a valid payment
           setPaymentDetails({
             reference: referenceNumber,
@@ -55,7 +53,7 @@ export default function PaymentSuccessPage() {
         return;
       }
 
-      // Check if it's a HitPay payment with payment_request_id (legacy format)
+      // Check if it's a HitPay payment with payment_request_id
       if (paymentRequestId) {
         try {
           // Verify HitPay payment
@@ -70,7 +68,7 @@ export default function PaymentSuccessPage() {
           setPaymentDetails({
             amount: verificationResult.amount,
             customerEmail: verificationResult.customerEmail || undefined,
-            reference: referenceNumber,
+            reference: verificationResult.reference || referenceNumber,
           });
         } catch (error) {
           console.error('HitPay payment verification error:', error);
@@ -81,50 +79,13 @@ export default function PaymentSuccessPage() {
         return;
       }
 
-      // Stripe payment verification
-      if (!sessionId) {
-        setError('No payment session found');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // Verify the payment
-        const verificationResult = await verifyStripePayment(sessionId);
-        
-        if (!verificationResult.success || !verificationResult.paid) {
-          throw new Error(verificationResult.error || 'Payment verification failed');
-        }
-
-        // Handle successful payment (update order status, etc.)
-        const successResult = await handlePaymentSuccess(sessionId);
-        
-        if (successResult.success) {
-          setPaymentDetails({
-            orderId: successResult.orderId,
-            amount: verificationResult.amount || successResult.amount,
-            customerEmail: verificationResult.customerEmail || undefined,
-            warning: successResult.warning,
-          });
-        } else {
-          // Payment was successful but order update failed
-          // Still show success but with a note
-          setPaymentDetails({
-            amount: verificationResult.amount,
-            customerEmail: verificationResult.customerEmail || undefined,
-            warning: 'Payment successful but order creation failed. Please contact support.',
-          });
-        }
-      } catch (error) {
-        console.error('Payment verification error:', error);
-        setError(error instanceof Error ? error.message : 'Failed to verify payment');
-      } finally {
-        setIsLoading(false);
-      }
+      // No payment information found
+      setError('No payment information found');
+      setIsLoading(false);
     }
 
     verifyPayment();
-  }, [sessionId, paymentRequestId, referenceNumber]);
+  }, [paymentRequestId, referenceNumber, status]);
 
   if (isLoading) {
     return (
@@ -176,16 +137,7 @@ export default function PaymentSuccessPage() {
         <CardContent className="space-y-6">
           {paymentDetails && (
             <div className="rounded-lg bg-gray-50 p-6 space-y-3">
-              <h3 className="font-semibold text-lg mb-3">Order Details</h3>
-              
-              {paymentDetails.orderId && (
-                <div className="flex flex-wrap justify-between gap-1">
-                  <span className="text-gray-600">Order ID:</span>
-                  <span className="font-medium break-all">
-                    #{paymentDetails.orderId}
-                  </span>
-                </div>
-              )}
+              <h3 className="font-semibold text-lg mb-3">Payment Details</h3>
               
               {paymentDetails.amount !== undefined && (
                 <div className="flex flex-wrap justify-between gap-1">
@@ -210,28 +162,12 @@ export default function PaymentSuccessPage() {
             </div>
           )}
 
-          {paymentDetails?.warning ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {paymentDetails.warning}
-              </AlertDescription>
-            </Alert>
-          ) : (referenceNumber && status === 'completed') || paymentRequestId ? (
-            <Alert>
-              <Package className="h-4 w-4" />
-              <AlertDescription>
-                Your payment has been received and is being processed. You will receive an order confirmation email shortly with your order details.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert>
-              <Package className="h-4 w-4" />
-              <AlertDescription>
-                A confirmation email has been sent to your registered email address with order details and tracking information.
-              </AlertDescription>
-            </Alert>
-          )}
+          <Alert>
+            <Package className="h-4 w-4" />
+            <AlertDescription>
+              Your payment has been received and is being processed. You will receive an order confirmation email shortly with your order details.
+            </AlertDescription>
+          </Alert>
 
           <div className="space-y-3">
             <h4 className="font-medium">What happens next?</h4>
@@ -259,15 +195,9 @@ export default function PaymentSuccessPage() {
           <Button variant="outline" asChild>
             <Link href="/products">Continue Shopping</Link>
           </Button>
-          {paymentDetails?.orderId ? (
-            <Button asChild>
-              <Link href={`/orders/${paymentDetails.orderId}`}>View Order</Link>
-            </Button>
-          ) : (
-            <Button asChild>
-              <Link href="/orders">View Orders</Link>
-            </Button>
-          )}
+          <Button asChild>
+            <Link href="/orders">View Orders</Link>
+          </Button>
         </CardFooter>
       </Card>
     </div>
