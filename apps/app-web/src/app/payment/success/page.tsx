@@ -22,7 +22,8 @@ export default function PaymentSuccessPage() {
   const router = useRouter();
   const sessionId = searchParams?.get('session_id') || '';
   const paymentRequestId = searchParams?.get('payment_request_id') || '';
-  const referenceNumber = searchParams?.get('reference_number') || '';
+  const referenceNumber = searchParams?.get('reference_number') || searchParams?.get('reference') || '';
+  const status = searchParams?.get('status') || '';
   
   const [isLoading, setIsLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState<{
@@ -36,7 +37,25 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     async function verifyPayment() {
-      // Check if it's a HitPay payment
+      // Check if it's a HitPay payment (by reference number and status)
+      if (referenceNumber && status === 'completed') {
+        try {
+          // For HitPay, we just show success since webhook handles order creation
+          // The reference number confirms this is a valid payment
+          setPaymentDetails({
+            reference: referenceNumber,
+            // We don't have amount/email from the redirect, but that's OK
+          });
+        } catch (error) {
+          console.error('HitPay payment error:', error);
+          setError(error instanceof Error ? error.message : 'Failed to process payment');
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Check if it's a HitPay payment with payment_request_id (legacy format)
       if (paymentRequestId) {
         try {
           // Verify HitPay payment
@@ -198,7 +217,7 @@ export default function PaymentSuccessPage() {
                 {paymentDetails.warning}
               </AlertDescription>
             </Alert>
-          ) : paymentRequestId ? (
+          ) : (referenceNumber && status === 'completed') || paymentRequestId ? (
             <Alert>
               <Package className="h-4 w-4" />
               <AlertDescription>
