@@ -39,6 +39,13 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
     // For Strapi 5, we need to use documentId for relations
     const userDocumentId = user.documentId;
     
+    console.log('Creating HitPay session for user:', {
+      email: user.email,
+      documentId: userDocumentId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    });
+    
     // Use environment variable for base URL, fallback to production domain
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai';
 

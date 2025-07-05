@@ -145,6 +145,14 @@ export async function createOrderAction(data: IOrderCreate) {
     // Generate a unique order number
     const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     
+    console.log('Creating order with data:', {
+      userId: data.userId,
+      orderNumber,
+      total: data.total,
+      status: data.status,
+      paymentMethod: data.paymentMethod,
+    });
+    
     // Transform data to Strapi format
     // For Strapi 5, relations should use connect syntax
     const strapiData = {
@@ -166,7 +174,15 @@ export async function createOrderAction(data: IOrderCreate) {
       }
     };
 
+    console.log('Sending to Strapi:', JSON.stringify(strapiData, null, 2));
+
     const result = await serverApiPost('/orders', strapiData);
+    
+    console.log('Order creation result:', {
+      success: result.success,
+      error: result.error,
+      data: result.data ? 'Order created' : 'No data',
+    });
     
     if (result.success && result.data) {
       const order = result.data.data || result.data;

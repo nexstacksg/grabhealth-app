@@ -60,6 +60,25 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        // Get full payment details from HitPay to retrieve payment method
+        let paymentMethod = 'hitpay'; // Default fallback
+        
+        try {
+          const paymentStatus = await hitpayClient.getPaymentStatus(payload.payment_request_id);
+          console.log('HitPay payment details:', {
+            paymentMethods: paymentStatus.payment_methods,
+            status: paymentStatus.status,
+          });
+          
+          // Use the actual payment method from HitPay (e.g., 'paynow', 'card', 'grabpay')
+          if (paymentStatus.payment_methods && paymentStatus.payment_methods.length > 0) {
+            paymentMethod = paymentStatus.payment_methods[0];
+          }
+        } catch (error) {
+          console.error('Failed to get payment method details:', error);
+          // Continue with default 'hitpay' if we can't get the specific method
+        }
+        
         // Create the order using the stored data
         const { createOrderAction } = await import('@/app/actions/order.actions');
         
@@ -68,6 +87,7 @@ export async function POST(request: NextRequest) {
           itemCount: pendingOrder.items.length,
           total: parseFloat(payload.amount),
           reference: reference,
+          paymentMethod: paymentMethod,
         });
         
         const orderResult = await createOrderAction({
@@ -79,7 +99,7 @@ export async function POST(request: NextRequest) {
           tax: pendingOrder.tax,
           status: 'PROCESSING', // Order is paid and processing
           paymentStatus: 'PAID',
-          paymentMethod: 'hitpay',
+          paymentMethod: paymentMethod, // Use the actual payment method from HitPay
           shippingAddress: pendingOrder.shippingAddress,
           billingAddress: pendingOrder.billingAddress,
           notes: pendingOrder.notes,

@@ -203,9 +203,7 @@ export default function CheckoutPage() {
         });
 
         if (result.success && result.url) {
-          // Clear cart before redirecting to payment gateway
-          await clearCart();
-
+          // DO NOT clear cart here - only clear after successful payment
           // Redirect to HitPay checkout
           window.location.href = result.url;
         } else {

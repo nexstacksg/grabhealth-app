@@ -16,10 +16,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 import { verifyHitPayPayment } from '@/app/actions';
 import { formatPrice } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { clearCart } = useCart();
   const paymentRequestId = searchParams?.get('payment_request_id') || '';
   const referenceNumber = searchParams?.get('reference_number') || searchParams?.get('reference') || '';
   const status = searchParams?.get('status') || '';
@@ -44,6 +46,9 @@ export default function PaymentSuccessPage() {
             reference: referenceNumber,
             // We don't have amount/email from the redirect, but that's OK
           });
+          
+          // Clear the cart after successful payment
+          await clearCart();
         } catch (error) {
           console.error('HitPay payment error:', error);
           setError(error instanceof Error ? error.message : 'Failed to process payment');
@@ -70,6 +75,9 @@ export default function PaymentSuccessPage() {
             customerEmail: verificationResult.customerEmail || undefined,
             reference: verificationResult.reference || referenceNumber,
           });
+          
+          // Clear the cart after successful payment
+          await clearCart();
         } catch (error) {
           console.error('HitPay payment verification error:', error);
           setError(error instanceof Error ? error.message : 'Failed to verify payment');
@@ -85,7 +93,7 @@ export default function PaymentSuccessPage() {
     }
 
     verifyPayment();
-  }, [paymentRequestId, referenceNumber, status]);
+  }, [paymentRequestId, referenceNumber, status, clearCart]);
 
   if (isLoading) {
     return (
