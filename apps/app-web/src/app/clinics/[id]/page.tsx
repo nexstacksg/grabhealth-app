@@ -50,7 +50,7 @@ export default function PartnerDetailPage() {
         setIsLoading(true);
         // Get partner data which already includes services
         const partnerData = await services.partners.getPartner(
-          params.id as string
+          params?.id as string
         );
 
         setPartner(partnerData);
@@ -58,13 +58,12 @@ export default function PartnerDetailPage() {
         setPartnerServices(partnerData.services || []);
 
         // Fetch free checkup status if user is logged in
-        if (user && user.id) {
+        if (user && user.documentId) {
           try {
             const status =
               await services.bookings.checkFreeCheckupEligibility();
             setFreeCheckupStatus(status);
           } catch (error: any) {
-            // Ignore rate limit errors and authentication errors
             if (
               !error.message?.includes('429') &&
               !error.message?.includes('401')
@@ -81,10 +80,10 @@ export default function PartnerDetailPage() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       fetchPartnerDetails();
     }
-  }, [params.id, user]);
+  }, [params?.id, user]);
 
   // Filter and pagination calculations
   const filteredServices = partnerServices.filter((service) => {
@@ -172,12 +171,14 @@ export default function PartnerDetailPage() {
                 {partner.description}
               </CardDescription>
             </div>
-            <div className="flex items-center">
-              <Star className="h-5 w-5 text-yellow-500 fill-current" />
-              <span className="ml-1 font-semibold">
-                {partner.rating.toFixed(1)}
-              </span>
-              <span className="ml-1 text-gray-500">
+            <div className="flex flex-wrap items-center gap-1 mt-2 sm:mt-0">
+              <div className="flex items-center">
+                <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                <span className="ml-1 font-semibold">
+                  {partner.rating.toFixed(1)}
+                </span>
+              </div>
+              <span className="text-gray-500">
                 ({partner.totalReviews} reviews)
               </span>
             </div>
@@ -260,34 +261,36 @@ export default function PartnerDetailPage() {
 
             {/* Filter Controls */}
             {serviceCategories.length > 1 && (
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-3 sm:mt-0">
                 <span className="text-sm font-medium">Filter by category:</span>
-                <Select
-                  value={serviceFilter}
-                  onValueChange={handleFilterChange}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {serviceCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {serviceFilter !== 'all' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleFilterChange('all')}
-                    className="text-gray-500 hover:text-gray-700"
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <Select
+                    value={serviceFilter}
+                    onValueChange={handleFilterChange}
                   >
-                    Clear filter
-                  </Button>
-                )}
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {serviceCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {serviceFilter !== 'all' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFilterChange('all')}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      Clear filter
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -473,11 +476,23 @@ export default function PartnerDetailPage() {
                 <CardContent className="pt-6">
                   <div className="text-center py-12">
                     <div className="text-gray-400 mb-4">
-                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg
+                        className="w-16 h-16 mx-auto"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
-                    <p className="text-gray-500 text-sm">Select a service to book an appointment</p>
+                    <p className="text-gray-500 text-sm">
+                      Select a service to book an appointment
+                    </p>
                   </div>
                 </CardContent>
               </Card>
