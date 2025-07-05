@@ -14,7 +14,11 @@ import { formatPrice } from '@/lib/utils';
 import services from '@/services';
 import { IProduct } from '@app/shared-types';
 
-interface ProductWithExtras extends IProduct {
+type ProductId = {
+  id?: string;
+};
+
+interface ProductWithExtras extends IProduct, ProductId {
   features?: string[];
   usage?: string;
   ingredients?: string;
@@ -186,7 +190,8 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const productId = params.id as string;
+        const productId = params?.id as string;
+        if (!productId) return;
 
         const productData = await services.product.getProduct(productId);
         setProduct(productData as ProductWithExtras);
@@ -204,14 +209,13 @@ export default function ProductDetailPage() {
               );
             setRelatedProducts(
               categoryProducts.products
-                .filter((p: IProduct) => p.id !== productData.id)
+                .filter(
+                  (p: IProduct) => p.documentId !== productData.documentId
+                )
                 .slice(0, 4)
             );
           } catch (err) {
-            console.error(
-              'Error fetching related products:',
-              err
-            );
+            console.error('Error fetching related products:', err);
           }
         }
       } catch (err: any) {
@@ -222,10 +226,10 @@ export default function ProductDetailPage() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       fetchProduct();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   // No demo data - use only real product information
 
@@ -279,13 +283,13 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Product Image Section */}
-        <div className="relative rounded-xl overflow-hidden bg-white border border-gray-100 h-[350px] md:h-[450px] group">
+        <div className="relative rounded-xl overflow-hidden bg-white border border-gray-100 h-[280px] sm:h-[320px] md:h-[450px] group">
           <div className="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <Image
             src={product.imageUrl || '/placeholder.svg?height=400&width=400'}
             alt={product.name}
             fill
-            className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-3 sm:p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
             priority
           />
 
@@ -351,7 +355,7 @@ export default function ProductDetailPage() {
             <div className="flex space-x-4">
               <AddToCartButton
                 product={{
-                  id: product.id,
+                  id: parseInt(product.documentId) || 0, // Convert string to number
                   name: product.name,
                   price: product.price,
                   image_url: product.imageUrl || undefined,
@@ -372,8 +376,8 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
               <Link
-                href={`/products/${(relatedProduct as any).documentId || relatedProduct.id}`}
-                key={relatedProduct.id}
+                href={`/products/${relatedProduct.documentId}`}
+                key={relatedProduct.documentId}
               >
                 <Card className="h-full hover:shadow-md transition-shadow overflow-hidden">
                   <div className="aspect-square relative">
