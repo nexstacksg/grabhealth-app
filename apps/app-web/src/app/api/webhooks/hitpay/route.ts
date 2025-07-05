@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hitpayClient } from '@/lib/hitpay-server';
 import { headers } from 'next/headers';
+import crypto from 'crypto';
 
 interface HitPayWebhookPayload {
   payment_id: string;
@@ -79,8 +80,10 @@ export async function POST(request: NextRequest) {
           // Continue with default 'hitpay' if we can't get the specific method
         }
         
-        // Create the order using the stored data
-        const { createOrderAction } = await import('@/app/actions/order.actions');
+        // Create order using internal API endpoint (bypasses authentication)
+        const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+        const internalSecret = process.env.INTERNAL_API_SECRET || 'dev-secret-change-in-production';
+        const secret = crypto.createHash('sha256').update(internalSecret).digest('hex');
         
         console.log('Creating order from webhook with data:', {
           userId: pendingOrder.userId,
@@ -88,27 +91,52 @@ export async function POST(request: NextRequest) {
           total: parseFloat(payload.amount),
           reference: reference,
           paymentMethod: paymentMethod,
+          orderNumber: orderNumber,
         });
         
-        const orderResult = await createOrderAction({
-          userId: pendingOrder.userId,
-          items: pendingOrder.items,
-          total: parseFloat(payload.amount), // Use actual paid amount from HitPay
-          subtotal: pendingOrder.subtotal,
-          discount: pendingOrder.discount,
-          tax: pendingOrder.tax,
-          status: 'PROCESSING', // Order is paid and processing
-          paymentStatus: 'PAID',
-          paymentMethod: paymentMethod, // Use the actual payment method from HitPay
-          shippingAddress: pendingOrder.shippingAddress,
-          billingAddress: pendingOrder.billingAddress,
-          notes: pendingOrder.notes,
+        // Get the base URL for internal API call
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai';
+        
+        // Create order via internal API endpoint
+        const orderResponse = await fetch(`${baseUrl}/api/internal/create-order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            secret: secret,
+            userId: pendingOrder.userId,
+            orderNumber: orderNumber,
+            items: pendingOrder.items,
+            total: parseFloat(payload.amount), // Use actual paid amount from HitPay
+            subtotal: pendingOrder.subtotal,
+            discount: pendingOrder.discount || 0,
+            tax: pendingOrder.tax || 0,
+            status: 'PROCESSING', // Order is paid and processing
+            paymentStatus: 'PAID',
+            paymentMethod: paymentMethod, // Use the actual payment method from HitPay
+            shippingAddress: pendingOrder.shippingAddress,
+            billingAddress: pendingOrder.billingAddress,
+            notes: pendingOrder.notes || '',
+          }),
         });
+        
+        const orderResult = await orderResponse.json();
+        
+        if (!orderResponse.ok) {
+          console.error('Failed to create order via internal API:', {
+            status: orderResponse.status,
+            error: orderResult,
+          });
+          throw new Error(orderResult?.error || 'Failed to create order');
+        }
+        
+        const createdOrder = orderResult.order;
 
-        if (orderResult.success) {
+        if (createdOrder) {
           console.log('Order created successfully:', {
-            orderId: orderResult.order.documentId,
-            orderNumber: orderResult.order.orderNumber,
+            orderId: createdOrder.documentId,
+            orderNumber: orderNumber,
             reference: reference,
             userId: pendingOrder.userId,
           });
@@ -117,7 +145,7 @@ export async function POST(request: NextRequest) {
           deletePendingOrder(reference);
         } else {
           console.error('Failed to create order:', {
-            error: orderResult.error,
+            error: 'No order data returned',
             userId: pendingOrder.userId,
             reference: reference,
           });
