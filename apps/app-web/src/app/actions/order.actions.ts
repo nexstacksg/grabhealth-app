@@ -2,7 +2,7 @@
 
 import { serverApiGet, serverApiPost, serverApiPut } from '@/lib/server-api';
 import { getCurrentUserAction } from './auth.actions';
-import { IOrderCreate } from '@app/shared-types';
+import { IOrderCreate, OrderStatus, PaymentStatus } from '@app/shared-types';
 
 /**
  * Server action to fetch current user's orders
@@ -165,8 +165,8 @@ export async function createOrderAction(data: IOrderCreate) {
         subtotal: data.subtotal,
         discount: data.discount || 0,
         tax: data.tax || 0,
-        status: data.status || 'PENDING',
-        paymentStatus: data.paymentStatus || 'PENDING',
+        status: data.status || OrderStatus.PENDING_PAYMENT,
+        paymentStatus: data.paymentStatus || PaymentStatus.PENDING,
         paymentMethod: data.paymentMethod,
         shippingAddress: data.shippingAddress,
         billingAddress: data.billingAddress,
@@ -203,7 +203,6 @@ export async function createOrderAction(data: IOrderCreate) {
                 quantity: item.quantity,
                 price: item.price,
                 discount: item.discount || 0,
-                pvPoints: item.pvPoints || 0,
               }
             };
             
@@ -250,7 +249,7 @@ export async function cancelOrderAction(orderId: string) {
     // Update order status to CANCELLED
     const result = await serverApiPut(`/orders/${orderId}`, {
       data: {
-        status: 'CANCELLED',
+        status: OrderStatus.CANCELLED,
       }
     });
     
@@ -267,6 +266,130 @@ export async function cancelOrderAction(orderId: string) {
     return {
       success: false,
       error: error.message || 'Failed to cancel order',
+    };
+  }
+}
+
+/**
+ * Server action to update order status (used by webhooks)
+ * This requires API token for now until we implement a better solution
+ */
+export async function updateOrderStatusAction(
+  orderId: string,
+  updates: {
+    status?: string;
+    paymentStatus?: string;
+    paymentMethod?: string;
+    paymentId?: string;
+  }
+) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+    
+    // For webhook updates, we need to use the API token temporarily
+    // This is the minimal use of API token until we can implement a better solution
+    const strapiToken = process.env.STRAPI_API_TOKEN;
+    
+    if (!strapiToken) {
+      console.error('STRAPI_API_TOKEN not configured for webhook updates');
+      return { success: false, error: 'API token not configured' };
+    }
+    
+    // Prepare update data
+    const updateData = {
+      data: {}
+    };
+    
+    if (updates.status) updateData.data.status = updates.status;
+    if (updates.paymentStatus) updateData.data.paymentStatus = updates.paymentStatus;
+    if (updates.paymentMethod) updateData.data.paymentMethod = updates.paymentMethod;
+    if (updates.paymentId) updateData.data.paymentId = updates.paymentId;
+    
+    console.log('Updating order status:', {
+      orderId,
+      updates: updateData.data,
+    });
+    
+    // Update the order
+    const updateResponse = await fetch(`${baseUrl}/api/orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${strapiToken}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+    
+    const updateResult = await updateResponse.json();
+    
+    if (!updateResponse.ok) {
+      console.error('Failed to update order:', updateResult);
+      return { 
+        success: false, 
+        error: updateResult?.error?.message || 'Failed to update order' 
+      };
+    }
+    
+    return {
+      success: true,
+      order: updateResult.data,
+    };
+    
+  } catch (error: any) {
+    console.error('Order update error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to update order',
+    };
+  }
+}
+
+/**
+ * Server action to get order by order number (used by webhooks)
+ */
+export async function getOrderByOrderNumberAction(orderNumber: string) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+    
+    // For webhook access, we need to use API token
+    const strapiToken = process.env.STRAPI_API_TOKEN;
+    
+    if (!strapiToken) {
+      console.error('STRAPI_API_TOKEN not configured');
+      return { success: false, error: 'API token not configured' };
+    }
+    
+    // Fetch order by order number
+    const orderResponse = await fetch(
+      `${baseUrl}/api/orders?filters[orderNumber][$eq]=${orderNumber}&populate=*`,
+      {
+        headers: {
+          'Authorization': `Bearer ${strapiToken}`,
+        },
+      }
+    );
+    
+    if (!orderResponse.ok) {
+      return { success: false, error: 'Order not found' };
+    }
+    
+    const orderData = await orderResponse.json();
+    const orders = orderData.data || [];
+    
+    if (orders.length === 0) {
+      return { success: false, error: 'Order not found' };
+    }
+    
+    return {
+      success: true,
+      order: orders[0],
+    };
+    
+  } catch (error: any) {
+    console.error('Error fetching order:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch order',
     };
   }
 }

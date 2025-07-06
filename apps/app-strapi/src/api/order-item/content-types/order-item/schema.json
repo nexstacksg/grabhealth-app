@@ -29,12 +29,6 @@
       "required": false,
       "min": 0
     },
-    "pvPoints": {
-      "type": "integer",
-      "default": 0,
-      "required": false,
-      "min": 0
-    },
     "order": {
       "type": "relation",
       "relation": "manyToOne",

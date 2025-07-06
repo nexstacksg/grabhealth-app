@@ -75,7 +75,7 @@ pnpm run start           # Start production server
 - **Content Types**:
   - `User`: Basic user info + referral relations (upline/downline)
   - `Product/Category`: E-commerce catalog
-  - `Order/OrderItem`: Purchase tracking
+  - `Order/OrderItem`: Purchase tracking with dual status system
   - `Partner/Service`: Service providers and their offerings
   - `Booking`: Appointment scheduling
 
@@ -102,7 +102,16 @@ Users
 └── downlines (array of users)
 
 Products → Categories
-Orders → OrderItems → Products
+
+Orders
+├── orderNumber (unique)
+├── status (PENDING_PAYMENT, PROCESSING, COMPLETED, CANCELLED)
+├── paymentStatus (PENDING, PAID, FAILED, REFUNDED)
+├── paymentMethod
+└── user (relation)
+
+OrderItems → Orders + Products
+
 Partners → Services
 Bookings → Users + Services
 ```
@@ -115,6 +124,25 @@ Bookings → Users + Services
 - `GET /api/partners` - List partners
 - `POST /api/bookings` - Create booking
 
+## Payment Flow (HitPay Integration)
+
+### Order Creation Before Payment
+1. **Checkout**: User fills form → Order created with `PENDING_PAYMENT` status
+2. **Payment**: User redirected to HitPay with order number as reference
+3. **Success**: Payment complete → Redirect to success page with orderId
+4. **Webhook**: HitPay notifies → Order updated to `PROCESSING` + `PAID`
+5. **Display**: Success page shows complete order details
+
+### Order Status vs Payment Status
+- **Order Status**: Tracks fulfillment lifecycle (PENDING_PAYMENT → PROCESSING → COMPLETED)
+- **Payment Status**: Tracks payment state (PENDING → PAID/FAILED → REFUNDED)
+
+### Key Benefits
+- No lost orders (order exists before payment)
+- Better tracking of abandoned checkouts
+- Immediate order confirmation
+- Simplified webhook logic (only updates status)
+
 ## Important Notes
 
 1. **Simplification Focus**: System has been simplified to focus on core features
@@ -123,6 +151,7 @@ Bookings → Users + Services
 4. **Commission System**: Planned for future phases
 5. **Referral Tracking**: Automatic via upline/downline relations
 6. **Admin Management**: All admin tasks done through Strapi Admin Panel at http://localhost:1337/admin
+7. **No PV Points**: Removed pvPoints system for simplicity
 
 ## Development Guidelines
 
@@ -137,3 +166,6 @@ Bookings → Users + Services
 - **Type errors**: Run `pnpm run build` in Strapi to regenerate types
 - **Auth issues**: Check JWT token in cookies and Bearer header
 - **CORS errors**: Strapi CORS is configured for localhost:3000
+- **Orders not created after payment**: Check webhook logs, ensure STRAPI_API_TOKEN is set
+- **Payment redirect issues**: Verify NEXT_PUBLIC_BASE_URL is correct
+- **Webhook not updating orders**: Check HitPay webhook URL and signature verification

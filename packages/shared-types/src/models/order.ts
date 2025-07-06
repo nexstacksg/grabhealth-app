@@ -34,7 +34,6 @@ export interface IOrderItem {
   quantity: number;
   price: number;
   discount?: number;
-  pvPoints?: number; // PV points for commission tracking
   // Relations (when populated)
   order?: IOrder;
   product?: IProduct;
@@ -63,7 +62,6 @@ export interface IOrderItemCreate {
   quantity: number;
   price: number;
   discount?: number;
-  pvPoints?: number; // PV points if applicable
 }
 
 export interface IOrderUpdate {

@@ -2,7 +2,7 @@
 
 import { hitpayClient } from '@/lib/hitpay-server';
 import { getCurrentUserAction } from './auth.actions';
-import { headers } from 'next/headers';
+import { createOrderAction } from './order.actions';
 
 interface CreateCheckoutSessionParams {
   items: Array<{
@@ -11,6 +11,7 @@ interface CreateCheckoutSessionParams {
     quantity: number;
     productId: string;
     image?: string;
+    discount?: number;
   }>;
   orderId?: string;
   successUrl?: string;
@@ -18,6 +19,10 @@ interface CreateCheckoutSessionParams {
   shippingAddress?: string;
   billingAddress?: string;
   notes?: string;
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
 }
 
 /**
@@ -35,92 +40,94 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
     }
 
     const user = userResult.user;
-    
-    // For Strapi 5, we need to use documentId for relations
     const userDocumentId = user.documentId;
     
-    console.log('Creating HitPay session for user:', {
+    console.log('Creating checkout session for user:', {
       email: user.email,
       documentId: userDocumentId,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      itemCount: params.items.length,
+      total: params.total,
     });
     
-    // Use environment variable for base URL, fallback to production domain
+    // Step 1: Create order in database with PENDING_PAYMENT status
+    const orderResult = await createOrderAction({
+      userId: userDocumentId,
+      items: params.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        discount: item.discount || 0,
+      })),
+      total: params.total,
+      subtotal: params.subtotal,
+      discount: params.discount,
+      tax: params.tax,
+      paymentMethod: '', // Will be updated after payment
+      shippingAddress: params.shippingAddress || '',
+      billingAddress: params.billingAddress || params.shippingAddress || '',
+      notes: params.notes || '',
+    });
+
+    if (!orderResult.success || !orderResult.order) {
+      console.error('Failed to create order:', orderResult.error);
+      return {
+        success: false,
+        error: orderResult.error || 'Failed to create order',
+      };
+    }
+
+    const order = orderResult.order;
+    console.log('Order created successfully:', {
+      orderId: order.documentId,
+      orderNumber: order.orderNumber,
+    });
+    
+    // Step 2: Create HitPay payment request
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai';
-
-    // Calculate total amount
-    const totalAmount = params.items.reduce(
-      (sum, item) => sum + (item.price * item.quantity),
-      0
-    );
-
-    // Generate order reference
-    const orderReference = `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-    // Log the request details for debugging
-    const redirectUrl = params.successUrl || `${baseUrl}/payment/success`;
+    const redirectUrl = params.successUrl || `${baseUrl}/payment/success?orderId=${order.documentId}`;
     const webhookUrl = `${baseUrl}/api/webhooks/hitpay`;
       
     console.log('Creating HitPay payment request:', {
-      amount: totalAmount.toFixed(2),
+      amount: params.total.toFixed(2),
       currency: 'SGD',
-      email: user.email,
-      baseUrl,
+      orderNumber: order.orderNumber,
       redirectUrl,
       webhookUrl,
     });
 
-    // Create HitPay payment request
     const fullName = user.firstName && user.lastName 
       ? `${user.firstName} ${user.lastName}`.trim() 
       : undefined;
     
     const paymentRequest = await hitpayClient.createPaymentRequest({
-      amount: totalAmount.toFixed(2), // HitPay expects amount as string in dollars
+      amount: params.total.toFixed(2), // HitPay expects amount as string in dollars
       currency: 'SGD',
-      purpose: `Order from ${fullName || user.email}`,
+      purpose: `Order ${order.orderNumber}`,
       email: user.email,
       name: fullName,
       redirect_url: redirectUrl,
       webhook: webhookUrl,
-      reference_number: orderReference,
+      reference_number: order.orderNumber, // Use actual order number as reference
       allow_repeated_payments: false,
     });
 
-    // Store pending order data for webhook processing
-    const { storePendingOrder } = await import('@/lib/pending-orders');
-    
-    storePendingOrder({
-      referenceNumber: orderReference,
-      userId: userDocumentId, // Use documentId for Strapi 5
-      items: params.items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.price,
-        pvPoints: 0,
-      })),
-      total: totalAmount,
-      subtotal: totalAmount,
-      discount: 0,
-      tax: 0,
-      shippingAddress: params.shippingAddress || '',
-      billingAddress: params.billingAddress || params.shippingAddress || '',
-      notes: params.notes || '',
-      createdAt: new Date(),
+    console.log('HitPay payment request created:', {
+      paymentRequestId: paymentRequest.id,
+      orderNumber: order.orderNumber,
     });
 
     return {
       success: true,
       paymentRequestId: paymentRequest.id,
       url: paymentRequest.url,
-      reference: orderReference,
+      orderId: order.documentId,
+      orderNumber: order.orderNumber,
     };
   } catch (error: any) {
-    console.error('Error creating HitPay payment request:', error);
+    console.error('Error creating checkout session:', error);
     return {
       success: false,
-      error: error.message || 'Failed to create payment request',
+      error: error.message || 'Failed to create checkout session',
     };
   }
 }

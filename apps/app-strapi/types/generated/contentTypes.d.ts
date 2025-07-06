@@ -517,14 +517,6 @@ export interface ApiOrderItemOrderItem extends Struct.CollectionTypeSchema {
       >;
     product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
-    pvPoints: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
     quantity: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -574,7 +566,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     shippingAddress: Schema.Attribute.Text;
     status: Schema.Attribute.Enumeration<
-      ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED']
+      ['PENDING', 'PENDING_PAYMENT', 'PROCESSING', 'COMPLETED', 'CANCELLED']
     > &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'PENDING'>;

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hitpayClient } from '@/lib/hitpay-server';
 import { headers } from 'next/headers';
-import crypto from 'crypto';
+import { getOrderByOrderNumberAction, updateOrderStatusAction } from '@/app/actions/order.actions';
+import { OrderStatus, PaymentStatus } from '@app/shared-types';
 
 interface HitPayWebhookPayload {
   payment_id: string;
@@ -40,34 +41,35 @@ export async function POST(request: NextRequest) {
     // Handle different payment statuses
     if (payload.status === 'completed') {
       // Payment successful
-      const reference = payload.reference_number || '';
+      const orderNumber = payload.reference_number || '';
       
       console.log('=== WEBHOOK: Payment completed ===', {
         paymentId: payload.payment_id,
         requestId: payload.payment_request_id,
         amount: payload.amount,
         currency: payload.currency,
-        reference: reference,
-        rawPayload: JSON.stringify(payload),
+        orderNumber: orderNumber,
       });
 
-      // Retrieve pending order data
-      const { getPendingOrder, deletePendingOrder } = await import('@/lib/pending-orders');
-      const pendingOrder = getPendingOrder(reference);
-
-      if (!pendingOrder) {
-        console.error('=== WEBHOOK ERROR: No pending order found ===', {
-          reference: reference,
-          allPayloadData: payload,
+      // Get order by order number
+      const orderResult = await getOrderByOrderNumberAction(orderNumber);
+      
+      if (!orderResult.success || !orderResult.order) {
+        console.error('=== WEBHOOK ERROR: Order not found ===', {
+          orderNumber: orderNumber,
+          error: orderResult.error,
         });
         // Still return success to HitPay to prevent retries
         return NextResponse.json({ success: true });
       }
       
-      console.log('=== WEBHOOK: Found pending order ===', {
-        userId: pendingOrder.userId,
-        itemCount: pendingOrder.items.length,
-        total: pendingOrder.total,
+      const order = orderResult.order;
+      
+      console.log('=== WEBHOOK: Found order ===', {
+        orderId: order.documentId,
+        orderNumber: order.orderNumber,
+        currentStatus: order.status,
+        currentPaymentStatus: order.paymentStatus,
       });
 
       try {
@@ -90,103 +92,33 @@ export async function POST(request: NextRequest) {
           // Continue with default 'hitpay' if we can't get the specific method
         }
         
-        // Create order using internal API endpoint (bypasses authentication)
-        const orderNumber = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-        const internalSecret = process.env.INTERNAL_API_SECRET || 'dev-secret-change-in-production';
-        const secret = crypto.createHash('sha256').update(internalSecret).digest('hex');
-        
-        console.log('Creating order from webhook with data:', {
-          userId: pendingOrder.userId,
-          itemCount: pendingOrder.items.length,
-          total: parseFloat(payload.amount),
-          reference: reference,
+        // Update order status
+        const updateResult = await updateOrderStatusAction(order.documentId, {
+          status: OrderStatus.PROCESSING,
+          paymentStatus: PaymentStatus.PAID,
           paymentMethod: paymentMethod,
-          orderNumber: orderNumber,
+          paymentId: payload.payment_id,
         });
         
-        // Get the base URL for internal API call
-        // For webhooks, we need to use localhost since it's server-to-server
-        const baseUrl = process.env.WEBHOOK_BASE_URL || 'http://localhost:3000';
-        
-        console.log('=== WEBHOOK: Creating order via internal API ===', {
-          url: `${baseUrl}/api/internal/create-order`,
-          orderNumber: orderNumber,
-        });
-        
-        // Create order via internal API endpoint
-        const orderResponse = await fetch(`${baseUrl}/api/internal/create-order`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            secret: secret,
-            userId: pendingOrder.userId,
-            orderNumber: orderNumber,
-            items: pendingOrder.items,
-            total: parseFloat(payload.amount), // Use actual paid amount from HitPay
-            subtotal: pendingOrder.subtotal,
-            discount: pendingOrder.discount || 0,
-            tax: pendingOrder.tax || 0,
-            status: 'PROCESSING', // Order is paid and processing
-            paymentStatus: 'PAID',
-            paymentMethod: paymentMethod, // Use the actual payment method from HitPay
-            shippingAddress: pendingOrder.shippingAddress,
-            billingAddress: pendingOrder.billingAddress,
-            notes: pendingOrder.notes || '',
-          }),
-        });
-        
-        let orderResult;
-        const responseText = await orderResponse.text();
-        
-        try {
-          orderResult = JSON.parse(responseText);
-        } catch (e) {
-          console.error('=== WEBHOOK ERROR: Failed to parse response ===', {
-            status: orderResponse.status,
-            responseText: responseText,
+        if (updateResult.success) {
+          console.log('=== WEBHOOK: Order updated successfully ===', {
+            orderId: order.documentId,
+            orderNumber: order.orderNumber,
+            newStatus: OrderStatus.PROCESSING,
+            paymentStatus: PaymentStatus.PAID,
+            paymentMethod: paymentMethod,
           });
-          throw new Error('Invalid response from internal API');
-        }
-        
-        if (!orderResponse.ok) {
-          console.error('=== WEBHOOK ERROR: Failed to create order ===', {
-            status: orderResponse.status,
-            error: orderResult,
-            responseText: responseText,
-          });
-          throw new Error(orderResult?.error || 'Failed to create order');
-        }
-        
-        const createdOrder = orderResult.order;
-        console.log('=== WEBHOOK: Internal API response ===', {
-          success: orderResult.success,
-          hasOrder: !!createdOrder,
-        });
-
-        if (createdOrder) {
-          console.log('Order created successfully:', {
-            orderId: createdOrder.documentId,
-            orderNumber: orderNumber,
-            reference: reference,
-            userId: pendingOrder.userId,
-          });
-          
-          // Delete the pending order data
-          deletePendingOrder(reference);
         } else {
-          console.error('Failed to create order:', {
-            error: 'No order data returned',
-            userId: pendingOrder.userId,
-            reference: reference,
+          console.error('=== WEBHOOK ERROR: Failed to update order ===', {
+            orderId: order.documentId,
+            error: updateResult.error,
           });
         }
       } catch (error) {
-        console.error('Error creating order from webhook:', {
+        console.error('Error updating order from webhook:', {
           error: error instanceof Error ? error.message : error,
           stack: error instanceof Error ? error.stack : undefined,
-          reference: reference,
+          orderNumber: orderNumber,
         });
       }
     } else if (payload.status === 'failed') {
@@ -196,10 +128,15 @@ export async function POST(request: NextRequest) {
         requestId: payload.payment_request_id,
       });
       
-      // Clean up pending order
-      const { deletePendingOrder } = await import('@/lib/pending-orders');
+      // Update order status to cancelled
       if (payload.reference_number) {
-        deletePendingOrder(payload.reference_number);
+        const orderResult = await getOrderByOrderNumberAction(payload.reference_number);
+        if (orderResult.success && orderResult.order) {
+          await updateOrderStatusAction(orderResult.order.documentId, {
+            status: OrderStatus.CANCELLED,
+            paymentStatus: PaymentStatus.FAILED,
+          });
+        }
       }
     } else if (payload.status === 'pending') {
       // Payment is pending
