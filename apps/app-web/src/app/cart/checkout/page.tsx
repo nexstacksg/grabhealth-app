@@ -187,12 +187,14 @@ export default function CheckoutPage() {
           quantity: number;
           productId: string;
           image?: string;
+          discount?: number;
         }> = cart.items.map((item) => ({
           name: item.product?.name || `Product ${item.productId}`,
           price: item.product?.price || item.price || 0,
           quantity: item.quantity,
           productId: String(item.productId),
           image: item.product?.imageUrl || undefined,
+          discount: 0, // You can calculate item discount here if needed
         }));
 
         const result = await createCheckoutSession({
@@ -200,6 +202,10 @@ export default function CheckoutPage() {
           shippingAddress,
           billingAddress: shippingAddress, // Use same as shipping for now
           notes: values.notes,
+          subtotal: cart.subtotal,
+          discount: cart.discount,
+          tax: cart.tax || 0,
+          total: cart.total,
         });
 
         if (result.success && result.url) {

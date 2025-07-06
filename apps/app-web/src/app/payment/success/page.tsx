@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Package, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,18 +15,23 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 import { verifyHitPayPayment } from '@/app/actions';
+import { getOrderAction } from '@/app/actions/order.actions';
 import { formatPrice } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
+import { IOrder } from '@app/shared-types';
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { clearCart } = useCart();
+  const cartClearedRef = useRef(false); // Track if cart has been cleared
   const paymentRequestId = searchParams?.get('payment_request_id') || '';
   const referenceNumber = searchParams?.get('reference_number') || searchParams?.get('reference') || '';
   const status = searchParams?.get('status') || '';
+  const orderId = searchParams?.get('orderId') || '';
   
   const [isLoading, setIsLoading] = useState(true);
+  const [order, setOrder] = useState<IOrder | null>(null);
   const [paymentDetails, setPaymentDetails] = useState<{
     orderId?: string;
     amount?: number;
@@ -37,7 +42,38 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     async function verifyPayment() {
-      // Check if it's a HitPay payment redirect (by reference number and status)
+      // Check if we have an orderId - this is the new flow
+      if (orderId) {
+        try {
+          // Fetch order details
+          const orderResult = await getOrderAction(orderId);
+          
+          if (orderResult.success && orderResult.order) {
+            setOrder(orderResult.order);
+            setPaymentDetails({
+              orderId: orderResult.order.documentId,
+              amount: orderResult.order.total,
+              reference: orderResult.order.orderNumber,
+            });
+            
+            // Clear the cart after successful payment (only once)
+            if (!cartClearedRef.current) {
+              cartClearedRef.current = true;
+              await clearCart();
+            }
+          } else {
+            throw new Error(orderResult.error || 'Failed to fetch order details');
+          }
+        } catch (error) {
+          console.error('Order fetch error:', error);
+          setError(error instanceof Error ? error.message : 'Failed to fetch order details');
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+      
+      // Legacy flow: Check if it's a HitPay payment redirect (by reference number and status)
       if (referenceNumber && status === 'completed') {
         try {
           // For HitPay redirect, we just show success since webhook handles order creation
@@ -47,8 +83,11 @@ export default function PaymentSuccessPage() {
             // We don't have amount/email from the redirect, but that's OK
           });
           
-          // Clear the cart after successful payment
-          await clearCart();
+          // Clear the cart after successful payment (only once)
+          if (!cartClearedRef.current) {
+            cartClearedRef.current = true;
+            await clearCart();
+          }
         } catch (error) {
           console.error('HitPay payment error:', error);
           setError(error instanceof Error ? error.message : 'Failed to process payment');
@@ -76,8 +115,11 @@ export default function PaymentSuccessPage() {
             reference: verificationResult.reference || referenceNumber,
           });
           
-          // Clear the cart after successful payment
-          await clearCart();
+          // Clear the cart after successful payment (only once)
+          if (!cartClearedRef.current) {
+            cartClearedRef.current = true;
+            await clearCart();
+          }
         } catch (error) {
           console.error('HitPay payment verification error:', error);
           setError(error instanceof Error ? error.message : 'Failed to verify payment');
@@ -93,7 +135,7 @@ export default function PaymentSuccessPage() {
     }
 
     verifyPayment();
-  }, [paymentRequestId, referenceNumber, status, clearCart]);
+  }, [paymentRequestId, referenceNumber, status, orderId]); // clearCart removed to prevent infinite loop
 
   if (isLoading) {
     return (
@@ -143,7 +185,31 @@ export default function PaymentSuccessPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {paymentDetails && (
+          {order ? (
+            <div className="rounded-lg bg-gray-50 p-6 space-y-3">
+              <h3 className="font-semibold text-lg mb-3">Order Details</h3>
+              
+              <div className="flex flex-wrap justify-between gap-1">
+                <span className="text-gray-600">Order Number:</span>
+                <span className="font-medium">{order.orderNumber}</span>
+              </div>
+              
+              <div className="flex flex-wrap justify-between gap-1">
+                <span className="text-gray-600">Amount Paid:</span>
+                <span className="font-medium">{formatPrice(order.total)}</span>
+              </div>
+              
+              <div className="flex flex-wrap justify-between gap-1">
+                <span className="text-gray-600">Status:</span>
+                <span className="font-medium">{order.status}</span>
+              </div>
+              
+              <div className="flex flex-wrap justify-between gap-1">
+                <span className="text-gray-600">Payment Method:</span>
+                <span className="font-medium">{order.paymentMethod || 'HitPay'}</span>
+              </div>
+            </div>
+          ) : paymentDetails && (
             <div className="rounded-lg bg-gray-50 p-6 space-y-3">
               <h3 className="font-semibold text-lg mb-3">Payment Details</h3>
               

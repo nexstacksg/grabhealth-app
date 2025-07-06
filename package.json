@@ -34,7 +34,9 @@
     "pm2:delete": "pm2 delete ecosystem.config.js",
     "pm2:logs": "pm2 logs",
     "pm2:monit": "pm2 monit",
-    "pm2:status": "pm2 list"
+    "pm2:status": "pm2 list",
+    "tunnel": "ngrok http 3000",
+    "tunnel:dashboard": "echo 'Visit http://127.0.0.1:4040 to see ngrok dashboard'"
   },
   "resolutions": {
     "is-stream": "2.0.1"
@@ -43,7 +45,8 @@
     "turbo": "^2.3.3",
     "typescript": "^5.8.3",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.0"
+    "lint-staged": "^15.2.0",
+    "ngrok": "^5.0.0-beta.2"
   },
   "lint-staged": {
     "apps/app-be/**/*.{ts,js}": [

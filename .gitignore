@@ -154,3 +154,4 @@ public/uploads/
 .app-be.env
 .app-web.env
 .app-strapi.env
+apps/app-strapi/types/generated/*

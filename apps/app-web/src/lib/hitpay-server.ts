@@ -85,28 +85,46 @@ export class HitPayClient {
   }
 
   verifyWebhookSignature(payload: any, signature: string): boolean {
-    if (!HITPAY_WEBHOOK_SALT) {
-      throw new Error('HitPay webhook salt is not configured');
+    if (!HITPAY_SALT) {
+      throw new Error('HitPay salt is not configured');
     }
 
-    // Create the signature string according to HitPay docs
-    const values = [
-      payload.payment_id,
-      payload.payment_request_id,
-      payload.phone,
-      payload.amount,
-      payload.currency,
-      payload.status,
-      payload.reference_number || '',
-    ];
+    // Create a copy of payload without the hmac field
+    const params: Record<string, string> = {};
+    for (const [key, value] of Object.entries(payload)) {
+      if (key !== 'hmac') {
+        params[key] = value?.toString() || '';
+      }
+    }
 
-    const signatureString = values.join('') + HITPAY_WEBHOOK_SALT;
-    const computedSignature = crypto
-      .createHash('sha256')
-      .update(signatureString)
+    // Create HMAC source array following HitPay's PHP example
+    const hmacSource: string[] = [];
+    for (const [key, val] of Object.entries(params)) {
+      hmacSource.push(`${key}${val}`);
+    }
+    
+    // Sort alphabetically by the combined key+value string
+    hmacSource.sort();
+    
+    // Join all strings together
+    const sig = hmacSource.join('');
+    
+    // Generate HMAC-SHA256
+    const computedHmac = crypto
+      .createHmac('sha256', HITPAY_SALT)
+      .update(sig)
       .digest('hex');
 
-    return computedSignature === signature;
+    console.log('Payment Request Webhook Verification Debug:', {
+      params,
+      hmacSource,
+      signatureString: sig,
+      computedHmac,
+      receivedSignature: signature,
+      match: computedHmac === signature
+    });
+
+    return computedHmac === signature;
   }
 
   generateSignature(params: Record<string, any>): string {

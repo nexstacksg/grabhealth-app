@@ -1,267 +1,220 @@
-# GrabHealth AI - E-commerce Platform
+# GrabHealth AI - Wellness E-commerce Platform
 
-A simplified wellness e-commerce platform with referral system and partner services. Built with Next.js and Strapi.
+A simplified wellness e-commerce platform with referral system and partner services, built with Next.js 15 and Strapi 5.
 
 ## 🏗️ Monorepo Structure
 
 ```
 grabhealth-app/
 ├── apps/
-│   ├── app-web/               # Customer web portal (Next.js)
-│   └── app-strapi/            # Backend CMS + Admin (Strapi)
+│   ├── app-web/               # Customer web portal (Next.js 15)
+│   └── app-strapi/            # Backend CMS + Admin (Strapi 5)
 ├── packages/
-│   └── shared-types/          # Shared TypeScript types and interfaces
+│   └── shared-types/          # Shared TypeScript types
 └── documents/                 # Documentation files
-    ├── features.md           # Feature list
-    └── setup-production.md   # Production setup guide
 ```
-
-This is a **Turbo-powered monorepo** using Bun workspaces for efficient dependency management and build orchestration.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ or Bun 1.0+
-- SQLite (for development)
-- iOS/Android development environment (for mobile app)
+- PostgreSQL (for production) or SQLite (for development)
+- pnpm package manager
 
 ### Installation
 
 1. **Clone the repository**
-
    ```bash
-   git clone https://github.com/yourusername/app-template.git
-   cd app-template
+   git clone https://github.com/yourusername/grabhealth-app.git
+   cd grabhealth-app
    ```
 
-2. **Install all dependencies** (from root directory)
-
+2. **Install dependencies**
    ```bash
    pnpm install
    ```
 
-3. **Set up the backend**
+3. **Set up environment variables**
    ```bash
-   cd apps/app-be
-   cp .env.example .env  # Configure your environment variables
-   pnpm run prisma:migrate
-   pnpm run prisma:seed
+   # For web app
+   cp apps/app-web/.env.example apps/app-web/.env.local
+   
+   # For Strapi
+   cp apps/app-strapi/.env.example apps/app-strapi/.env
    ```
 
-### Running the Applications
-
-#### Run All Applications (from root)
-
-```bash
-pnpm run dev  # Starts all apps concurrently
-```
-
-#### Run Individual Applications
-
-1. **Backend API** (Port 4000)
-
+4. **Start development servers**
    ```bash
-   # From root directory
-   pnpm run dev:be
-   # OR
-   pnpm run dev --filter=app-be
+   pnpm run dev  # Starts both web and Strapi
    ```
 
-2. **Web Portal** (Port 3000)
+## 🔑 Key Features
 
-   ```bash
-   # From root directory
-   pnpm run dev:web
-   # OR
-   pnpm run dev --filter=app-web
-   ```
+### E-commerce
+- Product catalog with categories
+- Shopping cart functionality
+- Order management with dual status system
+- HitPay payment integration
 
-3. **Admin Portal** (Port 3100)
+### Referral System
+- Unique referral codes for each user
+- Upline/downline tracking
+- Network visualization in admin panel
 
-   ```bash
-   # From root directory
-   pnpm run dev:admin
-   # OR
-   pnpm run dev --filter=app-admin
-   ```
+### Partner Services
+- Partner clinics and healthcare providers
+- Service bookings and appointments
+- Availability management
 
-4. **Mobile App**
-   ```bash
-   # From root directory
-   pnpm run dev:mobile
-   # OR
-   pnpm run dev --filter=app-mobile
-   # Press 'i' for iOS or 'a' for Android
-   ```
+### Payment Flow (Updated)
+1. **Order Before Payment**: Orders are created with `PENDING_PAYMENT` status before redirecting to payment
+2. **Dual Status System**: 
+   - `status`: Order lifecycle (PENDING_PAYMENT → PROCESSING → COMPLETED)
+   - `paymentStatus`: Payment state (PENDING → PAID/FAILED → REFUNDED)
+3. **Webhook Integration**: HitPay webhooks update order status after payment
+4. **No Lost Orders**: Orders exist even if payment fails
 
-## 📦 Shared Types Package
+## 📦 Technology Stack
 
-All TypeScript types and interfaces are centralized in the `@app/shared-types` package to ensure consistency across all applications.
+### Frontend (app-web)
+- Next.js 15 with App Router
+- React 19
+- TypeScript
+- Tailwind CSS + shadcn/ui
+- Server Actions for API calls
 
-### Structure
+### Backend (app-strapi)
+- Strapi 5 (Headless CMS)
+- PostgreSQL (production) / SQLite (development)
+- JWT authentication
+- RESTful API
 
-```
-packages/shared-types/
-├── src/
-│   ├── index.ts              # Main export file
-│   ├── enums/               # Shared enumerations
-│   ├── types/               # Common types
-│   │   ├── auth.ts          # Authentication types
-│   │   └── common.ts        # Common/utility types
-│   └── models/              # Data model interfaces
-│       └── user.ts          # User model interfaces
-```
+### Shared Types
+- Centralized TypeScript types
+- Shared enums and interfaces
+- Type safety across monorepo
 
-### Usage
+## 🛠️ Development Commands
 
-The shared-types package is automatically linked via Bun workspaces. Each app references it as:
-
-```json
-{
-  "dependencies": {
-    "@app/shared-types": "*"
-  }
-}
-```
-
-Import types in your code:
-
-```typescript
-import { UserRole, IUser, ApiResponse } from '@app/shared-types';
-```
-
-## 👥 User Roles
-
-The template supports three user roles with different access levels:
-
-- **SUPER_ADMIN**: Platform administrators with full system access
-- **MANAGER**: Middle-level users with management capabilities
-- **USER**: Standard users with basic access
-
-## 🔑 Features
-
-- **Authentication**: Email/password login with JWT tokens
-- **User Management**: User registration, profile management
-- **Role-based Access**: Different permissions for different user types
-- **Email Verification**: Email verification workflow
-- **Password Reset**: Forgot password functionality
-- **Multi-platform**: Web, admin portal, and mobile apps
-
-## 🛠️ Development
-
-### Database Commands
-
+### Monorepo Commands
 ```bash
-# Run migrations
-pnpm run prisma:migrate
+# Development
+pnpm run dev              # Run all apps
+pnpm run dev:web          # Web app only
+pnpm run dev:strapi       # Strapi only
 
-# Open Prisma Studio
-pnpm run prisma:studio
+# Build
+pnpm run build            # Build all apps
+pnpm run build:web        # Build web app
+pnpm run build:strapi     # Build Strapi
 
-# Seed the database
-pnpm run prisma:seed
-
-# Generate Prisma client
-pnpm run prisma:generate
+# Code Quality
+pnpm run lint             # Lint all code
+pnpm run format           # Format with Prettier
 ```
 
-### Build Commands
-
-#### Build All Applications
-
+### Strapi Commands
 ```bash
-# From root directory
-pnpm run build  # Builds all apps in dependency order
+cd apps/app-strapi
+pnpm run develop          # Start dev server
+pnpm run build            # Build admin panel
+pnpm run start            # Start production server
 ```
 
-#### Build Individual Applications
+## 🔐 Environment Variables
 
-```bash
-# Build specific app (from root)
-pnpm run build --filter=app-be      # Backend only
-pnpm run build --filter=app-web     # Web app only
-pnpm run build --filter=app-admin   # Admin app only
-
-# Or use the convenience scripts
-pnpm run build:be     # Build backend
-pnpm run build:web    # Build web app
-pnpm run build:admin  # Build admin app
-
-# Build shared packages
-pnpm run build --filter=@app/shared-types
-
-# Build mobile app (requires EAS CLI)
-cd apps/app-mobile && eas build
-```
-
-#### Other Turbo Commands
-
-```bash
-# Run linting across all apps
-pnpm run lint
-
-# Run linting for specific app
-pnpm run lint --filter=app-be
-
-# Format all code
-pnpm run format
-
-# Run tests
-pnpm run test
-
-# Clean all build artifacts
-pnpm run clean
-```
-
-### Testing
-
-```bash
-# Run backend tests
-cd app-be && pnpm run test
-
-# Run web app tests
-cd app-web && pnpm run test
-```
-
-## 🔒 Security Features
-
-- JWT-based authentication with refresh tokens
-- Role-based access control (RBAC)
-- Secure HTTP-only cookies for web sessions
-- Email verification and password reset functionality
-
-## 🌍 Environment Variables
-
-### Backend (.env)
-
+### Web App (.env.local)
 ```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="your-secret-key"
-JWT_REFRESH_SECRET="your-refresh-secret"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_EXPIRES_IN="7d"
-PORT=4000
-NODE_ENV="development"
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:1337
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Payment (HitPay)
+NEXT_PUBLIC_HITPAY_API_KEY=your_api_key
+HITPAY_API_KEY=your_api_key
+HITPAY_SALT=your_salt
+HITPAY_WEBHOOK_SALT=your_webhook_salt
+NEXT_PUBLIC_HITPAY_MODE=sandbox
+
+# Strapi API Token (for webhooks)
+STRAPI_API_TOKEN=your_strapi_api_token
 ```
 
-### Web Apps (.env.local)
-
+### Strapi (.env)
 ```env
-NEXT_PUBLIC_API_URL="http://localhost:4000/api/v1"
+# Database
+DATABASE_CLIENT=sqlite
+DATABASE_FILENAME=.tmp/data.db
+
+# Server
+HOST=0.0.0.0
+PORT=1337
+
+# Security
+APP_KEYS=your_app_keys
+API_TOKEN_SALT=your_api_token_salt
+ADMIN_JWT_SECRET=your_admin_jwt_secret
+JWT_SECRET=your_jwt_secret
 ```
 
-### Mobile App
+## 📝 Recent Updates
 
-Configure in `app.json` or use environment-specific config files.
+### Payment Flow Improvements (Latest)
+- **Order Creation Before Payment**: Orders are now created with `PENDING_PAYMENT` status before payment
+- **Removed Internal API**: Eliminated internal API endpoint, using server actions instead
+- **Simplified Webhook**: Webhook now only updates order status instead of creating orders
+- **Removed PV Points**: Simplified system by removing pvPoints tracking
+- **Better Error Handling**: Orders are never lost, even if payment fails
 
-## 📄 API Documentation
+### Benefits of New Flow
+- No lost orders during payment failures
+- Better tracking of abandoned checkouts
+- Immediate order confirmation on success page
+- Minimal use of API tokens (only for webhook updates)
+- Cleaner architecture without internal APIs
 
-The backend API is documented with Swagger/OpenAPI. Access the documentation at:
+## 🐛 Common Issues & Solutions
 
-```
-http://localhost:4000/api-docs
-```
+- **Orders not created after payment**: Check webhook logs and ensure STRAPI_API_TOKEN is set
+- **Payment redirect issues**: Verify NEXT_PUBLIC_BASE_URL matches your domain
+- **Webhook failures**: Check HitPay webhook URL configuration and signature verification
+- **Type errors**: Run `pnpm run build` in Strapi to regenerate types
+- **Port conflicts**: Ensure ports 3000 (web) and 1337 (Strapi) are available
+
+## 🔧 Testing Webhooks Locally
+
+For testing payment webhooks (HitPay, Stripe, etc.) in local development:
+
+1. **Install dependencies** (ngrok is included in devDependencies)
+   ```bash
+   pnpm install
+   ```
+
+2. **Start ngrok tunnel**
+   ```bash
+   pnpm run tunnel
+   ```
+   This will expose your local port 3000 to the internet.
+
+3. **Get your public URL**
+   - Look for the `Forwarding` URL in the ngrok output (e.g., `https://abc123.ngrok.io`)
+   - Or visit the ngrok dashboard: `pnpm run tunnel:dashboard`
+
+4. **Configure webhook URL**
+   - Update your payment provider's webhook URL to: `https://your-ngrok-url.ngrok.io/api/webhooks/hitpay`
+   - Update `NEXT_PUBLIC_BASE_URL` in `.env.local` to match your ngrok URL
+
+5. **Test the webhook**
+   - Make a test payment
+   - Check your terminal logs for webhook activity
+   - Visit `http://127.0.0.1:4040` to see all requests in ngrok dashboard
+
+## 📚 Documentation
+
+- [CLAUDE.md](./CLAUDE.md) - AI assistant guidelines
+- [Setup Production](./documents/setup-production.md) - Production deployment guide
+- [Features](./documents/features.md) - Complete feature list
 
 ## 🤝 Contributing
 
@@ -271,10 +224,10 @@ http://localhost:4000/api-docs
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ---
 
-Built with ❤️ as a modern app template 1
+Built with ❤️ by GrabHealth Team

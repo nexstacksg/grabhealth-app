@@ -41,6 +41,7 @@
       "type": "enumeration",
       "enum": [
         "PENDING",
+        "PENDING_PAYMENT",
         "PROCESSING",
         "COMPLETED",
         "CANCELLED"
