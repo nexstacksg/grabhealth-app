@@ -3,6 +3,7 @@ import { hitpayClient } from '@/lib/hitpay-server';
 import { headers } from 'next/headers';
 import { getOrderByOrderNumberAction, updateOrderStatusAction } from '@/app/actions/order.actions';
 import { OrderStatus, PaymentStatus } from '@app/shared-types';
+import crypto from 'crypto';
 
 interface HitPayWebhookPayload {
   payment_id: string;
@@ -20,14 +21,39 @@ export async function POST(request: NextRequest) {
     const headersList = await headers();
     const contentType = headersList.get('content-type') || '';
     
-    let payload: HitPayWebhookPayload;
+    // Read raw body first
+    const rawBody = await request.text();
     
-    // Handle different content types HitPay might send
+    let payload: HitPayWebhookPayload;
+    let jsonData: any;
+    
+    // Check if this is an Event Webhook (has Hitpay-Signature header)
+    const eventSignature = headersList.get('hitpay-signature');
+    const isEventWebhook = !!eventSignature;
+    
+    // Parse the body based on content type
     if (contentType.includes('application/json')) {
-      payload = await request.json() as HitPayWebhookPayload;
+      jsonData = JSON.parse(rawBody);
+      
+      // Check if this is the full payment object or just webhook fields
+      if (jsonData.payment_request) {
+        // Full payment object from HitPay Event Webhook
+        payload = {
+          payment_id: jsonData.id,
+          payment_request_id: jsonData.payment_request.id,
+          phone: jsonData.phone || undefined,
+          amount: jsonData.amount,
+          currency: jsonData.currency,
+          status: jsonData.status,
+          reference_number: jsonData.payment_request.reference_number || undefined,
+          hmac: jsonData.hmac || undefined,
+        };
+      } else {
+        // Standard webhook payload
+        payload = jsonData as HitPayWebhookPayload;
+      }
     } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const text = await request.text();
-      const params = new URLSearchParams(text);
+      const params = new URLSearchParams(rawBody);
       payload = {
         payment_id: params.get('payment_id') || '',
         payment_request_id: params.get('payment_request_id') || '',
@@ -39,42 +65,56 @@ export async function POST(request: NextRequest) {
         hmac: params.get('hmac') || undefined,
       };
     } else {
-      // Try form data as fallback
-      try {
-        const formData = await request.formData();
-        payload = {
-          payment_id: formData.get('payment_id') as string,
-          payment_request_id: formData.get('payment_request_id') as string,
-          phone: formData.get('phone') as string | undefined,
-          amount: formData.get('amount') as string,
-          currency: formData.get('currency') as string,
-          status: formData.get('status') as string,
-          reference_number: formData.get('reference_number') as string | undefined,
-          hmac: formData.get('hmac') as string | undefined,
-        };
-      } catch (e) {
-        console.error('Failed to parse webhook payload:', e);
-        console.log('Content-Type:', contentType);
-        console.log('Raw body:', await request.text());
-        throw new Error(`Unsupported content type: ${contentType}`);
-      }
+      console.error('Unsupported content type:', contentType);
+      return NextResponse.json(
+        { error: 'Unsupported content type' },
+        { status: 400 }
+      );
     }
     
-    const signature = headersList.get('X-HitPay-Signature') || payload.hmac || '';
-
     console.log('=== HitPay Webhook Debug ===');
     console.log('Content-Type:', contentType);
+    console.log('Webhook Type:', isEventWebhook ? 'Event Webhook' : 'Payment Request Webhook');
     console.log('Payload:', JSON.stringify(payload, null, 2));
-    console.log('Signature from header:', headersList.get('X-HitPay-Signature'));
-    console.log('Signature from hmac:', payload.hmac);
-    console.log('Final signature used:', signature);
+    console.log('Event Signature (Hitpay-Signature):', eventSignature);
+    console.log('Payment Request Signature (hmac):', payload.hmac);
+    console.log('Event Type:', headersList.get('hitpay-event-type'));
+    console.log('Event Object:', headersList.get('hitpay-event-object'));
     console.log('===========================');
 
-    // Verify webhook signature
-    const isValid = hitpayClient.verifyWebhookSignature(payload, signature);
+    // Get webhook salt
+    const HITPAY_WEBHOOK_SALT = process.env.HITPAY_WEBHOOK_SALT;
+    if (!HITPAY_WEBHOOK_SALT) {
+      console.error('HITPAY_WEBHOOK_SALT not configured');
+      return NextResponse.json(
+        { error: 'Webhook salt not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Verify webhook signature based on webhook type
+    let isValid = false;
+    
+    if (isEventWebhook) {
+      // Event Webhook: Use Hitpay-Signature header with raw JSON body
+      const computedSignature = crypto
+        .createHmac('sha256', HITPAY_WEBHOOK_SALT)
+        .update(rawBody)
+        .digest('hex');
+      
+      isValid = computedSignature === eventSignature;
+      
+      console.log('Event Webhook Verification:');
+      console.log('Computed signature:', computedSignature);
+      console.log('Received signature:', eventSignature);
+    } else {
+      // Payment Request Webhook: Use hmac field in payload
+      const signature = payload.hmac || '';
+      isValid = hitpayClient.verifyWebhookSignature(payload, signature);
+    }
+    
     if (!isValid) {
       console.error('Invalid HitPay webhook signature');
-      console.error('Expected signature does not match received signature');
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
