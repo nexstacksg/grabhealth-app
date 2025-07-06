@@ -303,7 +303,7 @@ export async function updateOrderStatusAction(
     if (updates.status) updateData.data.status = updates.status;
     if (updates.paymentStatus) updateData.data.paymentStatus = updates.paymentStatus;
     if (updates.paymentMethod) updateData.data.paymentMethod = updates.paymentMethod;
-    if (updates.paymentId) updateData.data.paymentId = updates.paymentId;
+    // Note: paymentId is not a field in Strapi order schema, so we don't include it
     
     console.log('Updating order status:', {
       orderId,

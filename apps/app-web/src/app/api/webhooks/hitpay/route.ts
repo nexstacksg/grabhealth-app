@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
           status: OrderStatus.PROCESSING,
           paymentStatus: PaymentStatus.PAID,
           paymentMethod: paymentMethod,
-          paymentId: payload.payment_id,
+          // Note: paymentId is not stored in Strapi order schema
         });
         
         if (updateResult.success) {
