@@ -182,6 +182,34 @@ JWT_SECRET=your_jwt_secret
 - **Type errors**: Run `pnpm run build` in Strapi to regenerate types
 - **Port conflicts**: Ensure ports 3000 (web) and 1337 (Strapi) are available
 
+## 🔧 Testing Webhooks Locally
+
+For testing payment webhooks (HitPay, Stripe, etc.) in local development:
+
+1. **Install dependencies** (ngrok is included in devDependencies)
+   ```bash
+   pnpm install
+   ```
+
+2. **Start ngrok tunnel**
+   ```bash
+   pnpm run tunnel
+   ```
+   This will expose your local port 3000 to the internet.
+
+3. **Get your public URL**
+   - Look for the `Forwarding` URL in the ngrok output (e.g., `https://abc123.ngrok.io`)
+   - Or visit the ngrok dashboard: `pnpm run tunnel:dashboard`
+
+4. **Configure webhook URL**
+   - Update your payment provider's webhook URL to: `https://your-ngrok-url.ngrok.io/api/webhooks/hitpay`
+   - Update `NEXT_PUBLIC_BASE_URL` in `.env.local` to match your ngrok URL
+
+5. **Test the webhook**
+   - Make a test payment
+   - Check your terminal logs for webhook activity
+   - Visit `http://127.0.0.1:4040` to see all requests in ngrok dashboard
+
 ## 📚 Documentation
 
 - [CLAUDE.md](./CLAUDE.md) - AI assistant guidelines
