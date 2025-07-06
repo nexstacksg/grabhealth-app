@@ -335,7 +335,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // Clear cart
   const clearCart = async () => {
-    const emptyCart = {
+    const emptyCart: ICartWithId = {
       id: 0,
       userId: user?.documentId || '',
       items: [],
@@ -347,11 +347,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     setCart(emptyCart);
 
-    // Clear from localStorage
+    // Clear from localStorage and save the empty cart
     if (user) {
+      // Clear the old cart
       clearAuthenticatedCart();
+      // Save the empty cart to ensure it's properly initialized
+      saveAuthenticatedCart(emptyCart);
     } else {
+      // Clear the old cart
       clearGuestCart();
+      // Save the empty cart to ensure it's properly initialized
+      saveGuestCart(emptyCart);
     }
 
     toast.success('Cart cleared');

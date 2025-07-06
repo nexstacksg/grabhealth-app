@@ -295,9 +295,13 @@ export async function updateOrderStatusAction(
       return { success: false, error: 'API token not configured' };
     }
     
-    // Prepare update data
+    // Prepare update data with proper typing
     const updateData = {
-      data: {}
+      data: {} as {
+        status?: string;
+        paymentStatus?: string;
+        paymentMethod?: string;
+      }
     };
     
     if (updates.status) updateData.data.status = updates.status;
