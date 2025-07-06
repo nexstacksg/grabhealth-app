@@ -36,6 +36,7 @@ const AUTH_CART_KEY = 'grabhealth_auth_cart';
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<ICartWithId | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [cartAnimating, setCartAnimating] = useState(false);
   const { user } = useAuth();
 
   // Get cart items from cart object
@@ -235,6 +236,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
 
       toast.success(`${product.name} added to cart`);
+      
+      // Trigger cart animation
+      setCartAnimating(true);
+      setTimeout(() => setCartAnimating(false), 1200); // Animation duration
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Failed to add item to cart');
@@ -376,6 +381,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         cartCount,
         cartTotal,
+        cartAnimating,
         addToCart,
         updateQuantity,
         removeItem,

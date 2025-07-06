@@ -28,7 +28,7 @@ import { formatPrice } from '@/lib/utils';
 export function CartDropdown() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { cartItems, cartCount, cartTotal, isLoading } = useCart();
+  const { cartItems, cartCount, cartTotal, isLoading, cartAnimating } = useCart();
 
   const goToCart = () => {
     router.push('/cart');
@@ -41,12 +41,12 @@ export function CartDropdown() {
           <Button
             variant="outline"
             size="icon"
-            className="relative"
+            className={`relative ${cartAnimating ? 'animate-cart-highlight' : ''}`}
             aria-label="Open cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-emerald-500 text-white">
+              <Badge className={`absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-emerald-500 text-white ${cartAnimating ? 'animate-cart-badge-bounce' : ''}`}>
                 {cartCount}
               </Badge>
             )}

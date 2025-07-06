@@ -57,3 +57,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes cart-highlight {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+  }
+
+  @keyframes cart-badge-bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  .animate-cart-highlight {
+    animation: cart-highlight 1.2s ease-out;
+  }
+
+  .animate-cart-badge-bounce {
+    animation: cart-badge-bounce 1.2s ease-out;
+  }
+}

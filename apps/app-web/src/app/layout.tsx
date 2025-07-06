@@ -31,7 +31,7 @@ export default function RootLayout({
           <LayoutWrapper>
             <main className="min-h-screen pb-4 md:pb-8">{children}</main>
           </LayoutWrapper>
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-center" richColors duration={1500} />
         </RootProvider>
       </body>
     </html>

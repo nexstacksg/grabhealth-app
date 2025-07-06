@@ -83,6 +83,7 @@ export interface CartContextType {
   isLoading: boolean;
   cartCount: number;
   cartTotal: number;
+  cartAnimating: boolean;
   addToCart: (
     product: {
       id: number;
