@@ -17,7 +17,19 @@ interface HitPayWebhookPayload {
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json() as HitPayWebhookPayload;
+    // HitPay sends webhook data as form-encoded, not JSON
+    const formData = await request.formData();
+    const payload: HitPayWebhookPayload = {
+      payment_id: formData.get('payment_id') as string,
+      payment_request_id: formData.get('payment_request_id') as string,
+      phone: formData.get('phone') as string | undefined,
+      amount: formData.get('amount') as string,
+      currency: formData.get('currency') as string,
+      status: formData.get('status') as string,
+      reference_number: formData.get('reference_number') as string | undefined,
+      hmac: formData.get('hmac') as string | undefined,
+    };
+    
     const headersList = await headers();
     const signature = headersList.get('X-HitPay-Signature') || payload.hmac || '';
 

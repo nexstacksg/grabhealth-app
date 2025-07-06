@@ -2,10 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
     const headers = Object.fromEntries(request.headers.entries());
+    const contentType = headers['content-type'] || '';
+    
+    let payload: any;
+    
+    // Handle both JSON and form-encoded data
+    if (contentType.includes('application/json')) {
+      payload = await request.json();
+    } else {
+      const formData = await request.formData();
+      payload = {};
+      formData.forEach((value, key) => {
+        payload[key] = value;
+      });
+    }
     
     console.log('=== TEST WEBHOOK RECEIVED ===');
+    console.log('Content-Type:', contentType);
     console.log('Headers:', headers);
     console.log('Payload:', JSON.stringify(payload, null, 2));
     console.log('Signature:', headers['x-hitpay-signature']);
@@ -14,6 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: 'Test webhook received',
+      contentType,
       payload,
       signature: headers['x-hitpay-signature']
     });
