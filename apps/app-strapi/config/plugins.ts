@@ -1,21 +1,20 @@
 module.exports = ({ env }) => {
+  // Debug environment variables
+  console.log('MAILGUN_API_KEY:', process.env.MAILGUN_API_KEY ? 'exists' : 'missing');
+  console.log('MAILGUN_DOMAIN:', process.env.MAILGUN_DOMAIN ? 'exists' : 'missing');
+  
   return {
     email: {
       config: {
-        provider: 'nodemailer',
+        provider: '@strapi/provider-email-mailgun',
         providerOptions: {
-          host: env('SMTP_HOST', 'smtp.gmail.com'),
-          port: env('SMTP_PORT', 465),
-          secure: true,
-          auth: {
-            user: env('MAIL_USERNAME'),
-            pass: env('MAIL_PASSWORD'),
-          },
-          ignoreTLS: true,
+          key: process.env.MAILGUN_API_KEY, // Changed from apiKey to key as required by the provider
+          domain: process.env.MAILGUN_DOMAIN,
+          host: process.env.MAILGUN_HOST || 'api.mailgun.net', // optional
         },
         settings: {
-          defaultFrom: env('SEND_FROM', 'dev.nexstack@gmail.com'),
-          defaultReplyTo: env('SEND_TO', 'dev.nexstack@gmail.com'),
+          defaultFrom: env('MAILGUN_FROM_EMAIL', 'noreply@example.com'),
+          defaultReplyTo: env('MAILGUN_FROM_EMAIL', 'noreply@example.com'),
         },
       },
     },

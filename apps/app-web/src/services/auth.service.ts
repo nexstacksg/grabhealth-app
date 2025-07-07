@@ -165,21 +165,18 @@ class AuthService extends BaseService {
     }
   }
 
-  async verifyEmail(email: string): Promise<void> {
-    try {
-      // Strapi email confirmation resend
-      await this.api.post('/auth/send-email-confirmation', { email });
-    } catch (error) {
-      this.handleError(error);
-    }
+  async verifyEmail(_email: string): Promise<void> {
+    // Not used with custom auth
+    throw new Error('Use resendVerificationCode instead');
   }
 
-  async verifyEmailCode(_email: string, confirmation: string): Promise<void> {
+  async verifyEmailCode(email: string, code: string): Promise<void> {
     try {
-      // Strapi email confirmation
-      await this.api.get(
-        `/auth/email-confirmation?confirmation=${confirmation}`
-      );
+      // Use custom email verification endpoint
+      await this.api.post('/custom-auth/verify-email', {
+        email,
+        code,
+      });
     } catch (error) {
       this.handleError(error);
     }
@@ -187,8 +184,8 @@ class AuthService extends BaseService {
 
   async resendVerificationCode(email: string): Promise<void> {
     try {
-      // Same as verifyEmail for Strapi
-      await this.verifyEmail(email);
+      // Use custom resend code endpoint
+      await this.api.post('/custom-auth/resend-code', { email });
     } catch (error) {
       this.handleError(error);
     }

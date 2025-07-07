@@ -131,18 +131,29 @@ const useAuthProvider = () => {
           throw new Error(result.error || 'Registration failed');
         }
         
-        setUser(result.user);
-
-        // Skip email verification for now and redirect to home
-        if (
-          result.user.role === 'PARTNER' &&
-          result.user.partnerId
-        ) {
-          // Redirect partner users to partner dashboard
-          router.push('/partner');
+        // For custom auth, users need to verify email first
+        console.log('[AuthContext] Registration result:', result);
+        console.log('[AuthContext] User status:', result.user.status);
+        
+        if (result.user.status === 'PENDING_VERIFICATION') {
+          // Store email for the verify page
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('registrationEmail', result.user.email);
+          }
+          // Don't set the user in state since they're not verified yet
+          // This prevents the auth context from treating them as logged in
+          
+          // Redirect to verify page
+          console.log('[AuthContext] Redirecting to /auth/verify');
+          router.push('/auth/verify');
         } else {
-          // Always redirect to home page, even if status is PENDING_VERIFICATION
-          router.push('/');
+          setUser(result.user);
+          // Redirect based on role
+          if (result.user.role === 'PARTNER' && result.user.partnerId) {
+            router.push('/partner');
+          } else {
+            router.push('/');
+          }
         }
       } catch (error: any) {
         throw error;

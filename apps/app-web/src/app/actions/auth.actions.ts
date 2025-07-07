@@ -34,15 +34,58 @@ export async function loginAction(data: LoginRequest) {
  */
 export async function registerAction(data: RegisterRequest) {
   try {
-    const authData = await authService.register(data);
+    // For registration, we need to call the custom auth API
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+    const url = `${baseUrl}/api/custom-auth/register`;
+    
+    console.log('[RegisterAction] Calling custom auth:', url);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+      }),
+    });
+    
+    let responseData;
+    try {
+      responseData = await response.json();
+    } catch (e) {
+      responseData = { error: { message: await response.text() } };
+    }
+    
+    if (!response.ok) {
+      console.error('[RegisterAction] Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData
+      });
+      throw new Error(responseData?.error?.message || responseData?.message || `Registration failed: ${response.statusText}`);
+    }
+    
+    // Transform the response
+    console.log('[RegisterAction] Raw user data:', responseData.user);
+    const user = transformStrapiUser(responseData.user);
+    console.log('[RegisterAction] Transformed user:', user);
     
     // Set httpOnly cookies for security
-    // Extract role properly - authData.user.role is already a string after transformation
-    const userRole = authData.user.role || 'authenticated';
-    await setAuthCookies(authData.accessToken, authData.refreshToken, userRole);
+    const userRole = user.role || 'public';
+    await setAuthCookies(responseData.jwt, responseData.jwt, userRole);
     
-    return { success: true as const, user: authData.user };
+    return { 
+      success: true as const, 
+      user,
+      message: responseData.message 
+    };
   } catch (error: any) {
+    console.error('[RegisterAction] Exception:', error);
     return { 
       success: false as const, 
       error: error.message || 'Registration failed' 

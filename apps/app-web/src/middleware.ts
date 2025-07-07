@@ -17,6 +17,9 @@ const partnerPaths = ['/partner'];
 // Auth pages that should redirect to home if already authenticated
 const authPaths = ['/auth/login', '/auth/register', '/auth/forgot-password'];
 
+// Auth pages that should be accessible regardless of auth status
+const authPublicPaths = ['/auth/verify'];
+
 // Public paths that don't require authentication
 const publicPaths = [
   '/',
@@ -43,6 +46,12 @@ export function middleware(request: NextRequest) {
     pathname.startsWith(path)
   );
   const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
+  const isAuthPublicPath = authPublicPaths.some((path) => pathname.startsWith(path));
+  
+  // Allow access to auth public paths regardless of auth status
+  if (isAuthPublicPath) {
+    return NextResponse.next();
+  }
 
   // Handle partner routes - require both authentication and partner role
   if (isPartnerPath) {

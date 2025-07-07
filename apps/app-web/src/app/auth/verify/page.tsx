@@ -14,33 +14,46 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 
 export default function VerifyPage() {
   const router = useRouter();
-  const { user, refreshAuth } = useAuth();
-  const [code, setCode] = useState(['', '', '', '']);
+  const { user } = useAuth();
+  const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Get email from user or sessionStorage (client-side only)
-  const email =
-    user?.email ||
-    (typeof window !== 'undefined'
-      ? JSON.parse(sessionStorage.getItem('user') || '{}').email
-      : '');
+  // Get email from sessionStorage (from registration)
+  const [email, setEmail] = useState<string>('');
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [showCodeEntry, setShowCodeEntry] = useState(false);
+  
+  useEffect(() => {
+    // Initialize email from sessionStorage
+    const regEmail = sessionStorage.getItem('registrationEmail');
+    if (regEmail) {
+      setEmail(regEmail);
+    } else if (user?.email && user?.status === 'PENDING_VERIFICATION') {
+      setEmail(user.email);
+    }
+    setIsInitialized(true);
+  }, [user]);
 
   useEffect(() => {
-    // Redirect if no user or already verified
-    if (!user && !email) {
+    // Only redirect after initialization and if no email is available
+    if (!isInitialized) return;
+    
+    if (!email && !user) {
+      // No email and no user, redirect to login
       router.push('/auth/login');
-    } else if (user?.status === 'ACTIVE') {
+    } else if (user?.status === 'ACTIVE' && user?.emailVerified) {
+      // User is already verified, redirect to home
       router.push('/');
     }
-  }, [user, email, router]);
+  }, [email, user, router, isInitialized]);
 
   useEffect(() => {
     // Countdown timer for resend button
@@ -60,14 +73,14 @@ export default function VerifyPage() {
     setError(null);
 
     // Auto-focus next input
-    if (digit && index < 3) {
+    if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
 
     // Auto-submit when all digits are entered
-    if (index === 3 && digit) {
+    if (index === 5 && digit) {
       const fullCode = [...newCode].join('');
-      if (fullCode.length === 4) {
+      if (fullCode.length === 6) {
         handleVerify(fullCode);
       }
     }
@@ -88,12 +101,12 @@ export default function VerifyPage() {
     const pastedData = e.clipboardData
       .getData('text')
       .replace(/\D/g, '')
-      .slice(0, 4);
+      .slice(0, 6);
 
-    if (pastedData.length === 4) {
+    if (pastedData.length === 6) {
       const newCode = pastedData.split('');
       setCode(newCode);
-      inputRefs.current[3]?.focus();
+      inputRefs.current[5]?.focus();
       handleVerify(pastedData);
     }
   };
@@ -101,8 +114,8 @@ export default function VerifyPage() {
   const handleVerify = async (verificationCode?: string) => {
     const fullCode = verificationCode || code.join('');
 
-    if (fullCode.length !== 4) {
-      setError('Please enter all 4 digits');
+    if (fullCode.length !== 6) {
+      setError('Please enter all 6 digits');
       return;
     }
 
@@ -126,6 +139,7 @@ export default function VerifyPage() {
       // Clear any existing session data since user needs to login after verification
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('user');
+        sessionStorage.removeItem('registrationEmail');
       }
 
       // Redirect to login page with success message
@@ -145,7 +159,7 @@ export default function VerifyPage() {
                           'Invalid code';
       setError(errorMessage);
       // Clear code on error
-      setCode(['', '', '', '']);
+      setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
@@ -161,7 +175,7 @@ export default function VerifyPage() {
       // Set 60 second cooldown
       setResendTimer(60);
       // Clear code
-      setCode(['', '', '', '']);
+      setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (error: unknown) {
       const err = error as {
@@ -187,6 +201,73 @@ export default function VerifyPage() {
       )
     : '';
 
+  // Show loading while initializing
+  if (!isInitialized) {
+    return (
+      <div className="container max-w-md py-16 mx-auto">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show special message if email is from registration and haven't clicked to show code entry
+  if (email && sessionStorage.getItem('registrationEmail') && !showCodeEntry) {
+    return (
+      <div className="container max-w-md py-16 mx-auto">
+        <Card>
+          <CardHeader className="space-y-1">
+            <div className="flex justify-center mb-4">
+              <Mail className="h-12 w-12 text-emerald-500" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-center">
+              Check Your Email
+            </CardTitle>
+            <CardDescription className="text-center">
+              We've sent a 6-digit verification code to:
+              <br />
+              <span className="font-semibold">{email}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                Please check your email for the verification code.
+                {process.env.NODE_ENV === 'development' && (
+                  <span className="block mt-2 text-xs">
+                    Development mode: Check the Strapi console for the code.
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+            
+            <Button
+              onClick={() => {
+                // Show the code entry form
+                setShowCodeEntry(true);
+              }}
+              className="w-full"
+            >
+              Enter Verification Code
+            </Button>
+            
+            <div className="text-sm text-gray-500 space-y-2">
+              <p>Didn't receive the email?</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Check your spam or junk folder</li>
+                <li>Wait a few minutes and try again</li>
+                {process.env.NODE_ENV === 'development' && (
+                  <li>Check the Strapi server console for the code</li>
+                )}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-md py-16 mx-auto">
       <Card>
@@ -195,7 +276,7 @@ export default function VerifyPage() {
             Verify Your Email
           </CardTitle>
           <CardDescription className="text-center">
-            We've sent a 4-digit verification code to {maskedEmail}
+            We've sent a 6-digit verification code to {maskedEmail}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -237,7 +318,7 @@ export default function VerifyPage() {
             <Button
               onClick={() => handleVerify()}
               className="w-full"
-              disabled={isLoading || code.join('').length !== 4}
+              disabled={isLoading || code.join('').length !== 6}
             >
               {isLoading ? (
                 <>
