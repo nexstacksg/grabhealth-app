@@ -104,3 +104,37 @@ jobs:
         
         # Save PM2 process list
         /usr/bin/pm2 save --force
+        
+        # Wait a moment for processes to stabilize
+        sleep 5
+        
+        # Show PM2 logs from all processes
+        echo "=== PM2 Logs (last 50 lines) ==="
+        /usr/bin/pm2 logs --nostream --lines 50
+        
+        # Check server health
+        echo "=== Checking Server Health ==="
+        
+        # Check Strapi health
+        echo "Checking Strapi (port 1337)..."
+        if curl -f -s -o /dev/null -w "%{http_code}" http://localhost:1337/_health | grep -q "204"; then
+          echo "✓ Strapi is healthy"
+        else
+          echo "✗ Strapi health check failed"
+          echo "Strapi logs:"
+          /usr/bin/pm2 logs app-strapi --nostream --lines 100
+          exit 1
+        fi
+        
+        # Check Next.js health
+        echo "Checking Next.js (port 3000)..."
+        if curl -f -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health | grep -q "200"; then
+          echo "✓ Next.js is healthy"
+        else
+          echo "✗ Next.js health check failed"
+          echo "Next.js logs:"
+          /usr/bin/pm2 logs app-web --nostream --lines 100
+          exit 1
+        fi
+        
+        echo "=== All services are running successfully ==="
