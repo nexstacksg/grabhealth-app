@@ -59,6 +59,16 @@ export async function serverApi<T = any>(
       const errorData = await response.json().catch(() => ({}));
       console.error('[ServerAPI] Error:', response.status, errorData);
       
+      // Log more details for debugging
+      if (response.status === 500) {
+        console.error('[ServerAPI] 500 Error Details:', {
+          url,
+          method: options.method,
+          body: options.body,
+          fullError: errorData
+        });
+      }
+      
       return { 
         success: false, 
         error: errorData?.error?.message || `Error ${response.status}: ${response.statusText}`,

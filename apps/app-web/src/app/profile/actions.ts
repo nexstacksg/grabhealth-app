@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiClient } from '@/lib/api-client';
 import { serverApiPut, serverApiPost } from '@/lib/server-api';
 
 export async function updateProfileAction(data: {
@@ -9,7 +8,8 @@ export async function updateProfileAction(data: {
   username: string;
   email: string;
 }) {
-  const result = await serverApiPut(`/users/${data.userId}`, {
+  // Use /users/me endpoint for authenticated users to update their own profile
+  const result = await serverApiPut('/users/me', {
     username: data.username,
     email: data.email,
     firstName: data.username, // Use username as firstName
@@ -32,23 +32,64 @@ export async function uploadProfileImageAction(formData: FormData) {
   }
 
   try {
-    // Use the unified API client which handles auth automatically
+    // Get auth token from cookies
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken');
+    
+    if (!token) {
+      return { error: 'Not authenticated' };
+    }
+
+    // Create FormData for upload
     const uploadFormData = new FormData();
     uploadFormData.append('files', file);
 
-    const uploadedFiles = await apiClient.post('/upload', uploadFormData);
+    // Upload the file to Strapi
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+    const uploadResponse = await fetch(`${baseUrl}/api/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token.value}`,
+      },
+      body: uploadFormData,
+    });
 
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      console.error('Upload failed:', uploadResponse.status, errorData);
+      return { error: errorData?.error?.message || 'Failed to upload image' };
+    }
+
+    const uploadedFiles = await uploadResponse.json();
+    console.log('Upload response:', uploadedFiles);
+    
     const uploadedFile = uploadedFiles[0];
+    
     if (!uploadedFile || !uploadedFile.id) {
+      console.error('No file in upload response:', uploadedFiles);
       return { error: 'No file uploaded' };
     }
 
-    // Update the user's profile image with the media ID
-    const updateResult = await serverApiPut(`/users/${userId}`, {
+    console.log('Updating user profile with image ID:', uploadedFile.id, 'for user:', userId);
+    console.log('Full upload response:', uploadedFile);
+
+    // Update the user's profile image using /users/me endpoint
+    // This endpoint allows users to update their own profile
+    console.log('Attempting to update profile with:', {
+      endpoint: '/users/me',
+      profileImageId: uploadedFile.id,
+      profileImageType: typeof uploadedFile.id
+    });
+    
+    const updateResult = await serverApiPut('/users/me', {
       profileImage: uploadedFile.id,
     });
 
+    console.log('Update result:', updateResult);
+
     if (!updateResult.success) {
+      console.error('Update failed:', updateResult);
       return { error: updateResult.error || 'Failed to update profile image' };
     }
 
