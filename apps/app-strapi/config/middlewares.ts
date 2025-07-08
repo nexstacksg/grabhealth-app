@@ -18,10 +18,20 @@ export default [
   {
     name: 'strapi::cors',
     config: {
-      headers: '*',
+      headers: [
+        'Content-Type',
+        'Authorization',
+        'X-Frame-Options',
+        'Access-Control-Allow-Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods',
+        'Access-Control-Allow-Credentials'
+      ],
       origin: [
         'http://localhost:3000', // app-web
+        'http://localhost:3001', // app-web alternative port
         'https://localhost:3000', // HTTPS variant
+        'https://localhost:3001', // HTTPS variant alternative port
         'https://api.grabhealth.ai', // Production API
         'https://grabhealth.ai', // Production frontend
         // Add production URLs when deployed
@@ -30,6 +40,16 @@ export default [
       credentials: true, // Allow cookies/credentials
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
       maxAge: 31536000,
+      expose: [
+        'Content-Type',
+        'Authorization',
+        'X-Frame-Options',
+        'Access-Control-Allow-Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods',
+        'Access-Control-Allow-Credentials'
+      ],
+      preflightContinue: false,
     },
   },
   'strapi::poweredBy',

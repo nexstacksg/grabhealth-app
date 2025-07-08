@@ -151,6 +151,14 @@ class UnifiedApiClient {
     this.axiosInstance.interceptors.request.use(
       async (config) => {
         try {
+          // Debug request details
+          console.log('🔍 API Request:', {
+            url: `${API_BASE_URL}${config.url}`,
+            method: config.method,
+            data: config.data,
+            headers: config.headers
+          });
+          
           // Get auth token
           const token = await getAuthToken();
 
@@ -178,10 +186,25 @@ class UnifiedApiClient {
     // Response interceptor for error handling
     this.axiosInstance.interceptors.response.use(
       (response) => {
+        // Debug successful response
+        console.log('✅ API Response Success:', {
+          url: response.config.url,
+          status: response.status,
+          data: response.data
+        });
         // Return the data directly (unwrap axios response)
         return response.data;
       },
       (error: AxiosError) => {
+        // Debug error response
+        console.error('❌ API Response Error:', {
+          url: error.config?.url,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        });
+        
         // Transform to our error format
         const apiError = transformError(error);
         return Promise.reject(apiError);
@@ -202,7 +225,14 @@ class UnifiedApiClient {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    return this.axiosInstance.post(endpoint, data, config);
+    try {
+      console.log(`📤 Making POST request to ${endpoint}`, { data });
+      const response = await this.axiosInstance.post<T>(endpoint, data, config);
+      return response as T;
+    } catch (error) {
+      console.error(`📥 POST request to ${endpoint} failed:`, error);
+      throw error;
+    }
   }
 
   async put<T = any>(

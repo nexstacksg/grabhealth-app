@@ -126,6 +126,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         populate: ['role']
       });
 
+      console.log('Email verification successful for user:', updatedUser.email);
+      
       return ctx.send({
         message: 'Email verified successfully',
         user: this.sanitizeUser(updatedUser)

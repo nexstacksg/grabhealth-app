@@ -16,6 +16,17 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail } from 'lucide-react';
 
+// Type assertions to fix React 18/19 compatibility issues
+const TypedCard = Card as any;
+const TypedCardHeader = CardHeader as any;
+const TypedCardTitle = CardTitle as any;
+const TypedCardDescription = CardDescription as any;
+const TypedCardContent = CardContent as any;
+const TypedAlert = Alert as any;
+const TypedAlertDescription = AlertDescription as any;
+const TypedButton = Button as any;
+const TypedInput = Input as any;
+
 export default function VerifyPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -23,6 +34,7 @@ export default function VerifyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -124,39 +136,33 @@ export default function VerifyPage() {
 
     try {
       console.log('Verifying email code for:', email, 'with code:', fullCode);
-      await services.auth.verifyEmailCode(email, fullCode);
-      console.log('Verification successful, updating session storage...');
-
-      // Update user status in sessionStorage (client-side only)
-      if (typeof window !== 'undefined') {
-        const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
-        if (storedUser.email) {
-          storedUser.status = 'ACTIVE';
-          sessionStorage.setItem('user', JSON.stringify(storedUser));
-        }
-      }
-
+      const response = await services.auth.verifyEmailCode(email, fullCode);
+      console.log('Verification response:', response);
+      
+      // Show success message before redirect
+      setError(null);
+      setIsSuccess(true);
+      
       // Clear any existing session data since user needs to login after verification
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('user');
         sessionStorage.removeItem('registrationEmail');
       }
 
-      // Redirect to login page with success message
-      console.log('Redirecting to login...');
-      router.push('/auth/login?verified=true');
-    } catch (error: unknown) {
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        console.log('Redirecting to login...');
+        router.push('/auth/login?verified=true');
+      }, 1000);
+      
+    } catch (error: any) {
       console.error('Verification error:', error);
-      const err = error as {
-        response?: { data?: { error?: { message?: string } } };
-        error?: { message?: string };
-        message?: string;
-      };
-      // Check both response.data.error.message and error.message patterns
-      const errorMessage = err.response?.data?.error?.message || 
-                          err.error?.message || 
-                          err.message || 
-                          'Invalid code';
+      
+      // Handle ApiError from the unified API client
+      const errorMessage = error.details?.error?.message || 
+                          error.message || 
+                          'Invalid or expired verification code';
+      
       setError(errorMessage);
       // Clear code on error
       setCode(['', '', '', '', '', '']);
@@ -204,7 +210,7 @@ export default function VerifyPage() {
   // Show loading while initializing
   if (!isInitialized) {
     return (
-      <div className="container max-w-md py-16 mx-auto">
+      <div className="container max-w-md py-8 px-4 mx-auto">
         <div className="flex justify-center items-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -215,34 +221,34 @@ export default function VerifyPage() {
   // Show special message if email is from registration and haven't clicked to show code entry
   if (email && sessionStorage.getItem('registrationEmail') && !showCodeEntry) {
     return (
-      <div className="container max-w-md py-16 mx-auto">
-        <Card>
-          <CardHeader className="space-y-1">
+      <div className="container max-w-md py-8 px-4 mx-auto">
+        <TypedCard>
+          <TypedCardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
-              <Mail className="h-12 w-12 text-emerald-500" />
+              <Mail className="h-10 w-10 sm:h-12 sm:w-12 text-emerald-500" />
             </div>
-            <CardTitle className="text-2xl font-bold text-center">
+            <TypedCardTitle className="text-xl sm:text-2xl font-bold text-center">
               Check Your Email
-            </CardTitle>
-            <CardDescription className="text-center">
+            </TypedCardTitle>
+            <TypedCardDescription className="text-center text-sm sm:text-base">
               We've sent a 6-digit verification code to:
               <br />
-              <span className="font-semibold">{email}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>
+              <span className="font-semibold break-all">{email}</span>
+            </TypedCardDescription>
+          </TypedCardHeader>
+          <TypedCardContent className="space-y-4 px-4 sm:px-6">
+            <TypedAlert>
+              <TypedAlertDescription className="text-xs sm:text-sm">
                 Please check your email for the verification code.
                 {process.env.NODE_ENV === 'development' && (
                   <span className="block mt-2 text-xs">
                     Development mode: Check the Strapi console for the code.
                   </span>
                 )}
-              </AlertDescription>
-            </Alert>
+              </TypedAlertDescription>
+            </TypedAlert>
             
-            <Button
+            <TypedButton
               onClick={() => {
                 // Show the code entry form
                 setShowCodeEntry(true);
@@ -250,9 +256,9 @@ export default function VerifyPage() {
               className="w-full"
             >
               Enter Verification Code
-            </Button>
+            </TypedButton>
             
-            <div className="text-sm text-gray-500 space-y-2">
+            <div className="text-xs sm:text-sm text-gray-500 space-y-2">
               <p>Didn't receive the email?</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Check your spam or junk folder</li>
@@ -262,63 +268,73 @@ export default function VerifyPage() {
                 )}
               </ul>
             </div>
-          </CardContent>
-        </Card>
+          </TypedCardContent>
+        </TypedCard>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-md py-16 mx-auto">
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
+    <div className="container max-w-md py-8 px-4 mx-auto">
+      <TypedCard>
+        <TypedCardHeader className="space-y-1">
+          <TypedCardTitle className="text-xl sm:text-2xl font-bold text-center">
             Verify Your Email
-          </CardTitle>
-          <CardDescription className="text-center">
+          </TypedCardTitle>
+          <TypedCardDescription className="text-center text-sm sm:text-base">
             We've sent a 6-digit verification code to {maskedEmail}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </TypedCardDescription>
+        </TypedCardHeader>
+        <TypedCardContent className="px-4 sm:px-6">
           {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <TypedAlert variant="destructive" className="mb-4">
+              <TypedAlertDescription className="text-xs sm:text-sm">{error}</TypedAlertDescription>
+            </TypedAlert>
+          )}
+
+          {isSuccess && (
+            <TypedAlert className="mb-4">
+              <TypedAlertDescription className="text-xs sm:text-sm">
+                Email verified successfully! Redirecting to login...
+              </TypedAlertDescription>
+            </TypedAlert>
           )}
 
           {/* Info message about email being sent */}
-          <Alert className="mb-4">
-            <AlertDescription>
-              The verification code has been sent to your email. It may take a few moments to arrive. Please check your spam folder if you don't see it.
-            </AlertDescription>
-          </Alert>
+          {!isSuccess && (
+            <TypedAlert className="mb-4">
+              <TypedAlertDescription className="text-xs sm:text-sm">
+                The verification code has been sent to your email. It may take a few moments to arrive. Please check your spam folder if you don't see it.
+              </TypedAlertDescription>
+            </TypedAlert>
+          )}
 
           <div className="space-y-4">
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-1 sm:gap-2">
               {code.map((digit, index) => (
-                <Input
+                <TypedInput
                   key={index}
-                  ref={(el) => {
+                  ref={(el: HTMLInputElement) => {
                     inputRefs.current[index] = el;
                   }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
                   value={digit}
-                  onChange={(e) => handleCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCodeChange(index, e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-14 h-14 text-center text-2xl font-bold"
-                  disabled={isLoading}
+                  className="w-12 h-12 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold"
+                  disabled={isLoading || isSuccess}
                   autoFocus={index === 0}
                 />
               ))}
             </div>
 
-            <Button
+            <TypedButton
               onClick={() => handleVerify()}
               className="w-full"
-              disabled={isLoading || code.join('').length !== 6}
+              disabled={isLoading || isSuccess || code.join('').length !== 6}
             >
               {isLoading ? (
                 <>
@@ -328,13 +344,13 @@ export default function VerifyPage() {
               ) : (
                 'Verify Email'
               )}
-            </Button>
+            </TypedButton>
 
-            <div className="text-center text-sm">
-              <p className="text-gray-500 mb-2">
+            <div className="text-center text-xs sm:text-sm">
+              <p className="text-gray-500 mb-2 text-xs sm:text-sm">
                 Didn&apos;t receive the code?
               </p>
-              <Button
+              <TypedButton
                 variant="link"
                 onClick={handleResend}
                 disabled={isResending || resendTimer > 0}
@@ -350,21 +366,21 @@ export default function VerifyPage() {
                 ) : (
                   'Resend code'
                 )}
-              </Button>
+              </TypedButton>
             </div>
 
             <div className="text-center">
-              <Button
+              <TypedButton
                 variant="ghost"
                 onClick={() => router.push('/auth/login')}
-                className="text-sm"
+                className="text-xs sm:text-sm"
               >
                 Back to login
-              </Button>
+              </TypedButton>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </TypedCardContent>
+      </TypedCard>
     </div>
   );
 }

@@ -1,16 +1,18 @@
 module.exports = ({ env }) => {
   // Debug environment variables
+  console.log('Email Configuration Debug:');
   console.log('MAILGUN_API_KEY:', process.env.MAILGUN_API_KEY ? 'exists' : 'missing');
-  console.log('MAILGUN_DOMAIN:', process.env.MAILGUN_DOMAIN ? 'exists' : 'missing');
+  console.log('MAILGUN_DOMAIN:', process.env.MAILGUN_DOMAIN);
+  console.log('MAILGUN_FROM_EMAIL:', process.env.MAILGUN_FROM_EMAIL);
   
   return {
     email: {
       config: {
         provider: '@strapi/provider-email-mailgun',
         providerOptions: {
-          key: process.env.MAILGUN_API_KEY, // Changed from apiKey to key as required by the provider
-          domain: process.env.MAILGUN_DOMAIN,
-          host: process.env.MAILGUN_HOST || 'api.mailgun.net', // optional
+          key: env('MAILGUN_API_KEY'), // The provider expects 'key' not 'apiKey'
+          domain: env('MAILGUN_DOMAIN'),
+          host: 'https://api.mailgun.net', // Use full URL
         },
         settings: {
           defaultFrom: env('MAILGUN_FROM_EMAIL', 'noreply@example.com'),
