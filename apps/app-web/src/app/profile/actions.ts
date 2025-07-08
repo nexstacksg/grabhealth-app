@@ -66,7 +66,14 @@ export async function changePasswordAction(data: {
   currentPassword: string;
   newPassword: string;
 }) {
-  // Note: Strapi doesn't have a built-in change password endpoint for authenticated users
-  // This would need to be implemented as a custom endpoint in Strapi
-  return { error: 'Password change functionality is not yet implemented with Strapi backend. Please use the forgot password flow instead.' };
+  const result = await serverApiPost('/custom-auth/change-password', {
+    currentPassword: data.currentPassword,
+    newPassword: data.newPassword,
+  });
+
+  if (result.success) {
+    return { success: true };
+  }
+
+  return { error: result.error || 'Failed to change password' };
 }

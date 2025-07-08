@@ -30,5 +30,17 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/custom-auth/change-password',
+      handler: 'custom-auth.changePassword',
+      config: {
+        auth: {
+          scope: ['authenticated']
+        },
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

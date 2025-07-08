@@ -179,6 +179,23 @@ export default {
             action: 'api::booking.booking.update',
             subject: null,
           },
+          // Upload permissions for authenticated users
+          {
+            action: 'plugin::upload.content-api.find',
+            subject: null,
+          },
+          {
+            action: 'plugin::upload.content-api.findOne',
+            subject: null,
+          },
+          {
+            action: 'plugin::upload.content-api.upload',
+            subject: null,
+          },
+          {
+            action: 'plugin::upload.content-api.destroy',
+            subject: null,
+          },
         ];
 
         for (const permission of authPermissions) {

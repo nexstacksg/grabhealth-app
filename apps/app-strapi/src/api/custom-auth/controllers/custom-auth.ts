@@ -219,6 +219,64 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
   },
 
+  async changePassword(ctx: any) {
+    try {
+      const { currentPassword, newPassword } = ctx.request.body;
+      const userId = ctx.state.user?.id;
+
+      if (!userId) {
+        return ctx.unauthorized('You must be logged in to change your password');
+      }
+
+      if (!currentPassword || !newPassword) {
+        return ctx.badRequest('Current password and new password are required');
+      }
+
+      // Validate new password length
+      if (newPassword.length < 8) {
+        return ctx.badRequest('New password must be at least 8 characters long');
+      }
+
+      // Get the user with password
+      const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { id: userId },
+        select: ['id', 'email', 'password']
+      });
+
+      if (!user) {
+        return ctx.notFound('User not found');
+      }
+
+      // Verify current password
+      const validPassword = await strapi.plugin('users-permissions').service('user').validatePassword(
+        currentPassword,
+        user.password
+      );
+
+      if (!validPassword) {
+        return ctx.badRequest('Current password is incorrect');
+      }
+
+      // Update password
+      await strapi.db.query('plugin::users-permissions.user').update({
+        where: { id: userId },
+        data: {
+          password: await strapi.plugin('users-permissions').service('user').hashPassword({
+            password: newPassword
+          })
+        }
+      });
+
+      return ctx.send({
+        message: 'Password changed successfully'
+      });
+
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      return ctx.internalServerError('Failed to change password: ' + error.message);
+    }
+  },
+
   // Helper to sanitize user data
   sanitizeUser(user: any) {
     const { password, emailVerificationCode, emailVerificationCodeExpires, ...sanitized } = user;
