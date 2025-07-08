@@ -30,5 +30,44 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/custom-auth/forgot-password',
+      handler: 'custom-auth.forgotPassword',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/custom-auth/validate-reset-code',
+      handler: 'custom-auth.validateResetCode',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/custom-auth/reset-password',
+      handler: 'custom-auth.resetPassword',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/custom-auth/change-password',
+      handler: 'custom-auth.changePassword',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

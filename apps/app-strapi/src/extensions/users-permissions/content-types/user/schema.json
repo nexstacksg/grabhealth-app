@@ -74,23 +74,20 @@
       "type": "string",
       "required": false
     },
-    "profileImage": {
-      "type": "string"
-    },
     "referralCode": {
       "type": "string",
       "unique": true
     },
-    "status": {
+    "userStatus": {
       "type": "enumeration",
+      "required": true,
+      "default": "PENDING_VERIFICATION",
       "enum": [
         "ACTIVE",
         "PENDING_VERIFICATION",
         "SUSPENDED",
         "INACTIVE"
-      ],
-      "default": "PENDING_VERIFICATION",
-      "required": true
+      ]
     },
     "lastLoginAt": {
       "type": "datetime"
@@ -129,6 +126,16 @@
       "relation": "manyToOne",
       "target": "api::partner.partner",
       "inversedBy": "users"
+    },
+    "profileImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

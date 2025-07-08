@@ -38,15 +38,14 @@ export async function uploadProfileImageAction(formData: FormData) {
 
     const uploadedFiles = await apiClient.post('/upload', uploadFormData);
 
-    const imageUrl = uploadedFiles[0]?.url;
-
-    if (!imageUrl) {
-      return { error: 'No image URL returned' };
+    const uploadedFile = uploadedFiles[0];
+    if (!uploadedFile || !uploadedFile.id) {
+      return { error: 'No file uploaded' };
     }
 
-    // Update the user's profile image
+    // Update the user's profile image with the media ID
     const updateResult = await serverApiPut(`/users/${userId}`, {
-      profileImage: imageUrl,
+      profileImage: uploadedFile.id,
     });
 
     if (!updateResult.success) {
@@ -54,7 +53,7 @@ export async function uploadProfileImageAction(formData: FormData) {
     }
 
     revalidatePath('/profile');
-    return { success: true, imageUrl };
+    return { success: true, imageUrl: uploadedFile.url };
   } catch (error: any) {
     console.error('Image upload error:', error);
     return { error: error.message || 'Failed to upload image' };
@@ -66,7 +65,14 @@ export async function changePasswordAction(data: {
   currentPassword: string;
   newPassword: string;
 }) {
-  // Note: Strapi doesn't have a built-in change password endpoint for authenticated users
-  // This would need to be implemented as a custom endpoint in Strapi
-  return { error: 'Password change functionality is not yet implemented with Strapi backend. Please use the forgot password flow instead.' };
+  const result = await serverApiPost('/custom-auth/change-password', {
+    currentPassword: data.currentPassword,
+    newPassword: data.newPassword,
+  });
+
+  if (result.success) {
+    return { success: true };
+  }
+
+  return { error: result.error || 'Failed to change password' };
 }

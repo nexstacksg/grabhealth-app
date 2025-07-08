@@ -82,16 +82,21 @@ export default function ForgotPasswordPage() {
               Check your email
             </CardTitle>
             <CardDescription className="text-center">
-              We've sent a password reset link to {form.getValues('email')}
+              We've sent a password reset code to {form.getValues('email')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-center text-gray-600">
-              If you don't see the email, check your spam folder. The link will
-              expire in 1 hour.
+              If you don't see the email, check your spam folder. The code will
+              expire in 10 minutes.
             </p>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-2">
+            <Link href="/auth/reset-password" className="w-full">
+              <Button variant="default" className="w-full">
+                I have a reset code
+              </Button>
+            </Link>
             <Link href="/auth/login" className="w-full">
               <Button variant="outline" className="w-full">
                 Back to login
@@ -111,7 +116,7 @@ export default function ForgotPasswordPage() {
             Reset password
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your email address and we'll send you a link to reset your
+            Enter your email address and we'll send you a code to reset your
             password
           </CardDescription>
         </CardHeader>
@@ -143,7 +148,7 @@ export default function ForgotPasswordPage() {
                     Sending...
                   </>
                 ) : (
-                  'Send reset link'
+                  'Send reset code'
                 )}
               </Button>
             </form>

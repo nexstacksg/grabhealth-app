@@ -14,51 +14,51 @@
   "attributes": {
     "orderNumber": {
       "type": "string",
-      "unique": true,
-      "required": true
+      "required": true,
+      "unique": true
     },
     "total": {
       "type": "decimal",
-      "default": 0,
-      "required": false
+      "required": false,
+      "default": 0
     },
     "subtotal": {
       "type": "decimal",
-      "default": 0,
-      "required": false
+      "required": false,
+      "default": 0
     },
     "discount": {
       "type": "decimal",
-      "default": 0,
-      "required": false
+      "required": false,
+      "default": 0
     },
     "tax": {
       "type": "decimal",
-      "default": 0,
-      "required": false
+      "required": false,
+      "default": 0
     },
-    "status": {
+    "orderStatus": {
       "type": "enumeration",
+      "required": true,
+      "default": "PENDING",
       "enum": [
         "PENDING",
         "PENDING_PAYMENT",
         "PROCESSING",
         "COMPLETED",
         "CANCELLED"
-      ],
-      "default": "PENDING",
-      "required": true
+      ]
     },
     "paymentStatus": {
       "type": "enumeration",
+      "required": true,
+      "default": "PENDING",
       "enum": [
         "PENDING",
         "PAID",
         "FAILED",
         "REFUNDED"
-      ],
-      "default": "PENDING",
-      "required": true
+      ]
     },
     "paymentMethod": {
       "type": "string",

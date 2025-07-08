@@ -477,34 +477,6 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiCustomAuthCustomAuth extends Struct.SingleTypeSchema {
-  collectionName: 'custom_auths';
-  info: {
-    description: 'Custom authentication handlers';
-    displayName: 'Custom Auth';
-    pluralName: 'custom-auths';
-    singularName: 'custom-auth';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::custom-auth.custom-auth'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiOrderItemOrderItem extends Struct.CollectionTypeSchema {
   collectionName: 'order_items';
   info: {
@@ -585,6 +557,11 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     orderNumber: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
+    orderStatus: Schema.Attribute.Enumeration<
+      ['PENDING', 'PENDING_PAYMENT', 'PROCESSING', 'COMPLETED', 'CANCELLED']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PENDING'>;
     paymentMethod: Schema.Attribute.String;
     paymentStatus: Schema.Attribute.Enumeration<
       ['PENDING', 'PAID', 'FAILED', 'REFUNDED']
@@ -593,11 +570,6 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<'PENDING'>;
     publishedAt: Schema.Attribute.DateTime;
     shippingAddress: Schema.Attribute.Text;
-    status: Schema.Attribute.Enumeration<
-      ['PENDING', 'PENDING_PAYMENT', 'PROCESSING', 'COMPLETED', 'CANCELLED']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'PENDING'>;
     subtotal: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     tax: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     total: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
@@ -1382,7 +1354,9 @@ export interface PluginUsersPermissionsUser
         minLength: 6;
       }>;
     passwordResetExpires: Schema.Attribute.DateTime & Schema.Attribute.Private;
-    profileImage: Schema.Attribute.String;
+    profileImage: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     referralCode: Schema.Attribute.String & Schema.Attribute.Unique;
@@ -1392,11 +1366,6 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
-    status: Schema.Attribute.Enumeration<
-      ['ACTIVE', 'PENDING_VERIFICATION', 'SUSPENDED', 'INACTIVE']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'PENDING_VERIFICATION'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1410,6 +1379,11 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 3;
       }>;
+    userStatus: Schema.Attribute.Enumeration<
+      ['ACTIVE', 'PENDING_VERIFICATION', 'SUSPENDED', 'INACTIVE']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PENDING_VERIFICATION'>;
   };
 }
 
@@ -1425,7 +1399,6 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::booking.booking': ApiBookingBooking;
       'api::category.category': ApiCategoryCategory;
-      'api::custom-auth.custom-auth': ApiCustomAuthCustomAuth;
       'api::order-item.order-item': ApiOrderItemOrderItem;
       'api::order.order': ApiOrderOrder;
       'api::partner-availability.partner-availability': ApiPartnerAvailabilityPartnerAvailability;

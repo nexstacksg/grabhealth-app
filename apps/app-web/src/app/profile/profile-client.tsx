@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateProfileAction, uploadProfileImageAction, changePasswordAction } from './actions';
@@ -111,8 +111,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       return;
     }
 
-    if (formData.newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (formData.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -177,7 +177,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   <div className="flex flex-col items-center self-center sm:self-start">
                     <label className="relative cursor-pointer group">
                       <div className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-3 sm:mb-4">
-                        {user?.profileImage ? (
+                        {user?.profileImage && user.profileImage.trim() !== '' ? (
                           <Image
                             src={user.profileImage}
                             alt="Profile"

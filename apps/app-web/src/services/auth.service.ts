@@ -141,8 +141,8 @@ class AuthService extends BaseService {
 
   async requestPasswordReset(email: string): Promise<void> {
     try {
-      // Strapi has a forgot password endpoint
-      await this.api.post('/auth/forgot-password', { email });
+      // Use custom forgot password endpoint
+      await this.api.post('/custom-auth/forgot-password', { email });
     } catch (error) {
       this.handleError(error);
     }
@@ -154,12 +154,41 @@ class AuthService extends BaseService {
     passwordConfirmation: string
   ): Promise<void> {
     try {
-      // Strapi reset password endpoint
-      await this.api.post('/auth/reset-password', {
+      // Use custom reset password endpoint
+      await this.api.post('/custom-auth/reset-password', {
         code,
         password,
         passwordConfirmation,
       });
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async resetPasswordWithEmail(
+    email: string,
+    code: string,
+    password: string
+  ): Promise<void> {
+    try {
+      // Use custom reset password endpoint with email
+      await this.api.post('/custom-auth/reset-password', {
+        email,
+        code,
+        password,
+      });
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async validateResetCode(email: string, code: string): Promise<{ valid: boolean }> {
+    try {
+      const response = await this.api.post<{ valid: boolean }>('/custom-auth/validate-reset-code', {
+        email,
+        code,
+      });
+      return response;
     } catch (error) {
       this.handleError(error);
     }
@@ -186,6 +215,18 @@ class AuthService extends BaseService {
     try {
       // Use custom resend code endpoint
       await this.api.post('/custom-auth/resend-code', { email });
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    try {
+      // Use custom change password endpoint
+      await this.api.post('/custom-auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
     } catch (error) {
       this.handleError(error);
     }
