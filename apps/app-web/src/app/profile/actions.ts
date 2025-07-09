@@ -8,8 +8,8 @@ export async function updateProfileAction(data: {
   username: string;
   email: string;
 }) {
-  // Use /users/me endpoint for authenticated users to update their own profile
-  const result = await serverApiPut('/users/me', {
+  // Use custom-auth update-profile endpoint for authenticated users
+  const result = await serverApiPut('/custom-auth/update-profile', {
     username: data.username,
     email: data.email,
     firstName: data.username, // Use username as firstName
@@ -74,15 +74,15 @@ export async function uploadProfileImageAction(formData: FormData) {
     console.log('Updating user profile with image ID:', uploadedFile.id, 'for user:', userId);
     console.log('Full upload response:', uploadedFile);
 
-    // Update the user's profile image using /users/me endpoint
+    // Update the user's profile image using custom-auth update-profile endpoint
     // This endpoint allows users to update their own profile
     console.log('Attempting to update profile with:', {
-      endpoint: '/users/me',
+      endpoint: '/custom-auth/update-profile',
       profileImageId: uploadedFile.id,
       profileImageType: typeof uploadedFile.id
     });
     
-    const updateResult = await serverApiPut('/users/me', {
+    const updateResult = await serverApiPut('/custom-auth/update-profile', {
       profileImage: uploadedFile.id,
     });
 

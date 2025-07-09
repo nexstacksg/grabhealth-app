@@ -69,5 +69,14 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'PUT',
+      path: '/custom-auth/update-profile',
+      handler: 'custom-auth.updateProfile',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

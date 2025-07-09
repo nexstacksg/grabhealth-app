@@ -386,5 +386,37 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       console.error('Change password error:', error);
       return ctx.internalServerError('Failed to change password');
     }
+  },
+
+  async updateProfile(ctx) {
+    try {
+      const userId = ctx.state.user.id;
+      if (!userId) {
+        return ctx.unauthorized('User not authenticated');
+      }
+
+      const { username, email, firstName, profileImage } = ctx.request.body;
+
+      // Prepare update data
+      const updateData: any = {};
+      if (username !== undefined) updateData.username = username;
+      if (email !== undefined) updateData.email = email;
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (profileImage !== undefined) updateData.profileImage = profileImage;
+
+      // Update user using the users-permissions service
+      const updatedUser = await strapi.plugin('users-permissions').service('user').edit(userId, updateData);
+
+      // Remove sensitive data
+      const { password, resetPasswordToken, confirmationToken, ...sanitizedUser } = updatedUser;
+
+      return ctx.send({
+        user: sanitizedUser
+      });
+
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return ctx.internalServerError('Failed to update profile');
+    }
   }
 });
