@@ -42,8 +42,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         confirmed: false,
         blocked: false,
         role: publicRole.id,
-        verificationCode,
-        verificationCodeExpiry: codeExpiry
+        emailVerificationCode: verificationCode,
+        emailVerificationCodeExpires: codeExpiry
       });
 
       // Send verification email
@@ -89,7 +89,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const user = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { 
           email: email.toLowerCase(),
-          verificationCode: code
+          emailVerificationCode: code
         }
       });
 
@@ -98,7 +98,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       }
 
       // Check if code is expired
-      if (new Date() > new Date(user.verificationCodeExpiry)) {
+      if (new Date() > new Date(user.emailVerificationCodeExpires)) {
         return ctx.badRequest('Verification code has expired');
       }
 
@@ -117,8 +117,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         data: {
           confirmed: true,
           role: authenticatedRole.id,
-          verificationCode: null,
-          verificationCodeExpiry: null
+          emailVerificationCode: null,
+          emailVerificationCodeExpires: null
         }
       });
 
@@ -169,8 +169,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       await strapi.db.query('plugin::users-permissions.user').update({
         where: { id: user.id },
         data: {
-          verificationCode,
-          verificationCodeExpiry: codeExpiry
+          emailVerificationCode: verificationCode,
+          emailVerificationCodeExpires: codeExpiry
         }
       });
 
@@ -222,12 +222,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
       const codeExpiry = new Date(Date.now() + VERIFICATION_CODE_EXPIRY);
 
-      // Store reset code in verification fields (reusing them for password reset)
+      // Store reset code in resetPasswordToken field for password reset
       await strapi.db.query('plugin::users-permissions.user').update({
         where: { id: user.id },
         data: {
-          verificationCode: resetCode,
-          verificationCodeExpiry: codeExpiry
+          resetPasswordToken: resetCode,
+          passwordResetExpires: codeExpiry
         }
       });
 
@@ -266,7 +266,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const user = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { 
           email: email.toLowerCase(),
-          verificationCode: code
+          resetPasswordToken: code
         }
       });
 
@@ -275,7 +275,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       }
 
       // Check if code is expired
-      if (new Date() > new Date(user.verificationCodeExpiry)) {
+      if (new Date() > new Date(user.passwordResetExpires)) {
         return ctx.send({ valid: false });
       }
 
@@ -304,7 +304,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const user = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { 
           email: email.toLowerCase(),
-          verificationCode: code
+          resetPasswordToken: code
         }
       });
 
@@ -313,15 +313,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       }
 
       // Check if code is expired
-      if (new Date() > new Date(user.verificationCodeExpiry)) {
+      if (new Date() > new Date(user.passwordResetExpires)) {
         return ctx.badRequest('Reset code has expired');
       }
 
       // Update password using the users-permissions service to ensure proper hashing
       await strapi.plugin('users-permissions').service('user').edit(user.id, {
         password,
-        verificationCode: null,
-        verificationCodeExpiry: null
+        resetPasswordToken: null,
+        passwordResetExpires: null
       });
 
       return ctx.send({
