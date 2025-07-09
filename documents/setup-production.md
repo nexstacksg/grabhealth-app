@@ -140,8 +140,8 @@ When updating environment variables:
 
 2. **Build Applications**
    ```bash
-   bun install
-   bun run build
+   pnpm install
+   pnpm run build
    ```
 
 3. **Run Database Migrations**

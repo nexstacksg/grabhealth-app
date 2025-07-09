@@ -95,7 +95,7 @@ App Template is a modern full-stack application template that provides a solid f
 - User profile creation and editing
 - Profile photo upload
 - Role-based access control (User, Manager, Super Admin)
-- Account status management (Active, Inactive, Suspended, Pending Verification)
+- AccountStatus management (Active, Inactive, Suspended, Pending Verification)
 
 ### Security Features
 
@@ -156,7 +156,7 @@ App Template is a modern full-stack application template that provides a solid f
 ### Getting Started
 
 1. Clone the repository
-2. Install dependencies with `bun install`
+2. Install dependencies with `pnpm install`
 3. Set up environment variables
 4. Run database migrations
 5. Start development servers

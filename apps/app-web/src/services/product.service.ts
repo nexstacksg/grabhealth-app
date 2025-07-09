@@ -85,7 +85,7 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
     category: transformStrapiCategory(strapiProduct.category),
     imageUrl,
     inStock: strapiProduct.inStock ?? true,
-    status: strapiProduct.productStatus || strapiProduct.status || 'ACTIVE',
+    status: strapiProduct.xStatus || strapiProduct.productStatus || 'ACTIVE',
     sku: strapiProduct.sku || undefined,
     qty: strapiProduct.qty || undefined,
     slug: strapiProduct.slug || undefined,

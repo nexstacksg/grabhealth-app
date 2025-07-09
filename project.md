@@ -51,9 +51,9 @@ To simplify the system, we removed:
 ### Quick Start
 ```bash
 # From root directory
-bun install
-bun run dev:strapi  # Start backend
-bun run dev:web     # Start frontend
+pnpm install
+pnpm run dev:strapi  # Start backend
+pnpm run dev:web     # Start frontend
 ```
 
 ### Next Steps

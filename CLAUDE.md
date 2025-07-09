@@ -52,7 +52,7 @@ pnpm run start            # Start production server
 # Content Types (simplified)
 - User (with upline/downline relations)
 - Product & Category
-- Order & Order Items  
+- Order & Order Items
 - Partner & Services
 - Booking & Partner Availability
 ```
@@ -105,7 +105,7 @@ Products → Categories
 
 Orders
 ├── orderNumber (unique)
-├── status (PENDING_PAYMENT, PROCESSING, COMPLETED, CANCELLED)
+├── orderStatus (PENDING_PAYMENT, PROCESSING, COMPLETED, CANCELLED)
 ├── paymentStatus (PENDING, PAID, FAILED, REFUNDED)
 ├── paymentMethod
 └── user (relation)
@@ -127,17 +127,20 @@ Bookings → Users + Services
 ## Payment Flow (HitPay Integration)
 
 ### Order Creation Before Payment
-1. **Checkout**: User fills form → Order created with `PENDING_PAYMENT` status
+
+1. **Checkout**: User fills form → Order created with `PENDING_PAYMENT` orderStatus
 2. **Payment**: User redirected to HitPay with order number as reference
 3. **Success**: Payment complete → Redirect to success page with orderId
 4. **Webhook**: HitPay notifies → Order updated to `PROCESSING` + `PAID`
 5. **Display**: Success page shows complete order details
 
 ### Order Status vs Payment Status
+
 - **Order Status**: Tracks fulfillment lifecycle (PENDING_PAYMENT → PROCESSING → COMPLETED)
 - **Payment Status**: Tracks payment state (PENDING → PAID/FAILED → REFUNDED)
 
 ### Key Benefits
+
 - No lost orders (order exists before payment)
 - Better tracking of abandoned checkouts
 - Immediate order confirmation

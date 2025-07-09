@@ -7,18 +7,21 @@ This document outlines the improvements needed for the app-web frontend codebase
 ### Major DRY Violations Found
 
 #### 1. **Duplicate API Client Implementations**
+
 - **Problem**: Two separate API clients doing the same thing
   - `/lib/api-client.ts` - Axios-based unified client
   - `/lib/server-api.ts` - Fetch-based server API
-- **Impact**: 
+- **Impact**:
   - Duplicate auth token handling
   - Different error handling approaches
   - Maintenance overhead
 - **Solution**: Use only `api-client.ts` everywhere, delete `server-api.ts`
 
 #### 2. **Repeated Server Action Pattern**
+
 - **Problem**: Every action file repeats the same try-catch-revalidate pattern
 - **Example**: Found in `order.actions.ts`, `auth.actions.ts`, `booking.actions.ts`, etc.
+
 ```typescript
 try {
   const result = await serverApi<T>(endpoint, options);
@@ -31,7 +34,9 @@ try {
   return { error: error.message };
 }
 ```
+
 - **Solution**: Create a base server action function:
+
 ```typescript
 export async function createServerAction<T>(
   apiCall: () => Promise<T>,
@@ -40,7 +45,7 @@ export async function createServerAction<T>(
   try {
     const data = await apiCall();
     if (revalidatePaths) {
-      revalidatePaths.forEach(path => revalidatePath(path));
+      revalidatePaths.forEach((path) => revalidatePath(path));
     }
     return { success: true, data };
   } catch (error) {
@@ -50,6 +55,7 @@ export async function createServerAction<T>(
 ```
 
 #### 3. **Three Separate Auth Utility Files**
+
 - **Problem**: Auth logic split across multiple files with duplication
   - `/lib/auth-utils-client.ts`
   - `/lib/auth-utils-server.ts`
@@ -58,11 +64,13 @@ export async function createServerAction<T>(
 - **Solution**: Merge into single auth module with client/server exports
 
 #### 4. **Service Layer Not Using BaseService**
+
 - **Problem**: Services duplicate error handling instead of using BaseService
 - **Example**: OrderService, ProductService implement their own error handling
 - **Solution**: Make all services properly extend BaseService
 
 #### 5. **Duplicate UI Components**
+
 - **Found**:
   - Two pagination components: `/components/products/Pagination.tsx` & `/components/ui/pagination.tsx`
   - Three table components: `table.tsx`, `responsive-table.tsx`, `responsive-table-wrapper.tsx`
@@ -84,19 +92,20 @@ export async function createServerAction<T>(
 
 Several components exceed 500 lines and handle too many responsibilities:
 
-| Status | Lines | File Path |
-|:------:|:-----:|:----------|
-| ✅ | ~~926~~ → **132** | `/src/app/products/page.tsx` **REFACTORED** |
-| ⚠️ | 763 | `/src/components/ui/sidebar.tsx` |
-| ⚠️ | 740 | `/src/components/commission/commission-network.tsx` |
-| ⚠️ | 589 | `/src/app/cart/checkout/page.tsx` |
-| ⚠️ | 583 | `/src/components/rank-rewards/rank-rewards-content.tsx` |
-| ⚠️ | 536 | `/src/app/products/[id]/page.tsx` |
-| ⚠️ | 526 | `/src/components/rank-rewards/rank-visualization.tsx` |
-| ⚠️ | 504 | `/src/components/product-chatbot.tsx` |
-| ⚠️ | 460 | `/src/components/membership-profile.tsx` |
+| Status |       Lines       | File Path                                               |
+| :----: | :---------------: | :------------------------------------------------------ |
+|   ✅   | ~~926~~ → **132** | `/src/app/products/page.tsx` **REFACTORED**             |
+|   ⚠️   |        763        | `/src/components/ui/sidebar.tsx`                        |
+|   ⚠️   |        740        | `/src/components/commission/commission-network.tsx`     |
+|   ⚠️   |        589        | `/src/app/cart/checkout/page.tsx`                       |
+|   ⚠️   |        583        | `/src/components/rank-rewards/rank-rewards-content.tsx` |
+|   ⚠️   |        536        | `/src/app/products/[id]/page.tsx`                       |
+|   ⚠️   |        526        | `/src/components/rank-rewards/rank-visualization.tsx`   |
+|   ⚠️   |        504        | `/src/components/product-chatbot.tsx`                   |
+|   ⚠️   |        460        | `/src/components/membership-profile.tsx`                |
 
 **Key components requiring attention:**
+
 - 📄 `product-chatbot.tsx` (504 lines)
 - 📄 `membership-profile.tsx` (460 lines - reduced from 520)
 - 📄 `header.tsx` (256 lines with duplicate logic)
@@ -140,6 +149,7 @@ The products page has been successfully refactored from 926 lines to 132 lines (
 ```
 
 **Key improvements:** ✨
+
 - ✅ Separated concerns with custom hooks
 - 🚀 Implemented React.memo for performance
 - 🔄 Created reusable components
@@ -487,7 +497,7 @@ catch (error: any) {
 ```tsx
 // types/api.types.ts
 export interface ApiError {
-  status: number;
+  apiStatus: number;
   message: string;
   code?: string;
   details?: Record<string, any>;
@@ -557,6 +567,7 @@ components/
 ## ✅ Recent Improvements Completed
 
 ### Admin Functionality Migration
+
 - **Moved admin files to app-admin project:**
   - `admin.service.ts` moved from app-web to app-admin
   - `sidebar.tsx` component moved to app-admin
@@ -565,6 +576,7 @@ components/
   - Successfully separated admin concerns from main app
 
 ### Build and Type Safety Fixes
+
 - **Fixed all service files to work with updated apiClient:**
   - Removed ApiResponse wrapper expectations (apiClient returns data directly)
   - Updated 12 service files: auth, product, cart, category, commission, dashboard, membership, order, partner, profile, promotion, user
@@ -573,6 +585,7 @@ components/
   - Build now completes successfully
 
 ### Build Configuration
+
 - Temporarily disabled app-admin build to allow incremental migration
 - ESLint configured to not fail builds on warnings
 
@@ -613,6 +626,7 @@ components/
 - [ ] 100% critical path test coverage
 
 ### Completed Items:
+
 - ✅ Products page refactored from 926 to 132 lines (86% reduction)
 - ✅ All service files updated for type safety
 - ✅ Admin functionality properly separated

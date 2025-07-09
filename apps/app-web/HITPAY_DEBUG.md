@@ -1,9 +1,11 @@
 # HitPay Order Creation Debugging Guide
 
 ## Current Issue
+
 Orders are not being created in Strapi after successful HitPay payments.
 
 ## Architecture Overview
+
 1. User initiates payment → Redirected to HitPay
 2. HitPay processes payment → Sends webhook to `/api/webhooks/hitpay`
 3. Webhook retrieves pending order → Calls internal API `/api/internal/create-order`
@@ -32,17 +34,20 @@ NEXT_PUBLIC_API_URL=http://localhost:1337
 ### 1. Test the Internal API Directly
 
 Run the test script:
+
 ```bash
 node test-internal-api.js
 ```
 
 Before running, update the script with:
+
 - A real user documentId
 - A real product documentId
 
 ### 2. Check Console Logs
 
 Look for these log markers in your console:
+
 - `=== WEBHOOK: Payment completed ===` - Webhook received payment
 - `=== WEBHOOK: Found pending order ===` - Pending order data found
 - `=== WEBHOOK: Creating order via internal API ===` - Calling internal API
@@ -53,22 +58,27 @@ Look for these log markers in your console:
 ### 3. Common Issues & Solutions
 
 #### Issue: "No pending order found"
+
 - The reference number doesn't match
 - Pending order expired or was already processed
 - Check `getPendingOrder` function in `/lib/pending-orders.ts`
 
 #### Issue: "Invalid internal API secret"
+
 - `INTERNAL_API_SECRET` not set in environment
 - Secret mismatch between webhook and internal API
 
 #### Issue: "API token not configured"
+
 - `STRAPI_API_TOKEN` not set in environment
 
 #### Issue: "Failed to create order" (401 Unauthorized)
+
 - API token is invalid or expired
 - API token doesn't have permission to create orders
 
 #### Issue: "Failed to create order" (400 Bad Request)
+
 - User documentId is invalid
 - Product documentId is invalid
 - Required fields are missing
@@ -76,6 +86,7 @@ Look for these log markers in your console:
 ### 4. Verify Strapi API Token Permissions
 
 In Strapi Admin Panel:
+
 1. Go to Settings → API Tokens
 2. Find your token
 3. Ensure it has these permissions:
@@ -96,7 +107,7 @@ curl -X POST http://localhost:3000/api/webhooks/hitpay \
     "payment_request_id": "test-request-id",
     "amount": "100.00",
     "currency": "SGD",
-    "status": "completed",
+    "orderStatus": "completed",
     "reference_number": "ORDER-xxxxx"
   }'
 ```
@@ -119,6 +130,7 @@ export async function GET() {
 ### 7. Monitor Network Requests
 
 Use Chrome DevTools Network tab or a tool like ngrok to see:
+
 - What HitPay is actually sending
 - Response from your webhook
 - Internal API calls
@@ -134,6 +146,7 @@ Use Chrome DevTools Network tab or a tool like ngrok to see:
 ## Alternative Solution
 
 If the internal API approach doesn't work, consider:
+
 1. Creating a Strapi plugin that exposes a public endpoint for webhooks
 2. Using Strapi's built-in webhook functionality
 3. Storing orders in a separate database table first, then syncing

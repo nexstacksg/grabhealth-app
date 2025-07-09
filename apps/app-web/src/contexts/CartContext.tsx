@@ -211,7 +211,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
               imageUrl: product?.image_url || '',
               description: '',
               inStock: true,
-              status: 'active',
             },
           };
           updatedCart.items.push(newItem);

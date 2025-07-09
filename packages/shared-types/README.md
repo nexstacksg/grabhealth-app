@@ -266,7 +266,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user }) => {
 ### Import errors?
 
 - Ensure the package is linked: check `"@app/shared-types": "file:../packages/shared-types"` in your package.json
-- Run `bun install` in your app directory
+- Run `pnpm install` in your app directory
 
 ### Type conflicts?
 
