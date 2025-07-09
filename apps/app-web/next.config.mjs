@@ -43,6 +43,17 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  // Webpack configuration to handle crypto module
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't resolve crypto module on the client side
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
