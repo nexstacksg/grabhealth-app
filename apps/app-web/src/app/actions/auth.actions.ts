@@ -70,14 +70,25 @@ export async function registerAction(data: RegisterRequest) {
       throw new Error(responseData?.error?.message || responseData?.message || `Registration failed: ${response.statusText}`);
     }
     
-    // Transform the response
-    console.log('[RegisterAction] Raw user data:', responseData.user);
-    const user = transformStrapiUser(responseData.user);
-    console.log('[RegisterAction] Transformed user:', user);
+    // Since registration doesn't return a user object (user needs to verify email first),
+    // we create a minimal user object for the frontend
+    const user = {
+      documentId: '', // No documentId yet since user isn't created/verified
+      email: responseData.email || data.email,
+      firstName: data.firstName || '',
+      lastName: data.lastName || '',
+      role: 'USER',
+      status: 'PENDING_VERIFICATION',
+      createdAt: new Date(),
+      profileImage: null,
+      referralCode: null,
+      emailVerified: false,
+      emailVerifiedAt: null,
+    };
     
-    // Set httpOnly cookies for security
-    const userRole = user.role || 'public';
-    await setAuthCookies(responseData.jwt, responseData.jwt, userRole);
+    console.log('[RegisterAction] Created placeholder user:', user);
+    
+    // No cookies to set yet - user needs to verify email first
     
     return { 
       success: true as const, 

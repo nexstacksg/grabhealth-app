@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
@@ -30,19 +30,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle } from 'lucide-react';
 
 const resetPasswordSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  code: z.string().length(6, { message: 'Code must be 6 digits' }),
   password: z
     .string()
-    .min(8, { message: 'Password must be at least 8 characters' })
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      {
-        message:
-          'Password must contain uppercase, lowercase, number and special character',
-      }
-    ),
+    .min(6, { message: 'Password must be at least 6 characters' }),
   confirmPassword: z
     .string()
-    .min(8, { message: 'Password must be at least 8 characters' }),
+    .min(6, { message: 'Password must be at least 6 characters' }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
@@ -53,37 +48,28 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const emailFromParams = searchParams?.get('email') || '';
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Invalid or missing reset token');
-    }
-  }, [token]);
-
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
+      email: emailFromParams || '',
+      code: '',
       password: '',
       confirmPassword: '',
     },
   });
 
   async function onSubmit(data: ResetPasswordFormValues) {
-    if (!token) {
-      setError('Invalid reset token');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
-      await services.auth.resetPassword(token, data.password);
+      await services.auth.resetPasswordWithEmail(data.email, data.code, data.password);
       setSuccess(true);
       // Redirect to login after 3 seconds
       setTimeout(() => {
@@ -130,7 +116,7 @@ function ResetPasswordContent() {
             Reset your password
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your new password below
+            Enter the reset code from your email and your new password
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,6 +129,40 @@ function ResetPasswordContent() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reset Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="123456"
+                        maxLength={6}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
@@ -152,7 +172,6 @@ function ResetPasswordContent() {
                         type="password"
                         placeholder="••••••••"
                         {...field}
-                        disabled={!token}
                       />
                     </FormControl>
                     <FormMessage />
@@ -170,14 +189,13 @@ function ResetPasswordContent() {
                         type="password"
                         placeholder="••••••••"
                         {...field}
-                        disabled={!token}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading || !token}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -191,13 +209,24 @@ function ResetPasswordContent() {
           </Form>
         </CardContent>
         <CardFooter>
-          <div className="text-sm text-center text-gray-500 w-full">
-            <Link
-              href="/auth/login"
-              className="text-emerald-500 hover:text-emerald-600"
-            >
-              Back to login
-            </Link>
+          <div className="text-sm text-center text-gray-500 w-full space-y-2">
+            <div>
+              Don't have a code?{' '}
+              <Link
+                href="/auth/forgot-password"
+                className="text-emerald-500 hover:text-emerald-600"
+              >
+                Request a new one
+              </Link>
+            </div>
+            <div>
+              <Link
+                href="/auth/login"
+                className="text-emerald-500 hover:text-emerald-600"
+              >
+                Back to login
+              </Link>
+            </div>
           </div>
         </CardFooter>
       </Card>

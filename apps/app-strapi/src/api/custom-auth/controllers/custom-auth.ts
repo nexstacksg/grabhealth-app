@@ -1,16 +1,12 @@
 import { Core } from '@strapi/strapi';
+import crypto from 'crypto';
 
 const VERIFICATION_CODE_EXPIRY = 10 * 60 * 1000; // 10 minutes
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
-  async register(ctx: any) {
+  async register(ctx) {
     try {
       const { email, password, username, firstName, lastName } = ctx.request.body;
-
-      // Validate required fields
-      if (!email || !password) {
-        return ctx.badRequest('Email and password are required');
-      }
 
       // Check if user exists
       const existingUser = await strapi.db.query('plugin::users-permissions.user').findOne({
@@ -35,73 +31,76 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const codeExpiry = new Date(Date.now() + VERIFICATION_CODE_EXPIRY);
 
       // Create user with public role and unconfirmed status
+      // Use the users-permissions service to properly hash the password
       const user = await strapi.plugin('users-permissions').service('user').add({
         username: username || email,
         email: email.toLowerCase(),
         password,
-        firstName: firstName || '',
-        lastName: lastName || '',
+        firstName,
+        lastName,
         provider: 'local',
         confirmed: false,
         blocked: false,
         role: publicRole.id,
         emailVerificationCode: verificationCode,
-        emailVerificationCodeExpires: codeExpiry,
-        status: 'PENDING_VERIFICATION'
+        emailVerificationCodeExpires: codeExpiry
       });
 
-      // Try to send verification email
-      const emailSent = await this.sendVerificationEmail(email, verificationCode, firstName);
-      
-      if (!emailSent && process.env.NODE_ENV === 'production') {
-        // In production, delete user if email fails
+      // Send verification email
+      try {
+        await strapi.plugin('email').service('email').send({
+          to: email,
+          subject: 'Verify your email',
+          html: `
+            <h1>Email Verification</h1>
+            <p>Your verification code is:</p>
+            <h2 style="background: #f4f4f4; padding: 10px; text-align: center; font-size: 32px; letter-spacing: 5px;">${verificationCode}</h2>
+            <p>This code will expire in 10 minutes.</p>
+          `
+        });
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Delete the user if email fails
         await strapi.db.query('plugin::users-permissions.user').delete({ where: { id: user.id } });
         return ctx.internalServerError('Failed to send verification email');
       }
 
-      // Generate JWT for the user (they can browse but not perform authenticated actions)
-      const jwt = strapi.plugin('users-permissions').service('jwt').issue({ id: user.id });
-
-      // Return success
+      // Return success without sensitive data
       return ctx.send({
-        jwt,
-        user: this.sanitizeUser(user),
-        message: emailSent 
-          ? 'Registration successful. Please check your email for verification code.'
-          : 'Registration successful. Check console for verification code (dev mode).'
+        message: 'Registration successful. Please check your email for verification code.',
+        email: user.email
       });
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
-      return ctx.internalServerError('Registration failed: ' + error.message);
+      return ctx.internalServerError('Registration failed');
     }
   },
 
-  async verifyEmail(ctx: any) {
+  async verifyEmail(ctx) {
     try {
-      console.log('Verify email endpoint called with request body:', ctx.request.body);
       const { email, code } = ctx.request.body;
 
       if (!email || !code) {
-        console.log('Validation failed: email or code missing');
         return ctx.badRequest('Email and verification code are required');
       }
 
-      console.log('Looking up user with email:', email.toLowerCase(), 'and code:', code);
+      // Find user with verification code
       const user = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { 
           email: email.toLowerCase(),
-          emailVerificationCode: code,
-          emailVerificationCodeExpires: { $gte: new Date() }
+          emailVerificationCode: code
         }
       });
 
       if (!user) {
-        console.log('User not found or code invalid/expired');
-        return ctx.badRequest('Invalid or expired verification code');
+        return ctx.badRequest('Invalid verification code');
       }
-      
-      console.log('User found:', user.id);
+
+      // Check if code is expired
+      if (new Date() > new Date(user.emailVerificationCodeExpires)) {
+        return ctx.badRequest('Verification code has expired');
+      }
 
       // Get authenticated role
       const authenticatedRole = await strapi.db.query('plugin::users-permissions.role').findOne({
@@ -112,34 +111,38 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return ctx.internalServerError('Authenticated role not found');
       }
 
-      // Update user to confirmed
+      // Update user: confirm email, change role, clear verification code
       const updatedUser = await strapi.db.query('plugin::users-permissions.user').update({
         where: { id: user.id },
         data: {
           confirmed: true,
+          role: authenticatedRole.id,
           emailVerificationCode: null,
-          emailVerificationCodeExpires: null,
-          emailVerifiedAt: new Date(),
-          status: 'ACTIVE',
-          role: authenticatedRole.id
-        },
-        populate: ['role']
+          emailVerificationCodeExpires: null
+        }
       });
 
-      console.log('Email verification successful for user:', updatedUser.email);
-      
+      // Generate JWT token
+      const token = strapi.plugin('users-permissions').service('jwt').issue({ id: user.id });
+
       return ctx.send({
-        message: 'Email verified successfully',
-        user: this.sanitizeUser(updatedUser)
+        jwt: token,
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          confirmed: updatedUser.confirmed,
+          role: authenticatedRole.name
+        }
       });
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Email verification error:', error);
-      return ctx.internalServerError('Verification failed: ' + (error.message || 'Unknown error'));
+      return ctx.internalServerError('Email verification failed');
     }
   },
 
-  async resendCode(ctx: any) {
+  async resendCode(ctx) {
     try {
       const { email } = ctx.request.body;
 
@@ -155,13 +158,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       });
 
       if (!user) {
-        // Don't reveal if email exists
-        return ctx.send({
-          message: 'If the email exists and is unverified, a new code has been sent.'
-        });
+        return ctx.badRequest('User not found or already verified');
       }
 
-      // Generate new code
+      // Generate new 6-digit verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const codeExpiry = new Date(Date.now() + VERIFICATION_CODE_EXPIRY);
 
@@ -174,58 +174,250 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         }
       });
 
-      // Send email
-      await this.sendVerificationEmail(email, verificationCode, user.firstName);
-
-      return ctx.send({
-        message: 'If the email exists and is unverified, a new code has been sent.'
+      // Send verification email
+      await strapi.plugin('email').service('email').send({
+        to: email,
+        subject: 'Verify your email - New code',
+        html: `
+          <h1>Email Verification</h1>
+          <p>Your new verification code is:</p>
+          <h2 style="background: #f4f4f4; padding: 10px; text-align: center; font-size: 32px; letter-spacing: 5px;">${verificationCode}</h2>
+          <p>This code will expire in 10 minutes.</p>
+        `
       });
 
-    } catch (error: any) {
+      return ctx.send({
+        message: 'Verification code sent successfully'
+      });
+
+    } catch (error) {
       console.error('Resend code error:', error);
-      return ctx.internalServerError('Failed to resend code');
+      return ctx.internalServerError('Failed to resend verification code');
     }
   },
 
-  // Helper method to send verification email
-  async sendVerificationEmail(email: string, code: string, firstName?: string): Promise<boolean> {
+  async forgotPassword(ctx) {
     try {
+      const { email } = ctx.request.body;
+
+      if (!email) {
+        return ctx.badRequest('Email is required');
+      }
+
+      const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { 
+          email: email.toLowerCase(),
+          confirmed: true
+        }
+      });
+
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return ctx.send({
+          message: 'If the email exists, a password reset code has been sent.'
+        });
+      }
+
+      // Generate 6-digit reset code
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const codeExpiry = new Date(Date.now() + VERIFICATION_CODE_EXPIRY);
+
+      // Store reset code in resetPasswordToken field for password reset
+      await strapi.db.query('plugin::users-permissions.user').update({
+        where: { id: user.id },
+        data: {
+          resetPasswordToken: resetCode,
+          passwordResetExpires: codeExpiry
+        }
+      });
+
+      // Send password reset email
       await strapi.plugin('email').service('email').send({
         to: email,
-        subject: 'Verify your email',
+        subject: 'Password Reset Code',
         html: `
-          <h1>Email Verification</h1>
-          <p>Hello ${firstName || 'there'},</p>
-          <p>Your verification code is:</p>
-          <h2 style="background: #f4f4f4; padding: 10px; text-align: center; font-size: 32px; letter-spacing: 5px;">${code}</h2>
+          <h1>Password Reset</h1>
+          <p>You requested a password reset. Use the code below to reset your password:</p>
+          <h2 style="background: #f4f4f4; padding: 10px; text-align: center; font-size: 32px; letter-spacing: 5px;">${resetCode}</h2>
           <p>This code will expire in 10 minutes.</p>
           <p>If you didn't request this, please ignore this email.</p>
         `
       });
-      return true;
-    } catch (emailError: any) {
-      console.error('Failed to send verification email:', emailError);
-      
-      // In development, log the code
-      if (process.env.NODE_ENV === 'development') {
-        console.log('\n=================================');
-        console.log('DEVELOPMENT MODE - Email not sent');
-        console.log('Email:', email);
-        console.log('Verification Code:', code);
-        console.log('=================================\n');
-      }
-      
-      return false;
+
+      return ctx.send({
+        message: 'If the email exists, a password reset code has been sent.'
+      });
+
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return ctx.internalServerError('Failed to process password reset request');
     }
   },
 
-  // Helper to sanitize user data
-  sanitizeUser(user: any) {
-    const { password, emailVerificationCode, emailVerificationCodeExpires, ...sanitized } = user;
-    // Ensure status is included
-    return {
-      ...sanitized,
-      status: user.status || 'PENDING_VERIFICATION'
-    };
+  async validateResetCode(ctx) {
+    try {
+      const { email, code } = ctx.request.body;
+
+      if (!email || !code) {
+        return ctx.badRequest('Email and code are required');
+      }
+
+      // Find user with reset code
+      const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { 
+          email: email.toLowerCase(),
+          resetPasswordToken: code
+        }
+      });
+
+      if (!user) {
+        return ctx.send({ valid: false });
+      }
+
+      // Check if code is expired
+      if (new Date() > new Date(user.passwordResetExpires)) {
+        return ctx.send({ valid: false });
+      }
+
+      return ctx.send({ valid: true });
+
+    } catch (error) {
+      console.error('Validate reset code error:', error);
+      return ctx.internalServerError('Failed to validate reset code');
+    }
+  },
+
+  async resetPassword(ctx) {
+    try {
+      const { email, code, password } = ctx.request.body;
+
+      if (!email || !code || !password) {
+        return ctx.badRequest('Email, code, and new password are required');
+      }
+
+      // Validate password strength
+      if (password.length < 6) {
+        return ctx.badRequest('Password must be at least 6 characters long');
+      }
+
+      // Find user with reset code
+      const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { 
+          email: email.toLowerCase(),
+          resetPasswordToken: code
+        }
+      });
+
+      if (!user) {
+        return ctx.badRequest('Invalid reset code');
+      }
+
+      // Check if code is expired
+      if (new Date() > new Date(user.passwordResetExpires)) {
+        return ctx.badRequest('Reset code has expired');
+      }
+
+      // Update password using the users-permissions service to ensure proper hashing
+      await strapi.plugin('users-permissions').service('user').edit(user.id, {
+        password,
+        resetPasswordToken: null,
+        passwordResetExpires: null
+      });
+
+      return ctx.send({
+        message: 'Password has been reset successfully'
+      });
+
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return ctx.internalServerError('Failed to reset password');
+    }
+  },
+
+  async changePassword(ctx) {
+    try {
+      const { currentPassword, newPassword } = ctx.request.body;
+
+      if (!currentPassword || !newPassword) {
+        return ctx.badRequest('Current password and new password are required');
+      }
+
+      // Validate new password strength
+      if (newPassword.length < 6) {
+        return ctx.badRequest('New password must be at least 6 characters long');
+      }
+
+      // Get the authenticated user
+      const userId = ctx.state.user.id;
+      if (!userId) {
+        return ctx.unauthorized('User not authenticated');
+      }
+
+      // Get user with password
+      const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { id: userId },
+        populate: ['role']
+      });
+
+      if (!user) {
+        return ctx.notFound('User not found');
+      }
+
+      // Verify current password
+      const validPassword = await strapi.plugin('users-permissions').service('user').validatePassword(
+        currentPassword,
+        user.password
+      );
+
+      if (!validPassword) {
+        return ctx.badRequest('Current password is incorrect');
+      }
+
+      // Update password using the users-permissions service to ensure proper hashing
+      await strapi.plugin('users-permissions').service('user').edit(userId, {
+        password: newPassword
+      });
+
+      return ctx.send({
+        message: 'Password changed successfully'
+      });
+
+    } catch (error) {
+      console.error('Change password error:', error);
+      return ctx.internalServerError('Failed to change password');
+    }
+  },
+
+  async updateProfile(ctx) {
+    try {
+      const userId = ctx.state.user.id;
+      if (!userId) {
+        return ctx.unauthorized('User not authenticated');
+      }
+
+      const { username, email, firstName } = ctx.request.body;
+
+      // Prepare update data
+      const updateData: any = {};
+      if (username !== undefined) updateData.username = username;
+      if (email !== undefined) updateData.email = email;
+      if (firstName !== undefined) updateData.firstName = firstName;
+      // TEMPORARILY DISABLED: Profile image upload
+      // if (profileImage !== undefined) updateData.profileImage = profileImage;
+
+      // Update user using the users-permissions service
+      const updatedUser = await strapi.plugin('users-permissions').service('user').edit(userId, updateData);
+
+      // Remove sensitive data
+      const { password, resetPasswordToken, confirmationToken, ...sanitizedUser } = updatedUser;
+
+      return ctx.send({
+        user: sanitizedUser
+      });
+
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return ctx.internalServerError('Failed to update profile');
+    }
   }
 });

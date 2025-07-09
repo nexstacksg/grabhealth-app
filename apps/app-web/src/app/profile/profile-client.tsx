@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import Image from 'next/image';
+// import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -14,10 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, User, Upload } from 'lucide-react';
+import { Alert, AlertDescription/* , AlertTitle */ } from '@/components/ui/alert';
+import { Loader2/* , User, Upload */ } from 'lucide-react';
 import { toast } from 'sonner';
-import { updateProfileAction, uploadProfileImageAction, changePasswordAction } from './actions';
+import { updateProfileAction, /* uploadProfileImageAction, */ changePasswordAction } from './actions';
 import { transformStrapiUser } from '@/services/strapi-base';
 
 interface ProfileClientProps {
@@ -26,7 +26,7 @@ interface ProfileClientProps {
 
 export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [isPending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
+  // const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Transform Strapi user to our format
@@ -48,6 +48,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     }));
   };
 
+  /* TEMPORARILY DISABLED: Profile image upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -75,6 +76,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       setIsUploading(false);
     }
   };
+  */
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,8 +113,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       return;
     }
 
-    if (formData.newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (formData.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -174,10 +176,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             <form onSubmit={handleProfileUpdate}>
               <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 mb-6">
+                  {/* TEMPORARILY DISABLED: Profile image upload
                   <div className="flex flex-col items-center self-center sm:self-start">
                     <label className="relative cursor-pointer group">
                       <div className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden mb-3 sm:mb-4">
-                        {user?.profileImage ? (
+                        {user?.profileImage && user.profileImage.trim() !== '' ? (
                           <Image
                             src={user.profileImage}
                             alt="Profile"
@@ -211,6 +214,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                       )}
                     </div>
                   </div>
+                  */}
 
                   <div className="flex-1 space-y-4 w-full">
                     <div className="space-y-2">

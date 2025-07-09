@@ -43,6 +43,19 @@ export interface StrapiListResponse<T> {
   };
 }
 
+// Strapi media format
+export interface StrapiMedia {
+  id: number;
+  documentId?: string;
+  url: string;
+  formats?: {
+    thumbnail?: { url: string };
+    small?: { url: string };
+    medium?: { url: string };
+    large?: { url: string };
+  };
+}
+
 // Strapi user structure
 export interface StrapiUser {
   id: number;
@@ -51,7 +64,7 @@ export interface StrapiUser {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
-  profileImage?: string | null;
+  profileImage?: StrapiMedia | string | null;
   referralCode?: string | null;
   status?: string;
   confirmed: boolean;
@@ -67,6 +80,24 @@ export interface StrapiUser {
   };
 }
 
+// Helper to extract image URL from Strapi media field
+function extractProfileImageUrl(profileImage: StrapiMedia | string | null | undefined): string | null {
+  if (!profileImage) return null;
+  
+  // If it's already a string URL
+  if (typeof profileImage === 'string') {
+    // Return null for empty strings to avoid the Next.js Image component error
+    return profileImage.trim() === '' ? null : getStrapiMediaUrl(profileImage);
+  }
+  
+  // If it's a media object
+  if (typeof profileImage === 'object' && 'url' in profileImage) {
+    return getStrapiMediaUrl(profileImage.url);
+  }
+  
+  return null;
+}
+
 // Transform Strapi user to our IUserPublic format
 // IMPORTANT: Strapi 5 uses documentId for all API operations
 export function transformStrapiUser(strapiUser: StrapiUser): IUserPublic {
@@ -80,7 +111,7 @@ export function transformStrapiUser(strapiUser: StrapiUser): IUserPublic {
       strapiUser.status ||
       (strapiUser.confirmed ? 'ACTIVE' : 'PENDING_VERIFICATION'),
     createdAt: new Date(strapiUser.createdAt),
-    profileImage: strapiUser.profileImage || null,
+    profileImage: extractProfileImageUrl(strapiUser.profileImage),
     referralCode: strapiUser.referralCode || null,
     emailVerified: strapiUser.confirmed,
     emailVerifiedAt: strapiUser.confirmed

@@ -2,6 +2,80 @@
 
 This document outlines the improvements needed for the app-web frontend codebase, organized by priority and category.
 
+## 🆕 Latest Analysis: DRY Principle & Optimization
+
+### Major DRY Violations Found
+
+#### 1. **Duplicate API Client Implementations**
+- **Problem**: Two separate API clients doing the same thing
+  - `/lib/api-client.ts` - Axios-based unified client
+  - `/lib/server-api.ts` - Fetch-based server API
+- **Impact**: 
+  - Duplicate auth token handling
+  - Different error handling approaches
+  - Maintenance overhead
+- **Solution**: Use only `api-client.ts` everywhere, delete `server-api.ts`
+
+#### 2. **Repeated Server Action Pattern**
+- **Problem**: Every action file repeats the same try-catch-revalidate pattern
+- **Example**: Found in `order.actions.ts`, `auth.actions.ts`, `booking.actions.ts`, etc.
+```typescript
+try {
+  const result = await serverApi<T>(endpoint, options);
+  if (result.success) {
+    revalidatePath(path);
+    return { success: true, data: result.data };
+  }
+  return { error: result.error };
+} catch (error) {
+  return { error: error.message };
+}
+```
+- **Solution**: Create a base server action function:
+```typescript
+export async function createServerAction<T>(
+  apiCall: () => Promise<T>,
+  revalidatePaths?: string[]
+) {
+  try {
+    const data = await apiCall();
+    if (revalidatePaths) {
+      revalidatePaths.forEach(path => revalidatePath(path));
+    }
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+```
+
+#### 3. **Three Separate Auth Utility Files**
+- **Problem**: Auth logic split across multiple files with duplication
+  - `/lib/auth-utils-client.ts`
+  - `/lib/auth-utils-server.ts`
+  - `/lib/auth-server.ts`
+- **Impact**: Duplicate cookie handling, token management
+- **Solution**: Merge into single auth module with client/server exports
+
+#### 4. **Service Layer Not Using BaseService**
+- **Problem**: Services duplicate error handling instead of using BaseService
+- **Example**: OrderService, ProductService implement their own error handling
+- **Solution**: Make all services properly extend BaseService
+
+#### 5. **Duplicate UI Components**
+- **Found**:
+  - Two pagination components: `/components/products/Pagination.tsx` & `/components/ui/pagination.tsx`
+  - Three table components: `table.tsx`, `responsive-table.tsx`, `responsive-table-wrapper.tsx`
+- **Solution**: Delete duplicates, use shadcn/ui components only
+
+### Quick Win Implementation Priority
+
+1. **Week 1**: Consolidate API clients (30% code reduction)
+2. **Week 1**: Create base server action (eliminate 80% of action boilerplate)
+3. **Week 2**: Merge auth utilities (simplify auth logic)
+4. **Week 2**: Fix service inheritance (consistent error handling)
+5. **Week 3**: Remove duplicate components (cleaner codebase)
+
 ## 🔴 Critical Issues (High Priority)
 
 ### 1. Component Size and Organization
