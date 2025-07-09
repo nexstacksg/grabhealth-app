@@ -214,11 +214,11 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center">
-          {getStatusIcon(order.status)}
+          {getStatusIcon(order.orderStatus)}
           <Badge
-            className={`ml-2 text-sm ${getStatusBadgeColor(order.status)}`}
+            className={`ml-2 text-sm ${getStatusBadgeColor(order.orderStatus)}`}
           >
-            {order.status.replace('_', ' ')}
+            {order.orderStatus?.replace('_', ' ') || 'Unknown'}
           </Badge>
         </div>
       </div>
@@ -298,21 +298,21 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               </div>
             </div>
 
-            {order.status === 'PROCESSING' || order.status === 'COMPLETED' ? (
+            {order.orderStatus === 'PROCESSING' || order.orderStatus === 'COMPLETED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div
-                    className={`${order.status === 'COMPLETED' ? 'bg-emerald-100' : 'bg-blue-100'} rounded-full p-2`}
+                    className={`${order.orderStatus === 'COMPLETED' ? 'bg-emerald-100' : 'bg-blue-100'} rounded-full p-2`}
                   >
                     <Clock
-                      className={`h-5 w-5 ${order.status === 'COMPLETED' ? 'text-emerald-600' : 'text-blue-600'}`}
+                      className={`h-5 w-5 ${order.orderStatus === 'COMPLETED' ? 'text-emerald-600' : 'text-blue-600'}`}
                     />
                   </div>
                 </div>
                 <div>
                   <p className="font-medium">Processing</p>
                   <p className="text-sm text-gray-500">
-                    {order.status === 'PROCESSING'
+                    {order.orderStatus === 'PROCESSING'
                       ? 'Your order is being processed'
                       : 'Completed'}
                   </p>
@@ -320,7 +320,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               </div>
             ) : null}
 
-            {order.status === 'COMPLETED' ? (
+            {order.orderStatus === 'COMPLETED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div className="bg-emerald-100 rounded-full p-2">
@@ -336,7 +336,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               </div>
             ) : null}
 
-            {order.status === 'REFUNDED' ? (
+            {order.orderStatus === 'REFUNDED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div className="bg-gray-100 rounded-full p-2">
@@ -352,7 +352,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsProps) {
               </div>
             ) : null}
 
-            {order.status === 'CANCELLED' ? (
+            {order.orderStatus === 'CANCELLED' ? (
               <div className="flex">
                 <div className="mr-4">
                   <div className="bg-red-100 rounded-full p-2">

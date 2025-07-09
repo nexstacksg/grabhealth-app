@@ -201,7 +201,7 @@ export default function PaymentSuccessPage() {
               
               <div className="flex flex-wrap justify-between gap-1">
                 <span className="text-gray-600">Status:</span>
-                <span className="font-medium">{order.status}</span>
+                <span className="font-medium">{order.orderStatus}</span>
               </div>
               
               <div className="flex flex-wrap justify-between gap-1">

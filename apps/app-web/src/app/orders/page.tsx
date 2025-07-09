@@ -86,7 +86,7 @@ export default function OrdersPage() {
     const searchString = (order.orderNumber || order.documentId || '').toString().toLowerCase();
     const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === 'all' || order.status === statusFilter;
+      statusFilter === 'all' || order.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
   }) : [];
 
@@ -222,8 +222,8 @@ export default function OrdersPage() {
                           : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusBadgeColor(order.status)}>
-                          {order.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                        <Badge className={getStatusBadgeColor(order.orderStatus)}>
+                          {order.orderStatus?.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown'}
                         </Badge>
                       </TableCell>
                       <TableCell>{getItemCount(order)}</TableCell>

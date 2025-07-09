@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       console.log('=== WEBHOOK: Found order ===', {
         orderId: order.documentId,
         orderNumber: order.orderNumber,
-        currentStatus: order.status,
+        currentStatus: order.orderStatus,
         currentPaymentStatus: order.paymentStatus,
       });
 
