@@ -37,7 +37,7 @@ export async function getMyOrdersAction(params?: {
     }
     
     if (params?.status) {
-      queryParams.append('filters[status][$eq]', params.status);
+      queryParams.append('filters[orderStatus][$eq]', params.status);
     }
     
     if (params?.page) {
@@ -59,8 +59,17 @@ export async function getMyOrdersAction(params?: {
     
     if (result.success && result.data) {
       const pagination = result.data.meta?.pagination || {};
-      // Transform orders - Strapi 5 already provides documentId
-      const orders = result.data.data || [];
+      // Transform orders - map orderStatus to status for frontend
+      const rawOrders = result.data.data || [];
+      const orders = rawOrders.map((order: any) => ({
+        ...order,
+        status: order.orderStatus || 'PENDING',
+        // Ensure other fields are properly set
+        documentId: order.documentId || order.id?.toString() || '',
+        orderNumber: order.orderNumber || '',
+        total: parseFloat(order.total || 0),
+        createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
+      }));
       return {
         success: true,
         orders,
@@ -165,7 +174,7 @@ export async function createOrderAction(data: IOrderCreate) {
         subtotal: data.subtotal,
         discount: data.discount || 0,
         tax: data.tax || 0,
-        status: data.status || OrderStatus.PENDING_PAYMENT,
+        orderStatus: data.status || OrderStatus.PENDING_PAYMENT,
         paymentStatus: data.paymentStatus || PaymentStatus.PENDING,
         paymentMethod: data.paymentMethod,
         shippingAddress: data.shippingAddress,
@@ -249,7 +258,7 @@ export async function cancelOrderAction(orderId: string) {
     // Update order status to CANCELLED
     const result = await serverApiPut(`/orders/${orderId}`, {
       data: {
-        status: OrderStatus.CANCELLED,
+        orderStatus: OrderStatus.CANCELLED,
       }
     });
     
@@ -298,13 +307,13 @@ export async function updateOrderStatusAction(
     // Prepare update data with proper typing
     const updateData = {
       data: {} as {
-        status?: string;
+        orderStatus?: string;
         paymentStatus?: string;
         paymentMethod?: string;
       }
     };
     
-    if (updates.status) updateData.data.status = updates.status;
+    if (updates.status) updateData.data.orderStatus = updates.status;
     if (updates.paymentStatus) updateData.data.paymentStatus = updates.paymentStatus;
     if (updates.paymentMethod) updateData.data.paymentMethod = updates.paymentMethod;
     // Note: paymentId is not a field in Strapi order schema, so we don't include it
