@@ -61,6 +61,10 @@ export default function BookingsPage() {
         page: 1,
         limit: 20,
       });
+      console.log('Fetched bookings:', response.bookings);
+      // Log cancelled bookings specifically
+      const cancelledBookings = response.bookings.filter(b => b.status === 'CANCELLED');
+      console.log('Cancelled bookings:', cancelledBookings);
       setBookings(response.bookings);
     } catch (error: any) {
       console.error('Failed to fetch bookings:', error);
@@ -471,16 +475,27 @@ function BookingCard({
   onCancel?: () => void;
   showActions?: boolean;
 }) {
+  // Extract service name from notes if service object is missing
+  const extractServiceFromNotes = (notes: string | null | undefined): string => {
+    if (!notes) return 'Service';
+    // Pattern: "Booking for [Service Name]"
+    const match = notes.match(/Booking for (.+)/i);
+    return match ? match[1] : 'Service';
+  };
+
+  const serviceName = booking.service?.name || extractServiceFromNotes(booking.notes);
+  const partnerName = booking.partner?.name || 'Partner';
+
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">
-              {booking.service?.name || 'Unknown Service'}
+              {serviceName}
             </CardTitle>
             <CardDescription>
-              {booking.partner?.name || 'Unknown Partner'}
+              {partnerName}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
