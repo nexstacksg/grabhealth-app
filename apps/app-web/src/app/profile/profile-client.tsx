@@ -25,6 +25,7 @@ import {
   /* uploadProfileImageAction, */ changePasswordAction,
 } from './actions';
 import { transformStrapiUser } from '@/services/strapi-base';
+import ReferralLink from '@/components/commission/referral-link';
 
 interface ProfileClientProps {
   initialUser: any; // Strapi user data
@@ -170,6 +171,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="referral">Referral Link</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -336,6 +338,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               </CardFooter>
             </form>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="referral">
+          {/* Always show the referral link component - it will generate a link using the user's email or ID */}
+          <ReferralLink referralLink={user.referralCode || user.email || user.documentId} />
         </TabsContent>
       </Tabs>
     </div>
