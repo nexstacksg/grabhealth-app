@@ -14,11 +14,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription/* , AlertTitle */ } from '@/components/ui/alert';
-import { Loader2/* , User, Upload */ } from 'lucide-react';
+import {
+  Alert,
+  AlertDescription /* , AlertTitle */,
+} from '@/components/ui/alert';
+import { Loader2 /* , User, Upload */ } from 'lucide-react';
 import { toast } from 'sonner';
-import { updateProfileAction, /* uploadProfileImageAction, */ changePasswordAction } from './actions';
+import {
+  updateProfileAction,
+  /* uploadProfileImageAction, */ changePasswordAction,
+} from './actions';
 import { transformStrapiUser } from '@/services/strapi-base';
+import ReferralLink from '@/components/commission/referral-link';
 
 interface ProfileClientProps {
   initialUser: any; // Strapi user data
@@ -28,10 +35,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [isPending, startTransition] = useTransition();
   // const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Transform Strapi user to our format
+
   const user = transformStrapiUser(initialUser);
-  
+
   const [formData, setFormData] = useState({
     username: user.firstName || user.email.split('@')[0] || '',
     email: user.email,
@@ -96,7 +102,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
         toast.success('Profile updated successfully!');
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to update profile';
         toast.error(errorMessage);
         setError(errorMessage);
       }
@@ -140,7 +147,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
         toast.success('Password updated successfully!');
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update password';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to update password';
         toast.error(errorMessage);
         setError(errorMessage);
       }
@@ -163,6 +171,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="referral">Referral Link</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -281,6 +290,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     value={formData.currentPassword}
                     onChange={handleInputChange}
                     required
+                    placeholder="Enter your current password"
                   />
                 </div>
 
@@ -293,6 +303,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     value={formData.newPassword}
                     onChange={handleInputChange}
                     required
+                    placeholder="Enter your new password"
                   />
                 </div>
 
@@ -305,6 +316,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
+                    placeholder="Confirm your new password"
                   />
                 </div>
               </CardContent>
@@ -326,6 +338,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               </CardFooter>
             </form>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="referral">
+          {/* Always show the referral link component - it will generate a link using the user's email or ID */}
+          <ReferralLink referralLink={user.referralCode || user.email || user.documentId} />
         </TabsContent>
       </Tabs>
     </div>

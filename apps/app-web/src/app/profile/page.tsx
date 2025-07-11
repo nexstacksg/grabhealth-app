@@ -4,6 +4,9 @@ import ProfileClient from './profile-client';
 import { apiClient } from '@/lib/api-client';
 import { serverApiGet } from '@/lib/server-api';
 
+// Force dynamic rendering since we're using cookies
+export const dynamic = 'force-dynamic';
+
 async function getUser() {
   const result = await serverApiGet('/users/me?populate=*');
   
