@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Add cache busting to force new chunks
+  generateBuildId: async () => {
+    return Date.now().toString();
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
