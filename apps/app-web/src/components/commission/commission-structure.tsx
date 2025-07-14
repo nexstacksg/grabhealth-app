@@ -17,11 +17,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
-import services from '@/services';
-import { apiClient } from '@/lib/api-client';
-// Authentication is now handled at the page level
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Types for the new 4-product commission structure
 type Product = {
@@ -65,156 +63,242 @@ type GiftItem = {
   requiredPurchases: number;
 };
 
-function CommissionStructure() {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+interface CommissionStructureProps {
+  products?: any[];
+  achievements?: any[];
+}
+
+function CommissionStructure({
+  products: serverProducts = [],
+  achievements: serverAchievements = [],
+}: CommissionStructureProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [roleTypes, setRoleTypes] = useState<RoleType[]>([]);
   const [volumeBonuses, setVolumeBonuses] = useState<VolumeBonus[]>([]);
   const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 5;
 
-  // Fetch commission structure data from Strapi
+  // Process server-provided products data
   useEffect(() => {
-    const fetchCommissionStructure = async () => {
+    const processCommissionData = () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        console.log('Server products received:', serverProducts);
+        console.log('Server achievements received:', serverAchievements);
 
-        // Fetch all data from Strapi in parallel
-        const [
-          structureData,
-          productCommissionTiers,
-          volumeBonusData,
-          giftItemsData,
-        ] = await Promise.all([
-          services.commission.getCommissionStructure(),
-          apiClient
-            .get<{
-              data: any[];
-            }>('/product-commission-tiers?populate=product&sort=id:asc')
-            .catch(() => ({ data: [] })),
-          apiClient
-            .get<{ data: any[] }>('/volume-bonus-tiers?sort=minVolume:asc')
-            .catch(() => ({ data: [] })),
-          apiClient
-            .get<{ data: any[] }>('/gift-items?sort=requiredPurchases:asc')
-            .catch(() => ({ data: [] })),
-        ]);
-
-        // Process commission structure - transform levels to roleTypes
-        if (structureData && structureData.levels) {
-          const transformedRoleTypes = structureData.levels.map(
-            (level: any, index: number) => ({
-              id: index + 1,
-              name: level.name,
-              commissionRate: level.rate,
-              level: level.level,
-            })
-          );
-          setRoleTypes(transformedRoleTypes);
+        // Early return if no data
+        if (!serverProducts || !Array.isArray(serverProducts)) {
+          console.log('No products data available');
+          setProducts([]);
+          setRoleTypes([]);
+          setVolumeBonuses([]);
+          setGiftItems([]);
+          return;
         }
 
-        // Process product commission tiers from Strapi
-        if (
-          productCommissionTiers.data &&
-          productCommissionTiers.data.length > 0
-        ) {
-          const transformedProducts = productCommissionTiers.data.map(
-            (tier: any) => {
-              const tierData = tier.attributes || tier;
-              const product =
-                tierData.product?.data?.attributes || tierData.product || {};
-              return {
-                id: tier.id,
-                name: tierData.productName || product.name || 'Unknown Product',
-                description: product.description || '',
-                sku: product.sku || '',
-                customerPrice: parseFloat(product.price || 0),
-                pvValue: product.pvValue || 0,
-                commissionRates: {
-                  sales: parseFloat(tierData.salesCommissionRate || 0),
-                  leader: parseFloat(tierData.leaderCommissionRate || 0),
-                  manager: parseFloat(tierData.managerCommissionRate || 0),
-                },
-                commissionAmounts: {
-                  sales: parseFloat(tierData.salesCommissionAmount || 0),
-                  leader: parseFloat(tierData.leaderCommissionAmount || 0),
-                  manager: parseFloat(tierData.managerCommissionAmount || 0),
-                },
-              };
-            }
-          );
-          setProducts(transformedProducts);
-        }
+        const productsList: Product[] = [];
+        const allCommissionRates = new Map<string, number>();
 
-        // Process volume bonuses
-        if (volumeBonusData.data && Array.isArray(volumeBonusData.data)) {
-          const transformedVolumeBonuses = volumeBonusData.data.map(
-            (bonus: any) => {
-              const bonusData = bonus.attributes || bonus;
-              return {
-                id: bonus.id || bonusData.id,
-                minVolume: parseFloat(bonusData.minVolume || 0),
-                maxVolume: bonusData.maxVolume
-                  ? parseFloat(bonusData.maxVolume)
-                  : undefined,
-                bonusPercentage: parseFloat(bonusData.bonusPercentage || 0),
-              };
-            }
-          );
-          setVolumeBonuses(transformedVolumeBonuses);
-        }
+        serverProducts.forEach((product: any) => {
+          const productData = product.attributes || product;
+          const productId = product.id || product.documentId;
 
-        // Process gift items
-        if (giftItemsData.data && Array.isArray(giftItemsData.data)) {
-          const transformedGiftItems = giftItemsData.data.map((item: any) => {
-            const itemData = item.attributes || item;
-            return {
-              id: item.id || itemData.id,
-              name: itemData.name || 'Unknown Gift',
-              description: itemData.description || undefined,
-              requiredPurchases: parseInt(itemData.requiredPurchases || 0),
-            };
+          // Initialize commission rates for this product
+          let productCommissionRates = {
+            direct: 0,
+            upline_1: 0,
+            upline_2: 0,
+          };
+
+          // Check for commission template in the product data
+          const commissionTemplate = productData.commissionTemplate;
+
+          console.log(
+            `Product ${productData.name} - Raw commission template:`,
+            commissionTemplate
+          );
+
+          if (
+            commissionTemplate &&
+            (commissionTemplate.data || commissionTemplate.id)
+          ) {
+            // Handle both direct object and data wrapper formats
+            const templateData = commissionTemplate.data || commissionTemplate;
+            const templateAttrs = templateData.attributes || templateData;
+
+            console.log(
+              `Product ${productData.name} - Processed template:`,
+              templateAttrs
+            );
+
+            // Get details from template
+            const details =
+              templateAttrs.details?.data || templateAttrs.details || [];
+
+            details.forEach((detail: any) => {
+              const detailData = detail.attributes || detail;
+              const levelType = detailData.levelType;
+              const commissionValue = parseFloat(
+                detailData.commissionValue || '0'
+              );
+
+              console.log(
+                `  - Level: ${levelType}, Value: ${commissionValue}%`
+              );
+
+              // Map level types to our structure
+              if (levelType === 'direct') {
+                productCommissionRates.direct = commissionValue;
+              } else if (levelType === 'upline_1') {
+                productCommissionRates.upline_1 = commissionValue;
+              } else if (levelType === 'upline_2') {
+                productCommissionRates.upline_2 = commissionValue;
+              }
+
+              // Track overall rates
+              if (
+                !allCommissionRates.has(levelType) ||
+                allCommissionRates.get(levelType)! < commissionValue
+              ) {
+                allCommissionRates.set(levelType, commissionValue);
+              }
+            });
+          } else {
+            console.log(
+              `Product ${productData.name} - No commission template found`
+            );
+          }
+
+          // Create product object with actual data
+          const price = parseFloat(productData.price || '0');
+
+          productsList.push({
+            id: parseInt(productId) || 0,
+            name: productData.name || 'Product',
+            description: productData.description || '',
+            sku: productData.sku || `SKU-${productId}`,
+            customerPrice: price,
+            travelPackagePrice: productData.travelPackagePrice
+              ? parseFloat(productData.travelPackagePrice)
+              : undefined,
+            pvValue: parseFloat(
+              productData.pvValue || productData.price || '0'
+            ),
+            commissionRates: {
+              sales: productCommissionRates.direct,
+              leader: productCommissionRates.upline_1,
+              manager: productCommissionRates.upline_2,
+            },
+            commissionAmounts: {
+              sales: price * (productCommissionRates.direct / 100),
+              leader: price * (productCommissionRates.upline_1 / 100),
+              manager: price * (productCommissionRates.upline_2 / 100),
+            },
           });
-          setGiftItems(transformedGiftItems);
+        });
+
+        console.log('Processed products:', productsList);
+        setProducts(productsList);
+
+        // Set role types based on actual commission rates found
+        const roleTypesList: RoleType[] = [];
+
+        if (allCommissionRates.has('direct')) {
+          roleTypesList.push({
+            id: 1,
+            name: 'Direct Sales',
+            commissionRate: allCommissionRates.get('direct')! / 100,
+            level: 1,
+          });
         }
-      } catch (err) {
-        console.error('Error fetching data from Strapi:', err);
-        setError('Failed to load commission structure from server');
-      } finally {
-        setIsLoading(false);
+
+        if (allCommissionRates.has('upline_1')) {
+          roleTypesList.push({
+            id: 2,
+            name: 'Upline Level 1',
+            commissionRate: allCommissionRates.get('upline_1')! / 100,
+            level: 2,
+          });
+        }
+
+        if (allCommissionRates.has('upline_2')) {
+          roleTypesList.push({
+            id: 3,
+            name: 'Upline Level 2',
+            commissionRate: allCommissionRates.get('upline_2')! / 100,
+            level: 3,
+          });
+        }
+
+        console.log('Role types:', roleTypesList);
+        setRoleTypes(roleTypesList);
+
+        // Process achievement rewards from Strapi
+        const volumeBonusList: VolumeBonus[] = [];
+        const giftItemsList: GiftItem[] = [];
+
+        serverAchievements.forEach((achievement: any, index: number) => {
+          const achievementData = achievement.attributes || achievement;
+
+          if (
+            achievementData.rewardType === 'cash' &&
+            achievementData.criteriaType === 'sales_volume'
+          ) {
+            // This is a volume bonus
+            volumeBonusList.push({
+              id: achievement.id || index + 1,
+              minVolume: parseFloat(achievementData.criteriaValue || '0'),
+              bonusPercentage: parseFloat(achievementData.rewardValue || '0'),
+            });
+          } else if (achievementData.rewardType === 'gift') {
+            // This is a gift reward
+            giftItemsList.push({
+              id: achievement.id || index + 1,
+              name: achievementData.rewardName || 'Gift Reward',
+              description: achievementData.description || '',
+              requiredPurchases: parseInt(achievementData.criteriaValue || '1'),
+            });
+          }
+        });
+
+        // Sort volume bonuses by min volume
+        volumeBonusList.sort((a, b) => a.minVolume - b.minVolume);
+
+        // Add max volume for display purposes (except last item)
+        for (let i = 0; i < volumeBonusList.length - 1; i++) {
+          volumeBonusList[i].maxVolume = volumeBonusList[i + 1].minVolume;
+        }
+
+        setVolumeBonuses(volumeBonusList);
+        setGiftItems(giftItemsList);
+
+        console.log('Volume bonuses:', volumeBonusList);
+        console.log('Gift items:', giftItemsList);
+      } catch (err: any) {
+        console.error('Error processing commission data:', err);
       }
     };
 
-    fetchCommissionStructure();
-  }, []);
+    processCommissionData();
+  }, [serverProducts, serverAchievements]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading commission structure...</span>
-      </div>
-    );
-  }
+  // Calculate pagination
+  const totalPages = Math.ceil(products.length / productsPerPage);
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const currentProducts = products.slice(startIndex, endIndex);
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-red-500 mb-4">{error}</p>
-        <p>Please check server connection and try again</p>
-      </div>
-    );
-  }
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>GrabHealth 4-Product Commission Structure</CardTitle>
+          <CardTitle>Product Commission Structure</CardTitle>
           <CardDescription>
-            Fixed commission amounts for each role level across our 4 core
-            products
+            Commission rates for each role level across our products
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -223,91 +307,170 @@ function CommissionStructure() {
               <TableRow>
                 <TableHead className="w-[200px]">Product</TableHead>
                 <TableHead>
-                  {(() => {
-                    const role = roleTypes.find((r) => r.level === 1);
-                    return role
-                      ? `${role.name} (${(role.commissionRate * 100).toFixed(0)}%)`
-                      : 'Sales (-)';
-                  })()}
+                  {roleTypes[0]
+                    ? `${roleTypes[0].name} (${(roleTypes[0].commissionRate * 100).toFixed(0)}%)`
+                    : 'Sales'}
                 </TableHead>
                 <TableHead>
-                  {(() => {
-                    const role = roleTypes.find((r) => r.level === 2);
-                    return role
-                      ? `${role.name} (${(role.commissionRate * 100).toFixed(0)}%)`
-                      : 'Leader (-)';
-                  })()}
+                  {roleTypes[1]
+                    ? `${roleTypes[1].name} (${(roleTypes[1].commissionRate * 100).toFixed(0)}%)`
+                    : 'Leader'}
                 </TableHead>
                 <TableHead>
-                  {(() => {
-                    const role = roleTypes.find((r) => r.level === 3);
-                    return role
-                      ? `${role.name} (${(role.commissionRate * 100).toFixed(0)}%)`
-                      : 'Manager (-)';
-                  })()}
+                  {roleTypes[2]
+                    ? `${roleTypes[2].name} (${(roleTypes[2].commissionRate * 100).toFixed(0)}%)`
+                    : 'Manager'}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.length > 0 ? (
-                products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">
-                      <div>
-                        <div className="font-semibold">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {product.sku}
+              {currentProducts.length > 0 ? (
+                currentProducts.map((product) => {
+                  const hasCommission =
+                    product.commissionRates.sales > 0 ||
+                    product.commissionRates.leader > 0 ||
+                    product.commissionRates.manager > 0;
+
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">
+                        <div>
+                          <div className="font-semibold">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {product.sku} • {formatPrice(product.customerPrice)}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-green-50">
-                        {formatPrice(product.commissionAmounts.sales)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-blue-50">
-                        {formatPrice(product.commissionAmounts.leader)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-orange-50">
-                        {formatPrice(product.commissionAmounts.manager)}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell>
+                        {product.commissionRates.sales > 0 ? (
+                          <div>
+                            <Badge variant="outline" className="bg-green-50">
+                              {formatPrice(product.commissionAmounts.sales)}
+                            </Badge>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {product.commissionRates.sales}%
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            No commission
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {product.commissionRates.leader > 0 ? (
+                          <div>
+                            <Badge variant="outline" className="bg-blue-50">
+                              {formatPrice(product.commissionAmounts.leader)}
+                            </Badge>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {product.commissionRates.leader}%
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            No commission
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {product.commissionRates.manager > 0 ? (
+                          <div>
+                            <Badge variant="outline" className="bg-orange-50">
+                              {formatPrice(product.commissionAmounts.manager)}
+                            </Badge>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {product.commissionRates.manager}%
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            No commission
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
-                    No products found
+                  <TableCell colSpan={4} className="text-center py-4">
+                    No products found. Please add products in Strapi admin
+                    panel.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-2 py-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to{' '}
+                {Math.min(endIndex, products.length)} of {products.length}{' '}
+                products
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        className={currentPage === page ? '' : ''}
+                      >
+                        {page}
+                      </Button>
+                    )
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Commission Role Structure</CardTitle>
-          <CardDescription>
-            Stepwise commission distribution across the upline hierarchy
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Role Level</TableHead>
-                <TableHead>Commission Rate</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {roleTypes.length > 0 ? (
-                roleTypes.map((role) => (
+      {roleTypes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Commission Role Structure</CardTitle>
+            <CardDescription>
+              Stepwise commission distribution across the upline hierarchy
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Role Level</TableHead>
+                  <TableHead>Commission Rate</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {roleTypes.map((role) => (
                   <TableRow key={role.id}>
                     <TableCell className="font-medium">
                       Level {role.level} - {role.name}
@@ -321,25 +484,18 @@ function CommissionStructure() {
                       {role.level === 1 &&
                         'Direct commission from personal sales'}
                       {role.level === 2 &&
-                        'Override commission from Sales level'}
+                        'Override commission from direct downline'}
                       {role.level === 3 &&
-                        'Override commission from Leader level'}
+                        'Override commission from second-level downline'}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4">
-                    No role types found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Volume Bonus Tiers - only show if data exists */}
       {volumeBonuses.length > 0 && (
         <Card>
           <CardHeader>
@@ -377,7 +533,6 @@ function CommissionStructure() {
         </Card>
       )}
 
-      {/* Gift Items - only show if data exists */}
       {giftItems.length > 0 && (
         <Card>
           <CardHeader>
@@ -409,63 +564,6 @@ function CommissionStructure() {
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Additional Incentive Structure</CardTitle>
-          <CardDescription>
-            Earn more through our multi-tiered incentive program
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {/* Dynamic incentives based on loaded data */}
-            {volumeBonuses.length > 0 && (
-              <Card className="border border-muted">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">
-                    Volume-based bonuses
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Earn up to{' '}
-                    {volumeBonuses.length > 0
-                      ? Math.max(...volumeBonuses.map((b) => b.bonusPercentage))
-                      : 0}
-                    % bonus based on sales volume
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {giftItems.length > 0 && (
-              <Card className="border border-muted">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Loyalty rewards</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Unlock {giftItems.length} exclusive gift items based on
-                    purchase milestones
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="border border-muted">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Referral incentives</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Additional rewards for bringing new customers/distributors
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
