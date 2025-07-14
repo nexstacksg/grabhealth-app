@@ -1,0 +1,52 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_achievements",
+  "info": {
+    "singularName": "user-achievement",
+    "pluralName": "user-achievements",
+    "displayName": "User Achievement",
+    "description": "Tracks user progress towards achievement rewards"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "reward": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::achievement-reward.achievement-reward",
+      "inversedBy": "userAchievements"
+    },
+    "periodStart": {
+      "type": "date",
+      "required": true
+    },
+    "periodEnd": {
+      "type": "date",
+      "required": true
+    },
+    "achievedValue": {
+      "type": "decimal",
+      "default": 0,
+      "required": true
+    },
+    "rewardStatus": {
+      "type": "enumeration",
+      "enum": ["in_progress", "qualified", "claimed", "paid"],
+      "default": "in_progress",
+      "required": true
+    },
+    "claimedAt": {
+      "type": "datetime"
+    },
+    "paidAt": {
+      "type": "datetime"
+    }
+  }
+}

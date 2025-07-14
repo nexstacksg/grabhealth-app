@@ -61,7 +61,7 @@ export default function Header() {
     { label: 'Products', href: '/products' },
     { label: 'Clinics', href: '/clinics' },
     { label: 'Membership', href: '/membership' },
-    // { label: 'Commission', href: '/commission' },
+    { label: 'Commission', href: '/commission' },
   ];
 
   // Return a consistent structure during SSR and initial client render

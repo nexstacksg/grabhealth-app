@@ -63,6 +63,12 @@
     "slug": {
       "type": "uid",
       "targetField": "name"
+    },
+    "commissionTemplate": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::commission-template.commission-template",
+      "inversedBy": "products"
     }
   }
 }
