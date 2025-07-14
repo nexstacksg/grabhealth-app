@@ -1,0 +1,66 @@
+{
+  "kind": "collectionType",
+  "collectionName": "commission_calculations",
+  "info": {
+    "singularName": "commission-calculation",
+    "pluralName": "commission-calculations",
+    "displayName": "Commission Calculation",
+    "description": "Calculated commissions for each transaction"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order"
+    },
+    "beneficiary": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "beneficiaryType": {
+      "type": "enumeration",
+      "enum": ["user", "company"],
+      "default": "user",
+      "required": true
+    },
+    "commissionLevel": {
+      "type": "integer",
+      "required": true
+    },
+    "commissionType": {
+      "type": "enumeration",
+      "enum": ["percentage", "fixed"],
+      "required": true
+    },
+    "commissionRate": {
+      "type": "decimal",
+      "required": true
+    },
+    "commissionAmount": {
+      "type": "decimal",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["pending", "approved", "paid"],
+      "default": "pending",
+      "required": true
+    },
+    "appliedTemplate": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::commission-template.commission-template"
+    },
+    "paidAt": {
+      "type": "datetime"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}
