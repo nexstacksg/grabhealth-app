@@ -32,13 +32,14 @@ export async function loginAction(data: LoginRequest) {
  * Server action for user registration
  * Sets httpOnly cookies upon successful registration
  */
-export async function registerAction(data: RegisterRequest) {
+export async function registerAction(data: RegisterRequest & { referrer?: string | null }) {
   try {
     // For registration, we need to call the custom auth API
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
     const url = `${baseUrl}/api/custom-auth/register`;
     
     console.log('[RegisterAction] Calling custom auth:', url);
+    console.log('[RegisterAction] With referrer:', data.referrer);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -51,6 +52,7 @@ export async function registerAction(data: RegisterRequest) {
         password: data.password,
         firstName: data.firstName || '',
         lastName: data.lastName || '',
+        referrer: data.referrer || undefined, // Include referrer if provided
       }),
     });
     

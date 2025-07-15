@@ -6,7 +6,7 @@ const VERIFICATION_CODE_EXPIRY = 10 * 60 * 1000; // 10 minutes
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async register(ctx) {
     try {
-      const { email, password, username, firstName, lastName } = ctx.request.body;
+      const { email, password, username, firstName, lastName, referrer } = ctx.request.body;
 
       // Check if user exists
       const existingUser = await strapi.db.query('plugin::users-permissions.user').findOne({
@@ -26,13 +26,39 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return ctx.internalServerError('Public role not found');
       }
 
+      // Handle referrer - look up upline user
+      let uplineUser = null;
+      if (referrer) {
+        // Try to find user by referral code first
+        uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+          where: { referralCode: referrer }
+        });
+
+        // If not found by referral code, try by email
+        if (!uplineUser && typeof referrer === 'string') {
+          uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { email: referrer.toLowerCase() }
+          });
+        }
+
+        // If not found by email, try by documentId (for backward compatibility)
+        if (!uplineUser && typeof referrer === 'string' && referrer.length === 24) { // documentId is typically 24 chars
+          uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { documentId: referrer }
+          });
+        }
+
+        // Log the referrer lookup result
+        console.log('Referrer lookup:', { referrer: referrer || 'none', found: !!uplineUser });
+      }
+
       // Generate 6-digit verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const codeExpiry = new Date(Date.now() + VERIFICATION_CODE_EXPIRY);
 
       // Create user with public role and unconfirmed status
       // Use the users-permissions service to properly hash the password
-      const user = await strapi.plugin('users-permissions').service('user').add({
+      const userData = {
         username: username || email,
         email: email.toLowerCase(),
         password,
@@ -44,7 +70,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         role: publicRole.id,
         emailVerificationCode: verificationCode,
         emailVerificationCodeExpires: codeExpiry
-      });
+      };
+
+      // Add upline if found
+      if (uplineUser) {
+        userData['upline'] = uplineUser.id;
+      }
+
+      const user = await strapi.plugin('users-permissions').service('user').add(userData);
 
       // Send verification email
       try {
