@@ -1,7 +1,5 @@
 import { factories } from '@strapi/strapi';
-import { errors } from '@strapi/utils';
-
-const { ApplicationError } = errors;
+import { ApplicationError } from '../../../utils/error-handler';
 
 export default factories.createCoreService('api::commission-calculation.commission-calculation', ({ strapi }) => ({
   async calculateOrderCommissions(orderId: number) {
