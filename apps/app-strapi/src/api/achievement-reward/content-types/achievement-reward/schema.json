@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "achievement_rewards",
+  "info": {
+    "singularName": "achievement-reward",
+    "pluralName": "achievement-rewards",
+    "displayName": "Achievement Reward",
+    "description": "Rewards for reaching sales targets and achievements"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "rewardName": {
+      "type": "string",
+      "required": true
+    },
+    "rewardType": {
+      "type": "enumeration",
+      "enum": ["cash", "trip", "gift", "voucher", "recognition"],
+      "required": true
+    },
+    "criteriaType": {
+      "type": "enumeration",
+      "enum": ["sales_volume", "units_sold", "new_recruits", "custom"],
+      "required": true
+    },
+    "criteriaValue": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "rewardValue": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "periodType": {
+      "type": "enumeration",
+      "enum": ["monthly", "quarterly", "yearly"],
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "inactive"],
+      "default": "active",
+      "required": true
+    },
+    "userAchievements": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::user-achievement.user-achievement",
+      "mappedBy": "reward"
+    }
+  }
+}

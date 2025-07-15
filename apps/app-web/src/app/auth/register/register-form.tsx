@@ -120,7 +120,7 @@ function FormInputField({
 }
 
 export default function RegisterForm({
-  referrerId: _referrerId, // Prefix with _ to indicate it's intentionally unused
+  referrerId,
 }: RegisterFormProps) {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -144,6 +144,7 @@ export default function RegisterForm({
       await register({
         email: data.email,
         password: data.password,
+        referrer: referrerId, // Pass the referrer to the registration
       });
 
       // The AuthContext handles the redirect after successful registration
@@ -186,6 +187,13 @@ export default function RegisterForm({
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {referrerId && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            You're joining through a referral link. Your referrer will be linked to your account.
+          </AlertDescription>
         </Alert>
       )}
       <Form {...form}>

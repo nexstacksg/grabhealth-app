@@ -2,10 +2,8 @@
  * Commission Service - Handles all commission related API calls for Strapi backend
  */
 
-
 import { BaseService } from './base.service';
-import { ICommission, ApiResponse } from '@app/shared-types';
-import { transformStrapiUser } from './strapi-base';
+import { ICommission, CommissionType } from '@app/shared-types';
 
 interface CommissionStats {
   totalEarnings: number;
@@ -38,8 +36,14 @@ interface CommissionData {
 }
 
 interface CommissionStructure {
-  levels: any[];
+  levels: CommissionLevel[];
   rates: Record<string, number>;
+}
+
+interface CommissionLevel {
+  level: number;
+  name: string;
+  rate: number;
 }
 
 // Strapi response formats
@@ -60,7 +64,7 @@ interface StrapiCommissionsResponse {
   };
 }
 
-// Transform Strapi commission to our ICommission format
+// Transform Strapi commission calculation to our ICommission format
 function transformStrapiCommission(strapiCommission: any): ICommission {
   if (!strapiCommission) {
     throw new Error('Invalid commission data');
@@ -70,15 +74,18 @@ function transformStrapiCommission(strapiCommission: any): ICommission {
   const data = strapiCommission.attributes || strapiCommission;
 
   return {
-    id: parseInt(strapiCommission.id || data.id || '0'),
-    orderId: parseInt(data.order?.data?.id || data.order?.id || data.orderId || '0'),
-    userId: (data.user?.data?.id || data.user?.id || data.userId || '').toString(),
-    recipientId: (data.recipient?.data?.id || data.recipient?.id || data.recipientId || '').toString(),
-    amount: parseFloat(data.amount || 0),
+    documentId: strapiCommission.documentId || strapiCommission.id || data.documentId || '',
+    orderId: (data.order?.data?.documentId || data.order?.documentId || data.order?.data?.id || data.order?.id || data.orderId || '').toString(),
+    userId: (data.beneficiary?.data?.id || data.beneficiary?.id || data.beneficiaryId || '').toString(),
+    recipientId: (data.beneficiary?.data?.id || data.beneficiary?.id || data.beneficiaryId || '').toString(),
+    amount: parseFloat(data.commissionAmount || 0),
     commissionRate: parseFloat(data.commissionRate || 0),
-    relationshipLevel: parseInt(data.relationshipLevel || 0),
-    type: data.type || 'DIRECT',
-    status: data.status || 'PENDING',
+    relationshipLevel: parseInt(data.commissionLevel || 0),
+    type: data.commissionType === 'direct' ? CommissionType.DIRECT : 
+          data.commissionType === 'indirect' ? CommissionType.INDIRECT :
+          data.commissionType === 'bonus' ? CommissionType.BONUS : 
+          data.commissionType === 'override' ? CommissionType.OVERRIDE : undefined,
+    status: data.status?.toUpperCase() || 'PENDING',
     createdAt: new Date(data.createdAt || strapiCommission.createdAt),
     updatedAt: new Date(data.updatedAt || strapiCommission.updatedAt),
   };
@@ -90,32 +97,35 @@ class CommissionService extends BaseService {
     limit?: number 
   }): Promise<{ commissions: ICommission[]; total: number; page: number; totalPages: number }> {
     try {
-      // Build query params for Strapi
+      // Get current user
+      const userResponse = await this.api.get('users/me');
+      const userId = userResponse.id;
+
+      if (!userId) {
+        return {
+          commissions: [],
+          total: 0,
+          page: 1,
+          totalPages: 0,
+        };
+      }
+
+      // Get commission calculations for the user
       const queryParams = new URLSearchParams();
-      
-      // Filter by current user as recipient - Strapi doesn't support 'me' in filters
-      // This needs to be handled by custom controller or use actual user ID
-      // For now, we'll fetch all and filter client-side
-      queryParams.append('populate[recipient]', 'true');
+      queryParams.append('filters[beneficiary][id][$eq]', userId);
+      queryParams.append('populate[order]', 'true');
+      queryParams.append('populate[appliedTemplate]', 'true');
+      queryParams.append('sort', 'createdAt:desc');
       
       if (params?.page) {
         queryParams.append('pagination[page]', params.page.toString());
       }
-      
       if (params?.limit) {
         queryParams.append('pagination[pageSize]', params.limit.toString());
       }
-      
-      // Populate relations
-      queryParams.append('populate[recipient]', '*');
-      queryParams.append('populate[user]', '*');
-      queryParams.append('populate[order]', '*');
-      
-      // Sort by creation date (newest first)
-      queryParams.append('sort', 'createdAt:desc');
 
       const response = await this.api.get<StrapiCommissionsResponse>(
-        `/commissions?${queryParams.toString()}`
+        `commission-calculations?${queryParams.toString()}`
       );
 
       const commissions = (response.data || []).map(transformStrapiCommission);
@@ -132,10 +142,7 @@ class CommissionService extends BaseService {
         totalPages: pagination.pageCount,
       };
     } catch (error: any) {
-      // Only log detailed error if it's not a 404 or 403
-      if (error?.status !== 404 && error?.status !== 403) {
-        console.error('Error fetching commissions:', error.message || error);
-      }
+      console.error('Error fetching commissions:', error.message || error);
       return {
         commissions: [],
         total: 0,
@@ -147,8 +154,7 @@ class CommissionService extends BaseService {
 
   async getCommissionStats(): Promise<CommissionStats> {
     try {
-      // This would need a custom controller in Strapi
-      // For now, fetch all commissions and calculate stats client-side
+      // Use getMyCommissions to fetch data and calculate stats
       const { commissions } = await this.getMyCommissions({ limit: 100 });
       
       const stats: CommissionStats = {
@@ -172,33 +178,24 @@ class CommissionService extends BaseService {
 
   async getNetwork(): Promise<NetworkNode> {
     try {
-      // Fetch user relationships to build network
-      const queryParams = new URLSearchParams();
-      queryParams.append('filters[upline][id][$eq]', 'me');
-      queryParams.append('populate[user]', '*');
-      queryParams.append('populate[upline]', '*');
-      
-      const response = await this.api.get<StrapiCommissionsResponse>(
-        `/user-relationships?${queryParams.toString()}`
-      );
+      // Get current user with downlines
+      const userResponse = await this.api.get('users/me?populate=downlines');
+      const currentUser = userResponse;
 
-      // Build network tree from relationships
-      const downlines = response.data || [];
-      
       const buildNode = (user: any, level: number = 1): NetworkNode => ({
         id: user.id?.toString() || '',
         name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
         email: user.email || '',
         level,
-        children: [], // Would need recursive fetching for deeper levels
+        children: user.downlines?.map((downline: any) => buildNode(downline, level + 1)) || [],
       });
 
       const rootNode: NetworkNode = {
-        id: 'me',
-        name: 'You',
-        email: '',
+        id: currentUser.id?.toString() || 'me',
+        name: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'You',
+        email: currentUser.email || '',
         level: 0,
-        children: downlines.map((rel: any) => buildNode(rel.user, 1)),
+        children: currentUser.downlines?.map((downline: any) => buildNode(downline, 1)) || [],
       };
 
       return rootNode;
@@ -249,21 +246,19 @@ class CommissionService extends BaseService {
   async getCommission(id: string): Promise<ICommission> {
     try {
       const response = await this.api.get<StrapiCommissionResponse>(
-        `/commissions/${id}?populate=*`
+        `commission-calculations/${id}?populate=*`
       );
       
       return transformStrapiCommission(response.data);
     } catch (error) {
       this.handleError(error);
-      // TypeScript requires a return value - throw to propagate the error
-      throw error;
+      // TypeScript needs this even though handleError throws
+      return {} as ICommission;
     }
   }
 
   async initializeCommissionSystem(): Promise<void> {
     try {
-      // This would need a custom controller in Strapi
-      // For now, just return success
       console.log('Commission system initialization requested');
     } catch (error) {
       this.handleError(error);
@@ -273,62 +268,56 @@ class CommissionService extends BaseService {
   async getCommissionData(): Promise<CommissionData> {
     try {
       // Fetch multiple data points in parallel
-      const [commissionsData, currentUserResp, uplineResp, downlineResp] = await Promise.all([
+      const [commissionsData, currentUserResp] = await Promise.all([
         this.getMyCommissions({ limit: 50 }),
-        this.api.get('/users/me').catch(() => ({ id: null })),
-        this.api.get('/user-relationships?filters[user][id][$eq]=me&populate[upline]=*').catch(() => ({ data: [] })),
-        this.api.get('/user-relationships?filters[upline][id][$eq]=me&populate[user]=*').catch(() => ({ data: [] }))
+        this.api.get('users/me?populate=upline,downlines')
       ]);
       
       const currentUser = currentUserResp as any;
-      const uplineRelations = Array.isArray((uplineResp as any).data) ? (uplineResp as any).data : [];
-      const downlineRelations = Array.isArray((downlineResp as any).data) ? (downlineResp as any).data : [];
       
-      // Get upline from relationships
+      // Get upline data
       let uplineData = null;
-      if (uplineRelations.length > 0) {
-        const rel = uplineRelations[0];
-        const uplineUser = rel.upline?.data || rel.upline || null;
-        if (uplineUser) {
-          uplineData = {
-            id: uplineUser.id,
-            user_id: uplineUser.id,
-            upline_id: null,
-            relationship_level: 1,
-            created_at: rel.createdAt || rel.attributes?.createdAt,
-            updated_at: rel.updatedAt || rel.attributes?.updatedAt,
-            name: `${uplineUser.firstName || ''} ${uplineUser.lastName || ''}`.trim(),
-            email: uplineUser.email,
-          };
-        }
+      if (currentUser.upline) {
+        const uplineUser = currentUser.upline;
+        uplineData = {
+          id: uplineUser.id,
+          user_id: uplineUser.id,
+          upline_id: null,
+          relationship_level: 1,
+          created_at: uplineUser.createdAt,
+          updated_at: uplineUser.updatedAt,
+          name: `${uplineUser.firstName || ''} ${uplineUser.lastName || ''}`.trim(),
+          email: uplineUser.email,
+        };
       }
       
       // Transform downlines
-      const downlinesData = downlineRelations.map((rel: any) => {
-        const userData = rel.user?.data || rel.user || {};
-        return {
-          id: rel.id,
-          user_id: userData.id || rel.userId,
-          upline_id: currentUser?.id,
-          relationship_level: rel.relationshipLevel || rel.attributes?.relationshipLevel || 1,
-          created_at: rel.createdAt || rel.attributes?.createdAt,
-          updated_at: rel.updatedAt || rel.attributes?.updatedAt,
-          name: userData ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim() : '',
-          email: userData.email || '',
-        };
-      });
+      const downlinesData = (currentUser.downlines || []).map((user: any) => ({
+        id: user.id,
+        user_id: user.id,
+        upline_id: currentUser.id,
+        relationship_level: 1,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        email: user.email || '',
+      }));
       
       const totalEarnings = commissionsData.commissions.reduce(
         (sum, c) => sum + c.amount, 
         0
       );
       
+      // Use referralCode from user data
+      const referralLink = currentUser.referralCode || 
+        (typeof window !== 'undefined' ? `${window.location.origin}/auth/register?referrer=${currentUser.referralCode || currentUser.id}` : '');
+      
       return {
         upline: uplineData,
         downlines: downlinesData,
         commissions: commissionsData.commissions,
-        points: 0, // Would need to calculate from orders
-        referralLink: typeof window !== 'undefined' ? `${window.location.origin}/auth/register?ref=${currentUser?.id || 'me'}` : '',
+        points: 0,
+        referralLink,
         totalEarnings,
       };
     } catch (error) {
@@ -346,44 +335,109 @@ class CommissionService extends BaseService {
 
   async getCommissionStructure(): Promise<CommissionStructure> {
     try {
-      // Fetch commission tiers from Strapi
-      const tiersResponse = await this.api.get<StrapiCommissionsResponse>('/commission-tiers?sort=tierLevel:asc');
-      const tiers = (tiersResponse as any).data || [];
+      // Fetch active commission templates using custom endpoint
+      const response = await this.api.get<StrapiCommissionsResponse>('commission-templates/active');
       
-      // Transform Strapi data to our structure
-      const levels = tiers.map((tier: any) => {
-        const tierData = tier.attributes || tier;
-        return {
-          level: tierData.tierLevel || tier.tierLevel,
-          name: tierData.tierName || tier.tierName,
-          rate: parseFloat(tierData.directCommissionRate || tier.directCommissionRate || 0) / 100, // Convert percentage to decimal
-        };
+      // Handle different response formats
+      let templates: any[] = [];
+      if (response) {
+        if (Array.isArray(response)) {
+          templates = response;
+        } else if (response.data && Array.isArray(response.data)) {
+          templates = response.data;
+        } else if (response.data) {
+          templates = [response.data];
+        }
+      }
+      
+      // Extract unique levels from all templates
+      const levelMap = new Map<number, CommissionLevel>();
+      
+      templates.forEach((template: any) => {
+        // Handle Strapi v5 response format
+        const templateData = template.attributes || template;
+        const detailsData = templateData.details?.data || templateData.details || [];
+        const details = Array.isArray(detailsData) ? detailsData : [];
+        
+        details.forEach((detail: any) => {
+          const detailData = detail.attributes || detail;
+          if (detailData.levelType === 'direct' && detailData.levelNumber === 0) {
+            levelMap.set(0, {
+              level: 0,
+              name: 'Direct Sales',
+              rate: detailData.commissionValue / 100
+            });
+          } else if (detailData.levelType && detailData.levelType.startsWith('upline_')) {
+            const level = parseInt(detailData.levelType.split('_')[1]);
+            levelMap.set(level, {
+              level,
+              name: `Level ${level} Upline`,
+              rate: detailData.commissionValue / 100
+            });
+          }
+        });
       });
       
-      // Build rates object from tiers
+      const levels = Array.from(levelMap.values()).sort((a, b) => a.level - b.level);
+      
+      // Build rates object
       const rates: Record<string, number> = {};
-      tiers.forEach((tier: any) => {
-        const tierData = tier.attributes || tier;
-        const tierName = tierData.tierName || tier.tierName || '';
-        const roleName = tierName.toUpperCase().replace(/ /g, '_');
-        const commissionRate = tierData.directCommissionRate || tier.directCommissionRate || 0;
-        rates[roleName] = parseFloat(commissionRate) / 100;
+      levels.forEach(level => {
+        rates[`LEVEL_${level.level}`] = level.rate;
       });
       
-      // Only return what we have from Strapi, no hardcoded defaults
+      // If no templates found, return empty structure to let component handle defaults
+      if (levels.length === 0) {
+        console.warn('No commission templates found in API response');
+        return {
+          levels: [],
+          rates: {}
+        };
+      }
+
       return {
         levels,
         rates,
       };
-    } catch (error) {
-      console.error('Error fetching commission structure from Strapi:', error);
-      // Return empty structure instead of hardcoded defaults
+    } catch (error: any) {
+      console.error('Error fetching commission structure:', error?.message || error);
+      // Return empty structure to let component handle defaults
       return {
         levels: [],
-        rates: {},
+        rates: {}
       };
+    }
+  }
+
+  async calculateCommissionForOrder(orderId: number): Promise<any> {
+    try {
+      const response = await this.api.post(`commission-calculations/calculate/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error calculating commission:', error);
+      throw error;
+    }
+  }
+
+  async approveCommissions(commissionIds: number[]): Promise<any> {
+    try {
+      const response = await this.api.post('commission-calculations/approve', { commissionIds });
+      return response.data;
+    } catch (error) {
+      console.error('Error approving commissions:', error);
+      throw error;
+    }
+  }
+
+  async markCommissionsAsPaid(commissionIds: number[]): Promise<any> {
+    try {
+      const response = await this.api.post('commission-calculations/mark-paid', { commissionIds });
+      return response.data;
+    } catch (error) {
+      console.error('Error marking commissions as paid:', error);
+      throw error;
     }
   }
 }
 
-export const commissionService = new CommissionService('/commissions');
+export const commissionService = new CommissionService('');

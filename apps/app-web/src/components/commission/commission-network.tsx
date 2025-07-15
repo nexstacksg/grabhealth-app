@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Download,
   ZoomIn,
   ZoomOut,
   ArrowUpRight,
@@ -26,9 +25,7 @@ import {
   ChevronUp,
   ChevronDown,
   QrCode,
-  Link,
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -39,45 +36,45 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import ReferralLink from './referral-link';
-import { useCommission } from './commission-provider';
-import { apiClient } from '@/lib/api-client';
-import { useAuth } from '@/contexts/AuthContext';
 // Authentication is now handled at the page level
 
 type UserRelationship = {
-  id: number;
-  user_id: number;
-  upline_id: number | null;
-  relationship_level: number;
-  created_at: string;
-  updated_at: string;
+  id?: number | string;
+  documentId?: string;
+  user_id?: number;
+  upline_id?: number | null;
+  relationship_level?: number;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
   user_name?: string;
+  username?: string;
+  firstName?: string;
   name?: string;
   email?: string;
   rank?: string;
   sales?: number;
   memberSince?: string;
+  attributes?: any;
 };
 
 type CommissionNetworkProps = {
   upline: UserRelationship | null;
   downlines: UserRelationship[];
+  referralLink?: string;
+  currentUser?: any; // User data from server
+  userSales?: number; // Pre-calculated sales from commissions
+  commissions?: any[]; // Commission data from server
 };
 
-function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
+function CommissionNetwork({ upline, downlines, referralLink = '', currentUser, userSales = 0 }: CommissionNetworkProps) {
   const [viewMode, setViewMode] = useState('tree');
   const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [windowWidth, setWindowWidth] = useState(0);
   const [expandedMembers, setExpandedMembers] = useState<{
     [key: string]: boolean;
   }>({});
-  const [showQRCode, setShowQRCode] = useState(false);
-  const { referralLink } = useCommission();
-  const { user } = useAuth();
-  const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>(
-    {}
-  );
   const [commissionRates, setCommissionRates] = useState<{
     tier1: number;
     tier2: number;
@@ -89,7 +86,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
   });
   const [currentUserSales, setCurrentUserSales] = useState<number>(0);
   const [currentUserRank, setCurrentUserRank] = useState<string>('Bronze');
-  const [rankThresholds, setRankThresholds] = useState<{
+  const [rankThresholds] = useState<{
     platinum: number;
     gold: number;
     silver: number;
@@ -99,183 +96,47 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
     silver: 2000,
   });
 
-  // Update window width on resize for responsive behavior
+
+
+  // Initialize commission rates with default values
+  // In a real implementation, these would come from the server
   useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    // Set initial width
-    handleResize();
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Use default commission rates that match Strapi's seeded data
+    // These should ideally be passed from the server component
+    setCommissionRates({
+      tier1: 30, // Direct sales: 30%
+      tier2: 10, // Upline level 1: 10%
+      tier3: 5,  // Upline level 2: 5%
+    });
   }, []);
 
-  // Fetch member sales data when component mounts
+  // Set current user's sales data from server-provided data
   useEffect(() => {
-    const fetchMemberSalesData = async () => {
-      try {
-        // Fetch sales data for all members in the network
-        const memberIds = [
-          ...downlines.map((d) => d.user_id),
-          upline?.user_id,
-        ].filter(Boolean);
+    // Use the user data passed from the server component
+    if (!currentUser) {
+      console.log('No user data provided - using defaults');
+      return;
+    }
 
-        if (memberIds.length > 0) {
-          // Fetch actual sales data for each member
-          const salesData: { [key: string]: number } = {};
+    // Check if user has a rank field
+    if (currentUser.rank) {
+      setCurrentUserRank(currentUser.rank);
+    } else {
+      // Determine rank based on sales
+      setCurrentUserRank(determineRank(userSales));
+    }
 
-          // For now, skip fetching individual member sales to avoid server errors
-          // This would need a custom Strapi endpoint to efficiently fetch sales for multiple users
-          // Just use the sales data if it's already provided in the relationship data
-          memberIds.forEach((memberId) => {
-            salesData[memberId || ''] = 0; // Default to 0
-          });
+    // Set the sales amount
+    setCurrentUserSales(userSales);
+  }, [currentUser, userSales]);
 
-          setMemberDetails((prev) => ({ ...prev, ...salesData }));
-        }
-      } catch (error: any) {
-        if (error?.status !== 404 && error?.status !== 403) {
-          console.error(
-            'Error fetching member sales data:',
-            error.message || error
-          );
-        }
-      }
-    };
-
-    fetchMemberSalesData();
-  }, [downlines, upline]);
-
-  // Fetch commission rates from Strapi
+  // Rank thresholds are currently hardcoded
+  // In the future, these could be fetched from a Strapi content type
+  // For now, commenting out the API call that doesn't exist
   useEffect(() => {
-    const fetchCommissionRates = async () => {
-      try {
-        const response = await apiClient.get<{ data: any[] }>(
-          '/commission-tiers?sort=tierLevel:asc'
-        );
-        if (response.data && response.data.length > 0) {
-          const rates: any = {};
-          response.data.forEach((tier: any) => {
-            const tierData = tier.attributes || tier;
-            const level = tierData.tierLevel || tier.tierLevel;
-            rates[`tier${level}`] = parseFloat(
-              tierData.directCommissionRate || tier.directCommissionRate || 0
-            );
-          });
-          setCommissionRates((prev) => ({ ...prev, ...rates }));
-        }
-      } catch (error: any) {
-        if (error?.status !== 404 && error?.status !== 403) {
-          console.error(
-            'Error fetching commission rates:',
-            error.message || error
-          );
-        }
-      }
-    };
-
-    fetchCommissionRates();
-  }, []);
-
-  // Fetch current user's sales data
-  useEffect(() => {
-    const fetchCurrentUserData = async () => {
-      try {
-        // Try to get user ID from auth context first
-        let userId: string | null = user?.id || null;
-
-        // If not in context, try to fetch from API
-        if (!userId) {
-          try {
-            const userResponse = await apiClient.get<any>('/users/me');
-            if (userResponse) {
-              userId = userResponse.id;
-              // Check if user has a rank field
-              if (userResponse.rank) {
-                setCurrentUserRank(userResponse.rank);
-              }
-            }
-          } catch (error) {
-            // If we can't get user info, use defaults
-            console.log('Using default values - unable to fetch user info');
-            return;
-          }
-        }
-
-        // If we have a user ID, fetch their orders
-        if (userId) {
-          try {
-            // Use proper Strapi filter syntax
-            const ordersResponse = await apiClient.get<{ data: any[] }>(
-              `/orders?filters[user][id][$eq]=${userId}&filters[status][$eq]=COMPLETED&populate=*`
-            );
-
-            if (ordersResponse.data && Array.isArray(ordersResponse.data)) {
-              // Calculate total sales from completed orders
-              const totalSales = ordersResponse.data.reduce((sum, order) => {
-                const orderData = order.attributes || order;
-                return (
-                  sum +
-                  parseFloat(orderData.totalAmount || orderData.total || 0)
-                );
-              }, 0);
-
-              setCurrentUserSales(totalSales);
-              // Only update rank if not already set from user profile
-              if (currentUserRank === 'Bronze') {
-                setCurrentUserRank(determineRank(totalSales));
-              }
-            }
-          } catch (orderError: any) {
-            // Orders might not exist, which is fine
-            if (orderError?.status !== 404) {
-              console.log('Unable to fetch orders:', orderError.message);
-            }
-          }
-        }
-      } catch (error: any) {
-        if (
-          error?.status !== 404 &&
-          error?.status !== 403 &&
-          error?.status !== 500
-        ) {
-          console.error(
-            'Error in fetchCurrentUserData:',
-            error.message || error
-          );
-        }
-        // Keep default values on error
-      }
-    };
-
-    fetchCurrentUserData();
-  }, [user]);
-
-  // Fetch rank thresholds from Strapi
-  useEffect(() => {
-    const fetchRankThresholds = async () => {
-      try {
-        // Try to fetch user role types which might contain sales thresholds
-        const response = await apiClient.get<{ data: any[] }>(
-          '/user-role-types?populate=*'
-        );
-        if (response.data && response.data.length > 0) {
-          // For now, use default thresholds since user-role-types doesn't have sales thresholds
-          // You might need to add a new content type in Strapi for rank thresholds
-          console.log('User role types fetched:', response.data.length);
-        }
-      } catch (error: any) {
-        // Silently handle if endpoint doesn't exist or user doesn't have permission
-        if (error?.status !== 404 && error?.status !== 403) {
-          console.error('Error fetching role types:', error.message || error);
-        }
-        // Keep default thresholds
-      }
-    };
-
-    fetchRankThresholds();
+    // Using default rank thresholds
+    // These could be moved to a configuration content type in Strapi if needed
+    console.log('Using default rank thresholds:', rankThresholds);
   }, []);
 
   const zoomIn = () => {
@@ -310,49 +171,52 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
     return `$${amount.toLocaleString()}`;
   };
 
-  // Process the actual data from Strapi
+  // Process the actual data from Strapi with proper null checks
+  const processUplineData = () => {
+    if (!upline) return [];
+    
+    // Handle both direct user object and relationship object formats
+    const uplineData = upline.attributes || upline;
+    const uplineId = uplineData.id || uplineData.documentId || uplineData.upline_id || 'upline';
+    const uplineName = uplineData.username || uplineData.firstName || uplineData.name || uplineData.user_name || uplineData.email || 'Upline Member';
+    
+    return [{
+      id: uplineId,
+      name: uplineName,
+      rank: uplineData.rank || determineRank(uplineData.sales || 0, 0),
+      sales: formatSales(uplineData.sales || 0),
+    }];
+  };
+  
+  const processDownlineData = () => {
+    if (!Array.isArray(downlines)) return [];
+    
+    return downlines.map((d: any, index: number) => {
+      const downlineData = d.attributes || d;
+      const downlineId = downlineData.id || downlineData.documentId || downlineData.user_id || `downline-${index}`;
+      const downlineName = downlineData.username || downlineData.firstName || downlineData.name || downlineData.user_name || downlineData.email || `Member #${index + 1}`;
+      
+      return {
+        id: downlineId,
+        name: downlineName,
+        rank: downlineData.rank || determineRank(downlineData.sales || 0, downlineData.relationship_level || 1),
+        sales: formatSales(downlineData.sales || 0),
+        joinedDate: downlineData.created_at || downlineData.createdAt,
+        relationshipLevel: downlineData.relationship_level || 1,
+      };
+    });
+  };
+
   const networkData = {
     currentUser: {
       id: 'current',
       name: 'You',
       rank: currentUserRank,
       sales: formatSales(currentUserSales),
-      referralLink: referralLink,
+      referralLink: referralLink || '',
     },
-    uplineMembers: upline
-      ? [
-          {
-            id: upline.id || upline.upline_id || 0,
-            name:
-              upline.name ||
-              upline.user_name ||
-              upline.email ||
-              'Upline Member',
-            rank:
-              upline.rank ||
-              determineRank(
-                upline.sales || memberDetails[upline.user_id] || 0,
-                0
-              ),
-            sales: formatSales(
-              upline.sales || memberDetails[upline.user_id] || 0
-            ),
-          },
-        ]
-      : [],
-    downlineMembers: downlines.map((d) => ({
-      id: d.id || d.user_id,
-      name: d.name || d.user_name || d.email || `Member #${d.user_id}`,
-      rank:
-        d.rank ||
-        determineRank(
-          d.sales || memberDetails[d.user_id] || 0,
-          d.relationship_level
-        ),
-      sales: formatSales(d.sales || memberDetails[d.user_id] || 0),
-      joinedDate: d.created_at,
-      relationshipLevel: d.relationship_level,
-    })),
+    uplineMembers: processUplineData(),
+    downlineMembers: processDownlineData(),
   };
 
   // Determine node colors based on rank
@@ -389,10 +253,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 <div
                   className={`w-16 h-16 ${getRankColor(member.rank)} rounded-full flex items-center justify-center text-white font-bold mb-2`}
                 >
-                  {member.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {member.name && typeof member.name === 'string' 
+                    ? member.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : 'U'}
                 </div>
                 <div className="text-center">
                   <p className="font-semibold">{member.name}</p>
@@ -412,10 +279,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
             <div
               className={`w-20 h-20 ${getRankColor(networkData.currentUser.rank)} rounded-full flex items-center justify-center text-white font-bold mb-2 border-2 border-white shadow-lg`}
             >
-              {networkData.currentUser.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')}
+              {networkData.currentUser.name && typeof networkData.currentUser.name === 'string'
+                ? networkData.currentUser.name
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .toUpperCase()
+                : 'Y'}
             </div>
             <div className="text-center">
               <p className="font-semibold">{networkData.currentUser.name}</p>
@@ -440,10 +310,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 <div
                   className={`w-16 h-16 ${getRankColor(member.rank)} rounded-full flex items-center justify-center text-white font-bold mb-2`}
                 >
-                  {member.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {member.name && typeof member.name === 'string'
+                    ? member.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : 'M'}
                 </div>
                 <div className="text-center">
                   <p className="font-semibold">{member.name}</p>
@@ -487,10 +360,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                     <div
                       className={`w-10 h-10 ${getRankColor(member.rank)} rounded-full flex items-center justify-center text-white font-bold`}
                     >
-                      {member.name
+                      {member.name && typeof member.name === 'string'
+                    ? member.name
                         .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : member.name.includes('current') ? 'Y' : 'M'}
                     </div>
                     <div>
                       <p className="font-medium">{member.name}</p>
@@ -547,7 +423,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 >
                   {networkData.currentUser.name
                     .split(' ')
-                    .map((n) => n[0])
+                    .map((n: string) => n[0])
                     .join('')}
                 </div>
                 <div>
@@ -609,10 +485,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                     <div
                       className={`w-10 h-10 ${getRankColor(member.rank)} rounded-full flex items-center justify-center text-white font-bold`}
                     >
-                      {member.name
+                      {member.name && typeof member.name === 'string'
+                    ? member.name
                         .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : member.name.includes('current') ? 'Y' : 'M'}
                     </div>
                     <div>
                       <p className="font-medium">{member.name}</p>
@@ -696,7 +575,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
             >
               {networkData.currentUser.name
                 .split(' ')
-                .map((n) => n[0])
+                .map((n: string) => n[0])
                 .join('')}
             </div>
             <div className="text-center">
@@ -709,7 +588,7 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
         </div>
 
         {/* Upline */}
-        {networkData.uplineMembers.map((member, index) => {
+        {networkData.uplineMembers.map((member) => {
           const position = calculatePosition(0, 1, radius);
 
           return (
@@ -725,10 +604,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 <div
                   className={`w-10 h-10 ${getRankColor(member.rank)} rounded-full flex items-center justify-center text-white font-bold mb-1`}
                 >
-                  {member.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {member.name && typeof member.name === 'string'
+                    ? member.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : member.name.includes('current') ? 'Y' : 'M'}
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-semibold">{member.name}</p>
@@ -791,10 +673,13 @@ function CommissionNetwork({ upline, downlines }: CommissionNetworkProps) {
                 <div
                   className={`w-10 h-10 ${getRankColor(member.rank)} rounded-full flex items-center justify-center text-white font-bold mb-1`}
                 >
-                  {member.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {member.name && typeof member.name === 'string'
+                    ? member.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : member.name.includes('current') ? 'Y' : 'M'}
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-semibold">{member.name}</p>

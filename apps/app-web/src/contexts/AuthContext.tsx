@@ -117,7 +117,7 @@ const useAuthProvider = () => {
   }, [router]);
 
   const register = useCallback(
-    async (data: RegisterRequest) => {
+    async (data: RegisterRequest & { referrer?: string | null }) => {
       try {
         // Use server action to set httpOnly cookies
         const result = await registerAction({
@@ -125,6 +125,7 @@ const useAuthProvider = () => {
           password: data.password,
           firstName: data.firstName || '',
           lastName: data.lastName || '',
+          referrer: data.referrer,
         });
         
         if (!result.success) {

@@ -28,27 +28,27 @@ type CommissionLevel = {
 function ReferralLink({ referralLink }: ReferralLinkProps) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
-  // const [commissionLevels, setCommissionLevels] = useState<CommissionLevel[]>([]);
+  const [commissionLevels, setCommissionLevels] = useState<CommissionLevel[]>([]);
   const [isLoadingRates, setIsLoadingRates] = useState(true);
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
-  // // Fetch commission structure on mount
-  // useEffect(() => {
-  //   const fetchCommissionRates = async () => {
-  //     try {
-  //       const structure = await commissionService.getCommissionStructure();
-  //       if (structure && structure.levels && structure.levels.length > 0) {
-  //         setCommissionLevels(structure.levels);
-  //       }
-  //     } catch (error) {
-  //       console.error('Failed to fetch commission rates:', error);
-  //     } finally {
-  //       setIsLoadingRates(false);
-  //     }
-  //   };
+  // Fetch commission structure on mount
+  useEffect(() => {
+    const fetchCommissionRates = async () => {
+      try {
+        const structure = await commissionService.getCommissionStructure();
+        if (structure && structure.levels && structure.levels.length > 0) {
+          setCommissionLevels(structure.levels);
+        }
+      } catch (error) {
+        console.error('Failed to fetch commission rates:', error);
+      } finally {
+        setIsLoadingRates(false);
+      }
+    };
 
-  //   fetchCommissionRates();
-  // }, []);
+    fetchCommissionRates();
+  }, []);
 
   // Copy referral link to clipboard
   const copyToClipboard = async () => {
@@ -232,7 +232,7 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
           </div>
         </div>
 
-        {/* <Alert>
+        <Alert>
           <Share2 className="h-4 w-4" />
           <AlertTitle>How the Commission System Works</AlertTitle>
           <AlertDescription>
@@ -249,16 +249,14 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
                   <li key={level.level}>
                     {level.name}: Earn {(level.rate * 100).toFixed(0)}%
                     commission
-                    {level.level === 1 && ' on direct sales'}
-                    {level.level === 2 &&
+                    {level.level === 0 && ' on direct sales'}
+                    {level.level === 1 &&
                       ' when your direct referrals make sales'}
-                    {level.level === 3 && ' from your extended network'}
+                    {level.level === 2 && ' from your Level 2 network'}
+                    {level.level === 3 && ' from your Level 3 network'}
+                    {level.level > 3 && ` from your Level ${level.level} network`}
                   </li>
                 ))}
-                <li>
-                  For deeper levels, you earn points that can be redeemed for
-                  benefits
-                </li>
                 <li>
                   The more people in your network, the more earning potential
                   you have
@@ -270,7 +268,7 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
               </p>
             )}
           </AlertDescription>
-        </Alert> */}
+        </Alert>
 
         <div className="flex justify-center space-x-4">
           <Button onClick={shareLink}>

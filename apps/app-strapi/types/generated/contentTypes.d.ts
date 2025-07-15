@@ -373,6 +373,72 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAchievementRewardAchievementReward
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'achievement_rewards';
+  info: {
+    description: 'Rewards for reaching sales targets and achievements';
+    displayName: 'Achievement Reward';
+    pluralName: 'achievement-rewards';
+    singularName: 'achievement-reward';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    criteriaType: Schema.Attribute.Enumeration<
+      ['sales_volume', 'units_sold', 'new_recruits', 'custom']
+    > &
+      Schema.Attribute.Required;
+    criteriaValue: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    description: Schema.Attribute.Text;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::achievement-reward.achievement-reward'
+    > &
+      Schema.Attribute.Private;
+    periodType: Schema.Attribute.Enumeration<
+      ['monthly', 'quarterly', 'yearly']
+    > &
+      Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    rewardName: Schema.Attribute.String & Schema.Attribute.Required;
+    rewardType: Schema.Attribute.Enumeration<
+      ['cash', 'trip', 'gift', 'voucher', 'recognition']
+    > &
+      Schema.Attribute.Required;
+    rewardValue: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    status: Schema.Attribute.Enumeration<['active', 'inactive']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'active'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    userAchievements: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::user-achievement.user-achievement'
+    >;
+  };
+}
+
 export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
   collectionName: 'bookings';
   info: {
@@ -471,6 +537,170 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
     sortOrder: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCommissionCalculationCommissionCalculation
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'commission_calculations';
+  info: {
+    description: 'Calculated commissions for each transaction';
+    displayName: 'Commission Calculation';
+    pluralName: 'commission-calculations';
+    singularName: 'commission-calculation';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    appliedTemplate: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::commission-template.commission-template'
+    >;
+    beneficiary: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    beneficiaryType: Schema.Attribute.Enumeration<['user', 'company']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'user'>;
+    commissionAmount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    commissionLevel: Schema.Attribute.Integer & Schema.Attribute.Required;
+    commissionRate: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    commissionType: Schema.Attribute.Enumeration<['percentage', 'fixed']> &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::commission-calculation.commission-calculation'
+    > &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Text;
+    order: Schema.Attribute.Relation<'manyToOne', 'api::order.order'>;
+    paidAt: Schema.Attribute.DateTime;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<['pending', 'approved', 'paid']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCommissionTemplateDetailCommissionTemplateDetail
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'commission_template_details';
+  info: {
+    description: 'Individual commission rules within a template';
+    displayName: 'Commission Template Detail';
+    pluralName: 'commission-template-details';
+    singularName: 'commission-template-detail';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    commissionType: Schema.Attribute.Enumeration<['percentage', 'fixed']> &
+      Schema.Attribute.Required;
+    commissionValue: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    customerType: Schema.Attribute.Enumeration<
+      ['all', 'regular', 'vip', 'wholesale']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'all'>;
+    levelNumber: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    levelType: Schema.Attribute.Enumeration<
+      [
+        'direct',
+        'upline_1',
+        'upline_2',
+        'upline_3',
+        'upline_4',
+        'upline_5',
+        'partner_company',
+      ]
+    > &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::commission-template-detail.commission-template-detail'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    template: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::commission-template.commission-template'
+    >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCommissionTemplateCommissionTemplate
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'commission_templates';
+  info: {
+    description: 'Reusable commission rule sets for products';
+    displayName: 'Commission Template';
+    pluralName: 'commission-templates';
+    singularName: 'commission-template';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    details: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::commission-template-detail.commission-template-detail'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::commission-template.commission-template'
+    > &
+      Schema.Attribute.Private;
+    productCommissionStatus: Schema.Attribute.Enumeration<
+      ['active', 'inactive']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'active'>;
+    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    templateCode: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    templateName: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -759,6 +989,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
   attributes: {
     category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    commissionTemplate: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::commission-template.commission-template'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -859,6 +1093,97 @@ export interface ApiServiceService extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTimeBasedTemplateTimeBasedTemplate
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'time_based_templates';
+  info: {
+    description: 'Promotional commission templates for specific time periods';
+    displayName: 'Time Based Template';
+    pluralName: 'time-based-templates';
+    singularName: 'time-based-template';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    commissionTemplate: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::commission-template.commission-template'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    endDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::time-based-template.time-based-template'
+    > &
+      Schema.Attribute.Private;
+    priority: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<1>;
+    product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    startDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    status: Schema.Attribute.Enumeration<['active', 'inactive']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'active'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiUserAchievementUserAchievement
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'user_achievements';
+  info: {
+    description: 'Tracks user progress towards achievement rewards';
+    displayName: 'User Achievement';
+    pluralName: 'user-achievements';
+    singularName: 'user-achievement';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    achievedValue: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    claimedAt: Schema.Attribute.DateTime;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::user-achievement.user-achievement'
+    > &
+      Schema.Attribute.Private;
+    paidAt: Schema.Attribute.DateTime;
+    periodEnd: Schema.Attribute.Date & Schema.Attribute.Required;
+    periodStart: Schema.Attribute.Date & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    reward: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::achievement-reward.achievement-reward'
+    >;
+    rewardStatus: Schema.Attribute.Enumeration<
+      ['in_progress', 'qualified', 'claimed', 'paid']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'in_progress'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -1397,8 +1722,12 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::achievement-reward.achievement-reward': ApiAchievementRewardAchievementReward;
       'api::booking.booking': ApiBookingBooking;
       'api::category.category': ApiCategoryCategory;
+      'api::commission-calculation.commission-calculation': ApiCommissionCalculationCommissionCalculation;
+      'api::commission-template-detail.commission-template-detail': ApiCommissionTemplateDetailCommissionTemplateDetail;
+      'api::commission-template.commission-template': ApiCommissionTemplateCommissionTemplate;
       'api::order-item.order-item': ApiOrderItemOrderItem;
       'api::order.order': ApiOrderOrder;
       'api::partner-availability.partner-availability': ApiPartnerAvailabilityPartnerAvailability;
@@ -1406,6 +1735,8 @@ declare module '@strapi/strapi' {
       'api::partner.partner': ApiPartnerPartner;
       'api::product.product': ApiProductProduct;
       'api::service.service': ApiServiceService;
+      'api::time-based-template.time-based-template': ApiTimeBasedTemplateTimeBasedTemplate;
+      'api::user-achievement.user-achievement': ApiUserAchievementUserAchievement;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
