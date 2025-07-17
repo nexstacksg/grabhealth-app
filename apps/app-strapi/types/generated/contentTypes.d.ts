@@ -560,6 +560,11 @@ export interface ApiCommissionCalculationCommissionCalculation
       'manyToOne',
       'api::commission-template.commission-template'
     >;
+    approvedAt: Schema.Attribute.DateTime;
+    approvedBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     beneficiary: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
@@ -567,6 +572,11 @@ export interface ApiCommissionCalculationCommissionCalculation
     beneficiaryType: Schema.Attribute.Enumeration<['user', 'company']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'user'>;
+    calculationStatus: Schema.Attribute.Enumeration<
+      ['pending', 'approved', 'paid']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
     commissionAmount: Schema.Attribute.Decimal & Schema.Attribute.Required;
     commissionLevel: Schema.Attribute.Integer & Schema.Attribute.Required;
     commissionRate: Schema.Attribute.Decimal & Schema.Attribute.Required;
@@ -584,10 +594,11 @@ export interface ApiCommissionCalculationCommissionCalculation
     notes: Schema.Attribute.Text;
     order: Schema.Attribute.Relation<'manyToOne', 'api::order.order'>;
     paidAt: Schema.Attribute.DateTime;
+    paidBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<['pending', 'approved', 'paid']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'pending'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -632,18 +643,7 @@ export interface ApiCommissionTemplateDetailCommissionTemplateDetail
         },
         number
       >;
-    levelType: Schema.Attribute.Enumeration<
-      [
-        'direct',
-        'upline_1',
-        'upline_2',
-        'upline_3',
-        'upline_4',
-        'upline_5',
-        'partner_company',
-      ]
-    > &
-      Schema.Attribute.Required;
+    levelType: Schema.Attribute.String & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1650,6 +1650,11 @@ export interface PluginUsersPermissionsUser
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    customerType: Schema.Attribute.Enumeration<
+      ['regular', 'vip', 'wholesale']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'regular'>;
     downlines: Schema.Attribute.Relation<
       'oneToMany',
       'plugin::users-permissions.user'
@@ -1673,6 +1678,10 @@ export interface PluginUsersPermissionsUser
     > &
       Schema.Attribute.Private;
     partner: Schema.Attribute.Relation<'manyToOne', 'api::partner.partner'>;
+    partnerCompany: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::partner.partner'
+    >;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{

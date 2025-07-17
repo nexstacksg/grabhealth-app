@@ -127,6 +127,17 @@
       "target": "api::partner.partner",
       "inversedBy": "users"
     },
+    "customerType": {
+      "type": "enumeration",
+      "enum": ["regular", "vip", "wholesale"],
+      "default": "regular",
+      "required": true
+    },
+    "partnerCompany": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::partner.partner"
+    },
     "profileImage": {
       "type": "media",
       "multiple": false,

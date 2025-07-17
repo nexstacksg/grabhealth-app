@@ -33,7 +33,7 @@ export default factories.createCoreController('api::commission-calculation.commi
       }
       
       if (status) {
-        filters.status = status;
+        filters.calculationStatus = status;
       }
       
       const commissionService = strapi.service('api::commission-calculation.commission-calculation');
@@ -49,6 +49,7 @@ export default factories.createCoreController('api::commission-calculation.commi
 
   async approveMultiple(ctx) {
     const { commissionIds } = ctx.request.body;
+    const userId = ctx.state.user?.id;
     
     if (!Array.isArray(commissionIds) || commissionIds.length === 0) {
       return ctx.badRequest('Invalid commission IDs');
@@ -56,7 +57,7 @@ export default factories.createCoreController('api::commission-calculation.commi
     
     try {
       const commissionService = strapi.service('api::commission-calculation.commission-calculation');
-      const updatedCommissions = await commissionService.approveCommissions(commissionIds);
+      const updatedCommissions = await commissionService.approveCommissions(commissionIds, userId);
       
       return {
         data: updatedCommissions,
@@ -71,6 +72,7 @@ export default factories.createCoreController('api::commission-calculation.commi
 
   async markAsPaid(ctx) {
     const { commissionIds } = ctx.request.body;
+    const userId = ctx.state.user?.id;
     
     if (!Array.isArray(commissionIds) || commissionIds.length === 0) {
       return ctx.badRequest('Invalid commission IDs');
@@ -78,7 +80,7 @@ export default factories.createCoreController('api::commission-calculation.commi
     
     try {
       const commissionService = strapi.service('api::commission-calculation.commission-calculation');
-      const updatedCommissions = await commissionService.markCommissionsAsPaid(commissionIds);
+      const updatedCommissions = await commissionService.markCommissionsAsPaid(commissionIds, userId);
       
       return {
         data: updatedCommissions,

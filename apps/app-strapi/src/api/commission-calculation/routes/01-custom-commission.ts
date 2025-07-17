@@ -5,7 +5,7 @@ export default {
       path: '/commissions/calculate/:orderId',
       handler: 'commission-calculation.calculateForOrder',
       config: {
-        policies: [],
+        policies: ['api::commission-calculation.is-admin-or-owner'],
         middlewares: []
       }
     },
@@ -14,7 +14,7 @@ export default {
       path: '/commissions/user/:userId/summary',
       handler: 'commission-calculation.getUserSummary',
       config: {
-        policies: [],
+        policies: ['api::commission-calculation.is-admin-or-owner'],
         middlewares: []
       }
     },
@@ -23,7 +23,7 @@ export default {
       path: '/commissions/approve',
       handler: 'commission-calculation.approveMultiple',
       config: {
-        policies: [],
+        policies: ['api::commission-calculation.is-admin-or-owner'],
         middlewares: []
       }
     },
@@ -32,7 +32,7 @@ export default {
       path: '/commissions/mark-paid',
       handler: 'commission-calculation.markAsPaid',
       config: {
-        policies: [],
+        policies: ['api::commission-calculation.is-admin-or-owner'],
         middlewares: []
       }
     }

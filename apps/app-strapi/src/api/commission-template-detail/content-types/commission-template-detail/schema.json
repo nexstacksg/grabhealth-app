@@ -19,9 +19,9 @@
       "inversedBy": "details"
     },
     "levelType": {
-      "type": "enumeration",
-      "enum": ["direct", "upline_1", "upline_2", "upline_3", "upline_4", "upline_5", "partner_company"],
-      "required": true
+      "type": "string",
+      "required": true,
+      "regex": "^(direct|upline_\\d+|partner_company)$"
     },
     "levelNumber": {
       "type": "integer",

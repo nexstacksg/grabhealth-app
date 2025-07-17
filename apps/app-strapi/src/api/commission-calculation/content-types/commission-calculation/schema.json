@@ -45,7 +45,7 @@
       "type": "decimal",
       "required": true
     },
-    "status": {
+    "calculationStatus": {
       "type": "enumeration",
       "enum": ["pending", "approved", "paid"],
       "default": "pending",
@@ -58,6 +58,19 @@
     },
     "paidAt": {
       "type": "datetime"
+    },
+    "approvedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "approvedAt": {
+      "type": "datetime"
+    },
+    "paidBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
     },
     "notes": {
       "type": "text"
