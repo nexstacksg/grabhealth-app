@@ -82,7 +82,7 @@ export default async function CommissionPage() {
     commissionRate: parseFloat(c.commissionRate || 0),
     relationshipLevel: parseInt(c.commissionLevel || 0),
     type: c.commissionType === 'percentage' ? 'PERCENTAGE' : 'FIXED',
-    status: c.status?.toUpperCase() || 'PENDING',
+    status: c.calculationStatus?.toUpperCase() || 'PENDING',
     createdAt: new Date(c.createdAt),
     updatedAt: new Date(c.updatedAt),
   }));
