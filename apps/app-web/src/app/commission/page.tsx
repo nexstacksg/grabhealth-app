@@ -32,7 +32,7 @@ async function getUserAndCommissionData() {
         `/products?populate[0]=commissionTemplate&populate[1]=commissionTemplate.details&populate[2]=category&pagination[pageSize]=100`
       ),
       serverApiGet(
-        `/achievement-rewards?filters[status][$eq]=active&sort=criteriaValue:asc`
+        `/achievement-rewards?filters[achievementStatus][$eq]=active&sort=criteriaValue:asc`
       )
     ]);
 

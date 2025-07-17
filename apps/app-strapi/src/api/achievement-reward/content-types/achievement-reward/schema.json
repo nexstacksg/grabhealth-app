@@ -44,7 +44,7 @@
     "description": {
       "type": "text"
     },
-    "status": {
+    "achievementStatus": {
       "type": "enumeration",
       "enum": ["active", "inactive"],
       "default": "active",
