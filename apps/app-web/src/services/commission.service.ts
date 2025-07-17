@@ -85,7 +85,7 @@ function transformStrapiCommission(strapiCommission: any): ICommission {
           data.commissionType === 'indirect' ? CommissionType.INDIRECT :
           data.commissionType === 'bonus' ? CommissionType.BONUS : 
           data.commissionType === 'override' ? CommissionType.OVERRIDE : undefined,
-    status: data.status?.toUpperCase() || 'PENDING',
+    status: data.calculationStatus?.toUpperCase() || 'PENDING',
     createdAt: new Date(data.createdAt || strapiCommission.createdAt),
     updatedAt: new Date(data.updatedAt || strapiCommission.updatedAt),
   };
