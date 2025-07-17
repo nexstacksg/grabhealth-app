@@ -1129,7 +1129,7 @@ export interface ApiTimeBasedTemplateTimeBasedTemplate
     product: Schema.Attribute.Relation<'manyToOne', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     startDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    status: Schema.Attribute.Enumeration<['active', 'inactive']> &
+    templateStatus: Schema.Attribute.Enumeration<['active', 'inactive']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'active'>;
     updatedAt: Schema.Attribute.DateTime;

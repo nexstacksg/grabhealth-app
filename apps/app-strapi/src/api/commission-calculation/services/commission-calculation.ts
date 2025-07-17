@@ -79,7 +79,7 @@ export default factories.createCoreService('api::commission-calculation.commissi
         product: { id: productId },
         startDate: { $lte: date },
         endDate: { $gte: date },
-        status: 'active'
+        templateStatus: 'active'
       },
       populate: {
         commissionTemplate: {

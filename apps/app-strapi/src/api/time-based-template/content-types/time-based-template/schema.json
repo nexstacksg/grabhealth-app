@@ -35,7 +35,7 @@
       "default": 1,
       "required": true
     },
-    "status": {
+    "templateStatus": {
       "type": "enumeration",
       "enum": ["active", "inactive"],
       "default": "active",
