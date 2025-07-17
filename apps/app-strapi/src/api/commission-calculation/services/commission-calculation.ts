@@ -343,7 +343,7 @@ export default factories.createCoreService('api::commission-calculation.commissi
       // Get all active achievement rewards
       const activeRewards = await strapi.entityService.findMany('api::achievement-reward.achievement-reward', {
         filters: {
-          status: 'active'
+          achievementStatus: 'active'
         }
       });
 
