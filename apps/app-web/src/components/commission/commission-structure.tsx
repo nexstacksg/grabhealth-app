@@ -138,21 +138,24 @@ function CommissionStructure({
             details.forEach((detail: any) => {
               const detailData = detail.attributes || detail;
               const levelType = detailData.levelType;
+              const customerType = detailData.customerType || 'all';
               const commissionValue = parseFloat(
                 detailData.commissionValue || '0'
               );
 
               console.log(
-                `  - Level: ${levelType}, Value: ${commissionValue}%`
+                `  - Level: ${levelType}, Customer Type: ${customerType}, Value: ${commissionValue}%`
               );
 
-              // Map level types to our structure
-              if (levelType === 'direct') {
-                productCommissionRates.direct = commissionValue;
-              } else if (levelType === 'upline_1') {
-                productCommissionRates.upline_1 = commissionValue;
-              } else if (levelType === 'upline_2') {
-                productCommissionRates.upline_2 = commissionValue;
+              if (customerType === 'all' || customerType === 'regular') {
+                // Map level types to our structure
+                if (levelType === 'direct') {
+                  productCommissionRates.direct = commissionValue;
+                } else if (levelType === 'upline_1') {
+                  productCommissionRates.upline_1 = commissionValue;
+                } else if (levelType === 'upline_2') {
+                  productCommissionRates.upline_2 = commissionValue;
+                }
               }
 
               // Track overall rates
@@ -326,11 +329,6 @@ function CommissionStructure({
             <TableBody>
               {currentProducts.length > 0 ? (
                 currentProducts.map((product) => {
-                  const hasCommission =
-                    product.commissionRates.sales > 0 ||
-                    product.commissionRates.leader > 0 ||
-                    product.commissionRates.manager > 0;
-
                   return (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">

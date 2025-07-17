@@ -385,19 +385,25 @@ class CommissionService extends BaseService {
         
         details.forEach((detail: any) => {
           const detailData = detail.attributes || detail;
-          if (detailData.levelType === 'direct' && detailData.levelNumber === 0) {
-            levelMap.set(0, {
-              level: 0,
-              name: 'Direct Sales',
-              rate: detailData.commissionValue / 100
-            });
-          } else if (detailData.levelType && detailData.levelType.startsWith('upline_')) {
-            const level = parseInt(detailData.levelType.split('_')[1]);
-            levelMap.set(level, {
-              level,
-              name: `Level ${level} Upline`,
-              rate: detailData.commissionValue / 100
-            });
+          const customerType = detailData.customerType || 'all';
+          
+          // For now, we process rates for 'all' customer types
+          // You may want to expand this to handle customer-specific rates
+          if (customerType === 'all' || customerType === 'regular') {
+            if (detailData.levelType === 'direct' && detailData.levelNumber === 0) {
+              levelMap.set(0, {
+                level: 0,
+                name: 'Direct Sales',
+                rate: detailData.commissionValue / 100
+              });
+            } else if (detailData.levelType && detailData.levelType.startsWith('upline_')) {
+              const level = parseInt(detailData.levelType.split('_')[1]);
+              levelMap.set(level, {
+                level,
+                name: `Level ${level} Upline`,
+                rate: detailData.commissionValue / 100
+              });
+            }
           }
         });
       });
