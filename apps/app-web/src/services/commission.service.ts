@@ -46,6 +46,25 @@ interface CommissionLevel {
   rate: number;
 }
 
+interface UserAchievement {
+  id: string;
+  periodStart: Date;
+  periodEnd: Date;
+  achievedValue: number;
+  rewardStatus: 'in_progress' | 'qualified' | 'claimed' | 'paid';
+  claimedAt?: Date;
+  paidAt?: Date;
+  reward: {
+    id: string;
+    rewardName: string;
+    rewardType: string;
+    criteriaType: string;
+    criteriaValue: number;
+    rewardValue: number;
+    periodType: string;
+  };
+}
+
 // Strapi response formats
 interface StrapiCommissionResponse {
   data: any;
@@ -73,6 +92,16 @@ function transformStrapiCommission(strapiCommission: any): ICommission {
   // Handle both direct data and Strapi's wrapped format
   const data = strapiCommission.attributes || strapiCommission;
 
+  // Map Strapi's commission level to commission type
+  // commissionLevel: 0 = direct, 1+ = indirect
+  let type: CommissionType | undefined;
+  const level = parseInt(data.commissionLevel || 0);
+  if (level === 0) {
+    type = CommissionType.DIRECT;
+  } else if (level > 0) {
+    type = CommissionType.INDIRECT;
+  }
+
   return {
     documentId: strapiCommission.documentId || strapiCommission.id || data.documentId || '',
     orderId: (data.order?.data?.documentId || data.order?.documentId || data.order?.data?.id || data.order?.id || data.orderId || '').toString(),
@@ -80,11 +109,8 @@ function transformStrapiCommission(strapiCommission: any): ICommission {
     recipientId: (data.beneficiary?.data?.id || data.beneficiary?.id || data.beneficiaryId || '').toString(),
     amount: parseFloat(data.commissionAmount || 0),
     commissionRate: parseFloat(data.commissionRate || 0),
-    relationshipLevel: parseInt(data.commissionLevel || 0),
-    type: data.commissionType === 'direct' ? CommissionType.DIRECT : 
-          data.commissionType === 'indirect' ? CommissionType.INDIRECT :
-          data.commissionType === 'bonus' ? CommissionType.BONUS : 
-          data.commissionType === 'override' ? CommissionType.OVERRIDE : undefined,
+    relationshipLevel: level,
+    type,
     status: data.calculationStatus?.toUpperCase() || 'PENDING',
     createdAt: new Date(data.createdAt || strapiCommission.createdAt),
     updatedAt: new Date(data.updatedAt || strapiCommission.updatedAt),
@@ -112,7 +138,7 @@ class CommissionService extends BaseService {
 
       // Get commission calculations for the user
       const queryParams = new URLSearchParams();
-      queryParams.append('filters[beneficiary][id][$eq]', userId);
+      queryParams.append('filters[beneficiary][id][$eq]', userId.toString());
       queryParams.append('populate[order]', 'true');
       queryParams.append('populate[appliedTemplate]', 'true');
       queryParams.append('sort', 'createdAt:desc');
@@ -252,8 +278,6 @@ class CommissionService extends BaseService {
       return transformStrapiCommission(response.data);
     } catch (error) {
       this.handleError(error);
-      // TypeScript needs this even though handleError throws
-      return {} as ICommission;
     }
   }
 
@@ -411,7 +435,7 @@ class CommissionService extends BaseService {
 
   async calculateCommissionForOrder(orderId: number): Promise<any> {
     try {
-      const response = await this.api.post(`commission-calculations/calculate/${orderId}`);
+      const response = await this.api.post(`commissions/calculate/${orderId}`);
       return response.data;
     } catch (error) {
       console.error('Error calculating commission:', error);
@@ -421,7 +445,7 @@ class CommissionService extends BaseService {
 
   async approveCommissions(commissionIds: number[]): Promise<any> {
     try {
-      const response = await this.api.post('commission-calculations/approve', { commissionIds });
+      const response = await this.api.post('commissions/approve', { commissionIds });
       return response.data;
     } catch (error) {
       console.error('Error approving commissions:', error);
@@ -431,11 +455,91 @@ class CommissionService extends BaseService {
 
   async markCommissionsAsPaid(commissionIds: number[]): Promise<any> {
     try {
-      const response = await this.api.post('commission-calculations/mark-paid', { commissionIds });
+      const response = await this.api.post('commissions/mark-paid', { commissionIds });
       return response.data;
     } catch (error) {
       console.error('Error marking commissions as paid:', error);
       throw error;
+    }
+  }
+
+  async getUserAchievements(): Promise<UserAchievement[]> {
+    try {
+      // Get current user
+      const userResponse = await this.api.get('users/me');
+      const userId = userResponse.id;
+
+      if (!userId) {
+        return [];
+      }
+
+      // Get user achievements with reward details
+      const queryParams = new URLSearchParams();
+      queryParams.append('filters[user][id][$eq]', userId.toString());
+      queryParams.append('populate[reward]', 'true');
+      queryParams.append('sort', 'createdAt:desc');
+
+      const response = await this.api.get<StrapiCommissionsResponse>(
+        `user-achievements?${queryParams.toString()}`
+      );
+
+      const achievements = (response.data || []).map((achievement: any) => {
+        const data = achievement.attributes || achievement;
+        const rewardData = data.reward?.data?.attributes || data.reward?.data || data.reward || {};
+
+        return {
+          id: achievement.documentId || achievement.id || '',
+          periodStart: new Date(data.periodStart),
+          periodEnd: new Date(data.periodEnd),
+          achievedValue: parseFloat(data.achievedValue || 0),
+          rewardStatus: data.rewardStatus || 'in_progress',
+          claimedAt: data.claimedAt ? new Date(data.claimedAt) : undefined,
+          paidAt: data.paidAt ? new Date(data.paidAt) : undefined,
+          reward: {
+            id: data.reward?.data?.id || data.reward?.id || '',
+            rewardName: rewardData.rewardName || '',
+            rewardType: rewardData.rewardType || '',
+            criteriaType: rewardData.criteriaType || '',
+            criteriaValue: parseFloat(rewardData.criteriaValue || 0),
+            rewardValue: parseFloat(rewardData.rewardValue || 0),
+            periodType: rewardData.periodType || '',
+          },
+        };
+      });
+
+      return achievements;
+    } catch (error) {
+      console.error('Error fetching user achievements:', error);
+      return [];
+    }
+  }
+
+  async getAchievementSummary(): Promise<{
+    totalQualified: number;
+    totalClaimed: number;
+    totalPaid: number;
+    inProgress: number;
+    achievements: UserAchievement[];
+  }> {
+    try {
+      const achievements = await this.getUserAchievements();
+
+      return {
+        totalQualified: achievements.filter(a => a.rewardStatus === 'qualified').length,
+        totalClaimed: achievements.filter(a => a.rewardStatus === 'claimed').length,
+        totalPaid: achievements.filter(a => a.rewardStatus === 'paid').length,
+        inProgress: achievements.filter(a => a.rewardStatus === 'in_progress').length,
+        achievements,
+      };
+    } catch (error) {
+      console.error('Error fetching achievement summary:', error);
+      return {
+        totalQualified: 0,
+        totalClaimed: 0,
+        totalPaid: 0,
+        inProgress: 0,
+        achievements: [],
+      };
     }
   }
 }
