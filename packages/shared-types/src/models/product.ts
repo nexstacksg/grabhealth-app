@@ -35,7 +35,8 @@ export interface IProduct {
   price: number;
   categoryId?: string | null; // Reference to category documentId
   category?: ICategory | null;
-  imageUrl?: string | null;
+  imageUrl?: string | null; // Primary image for backward compatibility
+  images?: string[]; // Array of all product images
   inStock: boolean;
   status?: ProductStatus | string;
   // Additional Strapi fields

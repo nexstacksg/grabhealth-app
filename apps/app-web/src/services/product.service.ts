@@ -45,31 +45,43 @@ function transformStrapiCategory(strapiCategory: any): ICategory | null {
 function transformStrapiProduct(strapiProduct: any): IProduct {
   // Handle image URL - Strapi v5 format
   let imageUrl = '';
+  let images: string[] = [];
+  
   if (
     strapiProduct.imageUrl &&
     Array.isArray(strapiProduct.imageUrl) &&
     strapiProduct.imageUrl.length > 0
   ) {
-    const imageData = strapiProduct.imageUrl[0];
-
-    // Check if it's a DigitalOcean Spaces URL (already full URL)
-    if (
-      imageData.url &&
-      (imageData.url.startsWith('http://') ||
-        imageData.url.startsWith('https://'))
-    ) {
-      imageUrl = imageData.url;
-    }
-    // Check if provider is 'aws-s3' (DigitalOcean Spaces uses aws-s3 provider)
-    else if (imageData.provider === 'aws-s3' && imageData.url) {
-      // URL should already be complete from Strapi
-      imageUrl = imageData.url;
-    }
-    // Fallback for local uploads
-    else if (imageData.url) {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
-      imageUrl = `${baseUrl}${imageData.url}`;
+    // Process all images
+    images = strapiProduct.imageUrl.map((imageData: any) => {
+      let url = '';
+      
+      // Check if it's a DigitalOcean Spaces URL (already full URL)
+      if (
+        imageData.url &&
+        (imageData.url.startsWith('http://') ||
+          imageData.url.startsWith('https://'))
+      ) {
+        url = imageData.url;
+      }
+      // Check if provider is 'aws-s3' (DigitalOcean Spaces uses aws-s3 provider)
+      else if (imageData.provider === 'aws-s3' && imageData.url) {
+        // URL should already be complete from Strapi
+        url = imageData.url;
+      }
+      // Fallback for local uploads
+      else if (imageData.url) {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+        url = `${baseUrl}${imageData.url}`;
+      }
+      
+      return url;
+    }).filter((url: string) => url !== '');
+    
+    // Set primary image (first image) for backward compatibility
+    if (images.length > 0) {
+      imageUrl = images[0];
     }
   }
 
@@ -84,6 +96,7 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
       null,
     category: transformStrapiCategory(strapiProduct.category),
     imageUrl,
+    images, // Include all images
     inStock: strapiProduct.inStock ?? true,
     status: strapiProduct.productStatus || 'ACTIVE',
     sku: strapiProduct.sku || undefined,

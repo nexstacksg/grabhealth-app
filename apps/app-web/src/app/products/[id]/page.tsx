@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartButton } from '@/components/add-to-cart-button';
+import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 
 import { formatPrice } from '@/lib/utils';
 import services from '@/services';
@@ -282,34 +284,30 @@ export default function ProductDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-        {/* Product Image Section */}
-        <div className="relative rounded-xl overflow-hidden bg-white border border-gray-100 h-[280px] sm:h-[320px] md:h-[450px] group">
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <Image
-            src={product.imageUrl || '/placeholder.svg?height=400&width=400'}
-            alt={product.name}
-            fill
-            className="object-contain p-3 sm:p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
-            priority
+        {/* Product Image Gallery Section */}
+        <div className="relative">
+          <ProductImageGallery
+            images={product.images || (product.imageUrl ? [product.imageUrl] : [])}
+            productName={product.name}
           />
 
           {/* Category Badge */}
           {product.category && (
-            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 border border-gray-100">
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 border border-gray-100 z-10">
               {product.category.name}
             </div>
           )}
 
           {/* Status Badge */}
           {product.inStock ? (
-            <Badge className="absolute top-4 right-4 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 px-3">
+            <Badge className="absolute top-4 right-4 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 px-3 z-10">
               <div className="flex items-center">
                 <div className="h-2 w-2 rounded-full bg-white mr-1.5 animate-pulse"></div>
                 In Stock
               </div>
             </Badge>
           ) : (
-            <Badge className="absolute top-4 right-4 bg-gray-500 hover:bg-gray-600 transition-all duration-200 px-3">
+            <Badge className="absolute top-4 right-4 bg-gray-500 hover:bg-gray-600 transition-all duration-200 px-3 z-10">
               Out of Stock
             </Badge>
           )}
@@ -355,11 +353,11 @@ export default function ProductDetailPage() {
             <div className="flex space-x-4">
               <AddToCartButton
                 product={{
-                  id: parseInt(product.documentId) || 0, // Convert string to number
+                  id: product.documentId,
                   name: product.name,
                   price: product.price,
                   image_url: product.imageUrl || undefined,
-                }}
+                } as any}
                 disabled={!product.inStock}
                 className="w-full py-2.5 text-base font-medium transition-all duration-200"
                 size="lg"
