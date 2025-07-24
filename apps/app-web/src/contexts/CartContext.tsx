@@ -289,7 +289,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         (sum, item) => sum + (item.price || 0) * item.quantity,
         0
       );
-      updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
+      updatedCart.tax = 0; // 0% tax
       updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
       setCart(updatedCart);
@@ -329,7 +329,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       (sum, item) => sum + (item.price || 0) * item.quantity,
       0
     );
-    updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
+    updatedCart.tax = 0; // 0% tax
     updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
     setCart(updatedCart);
