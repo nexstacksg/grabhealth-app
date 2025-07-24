@@ -11,6 +11,8 @@ interface AddToCartButtonProps {
     name: string;
     price: number;
     image_url?: string;
+    variantId?: string;
+    variantName?: string;
   };
   variant?: 'default' | 'outline' | 'secondary';
   size?: 'default' | 'sm' | 'lg' | 'icon';

@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_variants",
+  "info": {
+    "singularName": "product-variant",
+    "pluralName": "product-variants",
+    "displayName": "Product Variant",
+    "description": "Product variants for different package sizes or options"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "sku": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "price": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "unitQuantity": {
+      "type": "integer",
+      "default": 1,
+      "min": 1
+    },
+    "unitLabel": {
+      "type": "string",
+      "default": "bottle"
+    },
+    "savingsAmount": {
+      "type": "decimal",
+      "min": 0
+    },
+    "isMostPopular": {
+      "type": "boolean",
+      "default": false
+    },
+    "stock": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "variants"
+    }
+  }
+}

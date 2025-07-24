@@ -11,10 +11,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
+import { ProductVariantSelector } from '@/components/products/ProductVariantSelector';
 
 import { formatPrice } from '@/lib/utils';
 import services from '@/services';
-import { IProduct } from '@app/shared-types';
+import type { IProduct, IProductVariant } from '@app/shared-types';
 
 type ProductId = {
   id?: string;
@@ -24,6 +25,7 @@ interface ProductWithExtras extends IProduct, ProductId {
   features?: string[];
   usage?: string;
   ingredients?: string;
+  variants?: IProductVariant[]; // Explicitly include variants
 }
 
 // Component to format product descriptions beautifully
@@ -187,6 +189,8 @@ export default function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<IProductVariant | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -196,12 +200,40 @@ export default function ProductDetailPage() {
         if (!productId) return;
 
         const productData = await services.product.getProduct(productId);
+
+        // Always add single bottle option using product price
+        if (productData.variants && productData.variants.length > 0) {
+          // Check if single bottle variant already exists
+          const hasSingleBottle = productData.variants.some(
+            (v: IProductVariant) => v.unitQuantity === 1
+          );
+
+          if (!hasSingleBottle) {
+            // Add single bottle at the beginning using product table price
+            productData.variants.unshift({
+              documentId: `${productData.documentId}-single-bottle`,
+              name: 'Single Bottle',
+              sku: `${productData.sku}-1`,
+              price: productData.price, // Use price from product table
+              unitQuantity: 1,
+              unitLabel: 'bottle',
+              savingsAmount: null,
+              isMostPopular: false,
+              stock: productData.qty || 0,
+            });
+          }
+        }
+
         setProduct(productData as ProductWithExtras);
 
-        // Note: AI tracking removed as it's not essential for product viewing
-        // and was causing authentication errors for public users
+        if (productData.variants && productData.variants.length > 0) {
+          const defaultVariant =
+            productData.variants.find(
+              (v: IProductVariant) => v.isMostPopular
+            ) || productData.variants[0];
+          setSelectedVariant(defaultVariant);
+        }
 
-        // Fetch category-based related products
         if (productData.categoryId) {
           try {
             const categoryProducts =
@@ -232,8 +264,6 @@ export default function ProductDetailPage() {
       fetchProduct();
     }
   }, [params?.id]);
-
-  // No demo data - use only real product information
 
   if (loading) {
     return (
@@ -287,7 +317,9 @@ export default function ProductDetailPage() {
         {/* Product Image Gallery Section */}
         <div className="relative">
           <ProductImageGallery
-            images={product.images || (product.imageUrl ? [product.imageUrl] : [])}
+            images={
+              product.images || (product.imageUrl ? [product.imageUrl] : [])
+            }
             productName={product.name}
           />
 
@@ -320,11 +352,22 @@ export default function ProductDetailPage() {
               {product.name}
             </h1>
 
-            <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-              <span className="text-2xl md:text-3xl font-bold text-emerald-600">
-                {formatPrice(product.price)}
-              </span>
-            </div>
+            {/* Show product price or variant selector */}
+            {product.variants && product.variants.length > 0 ? (
+              <div className="mb-6">
+                <ProductVariantSelector
+                  variants={product.variants}
+                  selectedVariant={selectedVariant}
+                  onVariantSelect={setSelectedVariant}
+                />
+              </div>
+            ) : (
+              <div className="mb-4 bg-gray-50 p-4 rounded-lg">
+                <span className="text-2xl md:text-3xl font-bold text-emerald-600">
+                  {formatPrice(product.price)}
+                </span>
+              </div>
+            )}
 
             <div className="mb-4">
               <div className="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-100">
@@ -352,13 +395,24 @@ export default function ProductDetailPage() {
 
             <div className="flex space-x-4">
               <AddToCartButton
-                product={{
-                  id: product.documentId,
-                  name: product.name,
-                  price: product.price,
-                  image_url: product.imageUrl || undefined,
-                } as any}
-                disabled={!product.inStock}
+                product={
+                  {
+                    id: product.documentId,
+                    name: selectedVariant
+                      ? `${product.name} - ${selectedVariant.name}`
+                      : product.name,
+                    price: selectedVariant
+                      ? selectedVariant.price
+                      : product.price,
+                    image_url: product.imageUrl || undefined,
+                    variantId: selectedVariant?.documentId,
+                    variantName: selectedVariant?.name,
+                  } as any
+                }
+                disabled={
+                  !product.inStock ||
+                  (selectedVariant ? selectedVariant.stock === 0 : false)
+                }
                 className="w-full py-2.5 text-base font-medium transition-all duration-200"
                 size="lg"
               />

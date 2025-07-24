@@ -18,6 +18,11 @@ export function formatPrice(price: number): string {
 }
 
 /**
+ * Alias for formatPrice to maintain consistency
+ */
+export const formatCurrency = formatPrice;
+
+/**
  * Creates a proper API URL that works in both server and client environments
  */
 export function getApiUrl(path: string): string {

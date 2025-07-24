@@ -34,9 +34,12 @@ export interface IOrderItem {
   quantity: number;
   price: number;
   discount?: number;
+  variantId?: string; // Reference to product variant documentId
+  variantName?: string; // Variant name for display
   // Relations (when populated)
   order?: IOrder;
   product?: IProduct;
+  variant?: import('./product').IProductVariant;
   // Timestamps (added by Strapi)
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -62,6 +65,8 @@ export interface IOrderItemCreate {
   quantity: number;
   price: number;
   discount?: number;
+  variantId?: string; // Reference to product variant documentId
+  variantName?: string; // Variant name for display
 }
 
 export interface IOrderUpdate {
@@ -78,6 +83,8 @@ export interface ICartItem {
   quantity: number;
   price?: number;
   product?: IProduct | null;
+  variantId?: string; // Reference to product variant documentId
+  variantName?: string; // Variant name for display
 }
 
 export interface ICart {
