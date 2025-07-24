@@ -28,6 +28,20 @@ export interface ICategoryUpdate extends Partial<ICategoryCreate> {
   documentId: string; // Strapi 5 document ID
 }
 
+export interface IProductVariant {
+  documentId: string; // Strapi 5 document ID
+  name: string;
+  sku: string;
+  price: number;
+  unitQuantity: number; // e.g., 1 for single, 20 for box
+  unitLabel: string; // e.g., "bottle", "box"
+  savingsAmount?: number | null; // Amount saved vs individual units
+  isMostPopular?: boolean;
+  stock: number;
+  productId?: string; // Reference to product documentId
+  product?: IProduct;
+}
+
 export interface IProduct {
   documentId: string; // Strapi 5 document ID
   name: string;
@@ -44,6 +58,7 @@ export interface IProduct {
   qty?: number;
   slug?: string;
   productStatus?: string;
+  variants?: IProductVariant[]; // Product variants
 }
 
 export interface IProductCreate {
@@ -57,6 +72,22 @@ export interface IProductCreate {
 }
 
 export interface IProductUpdate extends Partial<IProductCreate> {
+  documentId: string; // Strapi 5 document ID
+}
+
+export interface IProductVariantCreate {
+  name: string;
+  sku: string;
+  price: number;
+  unitQuantity?: number;
+  unitLabel?: string;
+  savingsAmount?: number;
+  isMostPopular?: boolean;
+  stock?: number;
+  productId: string; // Reference to product documentId
+}
+
+export interface IProductVariantUpdate extends Partial<IProductVariantCreate> {
   documentId: string; // Strapi 5 document ID
 }
 

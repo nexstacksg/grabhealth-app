@@ -83,7 +83,7 @@ export default function CartPage(): JSX.Element {
               <div className="space-y-6">
                 {cartItems.map((item, index) => (
                   <div
-                    key={`${item.productId}-${index}`}
+                    key={`${item.productId}-${(item as any).variantId || 'default'}-${index}`}
                     className="flex gap-4 pb-6 border-b last:border-0 last:pb-0"
                   >
                     <div className="h-24 w-24 rounded-md overflow-hidden relative bg-secondary flex-shrink-0">

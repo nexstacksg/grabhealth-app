@@ -43,5 +43,13 @@ export default {
     } catch (error) {
       strapi.log.warn('Commission template seeding skipped:', error.message);
     }
+
+    // Seed product variants
+    try {
+      const seedProductVariants = (await import('./api/product-variant/services/seed-product-variants')).default;
+      await seedProductVariants({ strapi });
+    } catch (error) {
+      strapi.log.warn('Product variant seeding skipped:', error.message);
+    }
   },
 };
