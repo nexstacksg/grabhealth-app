@@ -38,147 +38,45 @@ function ProductDescription({
 }) {
   if (!description) return null;
 
-  // Check if this is a travel package
-  const isTravelPackage =
-    productName?.toLowerCase().includes('travel') ||
-    description.toLowerCase().includes('travel') ||
-    description.toLowerCase().includes('package includes') ||
-    description.toLowerCase().includes('destinations');
-
-  // Extract key information from description in a compact way
-  const extractKeyInfo = (desc: string) => {
-    const sections = desc.split('\n\n').filter((section) => section.trim());
-
-    let mainDescription = '';
-    let keyBenefits: string[] = [];
-    let usage = '';
-    let targetAudience: string[] = [];
-
-    sections.forEach((section) => {
-      const trimmed = section.trim();
-
-      if (trimmed.includes('Key Benefits') && trimmed.includes('•')) {
-        keyBenefits = trimmed
-          .split('•')
-          .filter((item) => item.trim())
-          .slice(0, 3);
-      } else if (
-        !isTravelPackage &&
-        (trimmed.includes('Direction for use') ||
-          trimmed.includes('Dosage') ||
-          trimmed.includes('Package'))
-      ) {
-        // Only show usage for non-travel products
-        usage = trimmed
-          .replace(/Direction for use:|Dosage:|Package:/g, '')
-          .trim()
-          .substring(0, 150);
-      } else if (
-        trimmed.includes('Who Should Use') ||
-        trimmed.includes('Perfect for')
-      ) {
-        if (trimmed.includes('•')) {
-          targetAudience = trimmed
-            .split('•')
-            .filter((item) => item.trim())
-            .slice(0, 3);
-        }
-      } else if (
-        !trimmed.includes('•') &&
-        !trimmed.includes(':') &&
-        trimmed.length > 50 &&
-        !mainDescription
-      ) {
-        mainDescription =
-          trimmed.substring(0, 180) + (trimmed.length > 180 ? '...' : '');
-      }
-    });
-
-    return { mainDescription, keyBenefits, usage, targetAudience };
-  };
-
-  const { mainDescription, keyBenefits, usage, targetAudience } =
-    extractKeyInfo(description);
-
+  // Split description into paragraphs and format them
+  const paragraphs = description.split('\n').filter(p => p.trim());
+  
+  // Check if there are bullet points
+  const hasBullets = description.includes('•');
+  
   return (
-    <div className="space-y-3">
-      {/* Main Description */}
-      {mainDescription && (
-        <p className="text-gray-700 leading-relaxed text-base">
-          {mainDescription}
-        </p>
-      )}
-
-      {/* Compact Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Key Benefits */}
-        {keyBenefits.length > 0 && (
-          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-            <h4 className="font-semibold text-emerald-800 mb-3 text-base flex items-center">
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Key Benefits
+    <div className="space-y-4">
+      {paragraphs.map((paragraph, index) => {
+        const trimmed = paragraph.trim();
+        
+        // Handle bullet points
+        if (trimmed.startsWith('•')) {
+          return (
+            <div key={index} className="flex items-start">
+              <span className="text-emerald-600 mr-2">•</span>
+              <span className="text-gray-700 leading-relaxed">
+                {trimmed.substring(1).trim()}
+              </span>
+            </div>
+          );
+        }
+        
+        // Handle section headers (lines ending with :)
+        if (trimmed.endsWith(':') && trimmed.length < 50) {
+          return (
+            <h4 key={index} className="font-semibold text-gray-800 mt-4 mb-2">
+              {trimmed}
             </h4>
-            <ul className="space-y-2 text-sm text-emerald-700">
-              {keyBenefits.map((benefit, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="leading-relaxed">
-                    {benefit.trim().substring(0, 80)}
-                    {benefit.trim().length > 80 ? '...' : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Target Audience */}
-        {targetAudience.length > 0 && (
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-            <h4 className="font-semibold text-blue-800 mb-3 text-base flex items-center">
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-              </svg>
-              Perfect For
-            </h4>
-            <ul className="space-y-2 text-sm text-blue-700">
-              {targetAudience.map((audience, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="leading-relaxed">
-                    {audience.trim().substring(0, 80)}
-                    {audience.trim().length > 80 ? '...' : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Usage Info */}
-      {usage && (
-        <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
-          <h4 className="font-semibold text-amber-800 mb-2 text-base">
-            {isTravelPackage ? 'Package Details' : 'Usage & Dosage'}
-          </h4>
-          <p className="text-sm text-amber-700 leading-relaxed">{usage}</p>
-        </div>
-      )}
+          );
+        }
+        
+        // Regular paragraphs
+        return (
+          <p key={index} className="text-gray-700 leading-relaxed">
+            {trimmed}
+          </p>
+        );
+      })}
     </div>
   );
 }
@@ -386,10 +284,16 @@ export default function ProductDetailPage() {
                   </svg>
                   Product Details
                 </h2>
-                <ProductDescription
-                  description={product.description || ''}
-                  productName={product.name}
-                />
+                <div className="max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                  {product.description ? (
+                    <ProductDescription
+                      description={product.description}
+                      productName={product.name}
+                    />
+                  ) : (
+                    <p className="text-gray-500">No description available.</p>
+                  )}
+                </div>
               </div>
             </div>
 
