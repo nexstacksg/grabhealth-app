@@ -42,14 +42,20 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         }
 
         // If not found by email, try by documentId (for backward compatibility)
-        if (!uplineUser && typeof referrer === 'string' && referrer.length === 24) { // documentId is typically 24 chars
+        if (!uplineUser && typeof referrer === 'string' && referrer.length >= 20) { // documentId is typically 24+ chars
           uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
             where: { documentId: referrer }
           });
         }
 
-        // Log the referrer lookup result
-        console.log('Referrer lookup:', { referrer: referrer || 'none', found: !!uplineUser });
+        // Log the referrer lookup result with more details
+        console.log('Referrer lookup:', { 
+          referrer: referrer || 'none', 
+          found: !!uplineUser,
+          uplineId: uplineUser?.id,
+          uplineEmail: uplineUser?.email,
+          lookupMethod: uplineUser ? (uplineUser.referralCode === referrer ? 'referralCode' : uplineUser.email === referrer.toLowerCase() ? 'email' : 'documentId') : 'not found'
+        });
       }
 
       // Generate 6-digit verification code
@@ -75,9 +81,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       // Add upline if found
       if (uplineUser) {
         userData['upline'] = uplineUser.id;
+        console.log('Setting upline for new user:', { newUserEmail: email, uplineId: uplineUser.id, uplineEmail: uplineUser.email });
       }
 
       const user = await strapi.plugin('users-permissions').service('user').add(userData);
+      
+      // Log the created user details
+      console.log('User created:', { 
+        userId: user.id, 
+        email: user.email, 
+        uplineId: user.upline,
+        confirmed: user.confirmed 
+      });
 
       // Send verification email
       try {
