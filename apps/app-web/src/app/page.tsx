@@ -149,10 +149,10 @@ export default function Home() {
       <section className="py-10 md:py-16 bg-gray-50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            <div className="grid grid-cols-2 gap-2 md:gap-4 mb-6 md:mb-0">
+            <div className="grid grid-cols-2 gap-2 p-6 md:gap-4 mb-6 md:mb-0">
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/pills-capsules-stethoscope-white-table-concept-healthcare.png"
+                  src="/uploads/frame1.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -161,7 +161,7 @@ export default function Home() {
               </div>
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/pills-with-glass-jar.png"
+                  src="/uploads/frame3.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -170,7 +170,7 @@ export default function Home() {
               </div>
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/portrait-young-asian-male-doctor-blue-background.png"
+                  src="/uploads/frame2.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -179,7 +179,7 @@ export default function Home() {
               </div>
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/vitamins-supplements-healthy-life-concept.png"
+                  src="/uploads/frame4.png"
                   alt="Health Product"
                   width={300}
                   height={300}
