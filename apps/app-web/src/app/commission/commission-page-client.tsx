@@ -112,12 +112,12 @@ export default function CommissionPageClient({
             >
               Commission History
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="structure"
               className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium"
             >
               Commission Structure
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger
               value="referral"
               className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium"
@@ -141,9 +141,9 @@ export default function CommissionPageClient({
             <CommissionHistory commissions={processedCommissions} />
           </TabsContent>
 
-          <TabsContent value="structure" className="space-y-4 mt-2">
+          {/* <TabsContent value="structure" className="space-y-4 mt-2">
             <CommissionStructure products={products} achievements={achievements} />
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="referral" className="space-y-4 mt-2">
             <ReferralLink referralLink={referralLink} />
