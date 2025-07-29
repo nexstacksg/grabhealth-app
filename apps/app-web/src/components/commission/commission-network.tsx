@@ -803,6 +803,7 @@ function CommissionNetwork({ upline, downlines, referralLink = '', currentUser, 
         </CardContent>
       </Card>
 
+      {/* Temporarily commented out Commission Structure card
       <Card>
         <CardHeader>
           <CardTitle>Commission Structure</CardTitle>
@@ -851,7 +852,7 @@ function CommissionNetwork({ upline, downlines, referralLink = '', currentUser, 
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }
