@@ -232,7 +232,7 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
           </div>
         </div>
 
-        <Alert>
+        {/* <Alert>
           <Share2 className="h-4 w-4" />
           <AlertTitle>How the Commission System Works</AlertTitle>
           <AlertDescription>
@@ -268,7 +268,7 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
               </p>
             )}
           </AlertDescription>
-        </Alert>
+        </Alert> */}
 
         <div className="flex justify-center space-x-4">
           <Button onClick={shareLink}>

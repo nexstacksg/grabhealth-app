@@ -341,8 +341,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         </TabsContent>
 
         <TabsContent value="referral">
-          {/* Always show the referral link component - it will generate a link using the user's email or ID */}
-          <ReferralLink referralLink={user.referralCode || user.email || user.documentId} />
+          <ReferralLink
+            referralLink={user.referralCode || user.email || user.documentId}
+          />
         </TabsContent>
       </Tabs>
     </div>
