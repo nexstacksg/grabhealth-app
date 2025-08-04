@@ -60,26 +60,7 @@ export default function ProductCategories() {
         setError(null);
       } catch (err) {
         console.error('Error fetching categories:', err);
-        // Use fallback categories if API fails
-        setCategories([
-          {
-            id: 1,
-            name: 'Medical Devices',
-            description: 'Health monitoring and medical equipment',
-          },
-          {
-            id: 2,
-            name: 'Medications',
-            description: 'Over-the-counter and prescription drugs',
-          },
-          { id: 3, name: 'Vitamins', description: 'Vitamins and supplements' },
-          {
-            id: 4,
-            name: 'General Health',
-            description: 'General health and wellness products',
-          },
-        ] as ICategory[]);
-        setError(null); // Don't show error since we have fallback data
+        setError('Unable to load categories. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -88,36 +69,38 @@ export default function ProductCategories() {
     fetchCategories();
   }, []);
 
-  // Map category names to icons based on category name
+  // Map category names to icons based on category name patterns
   const getIconForCategory = (categoryName: string) => {
-    const iconMap: Record<string, JSX.Element> = {
-      'Medical Devices': <Thermometer className="h-8 w-8 text-emerald-500" />,
-      Medications: <Pill className="h-8 w-8 text-emerald-500" />,
-      Vitamins: <Vitamins className="h-8 w-8 text-emerald-500" />,
-      Supplements: <Vitamins className="h-8 w-8 text-emerald-500" />,
-      'Health & Wellness': <Heart className="h-8 w-8 text-emerald-500" />,
-      Diagnostics: <Stethoscope className="h-8 w-8 text-emerald-500" />,
-      'Mental Health': <Brain className="h-8 w-8 text-emerald-500" />,
-
-      'First Aid': <Bandage className="h-8 w-8 text-emerald-500" />,
-    };
-
-    // Try exact match first, then partial match
-    if (iconMap[categoryName]) {
-      return iconMap[categoryName];
+    const lowerName = categoryName.toLowerCase();
+    
+    // Dynamic icon mapping based on keywords
+    if (lowerName.includes('device') || lowerName.includes('monitor')) {
+      return <Thermometer className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('medication') || lowerName.includes('medicine') || lowerName.includes('drug')) {
+      return <Pill className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('vitamin') || lowerName.includes('supplement')) {
+      return <Vitamins className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('wellness') || lowerName.includes('health')) {
+      return <Heart className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('diagnostic') || lowerName.includes('test')) {
+      return <Stethoscope className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('mental') || lowerName.includes('stress') || lowerName.includes('brain')) {
+      return <Brain className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('first') || lowerName.includes('aid') || lowerName.includes('emergency')) {
+      return <Bandage className="h-8 w-8 text-emerald-500" />;
+    }
+    if (lowerName.includes('water') || lowerName.includes('liquid') || lowerName.includes('drink')) {
+      return <Droplet className="h-8 w-8 text-emerald-500" />;
     }
 
-    // Check for partial matches
-    for (const [key, icon] of Object.entries(iconMap)) {
-      if (
-        categoryName.toLowerCase().includes(key.toLowerCase()) ||
-        key.toLowerCase().includes(categoryName.toLowerCase())
-      ) {
-        return icon;
-      }
-    }
-
-    return <Pill className="h-8 w-8 text-emerald-500" />; // Default icon
+    // Default icon if no match
+    return <Pill className="h-8 w-8 text-emerald-500" />;
   };
 
   const nextSlide = () => {

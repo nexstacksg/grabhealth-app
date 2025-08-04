@@ -5,6 +5,7 @@
 
 import { BaseService } from './base.service';
 import { IProduct, ApiResponse } from '@app/shared-types';
+import { nextApiClient } from '@/lib/nextjs-api-client';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -24,6 +25,8 @@ interface ChatContext {
 }
 
 interface ChatbotResponse extends ChatResponse {
+  products?: any[];
+  partners?: any[];
   actions?: {
     type: string;
     payload: any;
@@ -53,11 +56,11 @@ interface BackendInteraction {
 class AIService extends BaseService {
   async sendChatMessage(message: string): Promise<ChatResponse> {
     try {
-      const response = await this.api.post<ApiResponse<ChatResponse>>(
+      const response = await nextApiClient.post<ChatResponse>(
         '/ai/chat',
         { message }
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -67,10 +70,10 @@ class AIService extends BaseService {
     try {
       const params = userId ? { userId } : {};
       const queryString = this.buildQueryString(params);
-      const response = await this.api.get<ApiResponse<IProduct[]>>(
+      const response = await nextApiClient.get<IProduct[]>(
         `/ai/recommendations${queryString}`
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -78,10 +81,10 @@ class AIService extends BaseService {
 
   async getPersonalizedRecommendations(): Promise<IProduct[]> {
     try {
-      const response = await this.api.get<ApiResponse<IProduct[]>>(
+      const response = await nextApiClient.get<IProduct[]>(
         '/ai/recommendations/personalized'
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -94,10 +97,10 @@ class AIService extends BaseService {
     try {
       const { limit = 4 } = options;
       const queryString = this.buildQueryString({ limit });
-      const response = await this.api.get<ApiResponse<IProduct[]>>(
+      const response = await nextApiClient.get<IProduct[]>(
         `/ai/similar/${productId}${queryString}`
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -106,10 +109,10 @@ class AIService extends BaseService {
   async getTrendingProducts(limit: number = 8): Promise<IProduct[]> {
     try {
       const queryString = this.buildQueryString({ limit });
-      const response = await this.api.get<ApiResponse<IProduct[]>>(
+      const response = await nextApiClient.get<IProduct[]>(
         `/ai/trending${queryString}`
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -120,11 +123,11 @@ class AIService extends BaseService {
     context?: ChatContext
   ): Promise<ChatbotResponse> {
     try {
-      const response = await this.api.post<ApiResponse<ChatbotResponse>>(
+      const response = await nextApiClient.post<ChatbotResponse>(
         '/ai/chatbot',
         { message, context }
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -133,8 +136,8 @@ class AIService extends BaseService {
   async getChatHistory(): Promise<ChatHistory> {
     try {
       const response =
-        await this.api.get<ApiResponse<ChatHistory>>('/ai/chat-history');
-      return this.extractData(response);
+        await nextApiClient.get<ChatHistory>('/ai/chat-history');
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -142,7 +145,7 @@ class AIService extends BaseService {
 
   async clearChatHistory(): Promise<void> {
     try {
-      await this.api.delete('/ai/chat-history');
+      await nextApiClient.delete('/ai/chat-history');
     } catch (error) {
       this.handleError(error);
     }
@@ -150,10 +153,10 @@ class AIService extends BaseService {
 
   async getSearchSuggestions(query: string): Promise<string[]> {
     try {
-      const response = await this.api.get<ApiResponse<string[]>>(
+      const response = await nextApiClient.get<string[]>(
         `/ai/search-suggestions?q=${encodeURIComponent(query)}`
       );
-      return this.extractData(response);
+      return response.data;
     } catch (error) {
       this.handleError(error);
     }
@@ -175,7 +178,7 @@ class AIService extends BaseService {
         metadata: data.metadata,
       };
 
-      await this.api.post('/ai/track', backendData);
+      await nextApiClient.post('/ai/track', backendData);
     } catch (error) {
       // Don't throw errors for tracking - just log them
       console.warn('Failed to record interaction:', error);
