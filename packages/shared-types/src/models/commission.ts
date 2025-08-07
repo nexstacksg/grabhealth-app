@@ -1,10 +1,10 @@
 import { CommissionStatus, CommissionType, RoleType } from '../enums/commission';
 
 export interface ICommission {
-  documentId: string; // Strapi 5 document ID
-  orderId: string; // Reference to order documentId
-  userId: string; // Changed to string to match backend User model
-  recipientId: string; // Changed to string to match backend User model
+  documentId: string; 
+  orderId: string; 
+  userId: string; 
+  recipientId: string; 
   amount: number;
   commissionRate: number;
   relationshipLevel: number;
@@ -16,8 +16,8 @@ export interface ICommission {
 
 export interface IUserRelationship {
   documentId: string; // Strapi 5 document ID
-  userId: string; // Changed to string to match backend User model
-  uplineId?: string; // Changed to string to match backend User model
+  userId: string; 
+  uplineId?: string; 
   relationshipLevel: number;
   createdAt: Date;
   updatedAt: Date;
@@ -52,9 +52,9 @@ export interface IUserRoleType {
 }
 
 export interface ICommissionCreate {
-  orderId: string; // Reference to order documentId
-  userId: string; // Changed to string to match backend User model
-  recipientId: string; // Changed to string to match backend User model
+  orderId: string; 
+  userId: string; 
+  recipientId: string; 
   amount: number;
   commissionRate: number;
   relationshipLevel: number;
@@ -69,13 +69,13 @@ export interface ICommissionStructure {
   level: number;
 }
 
-export interface INetworkNode {
-  userId: string; // Changed to string to match backend User model
+export interface ICommissionNetworkNode {
+  userId: string; 
   userName: string;
   userEmail: string;
-  uplineId?: string; // Changed to string to match backend User model
+  uplineId?: string; 
   level: number;
   totalSales: number;
   totalCommissions: number;
-  downlines: INetworkNode[];
+  downlines: ICommissionNetworkNode[];
 }

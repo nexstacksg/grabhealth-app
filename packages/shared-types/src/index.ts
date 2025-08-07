@@ -13,15 +13,10 @@ export * from './types/promotion';
 export * from './types/admin';
 export * from './types/dashboard';
 
-// Export all models except INetworkNode (already exported from dashboard)
 export * from './models/user';
 export * from './models/product';
 export * from './models/order';
-export {
-  ICommission,
-  ICommissionTier,
-  IUserRelationship,
-} from './models/commission';
+export * from './models/commission';
 export * from './models/membership';
 export * from './models/stats';
 
