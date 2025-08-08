@@ -9,6 +9,7 @@ import { LayoutWrapper } from '@/components/layout-wrapper';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai'),
   title: 'GrabHealth AI - Your Health Membership Platform',
   description:
     'Get exclusive health benefits, discounts on products and lab services',
