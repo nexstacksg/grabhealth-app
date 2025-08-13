@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "commission_template_details",
+  "info": {
+    "singularName": "commission-template-detail",
+    "pluralName": "commission-template-details",
+    "displayName": "Commission Template Detail",
+    "description": "Individual commission rules within a template"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "template": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::commission-template.commission-template",
+      "inversedBy": "details"
+    },
+    "levelType": {
+      "type": "string",
+      "required": true,
+      "regex": "^(direct|upline_\\d+|partner_company)$"
+    },
+    "levelNumber": {
+      "type": "integer",
+      "required": false,
+      "min": 0
+    },
+    "commissionType": {
+      "type": "enumeration",
+      "enum": ["percentage", "fixed"],
+      "required": true
+    },
+    "commissionValue": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "customerType": {
+      "type": "enumeration",
+      "enum": ["all", "regular", "vip", "wholesale"],
+      "default": "all",
+      "required": true
+    }
+  }
+}

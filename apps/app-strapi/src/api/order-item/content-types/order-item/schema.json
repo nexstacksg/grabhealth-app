@@ -39,6 +39,14 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::product.product"
+    },
+    "variant": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-variant.product-variant"
+    },
+    "variantName": {
+      "type": "string"
     }
   }
 }

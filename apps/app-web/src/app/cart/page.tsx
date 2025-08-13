@@ -1,32 +1,31 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  ShoppingCart,
   Trash,
   Plus,
   Minus,
   ShoppingBag,
   ArrowRight,
-  Award,
-  BadgePercent,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils';
 
-export default function CartPage() {
+// Type assertion workaround for React 18/19 compatibility
+import { Button as BaseButton } from '@/components/ui/button';
+import { Separator as BaseSeparator } from '@/components/ui/separator';
+const Button = BaseButton as any;
+const Separator = BaseSeparator as any;
+
+export default function CartPage(): JSX.Element {
   const router = useRouter();
   const {
     cart,
     cartItems,
     cartCount,
-    cartTotal,
+    // cartTotal is calculated from cart.total
     isLoading: cartLoading,
     updateQuantity,
     removeItem,
@@ -84,7 +83,7 @@ export default function CartPage() {
               <div className="space-y-6">
                 {cartItems.map((item, index) => (
                   <div
-                    key={`${item.productId}-${index}`}
+                    key={`${item.productId}-${(item as any).variantId || 'default'}-${index}`}
                     className="flex gap-4 pb-6 border-b last:border-0 last:pb-0"
                   >
                     <div className="h-24 w-24 rounded-md overflow-hidden relative bg-secondary flex-shrink-0">
@@ -172,28 +171,22 @@ export default function CartPage() {
                   <span>{formatPrice(cart?.subtotal || 0)}</span>
                 </div>
 
-
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>Free</span>
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax (9%)</span>
-                  <span>
-                    {formatPrice((cart?.subtotal || 0) * 0.09)}
-                  </span>
+                  <span className="text-muted-foreground">Tax (0%)</span>
+                  <span>{formatPrice(0)}</span>
                 </div>
 
                 <Separator className="my-4" />
 
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>
-                    {formatPrice((cart?.subtotal || 0) + ((cart?.subtotal || 0) * 0.09))}
-                  </span>
+                  <span>{formatPrice(cart?.subtotal || 0)}</span>
                 </div>
-
 
                 <Button
                   className="w-full mt-6"

@@ -9,6 +9,11 @@ import PromotionBanner from '@/components/promotion-banner';
 import FeaturedProducts from '@/components/featured-products';
 import Link from 'next/link';
 
+// Type assertions for React 19 compatibility
+const ButtonCompat = Button as any;
+const CardCompat = Card as any;
+const CardContentCompat = CardContent as any;
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -28,26 +33,29 @@ export default function Home() {
                 Health Partner
               </h1>
               <div className="w-20 md:w-24 h-1 bg-[#0C99B4] mb-4 md:mb-6"></div>
+              <p className="text-lg md:text-xl text-gray-700 font-medium mb-3">
+                The simple and convenient way to take care of your health.
+              </p>
               <p className="text-base md:text-lg text-gray-600 mb-6 md:mb-8">
                 Join our membership program for exclusive health benefits,
                 discounts on products, lab services, and monthly free gifts.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <Link href="/products" className="w-full sm:w-auto">
-                  <Button
+                  <ButtonCompat
                     size="lg"
                     className="bg-[#0C99B4] hover:bg-[#0a7b91] w-full sm:w-auto"
                   >
                     Get Started <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  </ButtonCompat>
                 </Link>
-                <Button
+                <ButtonCompat
                   size="lg"
                   variant="outline"
                   className="border-[#0C99B4] text-[#0C99B4] hover:bg-[#e6f7fa] w-full sm:w-auto"
                 >
                   Learn More
-                </Button>
+                </ButtonCompat>
               </div>
             </div>
             <div className="relative h-[300px] md:h-[400px] w-full mt-4 md:mt-0">
@@ -82,8 +90,8 @@ export default function Home() {
       <section className="py-10 md:py-16 bg-white">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <Card className="border-none shadow-sm">
-              <CardContent className="pt-6">
+            <CardCompat className="border-none shadow-sm">
+              <CardContentCompat className="pt-6">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 rounded-full bg-[#c5edf3] flex items-center justify-center mr-4">
                     <Truck className="h-5 w-5 text-[#0C99B4]" />
@@ -93,10 +101,10 @@ export default function Home() {
                 <p className="text-gray-600">
                   Reliable priority service for members
                 </p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm">
-              <CardContent className="pt-6">
+              </CardContentCompat>
+            </CardCompat>
+            <CardCompat className="border-none shadow-sm">
+              <CardContentCompat className="pt-6">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 rounded-full bg-[#c5edf3] flex items-center justify-center mr-4">
                     <Star className="h-5 w-5 text-[#0C99B4]" />
@@ -104,10 +112,10 @@ export default function Home() {
                   <h3 className="text-xl font-semibold">Verified Sellers</h3>
                 </div>
                 <p className="text-gray-600">Trusted quality and safety</p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm">
-              <CardContent className="pt-6">
+              </CardContentCompat>
+            </CardCompat>
+            <CardCompat className="border-none shadow-sm">
+              <CardContentCompat className="pt-6">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 rounded-full bg-[#c5edf3] flex items-center justify-center mr-4">
                     <CreditCard className="h-5 w-5 text-[#0C99B4]" />
@@ -115,8 +123,8 @@ export default function Home() {
                   <h3 className="text-xl font-semibold">Secure Payments</h3>
                 </div>
                 <p className="text-gray-600">Safe and easy checkout</p>
-              </CardContent>
-            </Card>
+              </CardContentCompat>
+            </CardCompat>
           </div>
         </div>
       </section>
@@ -141,10 +149,10 @@ export default function Home() {
       <section className="py-10 md:py-16 bg-gray-50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            <div className="grid grid-cols-2 gap-2 md:gap-4 mb-6 md:mb-0">
+            <div className="grid grid-cols-2 gap-2 p-6 md:gap-4 mb-6 md:mb-0">
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/pills-capsules-stethoscope-white-table-concept-healthcare.png"
+                  src="/uploads/frame1.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -153,7 +161,7 @@ export default function Home() {
               </div>
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/pills-with-glass-jar.png"
+                  src="/uploads/frame3.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -162,7 +170,7 @@ export default function Home() {
               </div>
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/portrait-young-asian-male-doctor-blue-background.png"
+                  src="/uploads/frame2.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -171,7 +179,7 @@ export default function Home() {
               </div>
               <div className="aspect-square rounded-lg overflow-hidden">
                 <Image
-                  src="/vitamins-supplements-healthy-life-concept.png"
+                  src="/uploads/frame4.png"
                   alt="Health Product"
                   width={300}
                   height={300}
@@ -181,19 +189,67 @@ export default function Home() {
             </div>
             <div>
               <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
-                Our Service Values
+                WHO WE ARE
               </h2>
               <div className="w-14 md:w-16 h-1 bg-[#0C99B4] mb-4 md:mb-6"></div>
               <p className="text-sm md:text-base text-gray-600 mb-5 md:mb-6">
-                The cornerstone of our establishment is making the benefits of
-                exceptional medical services reach the public without
-                discrimination. We strive to live up to this philosophy through
-                our stellar values, that are the pillar of every service that we
-                offer under the banner of our prestigious platform.
+                GrabHealth Solutions Pte Ltd is a Singapore-based digital healthcare 
+                company that empowers individuals to take charge of their well-being 
+                through a fusion of technology, diagnostics, wellness, and secure 
+                data ownership.
               </p>
-              <Button className="bg-[#0C99B4] hover:bg-[#0a7b91] w-full sm:w-auto">
+              <p className="text-sm md:text-base text-gray-600 mb-5 md:mb-6">
+                With a vision to make health simple and accessible, we partner with 
+                top diagnostic labs, AI health innovators, and lifestyle practitioners 
+                to offer a comprehensive health journey — from testing to transformation.
+              </p>
+              <ButtonCompat className="bg-[#0C99B4] hover:bg-[#0a7b91] w-full sm:w-auto">
                 Contact Us
-              </Button>
+              </ButtonCompat>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Vision & Mission Section */}
+      <section className="py-12 md:py-20 bg-gradient-to-r from-[#e6f7fa] to-[#c5edf3]">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
+              OUR VISION & MISSION
+            </h2>
+            <div className="w-14 md:w-16 h-1 bg-[#0C99B4] mb-6 md:mb-8 mx-auto"></div>
+            <p className="text-lg md:text-xl text-gray-700 font-medium mb-6">
+              To make quality, personalised health services:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="w-12 h-12 bg-[#0C99B4] rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">1</span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Accessible</h3>
+                <p className="text-gray-600">
+                  To everyday individuals seeking proactive health management
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="w-12 h-12 bg-[#0C99B4] rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">2</span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Empowered</h3>
+                <p className="text-gray-600">
+                  By technology and secure platforms for better health insights
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="w-12 h-12 bg-[#0C99B4] rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">3</span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Elevated</h3>
+                <p className="text-gray-600">
+                  For high-net-worth clients seeking advanced and luxury wellness care
+                </p>
+              </div>
             </div>
           </div>
         </div>

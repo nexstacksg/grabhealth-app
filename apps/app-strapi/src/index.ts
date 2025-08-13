@@ -35,5 +35,21 @@ export default {
         default_role: 'authenticated',
       },
     });
+
+    // Seed commission templates
+    try {
+      const seedCommissionTemplates = (await import('./api/commission-template/services/seed-commission-templates')).default;
+      await seedCommissionTemplates(strapi);
+    } catch (error) {
+      strapi.log.warn('Commission template seeding skipped:', error.message);
+    }
+
+    // Seed product variants
+    try {
+      const seedProductVariants = (await import('./api/product-variant/services/seed-product-variants')).default;
+      await seedProductVariants({ strapi });
+    } catch (error) {
+      strapi.log.warn('Product variant seeding skipped:', error.message);
+    }
   },
 };

@@ -18,8 +18,8 @@ export default function Footer() {
               />
             </div>
             <p className="text-gray-400 mb-4">
-              Your trusted health membership platform for exclusive benefits and
-              discounts.
+              Empowering your wellness journey through technology, diagnostics, 
+              and secure health data ownership.
             </p>
             <div className="flex space-x-4">
               <Link href="#" className="text-gray-400 hover:text-emerald-400">

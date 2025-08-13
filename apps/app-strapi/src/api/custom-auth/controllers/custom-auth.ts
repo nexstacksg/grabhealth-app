@@ -6,15 +6,37 @@ const VERIFICATION_CODE_EXPIRY = 10 * 60 * 1000; // 10 minutes
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async register(ctx) {
     try {
-      const { email, password, username, firstName, lastName } = ctx.request.body;
+      const { email, password, username, firstName, lastName, phoneNumber, referrer } = ctx.request.body;
 
-      // Check if user exists
+      // Validate required fields
+      if (!phoneNumber) {
+        return ctx.badRequest('Phone number is required');
+      }
+
+      // Clean phone number (remove spaces, dashes, parentheses)
+      const cleanedPhoneNumber = phoneNumber.replace(/[\s-()]/g, '');
+      
+      // Validate phone number format
+      if (!/^[+]?\d{10,20}$/.test(cleanedPhoneNumber)) {
+        return ctx.badRequest('Please enter a valid phone number (10-20 digits)');
+      }
+
+      // Check if user exists with email
       const existingUser = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { email: email.toLowerCase() }
       });
 
       if (existingUser) {
         return ctx.badRequest('Email already registered');
+      }
+
+      // Check if phone number already exists
+      const existingPhone = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { phoneNumber: cleanedPhoneNumber }
+      });
+
+      if (existingPhone) {
+        return ctx.badRequest('This phone number is already registered. Please use a different phone number or sign in to your existing account.');
       }
 
       // Get the public role
@@ -26,16 +48,41 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return ctx.internalServerError('Public role not found');
       }
 
+      // Handle referrer - look up upline user
+      let uplineUser = null;
+      if (referrer) {
+        // Try to find user by referral code first
+        uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+          where: { referralCode: referrer }
+        });
+
+        // If not found by referral code, try by email
+        if (!uplineUser && typeof referrer === 'string') {
+          uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { email: referrer.toLowerCase() }
+          });
+        }
+
+        // If not found by email, try by documentId (for backward compatibility)
+        if (!uplineUser && typeof referrer === 'string' && referrer.length >= 20) { // documentId is typically 24+ chars
+          uplineUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { documentId: referrer }
+          });
+        }
+
+      }
+
       // Generate 6-digit verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const codeExpiry = new Date(Date.now() + VERIFICATION_CODE_EXPIRY);
 
       // Create user with public role and unconfirmed status
       // Use the users-permissions service to properly hash the password
-      const user = await strapi.plugin('users-permissions').service('user').add({
+      const userData = {
         username: username || email,
         email: email.toLowerCase(),
         password,
+        phoneNumber: cleanedPhoneNumber,
         firstName,
         lastName,
         provider: 'local',
@@ -44,6 +91,22 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         role: publicRole.id,
         emailVerificationCode: verificationCode,
         emailVerificationCodeExpires: codeExpiry
+      };
+
+      // Add upline if found
+      if (uplineUser) {
+        userData['upline'] = uplineUser.id;
+        console.log('Setting upline for new user:', { newUserEmail: email, uplineId: uplineUser.id, uplineEmail: uplineUser.email });
+      }
+
+      const user = await strapi.plugin('users-permissions').service('user').add(userData);
+      
+      // Log the created user details
+      console.log('User created:', { 
+        userId: user.id, 
+        email: user.email, 
+        uplineId: user.upline,
+        confirmed: user.confirmed 
       });
 
       // Send verification email
@@ -395,13 +458,38 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return ctx.unauthorized('User not authenticated');
       }
 
-      const { username, email, firstName } = ctx.request.body;
+      const { username, email, firstName, phoneNumber } = ctx.request.body;
 
       // Prepare update data
       const updateData: any = {};
       if (username !== undefined) updateData.username = username;
       if (email !== undefined) updateData.email = email;
       if (firstName !== undefined) updateData.firstName = firstName;
+      if (phoneNumber !== undefined) {
+        // Clean phone number (remove spaces, dashes, parentheses)
+        const cleanedPhoneNumber = phoneNumber.replace(/[\s-()]/g, '');
+        
+        // Validate phone number format
+        if (cleanedPhoneNumber && !/^[+]?\d{10,20}$/.test(cleanedPhoneNumber)) {
+          return ctx.badRequest('Please enter a valid phone number (10-20 digits)');
+        }
+        
+        // Check if phone number already exists for another user
+        if (cleanedPhoneNumber) {
+          const existingPhone = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { 
+              phoneNumber: cleanedPhoneNumber,
+              id: { $ne: userId } // Not the current user
+            }
+          });
+
+          if (existingPhone) {
+            return ctx.badRequest('This phone number is already registered to another account');
+          }
+        }
+        
+        updateData.phoneNumber = cleanedPhoneNumber || null;
+      }
       // TEMPORARILY DISABLED: Profile image upload
       // if (profileImage !== undefined) updateData.profileImage = profileImage;
 

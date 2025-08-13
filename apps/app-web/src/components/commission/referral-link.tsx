@@ -109,8 +109,21 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
         });
         setShared(true);
         setTimeout(() => setShared(false), 2000);
-      } catch (err) {
-        console.error('Error sharing:', err);
+      } catch (err: any) {
+        // Don't show error if user just canceled the share
+        if (err.name === 'AbortError' || err.message?.includes('canceled')) {
+          console.log('Share canceled by user');
+        } else {
+          console.error('Error sharing:', err);
+          // Fallback to copy if share fails
+          try {
+            await navigator.clipboard.writeText(displayUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch (copyErr) {
+            console.error('Failed to copy: ', copyErr);
+          }
+        }
       }
     } else {
       // Fallback for browsers that don't support Web Share API
@@ -219,12 +232,14 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
           </div>
         </div>
 
-        <Alert>
+        {/* <Alert>
           <Share2 className="h-4 w-4" />
           <AlertTitle>How the Commission System Works</AlertTitle>
           <AlertDescription>
             {isLoadingRates ? (
-              <div className="text-sm text-muted-foreground">Loading commission rates...</div>
+              <div className="text-sm text-muted-foreground">
+                Loading commission rates...
+              </div>
             ) : commissionLevels.length > 0 ? (
               <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
                 <li>
@@ -232,17 +247,19 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
                 </li>
                 {commissionLevels.map((level) => (
                   <li key={level.level}>
-                    {level.name}: Earn {(level.rate * 100).toFixed(0)}% commission
-                    {level.level === 1 && ' on direct sales'}
-                    {level.level === 2 && ' when your direct referrals make sales'}
-                    {level.level === 3 && ' from your extended network'}
+                    {level.name}: Earn {(level.rate * 100).toFixed(0)}%
+                    commission
+                    {level.level === 0 && ' on direct sales'}
+                    {level.level === 1 &&
+                      ' when your direct referrals make sales'}
+                    {level.level === 2 && ' from your Level 2 network'}
+                    {level.level === 3 && ' from your Level 3 network'}
+                    {level.level > 3 && ` from your Level ${level.level} network`}
                   </li>
                 ))}
                 <li>
-                  For deeper levels, you earn points that can be redeemed for benefits
-                </li>
-                <li>
-                  The more people in your network, the more earning potential you have
+                  The more people in your network, the more earning potential
+                  you have
                 </li>
               </ul>
             ) : (
@@ -251,7 +268,7 @@ function ReferralLink({ referralLink }: ReferralLinkProps) {
               </p>
             )}
           </AlertDescription>
-        </Alert>
+        </Alert> */}
 
         <div className="flex justify-center space-x-4">
           <Button onClick={shareLink}>

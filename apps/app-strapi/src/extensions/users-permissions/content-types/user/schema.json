@@ -114,18 +114,38 @@
     "upline": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "plugin::users-permissions.user"
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "downlines"
     },
     "downlines": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "plugin::users-permissions.user"
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "upline"
     },
     "partner": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::partner.partner",
       "inversedBy": "users"
+    },
+    "customerType": {
+      "type": "enumeration",
+      "enum": ["regular", "vip", "wholesale"],
+      "default": "regular",
+      "required": true
+    },
+    "phoneNumber": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "minLength": 10,
+      "maxLength": 20
+    },
+    "partnerCompany": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::partner.partner"
     },
     "profileImage": {
       "type": "media",

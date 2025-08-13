@@ -32,13 +32,11 @@ export async function loginAction(data: LoginRequest) {
  * Server action for user registration
  * Sets httpOnly cookies upon successful registration
  */
-export async function registerAction(data: RegisterRequest) {
+export async function registerAction(data: RegisterRequest & { referrer?: string | null }) {
   try {
     // For registration, we need to call the custom auth API
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
     const url = `${baseUrl}/api/custom-auth/register`;
-    
-    console.log('[RegisterAction] Calling custom auth:', url);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -49,8 +47,10 @@ export async function registerAction(data: RegisterRequest) {
       body: JSON.stringify({
         email: data.email,
         password: data.password,
+        phoneNumber: data.phoneNumber,
         firstName: data.firstName || '',
         lastName: data.lastName || '',
+        referrer: data.referrer || undefined, // Include referrer if provided
       }),
     });
     
@@ -62,11 +62,6 @@ export async function registerAction(data: RegisterRequest) {
     }
     
     if (!response.ok) {
-      console.error('[RegisterAction] Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: responseData
-      });
       throw new Error(responseData?.error?.message || responseData?.message || `Registration failed: ${response.statusText}`);
     }
     
@@ -86,8 +81,6 @@ export async function registerAction(data: RegisterRequest) {
       emailVerifiedAt: null,
     };
     
-    console.log('[RegisterAction] Created placeholder user:', user);
-    
     // No cookies to set yet - user needs to verify email first
     
     return { 
@@ -96,7 +89,6 @@ export async function registerAction(data: RegisterRequest) {
       message: responseData.message 
     };
   } catch (error: any) {
-    console.error('[RegisterAction] Exception:', error);
     return { 
       success: false as const, 
       error: error.message || 'Registration failed' 

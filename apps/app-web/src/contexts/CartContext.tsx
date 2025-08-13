@@ -15,10 +15,12 @@ import {
 } from '@app/shared-types';
 import { useAuth } from './AuthContext';
 
-// Extend ICartItem to include id field from backend
+// Extend ICartItem to include id field from backend and variant info
 interface ICartItem extends BaseCartItem {
   id?: number;
   cartId?: number;
+  variantId?: string;
+  variantName?: string;
 }
 
 // Extend ICart to use our extended ICartItem
@@ -164,6 +166,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       name: string;
       price: number;
       image_url?: string;
+      variantId?: string;
+      variantName?: string;
     },
     quantity: number = 1
   ) => {
@@ -187,9 +191,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           items: [...currentCart.items],
         };
 
-        // Check if item already exists
+        // Check if item already exists (consider variant when checking)
         const existingItemIndex = updatedCart.items.findIndex(
-          (item) => item.productId === product.id
+          (item) => item.productId === product.id && 
+                   item.variantId === product.variantId
         );
 
         if (existingItemIndex >= 0) {
@@ -204,6 +209,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             productId: product.id,
             quantity,
             price: product.price,
+            variantId: product.variantId,
+            variantName: product.variantName,
             product: {
               documentId: (product.id || '')?.toString(),
               name: product.name,
@@ -221,7 +228,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           (sum, item) => sum + (item.price || 0) * item.quantity,
           0
         );
-        updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
+        updatedCart.tax = 0; // 0% tax
         updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
         setCart(updatedCart);
@@ -282,7 +289,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         (sum, item) => sum + (item.price || 0) * item.quantity,
         0
       );
-      updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
+      updatedCart.tax = 0; // 0% tax
       updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
       setCart(updatedCart);
@@ -322,7 +329,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       (sum, item) => sum + (item.price || 0) * item.quantity,
       0
     );
-    updatedCart.tax = updatedCart.subtotal * 0.09; // 9% tax
+    updatedCart.tax = 0; // 0% tax
     updatedCart.total = updatedCart.subtotal + updatedCart.tax;
 
     setCart(updatedCart);

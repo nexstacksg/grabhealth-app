@@ -14,11 +14,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription/* , AlertTitle */ } from '@/components/ui/alert';
-import { Loader2/* , User, Upload */ } from 'lucide-react';
+import {
+  Alert,
+  AlertDescription /* , AlertTitle */,
+} from '@/components/ui/alert';
+import { Loader2 /* , User, Upload */ } from 'lucide-react';
 import { toast } from 'sonner';
-import { updateProfileAction, /* uploadProfileImageAction, */ changePasswordAction } from './actions';
+import {
+  updateProfileAction,
+  /* uploadProfileImageAction, */ changePasswordAction,
+} from './actions';
 import { transformStrapiUser } from '@/services/strapi-base';
+import ReferralLink from '@/components/commission/referral-link';
 
 interface ProfileClientProps {
   initialUser: any; // Strapi user data
@@ -28,13 +35,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [isPending, startTransition] = useTransition();
   // const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Transform Strapi user to our format
+
   const user = transformStrapiUser(initialUser);
-  
+
   const [formData, setFormData] = useState({
     username: user.firstName || user.email.split('@')[0] || '',
     email: user.email,
+    phoneNumber: user.phoneNumber || '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -82,12 +89,22 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     e.preventDefault();
     setError(null);
 
+    // Validate phone number format if provided
+    if (formData.phoneNumber) {
+      const cleanedPhone = formData.phoneNumber.replace(/[\s-()]/g, '');
+      if (!/^[+]?\d{10,20}$/.test(cleanedPhone)) {
+        setError('Please enter a valid phone number (10-20 digits)');
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
         const result = await updateProfileAction({
           userId: user.documentId,
           username: formData.username,
           email: formData.email,
+          phoneNumber: formData.phoneNumber,
         });
 
         if (result.error) {
@@ -96,9 +113,17 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
         toast.success('Profile updated successfully!');
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
-        toast.error(errorMessage);
-        setError(errorMessage);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to update profile';
+        
+        // Check for phone number already exists error
+        if (errorMessage.toLowerCase().includes('phone number') && errorMessage.toLowerCase().includes('already registered')) {
+          setError('This phone number is already registered to another account');
+          toast.error('This phone number is already registered to another account');
+        } else {
+          toast.error(errorMessage);
+          setError(errorMessage);
+        }
       }
     });
   };
@@ -140,7 +165,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
         toast.success('Password updated successfully!');
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update password';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to update password';
         toast.error(errorMessage);
         setError(errorMessage);
       }
@@ -163,6 +189,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="referral">Referral Link</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -239,6 +266,21 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                         required
                       />
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber">Phone Number</Label>
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        placeholder="+60 12-345 6789"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Enter your mobile number with country code
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -281,6 +323,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     value={formData.currentPassword}
                     onChange={handleInputChange}
                     required
+                    placeholder="Enter your current password"
                   />
                 </div>
 
@@ -293,6 +336,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     value={formData.newPassword}
                     onChange={handleInputChange}
                     required
+                    placeholder="Enter your new password"
                   />
                 </div>
 
@@ -305,6 +349,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
+                    placeholder="Confirm your new password"
                   />
                 </div>
               </CardContent>
@@ -326,6 +371,12 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               </CardFooter>
             </form>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="referral">
+          <ReferralLink
+            referralLink={user.referralCode || user.email || user.documentId}
+          />
         </TabsContent>
       </Tabs>
     </div>

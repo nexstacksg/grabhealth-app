@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.service';
-import { IProduct, ICategory, ProductSearchParams } from '@app/shared-types';
+import { IProduct, ICategory, IProductVariant, ProductSearchParams } from '@app/shared-types';
 
 export type PriceRange = '0-50' | '50-100' | '100-200' | '200+';
 
@@ -41,36 +41,70 @@ function transformStrapiCategory(strapiCategory: any): ICategory | null {
   };
 }
 
+// Transform Strapi variant to our IProductVariant format
+function transformStrapiVariant(strapiVariant: any): IProductVariant {
+  return {
+    documentId: strapiVariant.documentId || strapiVariant.id?.toString() || '',
+    name: strapiVariant.name || '',
+    sku: strapiVariant.sku || '',
+    price: strapiVariant.price || 0,
+    unitQuantity: strapiVariant.unitQuantity || 1,
+    unitLabel: strapiVariant.unitLabel || 'unit',
+    savingsAmount: strapiVariant.savingsAmount || null,
+    isMostPopular: strapiVariant.isMostPopular || false,
+    stock: strapiVariant.stock || 0,
+    productId: strapiVariant.product?.documentId || strapiVariant.product?.id?.toString() || undefined,
+  };
+}
+
 // Transform Strapi product to our IProduct format
 function transformStrapiProduct(strapiProduct: any): IProduct {
   // Handle image URL - Strapi v5 format
   let imageUrl = '';
+  let images: string[] = [];
+  
   if (
     strapiProduct.imageUrl &&
     Array.isArray(strapiProduct.imageUrl) &&
     strapiProduct.imageUrl.length > 0
   ) {
-    const imageData = strapiProduct.imageUrl[0];
+    // Process all images
+    images = strapiProduct.imageUrl.map((imageData: any) => {
+      let url = '';
+      
+      // Check if it's a DigitalOcean Spaces URL (already full URL)
+      if (
+        imageData.url &&
+        (imageData.url.startsWith('http://') ||
+          imageData.url.startsWith('https://'))
+      ) {
+        url = imageData.url;
+      }
+      // Check if provider is 'aws-s3' (DigitalOcean Spaces uses aws-s3 provider)
+      else if (imageData.provider === 'aws-s3' && imageData.url) {
+        // URL should already be complete from Strapi
+        url = imageData.url;
+      }
+      // Fallback for local uploads
+      else if (imageData.url) {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
+        url = `${baseUrl}${imageData.url}`;
+      }
+      
+      return url;
+    }).filter((url: string) => url !== '');
+    
+    // Set primary image (first image) for backward compatibility
+    if (images.length > 0) {
+      imageUrl = images[0];
+    }
+  }
 
-    // Check if it's a DigitalOcean Spaces URL (already full URL)
-    if (
-      imageData.url &&
-      (imageData.url.startsWith('http://') ||
-        imageData.url.startsWith('https://'))
-    ) {
-      imageUrl = imageData.url;
-    }
-    // Check if provider is 'aws-s3' (DigitalOcean Spaces uses aws-s3 provider)
-    else if (imageData.provider === 'aws-s3' && imageData.url) {
-      // URL should already be complete from Strapi
-      imageUrl = imageData.url;
-    }
-    // Fallback for local uploads
-    else if (imageData.url) {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
-      imageUrl = `${baseUrl}${imageData.url}`;
-    }
+  // Transform variants if present
+  let variants: IProductVariant[] | undefined;
+  if (strapiProduct.variants && Array.isArray(strapiProduct.variants)) {
+    variants = strapiProduct.variants.map(transformStrapiVariant);
   }
 
   return {
@@ -84,12 +118,14 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
       null,
     category: transformStrapiCategory(strapiProduct.category),
     imageUrl,
+    images, // Include all images
     inStock: strapiProduct.inStock ?? true,
     status: strapiProduct.productStatus || 'ACTIVE',
     sku: strapiProduct.sku || undefined,
     qty: strapiProduct.qty || undefined,
     slug: strapiProduct.slug || undefined,
     productStatus: strapiProduct.productStatus || undefined,
+    variants, // Include variants
   };
 }
 
@@ -225,7 +261,8 @@ class ProductService extends BaseService {
   async getProduct(id: number | string): Promise<IProduct> {
     try {
       // For Strapi v5, use documentId if it's a string
-      const endpoint = `/products/${id}?populate=*`;
+      // Explicitly populate all fields including nested relations
+      const endpoint = `/products/${id}?populate[category]=true&populate[imageUrl]=true&populate[variants][populate]=*`;
 
       const response = await this.api.get<StrapiResponse<any>>(endpoint);
       const strapiData = response.data as any;

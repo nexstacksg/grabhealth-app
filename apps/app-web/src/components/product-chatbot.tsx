@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, X, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Send, X, ShoppingBag, ArrowRight, MapPin, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,15 +22,18 @@ interface Message {
 }
 
 interface Product {
-  id: number;
+  id?: number;
+  documentId?: string;
   name: string;
   description: string;
   price: number;
-  discount_essential: number;
-  discount_premium: number;
-  category: string;
-  image_url: string;
-  in_stock: boolean;
+  discount_essential?: number;
+  discount_premium?: number;
+  category?: any;
+  imageUrl?: string;
+  image_url?: string;
+  inStock?: boolean;
+  in_stock?: boolean;
 }
 
 export function ProductChatbot() {
@@ -42,39 +45,87 @@ export function ProductChatbot() {
       id: '1',
       role: 'assistant',
       content:
-        "Hello! 👋 I'm HealthBot, your AI assistant for product hunting in GrabHealth. I can help you with:",
+        "Hello! 👋 I'm HealthBot, your personal wellness assistant. I'm here to help you find the perfect health products from our collection.",
     },
     {
       id: '2',
       role: 'assistant',
       content:
-        '• Finding products based on your requirements\n• Providing information about health products\n• Explaining product benefits and usage\n• Recommending similar products',
+        "How can I help you today? You can ask me about:\n• Product recommendations for specific health needs\n• Information about our products\n• Help finding the right wellness solutions\n• General health and wellness advice",
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [recommendedPartners, setRecommendedPartners] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [initialSuggestionsLoaded, setInitialSuggestionsLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Predefined quick suggestions
-  const suggestions = [
-    'Find vitamins for immune support',
-    'Product prices in supplements category',
-    'Recommend products for joint health',
-    'Tell me about membership benefits',
-  ];
 
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleViewProduct = (productId: number) => {
+  // Load initial suggestions from categories
+  useEffect(() => {
+    async function loadInitialSuggestions() {
+      if (initialSuggestionsLoaded) return;
+      
+      try {
+        const categories = await services.category.getCategories();
+        if (categories.length > 0) {
+          const dynamicSuggestions = [
+            'What products help with wellness?',
+            categories.length > 0 ? `Show me ${categories[0].name.toLowerCase()}` : 'Show me vitamins & supplements',
+            'Where are your healthcare partner clinics?',
+            'I need help finding health products',
+          ];
+          setSuggestions(dynamicSuggestions);
+        } else {
+          // Fallback suggestions if categories fail to load
+          setSuggestions([
+            'What products help with wellness?',
+            'Show me vitamins & supplements',
+            'Where are your healthcare partners?',
+            'I need help finding health products',
+          ]);
+        }
+        setInitialSuggestionsLoaded(true);
+      } catch (error) {
+        console.error('Error loading suggestions:', error);
+        // Set fallback suggestions on error
+        setSuggestions([
+          'What products help with wellness?',
+          'Show me vitamins & supplements',
+          'Where are your healthcare partners?',
+          'I need help finding health products',
+        ]);
+        setInitialSuggestionsLoaded(true);
+      }
+    }
+
+    loadInitialSuggestions();
+  }, [initialSuggestionsLoaded]);
+
+  const handleViewProduct = (productId: number | string | undefined) => {
+    if (!productId) return;
+    
     // Close the chatbot
     setIsOpen(false);
 
     // Navigate to the product page using Next.js router
     router.push(`/products/${productId}`);
+  };
+
+  const handleViewPartner = (partnerId: number | string | undefined) => {
+    if (!partnerId) return;
+    
+    // Close the chatbot
+    setIsOpen(false);
+
+    // Navigate to the partner page using Next.js router
+    router.push(`/partners/${partnerId}`);
   };
 
   const handleSendMessage = async () => {
@@ -91,6 +142,7 @@ export function ProductChatbot() {
     setInput('');
     setIsLoading(true);
     setRecommendedProducts([]);
+    setRecommendedPartners([]);
 
     // Scroll to bottom
     setTimeout(() => {
@@ -101,8 +153,16 @@ export function ProductChatbot() {
 
     try {
       // Use AI service for chatbot functionality
-      const response = await services.ai.sendChatbotMessage(input);
-      // Session ID is not returned by this method
+      const response = await services.ai.sendChatbotMessage(input, {
+        productId: undefined,
+        categoryId: undefined,
+        orderId: undefined,
+      });
+      
+      // Check if we got a valid response
+      if (!response || !response.message) {
+        throw new Error('Invalid response from chatbot service');
+      }
 
       // Add assistant message
       const assistantMessage: Message = {
@@ -113,22 +173,53 @@ export function ProductChatbot() {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Handle suggestions if any
-      // TODO: Implement suggestions UI
-      // if (response.suggestions && response.suggestions.length > 0) {
-      //   // Add suggestions as quick actions
-      // }
+      // Handle product recommendations from response
+      if (response.products && response.products.length > 0) {
+        console.log('Setting recommended products:', response.products);
+        setRecommendedProducts(response.products);
+      }
+      
+      // Handle partner recommendations from response
+      if (response.partners && response.partners.length > 0) {
+        console.log('Setting recommended partners:', response.partners);
+        setRecommendedPartners(response.partners);
+      } else {
+        console.log('No partners in response:', response);
+      }
+      
+      if (response.actions && response.actions.length > 0) {
+        // Fallback to actions if no products in response
+        for (const action of response.actions) {
+          if (action.type === 'show_products' && action.payload.category) {
+            // Fetch products based on category
+            try {
+              const { products } = await services.product.searchProducts({
+                category: action.payload.category as string,
+                limit: 4,
+                inStock: true,
+              });
+              if (products.length > 0) {
+                setRecommendedProducts(products);
+              }
+            } catch (err) {
+              console.error('Error fetching recommended products:', err);
+            }
+          }
+        }
+      }
 
-      // For now, we don't have product recommendations in the response
-      // You could fetch products based on the conversation context
+      // Update suggestions based on response
+      if (response.suggestions && response.suggestions.length > 0) {
+        setSuggestions(response.suggestions);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Chatbot error details:', error);
 
       // Add error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'I apologize, but I\'m currently offline. Please browse our products directly or contact our support team for assistance.',
+        content: 'I apologize for the inconvenience. I\'m having trouble connecting right now. In the meantime, you can browse our products directly or try again in a moment.',
       };
 
       setMessages((prev) => [...prev, errorMessage]);
@@ -215,7 +306,7 @@ export function ProductChatbot() {
       {/* Chatbot container */}
       {isOpen && (
         <div
-          className="fixed bottom-0 right-0 sm:bottom-8 sm:right-28 w-full sm:w-[350px] md:w-[400px] lg:w-[450px] h-[85vh] sm:h-[520px] bg-white rounded-none sm:rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-emerald-100"
+          className="fixed bottom-0 right-0 sm:bottom-8 sm:right-28 w-full sm:w-[380px] md:w-[420px] lg:w-[480px] h-[90vh] sm:h-[650px] md:h-[700px] bg-white rounded-none sm:rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-emerald-100"
           style={{
             animation:
               'chatbotAppear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
@@ -269,22 +360,22 @@ export function ProductChatbot() {
             }
           `}</style>
           {/* Header */}
-          <div className="border-b p-3 sm:p-4 flex items-center justify-between bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-t-none sm:rounded-t-2xl">
+          <div className="border-b p-4 sm:p-5 flex items-center justify-between bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-t-none sm:rounded-t-2xl">
             <div className="flex items-center gap-3">
-              <div className="bg-white bg-opacity-20 p-2.5 rounded-full shadow-inner">
+              <div className="bg-white bg-opacity-20 p-3 rounded-full shadow-inner">
                 <Image
                   src="/robot.png"
                   alt="HealthBot"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
                 />
               </div>
               <div>
-                <h2 className="font-bold text-base sm:text-lg tracking-tight">
+                <h2 className="font-bold text-lg sm:text-xl tracking-tight">
                   HealthBot
                 </h2>
-                <p className="text-xs opacity-80 font-medium">
+                <p className="text-xs sm:text-sm opacity-90 font-medium">
                   Your Personal Health Assistant
                 </p>
               </div>
@@ -293,141 +384,222 @@ export function ProductChatbot() {
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full h-9 w-9 transition-colors"
+              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full h-10 w-10 transition-colors"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
 
           {/* Chat area */}
-          <ScrollArea className="flex-1 px-4 py-3">
+          <ScrollArea className="flex-1 px-4 py-4">
             <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
-                      <Image
-                        src="/robot.png"
-                        alt="HealthBot"
-                        width={24}
-                        height={24}
-                        className="h-6 w-6"
-                      />
-                    </div>
-                  )}
+              {messages.map((message, index) => (
+                <React.Fragment key={message.id}>
                   <div
-                    className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-2.5 sm:p-3 message-bubble ${
-                      message.role === 'user'
-                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-tr-none shadow-sm'
-                        : 'bg-gray-100 text-gray-800 rounded-tl-none shadow-sm'
-                    }`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="whitespace-pre-line text-xs sm:text-sm leading-relaxed">
-                      {message.role === 'assistant'
-                        ? formatBotMessage(message.content)
-                        : message.content}
+                    {message.role === 'assistant' && (
+                      <div className="h-11 w-11 rounded-full bg-emerald-100 flex items-center justify-center mr-3 flex-shrink-0 mt-1">
+                        <Image
+                          src="/robot.png"
+                          alt="HealthBot"
+                          width={28}
+                          height={28}
+                          className="h-7 w-7"
+                        />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 message-bubble ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-tr-none shadow-sm'
+                          : 'bg-gray-100 text-gray-800 rounded-tl-none shadow-sm'
+                      }`}
+                    >
+                      <div className="whitespace-pre-line text-sm leading-relaxed">
+                        {message.role === 'assistant'
+                          ? formatBotMessage(message.content)
+                          : message.content}
+                      </div>
                     </div>
+                    {message.role === 'user' && (
+                      <div className="h-9 w-9 rounded-full bg-emerald-600 flex items-center justify-center ml-3 flex-shrink-0 mt-1">
+                        <span className="text-xs text-white font-medium">
+                          You
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  {message.role === 'user' && (
-                    <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center ml-2 flex-shrink-0 mt-1">
-                      <span className="text-xs text-white font-medium">
-                        You
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Recommended products */}
-              {recommendedProducts.length > 0 && (
-                <div className="my-4 ml-10">
-                  <div className="flex items-center mb-2">
-                    <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center mr-2">
-                      <ShoppingBag className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <h3 className="text-sm font-medium text-emerald-700">
-                      Recommended for you
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 sm:gap-3 ml-4 sm:ml-8">
-                    {recommendedProducts.map((product) => (
-                      <Card
-                        key={product.id}
-                        className="overflow-hidden border-emerald-100 hover:border-emerald-200 transition-colors product-card"
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-4">
-                            <div className="w-16 sm:w-20 h-16 sm:h-20 relative flex-shrink-0 rounded-lg overflow-hidden border border-emerald-100 shadow-sm group-hover:shadow-md transition-all duration-200">
-                              <Image
-                                src={
-                                  product.image_url ||
-                                  '/placeholder-product.png'
-                                }
-                                alt={product.name}
-                                fill
-                                className="object-cover transition-transform duration-300 hover:scale-110"
-                              />
-                              {product.in_stock ? (
-                                <div className="absolute bottom-0 left-0 right-0 bg-emerald-500 text-white text-[10px] font-medium py-0.5 text-center">
-                                  In Stock
-                                </div>
-                              ) : (
-                                <div className="absolute bottom-0 left-0 right-0 bg-gray-500 text-white text-[10px] font-medium py-0.5 text-center">
-                                  Out of Stock
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate text-gray-800">
-                                {product.name}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                                {product.description}
-                              </p>
-                              <div className="flex items-center justify-between mt-3">
-                                <div>
-                                  <p className="font-semibold text-emerald-600">
-                                    {formatPrice(product.price)}
-                                  </p>
-                                  {product.discount_premium > 0 && (
-                                    <p className="text-xs text-gray-500 line-through">
-                                      {formatPrice(
-                                        product.price /
-                                          (1 - product.discount_premium)
-                                      )}
-                                    </p>
+                  
+                  {/* Show recommended products after this message if it's the last assistant message */}
+                  {message.role === 'assistant' && 
+                   index === messages.length - 1 && 
+                   recommendedProducts.length > 0 && (
+                    <div className="my-4 ml-10">
+                      <div className="flex items-center mb-2">
+                        <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center mr-2">
+                          <ShoppingBag className="h-3 w-3 text-emerald-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-emerald-700">
+                          Recommended for you
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 sm:gap-3 ml-4 sm:ml-8">
+                        {recommendedProducts.map((product) => (
+                          <Card
+                            key={product.id || product.documentId}
+                            className="overflow-hidden border-emerald-100 hover:border-emerald-200 transition-colors product-card"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-4">
+                                <div className="w-20 sm:w-24 h-20 sm:h-24 relative flex-shrink-0 rounded-lg overflow-hidden border border-emerald-100 shadow-sm hover:shadow-md transition-all duration-200">
+                                  <Image
+                                    src={
+                                      product.imageUrl ||
+                                      '/placeholder-product.png'
+                                    }
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover transition-transform duration-300 hover:scale-110"
+                                  />
+                                  {product.inStock ? (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-emerald-500 text-white text-[10px] font-medium py-0.5 text-center">
+                                      In Stock
+                                    </div>
+                                  ) : (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gray-500 text-white text-[10px] font-medium py-0.5 text-center">
+                                      Out of Stock
+                                    </div>
                                   )}
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
-                                  onClick={() => handleViewProduct(product.id)}
-                                >
-                                  View Details
-                                </Button>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-base truncate text-gray-800">
+                                    {product.name}
+                                  </h4>
+                                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                    {product.description}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-3">
+                                    <div>
+                                      <p className="font-semibold text-lg text-emerald-600">
+                                        {formatPrice(product.price)}
+                                      </p>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-9 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+                                      onClick={() => handleViewProduct(product.id || product.documentId)}
+                                    >
+                                      View Details
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show recommended partners after this message if it's the last assistant message */}
+                  {message.role === 'assistant' && 
+                   index === messages.length - 1 && 
+                   recommendedPartners.length > 0 && (
+                    <div className="my-4 ml-10">
+                      <div className="flex items-center mb-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                          <MapPin className="h-3 w-3 text-blue-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-blue-700">
+                          Healthcare Partners Near You
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 sm:gap-3 ml-4 sm:ml-8">
+                        {recommendedPartners.map((partner) => (
+                          <Card
+                            key={partner.id || partner.documentId}
+                            className="overflow-hidden border-blue-100 hover:border-blue-200 transition-colors product-card"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-4">
+                                <div className="w-20 sm:w-24 h-20 sm:h-24 relative flex-shrink-0 rounded-lg overflow-hidden border border-blue-100 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-blue-50 to-blue-100">
+                                  <div className="flex items-center justify-center h-full">
+                                    <MapPin className="h-10 w-10 text-blue-600" />
+                                  </div>
+                                  {partner.rating && partner.rating >= 4.5 && (
+                                    <div className="absolute top-1 right-1 bg-yellow-500 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                                      ⭐ {partner.rating}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-base truncate text-gray-800">
+                                    {partner.name}
+                                  </h4>
+                                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                    <MapPin className="inline h-3 w-3 mr-1" />
+                                    {partner.address || 'Visit for location details'}
+                                  </p>
+                                  {partner.services && partner.services.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {partner.services.slice(0, 2).map((service: any, idx: number) => (
+                                        <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                          {service.name || service}
+                                        </span>
+                                      ))}
+                                      {partner.services.length > 2 && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                          +{partner.services.length - 2} more
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between mt-3">
+                                    <div className="flex items-center gap-3">
+                                      {partner.rating && (
+                                        <div className="flex items-center">
+                                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                          <span className="text-sm ml-1 font-medium">{partner.rating}/5</span>
+                                        </div>
+                                      )}
+                                      {partner.phone && (
+                                        <span className="text-xs text-gray-500">
+                                          📞 Available
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-9 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                                      onClick={() => handleViewPartner(partner.id || partner.documentId)}
+                                    >
+                                      View Details & Book
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+
 
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
+                  <div className="h-11 w-11 rounded-full bg-emerald-100 flex items-center justify-center mr-3 flex-shrink-0 mt-1">
                     <Image
                       src="/robot.png"
                       alt="HealthBot"
-                      width={24}
-                      height={24}
-                      className="h-6 w-6"
+                      width={28}
+                      height={28}
+                      className="h-7 w-7"
                     />
                   </div>
                   <div className="max-w-[80%] rounded-2xl p-3 bg-gray-100 rounded-tl-none">
@@ -468,14 +640,14 @@ export function ProductChatbot() {
           )}
 
           {/* Input area */}
-          <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3 bg-gradient-to-b from-white to-gray-50">
+          <div className="border-t p-4 sm:p-5 flex gap-3 bg-gradient-to-b from-white to-gray-50">
             <div className="relative flex-1">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about health products..."
-                className="flex-1 border-emerald-200 focus-visible:ring-emerald-500 rounded-full py-5 sm:py-6 px-3 sm:px-4 shadow-sm pr-10 sm:pr-12 text-sm sm:text-base"
+                className="flex-1 border-emerald-200 focus-visible:ring-emerald-500 rounded-full py-5 sm:py-6 px-4 sm:px-5 shadow-sm pr-12 text-sm sm:text-base"
                 disabled={isLoading}
               />
               {input.trim().length > 0 && (
@@ -488,9 +660,9 @@ export function ProductChatbot() {
             <Button
               onClick={handleSendMessage}
               disabled={!input.trim() || isLoading}
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full w-10 sm:w-12 h-10 sm:h-12 p-0 flex items-center justify-center shadow-md transition-all duration-200 hover:shadow-lg disabled:opacity-50"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full w-12 h-12 p-0 flex items-center justify-center shadow-md transition-all duration-200 hover:shadow-lg disabled:opacity-50"
             >
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Send className="h-5 w-5" />
             </Button>
           </div>
         </div>

@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "commission_templates",
+  "info": {
+    "singularName": "commission-template",
+    "pluralName": "commission-templates",
+    "displayName": "Commission Template",
+    "description": "Reusable commission rule sets for products"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "templateName": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "templateCode": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "productCommissionStatus": {
+      "type": "enumeration",
+      "enum": ["active", "inactive"],
+      "default": "active",
+      "required": true
+    },
+    "details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::commission-template-detail.commission-template-detail",
+      "mappedBy": "template"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "commissionTemplate"
+    }
+  }
+}

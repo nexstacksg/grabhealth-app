@@ -1,10 +1,13 @@
 module.exports = ({ env }) => {
   // Debug environment variables
   console.log('Email Configuration Debug:');
-  console.log('MAILGUN_API_KEY:', process.env.MAILGUN_API_KEY ? 'exists' : 'missing');
+  console.log(
+    'MAILGUN_API_KEY:',
+    process.env.MAILGUN_API_KEY ? 'exists' : 'missing'
+  );
   console.log('MAILGUN_DOMAIN:', process.env.MAILGUN_DOMAIN);
   console.log('MAILGUN_FROM_EMAIL:', process.env.MAILGUN_FROM_EMAIL);
-  
+
   return {
     email: {
       config: {

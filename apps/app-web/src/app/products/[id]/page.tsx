@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -9,10 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AddToCartButton } from '@/components/add-to-cart-button';
+import { ProductImageGallery } from '@/components/products/ProductImageGallery';
+import { ProductVariantSelector } from '@/components/products/ProductVariantSelector';
 
 import { formatPrice } from '@/lib/utils';
 import services from '@/services';
-import { IProduct } from '@app/shared-types';
+import type { IProduct, IProductVariant } from '@app/shared-types';
 
 type ProductId = {
   id?: string;
@@ -22,6 +25,7 @@ interface ProductWithExtras extends IProduct, ProductId {
   features?: string[];
   usage?: string;
   ingredients?: string;
+  variants?: IProductVariant[]; // Explicitly include variants
 }
 
 // Component to format product descriptions beautifully
@@ -34,147 +38,45 @@ function ProductDescription({
 }) {
   if (!description) return null;
 
-  // Check if this is a travel package
-  const isTravelPackage =
-    productName?.toLowerCase().includes('travel') ||
-    description.toLowerCase().includes('travel') ||
-    description.toLowerCase().includes('package includes') ||
-    description.toLowerCase().includes('destinations');
-
-  // Extract key information from description in a compact way
-  const extractKeyInfo = (desc: string) => {
-    const sections = desc.split('\n\n').filter((section) => section.trim());
-
-    let mainDescription = '';
-    let keyBenefits: string[] = [];
-    let usage = '';
-    let targetAudience: string[] = [];
-
-    sections.forEach((section) => {
-      const trimmed = section.trim();
-
-      if (trimmed.includes('Key Benefits') && trimmed.includes('•')) {
-        keyBenefits = trimmed
-          .split('•')
-          .filter((item) => item.trim())
-          .slice(0, 3);
-      } else if (
-        !isTravelPackage &&
-        (trimmed.includes('Direction for use') ||
-          trimmed.includes('Dosage') ||
-          trimmed.includes('Package'))
-      ) {
-        // Only show usage for non-travel products
-        usage = trimmed
-          .replace(/Direction for use:|Dosage:|Package:/g, '')
-          .trim()
-          .substring(0, 150);
-      } else if (
-        trimmed.includes('Who Should Use') ||
-        trimmed.includes('Perfect for')
-      ) {
-        if (trimmed.includes('•')) {
-          targetAudience = trimmed
-            .split('•')
-            .filter((item) => item.trim())
-            .slice(0, 3);
-        }
-      } else if (
-        !trimmed.includes('•') &&
-        !trimmed.includes(':') &&
-        trimmed.length > 50 &&
-        !mainDescription
-      ) {
-        mainDescription =
-          trimmed.substring(0, 180) + (trimmed.length > 180 ? '...' : '');
-      }
-    });
-
-    return { mainDescription, keyBenefits, usage, targetAudience };
-  };
-
-  const { mainDescription, keyBenefits, usage, targetAudience } =
-    extractKeyInfo(description);
-
+  // Split description into paragraphs and format them
+  const paragraphs = description.split('\n').filter(p => p.trim());
+  
+  // Check if there are bullet points
+  const hasBullets = description.includes('•');
+  
   return (
-    <div className="space-y-3">
-      {/* Main Description */}
-      {mainDescription && (
-        <p className="text-gray-700 leading-relaxed text-base">
-          {mainDescription}
-        </p>
-      )}
-
-      {/* Compact Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Key Benefits */}
-        {keyBenefits.length > 0 && (
-          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-            <h4 className="font-semibold text-emerald-800 mb-3 text-base flex items-center">
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Key Benefits
+    <div className="space-y-4">
+      {paragraphs.map((paragraph, index) => {
+        const trimmed = paragraph.trim();
+        
+        // Handle bullet points
+        if (trimmed.startsWith('•')) {
+          return (
+            <div key={index} className="flex items-start">
+              <span className="text-emerald-600 mr-2">•</span>
+              <span className="text-gray-700 leading-relaxed">
+                {trimmed.substring(1).trim()}
+              </span>
+            </div>
+          );
+        }
+        
+        // Handle section headers (lines ending with :)
+        if (trimmed.endsWith(':') && trimmed.length < 50) {
+          return (
+            <h4 key={index} className="font-semibold text-gray-800 mt-4 mb-2">
+              {trimmed}
             </h4>
-            <ul className="space-y-2 text-sm text-emerald-700">
-              {keyBenefits.map((benefit, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="leading-relaxed">
-                    {benefit.trim().substring(0, 80)}
-                    {benefit.trim().length > 80 ? '...' : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Target Audience */}
-        {targetAudience.length > 0 && (
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-            <h4 className="font-semibold text-blue-800 mb-3 text-base flex items-center">
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-              </svg>
-              Perfect For
-            </h4>
-            <ul className="space-y-2 text-sm text-blue-700">
-              {targetAudience.map((audience, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="leading-relaxed">
-                    {audience.trim().substring(0, 80)}
-                    {audience.trim().length > 80 ? '...' : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Usage Info */}
-      {usage && (
-        <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
-          <h4 className="font-semibold text-amber-800 mb-2 text-base">
-            {isTravelPackage ? 'Package Details' : 'Usage & Dosage'}
-          </h4>
-          <p className="text-sm text-amber-700 leading-relaxed">{usage}</p>
-        </div>
-      )}
+          );
+        }
+        
+        // Regular paragraphs
+        return (
+          <p key={index} className="text-gray-700 leading-relaxed">
+            {trimmed}
+          </p>
+        );
+      })}
     </div>
   );
 }
@@ -185,6 +87,8 @@ export default function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<IProductVariant | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -194,12 +98,40 @@ export default function ProductDetailPage() {
         if (!productId) return;
 
         const productData = await services.product.getProduct(productId);
+
+        // Always add single bottle option using product price
+        if (productData.variants && productData.variants.length > 0) {
+          // Check if single bottle variant already exists
+          const hasSingleBottle = productData.variants.some(
+            (v: IProductVariant) => v.unitQuantity === 1
+          );
+
+          if (!hasSingleBottle) {
+            // Add single bottle at the beginning using product table price
+            productData.variants.unshift({
+              documentId: `${productData.documentId}-single-bottle`,
+              name: 'Single Bottle',
+              sku: `${productData.sku}-1`,
+              price: productData.price, // Use price from product table
+              unitQuantity: 1,
+              unitLabel: 'bottle',
+              savingsAmount: null,
+              isMostPopular: false,
+              stock: productData.qty || 0,
+            });
+          }
+        }
+
         setProduct(productData as ProductWithExtras);
 
-        // Note: AI tracking removed as it's not essential for product viewing
-        // and was causing authentication errors for public users
+        if (productData.variants && productData.variants.length > 0) {
+          const defaultVariant =
+            productData.variants.find(
+              (v: IProductVariant) => v.isMostPopular
+            ) || productData.variants[0];
+          setSelectedVariant(defaultVariant);
+        }
 
-        // Fetch category-based related products
         if (productData.categoryId) {
           try {
             const categoryProducts =
@@ -230,8 +162,6 @@ export default function ProductDetailPage() {
       fetchProduct();
     }
   }, [params?.id]);
-
-  // No demo data - use only real product information
 
   if (loading) {
     return (
@@ -282,34 +212,32 @@ export default function ProductDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-        {/* Product Image Section */}
-        <div className="relative rounded-xl overflow-hidden bg-white border border-gray-100 h-[280px] sm:h-[320px] md:h-[450px] group">
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <Image
-            src={product.imageUrl || '/placeholder.svg?height=400&width=400'}
-            alt={product.name}
-            fill
-            className="object-contain p-3 sm:p-4 md:p-6 transition-transform duration-300 group-hover:scale-105"
-            priority
+        {/* Product Image Gallery Section */}
+        <div className="relative">
+          <ProductImageGallery
+            images={
+              product.images || (product.imageUrl ? [product.imageUrl] : [])
+            }
+            productName={product.name}
           />
 
           {/* Category Badge */}
           {product.category && (
-            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 border border-gray-100">
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-700 border border-gray-100 z-10">
               {product.category.name}
             </div>
           )}
 
           {/* Status Badge */}
           {product.inStock ? (
-            <Badge className="absolute top-4 right-4 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 px-3">
+            <Badge className="absolute top-4 right-4 bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 px-3 z-10">
               <div className="flex items-center">
                 <div className="h-2 w-2 rounded-full bg-white mr-1.5 animate-pulse"></div>
                 In Stock
               </div>
             </Badge>
           ) : (
-            <Badge className="absolute top-4 right-4 bg-gray-500 hover:bg-gray-600 transition-all duration-200 px-3">
+            <Badge className="absolute top-4 right-4 bg-gray-500 hover:bg-gray-600 transition-all duration-200 px-3 z-10">
               Out of Stock
             </Badge>
           )}
@@ -322,11 +250,22 @@ export default function ProductDetailPage() {
               {product.name}
             </h1>
 
-            <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-              <span className="text-2xl md:text-3xl font-bold text-emerald-600">
-                {formatPrice(product.price)}
-              </span>
-            </div>
+            {/* Show product price or variant selector */}
+            {product.variants && product.variants.length > 0 ? (
+              <div className="mb-6">
+                <ProductVariantSelector
+                  variants={product.variants}
+                  selectedVariant={selectedVariant}
+                  onVariantSelect={setSelectedVariant}
+                />
+              </div>
+            ) : (
+              <div className="mb-4 bg-gray-50 p-4 rounded-lg">
+                <span className="text-2xl md:text-3xl font-bold text-emerald-600">
+                  {formatPrice(product.price)}
+                </span>
+              </div>
+            )}
 
             <div className="mb-4">
               <div className="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-100">
@@ -345,22 +284,39 @@ export default function ProductDetailPage() {
                   </svg>
                   Product Details
                 </h2>
-                <ProductDescription
-                  description={product.description || ''}
-                  productName={product.name}
-                />
+                <div className="max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                  {product.description ? (
+                    <ProductDescription
+                      description={product.description}
+                      productName={product.name}
+                    />
+                  ) : (
+                    <p className="text-gray-500">No description available.</p>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="flex space-x-4">
               <AddToCartButton
-                product={{
-                  id: parseInt(product.documentId) || 0, // Convert string to number
-                  name: product.name,
-                  price: product.price,
-                  image_url: product.imageUrl || undefined,
-                }}
-                disabled={!product.inStock}
+                product={
+                  {
+                    id: product.documentId,
+                    name: selectedVariant
+                      ? `${product.name} - ${selectedVariant.name}`
+                      : product.name,
+                    price: selectedVariant
+                      ? selectedVariant.price
+                      : product.price,
+                    image_url: product.imageUrl || undefined,
+                    variantId: selectedVariant?.documentId,
+                    variantName: selectedVariant?.name,
+                  } as any
+                }
+                disabled={
+                  !product.inStock ||
+                  (selectedVariant ? selectedVariant.stock === 0 : false)
+                }
                 className="w-full py-2.5 text-base font-medium transition-all duration-200"
                 size="lg"
               />

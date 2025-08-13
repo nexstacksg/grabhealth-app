@@ -1,16 +1,13 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import {
   ShoppingCart,
   ChevronDown,
   ChevronUp,
-  Trash,
-  Plus,
-  Minus,
   ShoppingBag,
 } from 'lucide-react';
 import {
@@ -29,10 +26,6 @@ export function CartDropdown() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { cartItems, cartCount, cartTotal, isLoading, cartAnimating } = useCart();
-
-  const goToCart = () => {
-    router.push('/cart');
-  };
 
   return (
     <div className="relative">
@@ -100,7 +93,7 @@ export function CartDropdown() {
                       <div
                         key={
                           (item as any).id ||
-                          item.productId ||
+                          `${item.productId}-${(item as any).variantId || 'default'}` ||
                           `cart-item-${index}`
                         }
                         className="flex gap-3"

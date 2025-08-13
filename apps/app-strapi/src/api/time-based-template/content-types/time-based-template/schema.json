@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "time_based_templates",
+  "info": {
+    "singularName": "time-based-template",
+    "pluralName": "time-based-templates",
+    "displayName": "Time Based Template",
+    "description": "Promotional commission templates for specific time periods"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product"
+    },
+    "commissionTemplate": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::commission-template.commission-template"
+    },
+    "startDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "priority": {
+      "type": "integer",
+      "default": 1,
+      "required": true
+    },
+    "templateStatus": {
+      "type": "enumeration",
+      "enum": ["active", "inactive"],
+      "default": "active",
+      "required": true
+    }
+  }
+}

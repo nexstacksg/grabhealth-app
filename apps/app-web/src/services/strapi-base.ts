@@ -64,6 +64,7 @@ export interface StrapiUser {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
+  phoneNumber?: string | null;
   profileImage?: StrapiMedia | string | null;
   referralCode?: string | null;
   status?: string;
@@ -106,6 +107,7 @@ export function transformStrapiUser(strapiUser: StrapiUser): IUserPublic {
     email: strapiUser.email,
     firstName: strapiUser.firstName || strapiUser.username || '',
     lastName: strapiUser.lastName || '',
+    phoneNumber: strapiUser.phoneNumber || null,
     role: strapiUser.role?.type?.toUpperCase() || 'USER',
     status:
       strapiUser.status ||
