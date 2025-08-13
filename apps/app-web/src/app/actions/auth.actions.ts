@@ -38,9 +38,6 @@ export async function registerAction(data: RegisterRequest & { referrer?: string
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:1337';
     const url = `${baseUrl}/api/custom-auth/register`;
     
-    console.log('[RegisterAction] Calling custom auth:', url);
-    console.log('[RegisterAction] With referrer:', data.referrer);
-    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -50,6 +47,7 @@ export async function registerAction(data: RegisterRequest & { referrer?: string
       body: JSON.stringify({
         email: data.email,
         password: data.password,
+        phoneNumber: data.phoneNumber,
         firstName: data.firstName || '',
         lastName: data.lastName || '',
         referrer: data.referrer || undefined, // Include referrer if provided
@@ -64,11 +62,6 @@ export async function registerAction(data: RegisterRequest & { referrer?: string
     }
     
     if (!response.ok) {
-      console.error('[RegisterAction] Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: responseData
-      });
       throw new Error(responseData?.error?.message || responseData?.message || `Registration failed: ${response.statusText}`);
     }
     
@@ -88,8 +81,6 @@ export async function registerAction(data: RegisterRequest & { referrer?: string
       emailVerifiedAt: null,
     };
     
-    console.log('[RegisterAction] Created placeholder user:', user);
-    
     // No cookies to set yet - user needs to verify email first
     
     return { 
@@ -98,7 +89,6 @@ export async function registerAction(data: RegisterRequest & { referrer?: string
       message: responseData.message 
     };
   } catch (error: any) {
-    console.error('[RegisterAction] Exception:', error);
     return { 
       success: false as const, 
       error: error.message || 'Registration failed' 

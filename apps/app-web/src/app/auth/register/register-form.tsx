@@ -22,6 +22,7 @@ import { Loader2 } from 'lucide-react';
 // Define form type directly to avoid deep type instantiation
 type RegisterFormValues = {
   email: string;
+  phoneNumber: string;
   password: string;
   confirmPassword: string;
 };
@@ -71,10 +72,17 @@ const passwordValidator = (password: string) => {
 const registerSchema = z
   .object({
     email: z.string().email({ message: 'Please enter a valid email address' }),
-    password: z.string().refine(passwordValidator, {
-      message: 'Invalid password',
-    }),
-    confirmPassword: z.string(),
+    phoneNumber: z.string()
+      .min(10, { message: 'Phone number must be at least 10 digits' })
+      .max(20, { message: 'Phone number must not exceed 20 digits' })
+      .regex(/^[+]?[\d\s-()]+$/, { message: 'Please enter a valid phone number' })
+      .transform(val => val.replace(/[\s-()]/g, '')), // Remove spaces, dashes, and parentheses for storage
+    password: z.string()
+      .min(1, { message: 'Password is required' })
+      .refine(passwordValidator, {
+        message: 'Invalid password',
+      }),
+    confirmPassword: z.string().min(1, { message: 'Please confirm your password' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -93,6 +101,7 @@ interface FormInputFieldProps {
   label: string;
   type?: string;
   placeholder?: string;
+  description?: string;
 }
 
 function FormInputField({
@@ -101,6 +110,7 @@ function FormInputField({
   label,
   type = 'text',
   placeholder,
+  description,
 }: FormInputFieldProps) {
   return (
     <FormField
@@ -112,6 +122,9 @@ function FormInputField({
           <FormControl>
             <Input type={type} placeholder={placeholder} {...field} />
           </FormControl>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
           <FormMessage />
         </FormItem>
       )}
@@ -127,10 +140,10 @@ export default function RegisterForm({
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<RegisterFormValues>({
-    // @ts-expect-error: Known issue with zod resolver and complex schemas
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: '',
+      phoneNumber: '',
       password: '',
       confirmPassword: '',
     },
@@ -143,20 +156,13 @@ export default function RegisterForm({
     try {
       await register({
         email: data.email,
+        phoneNumber: data.phoneNumber,
         password: data.password,
         referrer: referrerId, // Pass the referrer to the registration
       });
 
       // The AuthContext handles the redirect after successful registration
     } catch (error: any) {
-      console.error('Registration error:', error?.message || 'Unknown error');
-      console.error('Error details:', {
-        message: error?.message,
-        status: error?.status,
-        details: error?.details,
-        name: error?.name,
-        stack: error?.stack
-      });
 
       // Detailed error message for debugging
       let errorMessage = 'Registration failed';
@@ -169,6 +175,23 @@ export default function RegisterForm({
         errorMessage = error.response.data.error.message;
       } else if (error?.message) {
         errorMessage = error.message;
+      }
+      
+      // Check for specific error messages
+      if (errorMessage.toLowerCase().includes('phone number') && errorMessage.toLowerCase().includes('already registered')) {
+        // Phone number already exists - clear the phone field
+        form.setError('phoneNumber', {
+          type: 'manual',
+          message: 'This phone number is already registered'
+        });
+        errorMessage = 'This phone number is already registered. Please use a different phone number or sign in to your existing account.';
+      } else if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('already registered')) {
+        // Email already exists
+        form.setError('email', {
+          type: 'manual',
+          message: 'This email is already registered'
+        });
+        errorMessage = 'This email is already registered. Please sign in to your existing account.';
       }
       
       // In development, show more details
@@ -203,6 +226,13 @@ export default function RegisterForm({
             name="email"
             label="Email"
             placeholder="you@example.com"
+          />
+          <FormInputField
+            form={form}
+            name="phoneNumber"
+            label="Phone Number"
+            placeholder="+60 12-345 6789"
+            description="Enter your mobile number with country code"
           />
           <FormInputField
             form={form}

@@ -40,7 +40,6 @@ const useAuthProvider = () => {
         setUser(null);
       }
     } catch (error: any) {
-      console.error('Auth check failed:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -123,6 +122,7 @@ const useAuthProvider = () => {
         const result = await registerAction({
           email: data.email,
           password: data.password,
+          phoneNumber: data.phoneNumber,
           firstName: data.firstName || '',
           lastName: data.lastName || '',
           referrer: data.referrer,
@@ -133,9 +133,6 @@ const useAuthProvider = () => {
         }
         
         // For custom auth, users need to verify email first
-        console.log('[AuthContext] Registration result:', result);
-        console.log('[AuthContext] User status:', result.user.status);
-        
         if (result.user.status === 'PENDING_VERIFICATION') {
           // Store email for the verify page
           if (typeof window !== 'undefined') {
@@ -145,7 +142,6 @@ const useAuthProvider = () => {
           // This prevents the auth context from treating them as logged in
           
           // Redirect to verify page
-          console.log('[AuthContext] Redirecting to /auth/verify');
           router.push('/auth/verify');
         } else {
           setUser(result.user);

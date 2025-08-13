@@ -7,11 +7,13 @@ export async function updateProfileAction(data: {
   userId: string;
   username: string;
   email: string;
+  phoneNumber?: string;
 }) {
   // Use custom-auth update-profile endpoint for authenticated users
   const result = await serverApiPut('/custom-auth/update-profile', {
     username: data.username,
     email: data.email,
+    phoneNumber: data.phoneNumber,
     firstName: data.username, // Use username as firstName
   });
 

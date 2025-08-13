@@ -41,6 +41,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [formData, setFormData] = useState({
     username: user.firstName || user.email.split('@')[0] || '',
     email: user.email,
+    phoneNumber: user.phoneNumber || '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -88,12 +89,22 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     e.preventDefault();
     setError(null);
 
+    // Validate phone number format if provided
+    if (formData.phoneNumber) {
+      const cleanedPhone = formData.phoneNumber.replace(/[\s-()]/g, '');
+      if (!/^[+]?\d{10,20}$/.test(cleanedPhone)) {
+        setError('Please enter a valid phone number (10-20 digits)');
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
         const result = await updateProfileAction({
           userId: user.documentId,
           username: formData.username,
           email: formData.email,
+          phoneNumber: formData.phoneNumber,
         });
 
         if (result.error) {
@@ -104,8 +115,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to update profile';
-        toast.error(errorMessage);
-        setError(errorMessage);
+        
+        // Check for phone number already exists error
+        if (errorMessage.toLowerCase().includes('phone number') && errorMessage.toLowerCase().includes('already registered')) {
+          setError('This phone number is already registered to another account');
+          toast.error('This phone number is already registered to another account');
+        } else {
+          toast.error(errorMessage);
+          setError(errorMessage);
+        }
       }
     });
   };
@@ -247,6 +265,21 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                         onChange={handleInputChange}
                         required
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber">Phone Number</Label>
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        placeholder="+60 12-345 6789"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Enter your mobile number with country code
+                      </p>
                     </div>
                   </div>
                 </div>
