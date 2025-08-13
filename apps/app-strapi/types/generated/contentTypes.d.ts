@@ -1764,6 +1764,13 @@ export interface PluginUsersPermissionsUser
         minLength: 6;
       }>;
     passwordResetExpires: Schema.Attribute.DateTime & Schema.Attribute.Private;
+    phoneNumber: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20;
+        minLength: 10;
+      }>;
     profileImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
