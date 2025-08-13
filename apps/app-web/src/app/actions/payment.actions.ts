@@ -82,6 +82,7 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
       orderNumber: order.orderNumber,
     });
     
+    // Step 2: Create HitPay payment request
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://grabhealth.ai';
     const redirectUrl = params.successUrl || `${baseUrl}/payment/success?orderId=${order.documentId}`;
     const webhookUrl = `${baseUrl}/api/webhooks/hitpay`;
@@ -98,14 +99,8 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
       ? `${user.firstName} ${user.lastName}`.trim() 
       : undefined;
     
-    // Use a small test amount when in development with live credentials
-    const isLocalDev = process.env.NEXT_PUBLIC_BASE_URL?.includes('localhost');
-    const amount = isLocalDev && process.env.NEXT_PUBLIC_HITPAY_MODE === 'live' 
-      ? '0.10' // 10 cents for testing
-      : params.total.toFixed(2);
-    
     const paymentRequest = await hitpayClient.createPaymentRequest({
-      amount, // HitPay expects amount as string in dollars
+      amount: params.total.toFixed(2), // HitPay expects amount as string in dollars
       currency: 'SGD',
       purpose: `Order ${order.orderNumber}`,
       email: user.email,
@@ -114,7 +109,6 @@ export async function createCheckoutSession(params: CreateCheckoutSessionParams)
       webhook: webhookUrl,
       reference_number: order.orderNumber, // Use actual order number as reference
       allow_repeated_payments: false,
-      payment_methods: ['paynow_online', 'upi_qr', 'card'],
     });
 
     console.log('HitPay payment request created:', {

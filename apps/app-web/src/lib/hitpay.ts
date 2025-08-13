@@ -4,7 +4,14 @@ export interface HitPayConfig {
 }
 
 export const getHitPayConfig = (): HitPayConfig => {
-  throw new Error('HitPay configuration should only be accessed server-side through hitpay-server.ts');
+  const apiKey = process.env.NEXT_PUBLIC_HITPAY_API_KEY;
+  const mode = (process.env.NEXT_PUBLIC_HITPAY_MODE || 'sandbox') as 'sandbox' | 'live';
+
+  if (!apiKey) {
+    throw new Error('HitPay API key is not configured');
+  }
+
+  return { apiKey, mode };
 };
 
 export const getHitPayApiUrl = (mode: 'sandbox' | 'live' = 'sandbox'): string => {
@@ -24,7 +31,6 @@ export interface HitPayPaymentRequest {
   reference_number?: string;
   allow_repeated_payments?: boolean;
   expiry_date?: string;
-  payment_methods?: string[];
 }
 
 export interface HitPayPaymentResponse {
