@@ -458,13 +458,38 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return ctx.unauthorized('User not authenticated');
       }
 
-      const { username, email, firstName } = ctx.request.body;
+      const { username, email, firstName, phoneNumber } = ctx.request.body;
 
       // Prepare update data
       const updateData: any = {};
       if (username !== undefined) updateData.username = username;
       if (email !== undefined) updateData.email = email;
       if (firstName !== undefined) updateData.firstName = firstName;
+      if (phoneNumber !== undefined) {
+        // Clean phone number (remove spaces, dashes, parentheses)
+        const cleanedPhoneNumber = phoneNumber.replace(/[\s-()]/g, '');
+        
+        // Validate phone number format
+        if (cleanedPhoneNumber && !/^[+]?\d{10,20}$/.test(cleanedPhoneNumber)) {
+          return ctx.badRequest('Please enter a valid phone number (10-20 digits)');
+        }
+        
+        // Check if phone number already exists for another user
+        if (cleanedPhoneNumber) {
+          const existingPhone = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { 
+              phoneNumber: cleanedPhoneNumber,
+              id: { $ne: userId } // Not the current user
+            }
+          });
+
+          if (existingPhone) {
+            return ctx.badRequest('This phone number is already registered to another account');
+          }
+        }
+        
+        updateData.phoneNumber = cleanedPhoneNumber || null;
+      }
       // TEMPORARILY DISABLED: Profile image upload
       // if (profileImage !== undefined) updateData.profileImage = profileImage;
 
