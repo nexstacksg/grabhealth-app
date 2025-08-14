@@ -198,6 +198,36 @@ export async function POST(request: NextRequest) {
             paymentStatus: PaymentStatus.PAID,
             paymentMethod: paymentMethod,
           });
+
+          // Send order confirmation email
+          try {
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/orders/${order.documentId}/send-confirmation-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.STRAPI_API_TOKEN}`,
+              },
+            });
+
+            if (emailResponse.ok) {
+              console.log('=== WEBHOOK: Confirmation email sent successfully ===', {
+                orderId: order.documentId,
+                orderNumber: order.orderNumber,
+              });
+            } else {
+              const errorData = await emailResponse.text();
+              console.error('=== WEBHOOK ERROR: Failed to send confirmation email ===', {
+                orderId: order.documentId,
+                status: emailResponse.status,
+                error: errorData,
+              });
+            }
+          } catch (emailError) {
+            console.error('=== WEBHOOK ERROR: Exception sending confirmation email ===', {
+              orderId: order.documentId,
+              error: emailError instanceof Error ? emailError.message : emailError,
+            });
+          }
         } else {
           console.error('=== WEBHOOK ERROR: Failed to update order ===', {
             orderId: order.documentId,
