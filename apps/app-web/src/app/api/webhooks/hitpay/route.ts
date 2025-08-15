@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
 
           // Send order confirmation email
           try {
-            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/orders/${order.documentId}/send-confirmation-email`, {
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order.documentId}/send-confirmation-email`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
