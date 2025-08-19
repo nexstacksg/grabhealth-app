@@ -28,6 +28,7 @@ export interface IUserPublic {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber?: string | null;
   profileImage?: string | null;
   role: string;
   status: string;

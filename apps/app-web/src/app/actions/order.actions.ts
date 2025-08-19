@@ -59,8 +59,17 @@ export async function getMyOrdersAction(params?: {
     
     if (result.success && result.data) {
       const pagination = result.data.meta?.pagination || {};
-      // Transform orders - Strapi 5 already provides documentId
-      const orders = result.data.data || [];
+      // Transform orders - map orderStatus to status for frontend
+      const rawOrders = result.data.data || [];
+      const orders = rawOrders.map((order: any) => ({
+        ...order,
+        status: order.orderStatus || 'PENDING',
+        // Ensure other fields are properly set
+        documentId: order.documentId || order.id?.toString() || '',
+        orderNumber: order.orderNumber || '',
+        total: parseFloat(order.total || 0),
+        createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
+      }));
       return {
         success: true,
         orders,

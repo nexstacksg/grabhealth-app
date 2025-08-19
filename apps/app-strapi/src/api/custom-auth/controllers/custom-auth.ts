@@ -6,15 +6,37 @@ const VERIFICATION_CODE_EXPIRY = 10 * 60 * 1000; // 10 minutes
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async register(ctx) {
     try {
-      const { email, password, username, firstName, lastName, referrer } = ctx.request.body;
+      const { email, password, username, firstName, lastName, phoneNumber, referrer } = ctx.request.body;
 
-      // Check if user exists
+      // Validate required fields
+      if (!phoneNumber) {
+        return ctx.badRequest('Phone number is required');
+      }
+
+      // Clean phone number (remove spaces, dashes, parentheses)
+      const cleanedPhoneNumber = phoneNumber.replace(/[\s-()]/g, '');
+      
+      // Validate phone number format
+      if (!/^[+]?\d{10,20}$/.test(cleanedPhoneNumber)) {
+        return ctx.badRequest('Please enter a valid phone number (10-20 digits)');
+      }
+
+      // Check if user exists with email
       const existingUser = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { email: email.toLowerCase() }
       });
 
       if (existingUser) {
         return ctx.badRequest('Email already registered');
+      }
+
+      // Check if phone number already exists
+      const existingPhone = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { phoneNumber: cleanedPhoneNumber }
+      });
+
+      if (existingPhone) {
+        return ctx.badRequest('This phone number is already registered. Please use a different phone number or sign in to your existing account.');
       }
 
       // Get the public role
@@ -48,14 +70,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           });
         }
 
-        // Log the referrer lookup result with more details
-        console.log('Referrer lookup:', { 
-          referrer: referrer || 'none', 
-          found: !!uplineUser,
-          uplineId: uplineUser?.id,
-          uplineEmail: uplineUser?.email,
-          lookupMethod: uplineUser ? (uplineUser.referralCode === referrer ? 'referralCode' : uplineUser.email === referrer.toLowerCase() ? 'email' : 'documentId') : 'not found'
-        });
       }
 
       // Generate 6-digit verification code
@@ -68,6 +82,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         username: username || email,
         email: email.toLowerCase(),
         password,
+        phoneNumber: cleanedPhoneNumber,
         firstName,
         lastName,
         provider: 'local',
@@ -443,13 +458,38 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return ctx.unauthorized('User not authenticated');
       }
 
-      const { username, email, firstName } = ctx.request.body;
+      const { username, email, firstName, phoneNumber } = ctx.request.body;
 
       // Prepare update data
       const updateData: any = {};
       if (username !== undefined) updateData.username = username;
       if (email !== undefined) updateData.email = email;
       if (firstName !== undefined) updateData.firstName = firstName;
+      if (phoneNumber !== undefined) {
+        // Clean phone number (remove spaces, dashes, parentheses)
+        const cleanedPhoneNumber = phoneNumber.replace(/[\s-()]/g, '');
+        
+        // Validate phone number format
+        if (cleanedPhoneNumber && !/^[+]?\d{10,20}$/.test(cleanedPhoneNumber)) {
+          return ctx.badRequest('Please enter a valid phone number (10-20 digits)');
+        }
+        
+        // Check if phone number already exists for another user
+        if (cleanedPhoneNumber) {
+          const existingPhone = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { 
+              phoneNumber: cleanedPhoneNumber,
+              id: { $ne: userId } // Not the current user
+            }
+          });
+
+          if (existingPhone) {
+            return ctx.badRequest('This phone number is already registered to another account');
+          }
+        }
+        
+        updateData.phoneNumber = cleanedPhoneNumber || null;
+      }
       // TEMPORARILY DISABLED: Profile image upload
       // if (profileImage !== undefined) updateData.profileImage = profileImage;
 

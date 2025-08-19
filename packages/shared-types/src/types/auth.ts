@@ -4,6 +4,7 @@ import { UserRole } from '../enums';
 export interface RegisterRequest {
   email: string;
   password: string;
+  phoneNumber: string;
   firstName?: string;
   lastName?: string;
 }

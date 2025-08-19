@@ -11,12 +11,22 @@ export class HitPayClient {
   private apiUrl: string;
 
   constructor() {
+    console.log('HitPay Configuration:', {
+      mode: HITPAY_MODE,
+      apiKeyPrefix: HITPAY_API_KEY ? HITPAY_API_KEY.substring(0, 20) + '...' : 'NOT SET',
+      apiUrl: getHitPayApiUrl(HITPAY_MODE),
+      hasApiKey: !!HITPAY_API_KEY,
+      hasSalt: !!HITPAY_SALT,
+      hasWebhookSalt: !!HITPAY_WEBHOOK_SALT,
+    });
+    
     if (!HITPAY_API_KEY) {
       throw new Error('HitPay API key is not configured');
     }
     this.apiKey = HITPAY_API_KEY;
     this.apiUrl = getHitPayApiUrl(HITPAY_MODE);
   }
+
 
   async createPaymentRequest(params: HitPayPaymentRequest): Promise<HitPayPaymentResponse> {
     console.log('HitPay API Request:', {
@@ -48,6 +58,9 @@ export class HitPayClient {
         statusText: response.statusText,
         error,
         requestParams: params,
+        mode: HITPAY_MODE,
+        apiUrl: this.apiUrl,
+        apiKeyUsed: this.apiKey.substring(0, 20) + '...',
       });
       throw new Error(`HitPay API error: ${error.message || error.error || response.statusText}`);
     }

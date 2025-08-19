@@ -7,9 +7,11 @@ import { BaseService } from './base.service';
 import {
   IOrder,
   IOrderCreate,
-  ApiResponse,
   IProduct,
-  IUserPublic,
+  IUser,
+  OrderStatus,
+  PaymentStatus,
+  IOrderItemCreate,
 } from '@app/shared-types';
 import { transformStrapiUser } from './strapi-base';
 import { api } from './api.service';
@@ -65,20 +67,19 @@ function transformStrapiOrder(strapiOrder: any): IOrder {
     quantity: item.quantity || 0,
     price: parseFloat(item.price || 0),
     discount: parseFloat(item.discount || 0),
-    pvPoints: item.pvPoints || 0,
   })) || [];
 
   return {
     documentId: strapiOrder.documentId || strapiOrder.id?.toString() || '', // Strapi 5 documentId
     orderNumber: strapiOrder.orderNumber || '',
     userId: strapiOrder.user?.documentId || strapiOrder.user?.id?.toString() || '',
-    user: strapiOrder.user ? transformStrapiUser(strapiOrder.user) : undefined,
+    user: strapiOrder.user ? transformStrapiUser(strapiOrder.user) as IUser : undefined,
     total: parseFloat(strapiOrder.total || 0),
     subtotal: parseFloat(strapiOrder.subtotal || 0),
     discount: parseFloat(strapiOrder.discount || 0),
     tax: parseFloat(strapiOrder.tax || 0),
-    status: strapiOrder.status || 'PENDING',
-    paymentStatus: strapiOrder.paymentStatus || 'PENDING',
+    status: strapiOrder.orderStatus || OrderStatus.PENDING,
+    paymentStatus: strapiOrder.paymentStatus || PaymentStatus.PENDING,
     paymentMethod: strapiOrder.paymentMethod || '',
     paymentTransactionId: strapiOrder.paymentTransactionId || null,
     shippingAddress: strapiOrder.shippingAddress || '',
@@ -102,8 +103,6 @@ function transformStrapiProduct(strapiProduct: any): IProduct {
     imageUrl: strapiProduct.imageUrl || '',
     inStock: strapiProduct.inStock ?? true,
     status: strapiProduct.status || 'ACTIVE',
-    createdAt: new Date(strapiProduct.createdAt),
-    updatedAt: new Date(strapiProduct.updatedAt),
   };
 }
 
@@ -125,8 +124,8 @@ class OrderService extends BaseService {
           subtotal: data.subtotal || 0,
           discount: data.discount || 0,
           tax: data.tax || 0,
-          status: data.status || 'PENDING',
-          paymentStatus: data.paymentStatus || 'PENDING',
+          orderStatus: data.status || OrderStatus.PENDING,
+          paymentStatus: data.paymentStatus || PaymentStatus.PENDING,
           paymentMethod: data.paymentMethod,
           shippingAddress: data.shippingAddress,
           billingAddress: data.billingAddress,
@@ -149,7 +148,7 @@ class OrderService extends BaseService {
           await this.api.post('/order-items', {
             data: {
               order: {
-                connect: [order.id] // Use connect syntax for relations
+                connect: [order.documentId] // Use connect syntax for relations
               },
               product: {
                 connect: [item.productId] // Use connect syntax for relations
@@ -195,10 +194,10 @@ class OrderService extends BaseService {
       const queryParams = new URLSearchParams();
       
       // Filter by current user ID
-      queryParams.append('filters[user][id][$eq]', currentUser.id.toString());
+      queryParams.append('filters[user][id][$eq]', currentUser.documentId.toString());
       
       if (params?.status) {
-        queryParams.append('filters[status][$eq]', params.status);
+        queryParams.append('filters[orderStatus][$eq]', params.status);
       }
       
       if (params?.page) {
@@ -278,7 +277,7 @@ class OrderService extends BaseService {
         `/orders/${id}`,
         {
           data: {
-            status: 'CANCELLED',
+            orderStatus: 'CANCELLED',
           }
         }
       );
@@ -318,7 +317,7 @@ class OrderService extends BaseService {
     try {
       // Calculate totals from cart items
       let subtotal = 0;
-      const orderItems = [];
+      const orderItems: IOrderItemCreate[] = [];
       
       // Note: This would need product price lookup in real implementation
       for (const item of data.cartItems) {
@@ -327,11 +326,10 @@ class OrderService extends BaseService {
         subtotal += price * item.quantity;
         
         orderItems.push({
-          productId: item.productId,
+          productId: item.productId.toString(),
           quantity: item.quantity,
           price: price,
           discount: 0,
-          pvPoints: 0,
         });
       }
       
@@ -342,8 +340,8 @@ class OrderService extends BaseService {
         subtotal: subtotal,
         discount: 0,
         tax: 0,
-        status: 'PENDING',
-        paymentStatus: 'PENDING',
+        status: OrderStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
         paymentMethod: data.paymentMethod || 'card',
         shippingAddress: data.shippingAddress,
         billingAddress: data.billingAddress,
