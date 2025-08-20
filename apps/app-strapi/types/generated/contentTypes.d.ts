@@ -1113,6 +1113,67 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiServerSettingServerSetting extends Struct.SingleTypeSchema {
+  collectionName: 'server_settings';
+  info: {
+    description: 'Server configuration and monitoring settings';
+    displayName: 'Server Setting';
+    pluralName: 'server-settings';
+    singularName: 'server-setting';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    adminEmail: Schema.Attribute.Email & Schema.Attribute.Required;
+    backupRetentionDays: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<30>;
+    backupSchedule: Schema.Attribute.Enumeration<
+      ['hourly', 'daily', 'weekly', 'monthly', 'disabled']
+    > &
+      Schema.Attribute.DefaultTo<'daily'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::server-setting.server-setting'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    smtpHost: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'smtp.gmail.com'>;
+    smtpPort: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<587>;
+    smtpUser: Schema.Attribute.Email;
+    storageMonitoringEnabled: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    storageMonitoringFrequency: Schema.Attribute.Enumeration<
+      ['every5min', 'every15min', 'every30min', 'hourly', 'daily']
+    > &
+      Schema.Attribute.DefaultTo<'hourly'>;
+    storageThreshold: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 100;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<70>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiServiceService extends Struct.CollectionTypeSchema {
   collectionName: 'services';
   info: {
@@ -1827,6 +1888,7 @@ declare module '@strapi/strapi' {
       'api::partner.partner': ApiPartnerPartner;
       'api::product-variant.product-variant': ApiProductVariantProductVariant;
       'api::product.product': ApiProductProduct;
+      'api::server-setting.server-setting': ApiServerSettingServerSetting;
       'api::service.service': ApiServiceService;
       'api::time-based-template.time-based-template': ApiTimeBasedTemplateTimeBasedTemplate;
       'api::user-achievement.user-achievement': ApiUserAchievementUserAchievement;

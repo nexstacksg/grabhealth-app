@@ -155,3 +155,9 @@ public/uploads/
 .app-web.env
 .app-strapi.env
 apps/app-strapi/types/generated/*
+
+# Backup files
+apps/app-strapi/backups/
+*.sql
+*.sql.gz
+*.tar.gz

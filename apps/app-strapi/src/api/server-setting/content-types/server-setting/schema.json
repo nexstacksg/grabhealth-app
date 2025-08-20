@@ -1,0 +1,69 @@
+{
+  "kind": "singleType",
+  "collectionName": "server_settings",
+  "info": {
+    "singularName": "server-setting",
+    "pluralName": "server-settings",
+    "displayName": "Server Setting",
+    "description": "Server configuration and monitoring settings"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "storageThreshold": {
+      "type": "integer",
+      "default": 70,
+      "min": 1,
+      "max": 100,
+      "required": true
+    },
+    "adminEmail": {
+      "type": "email",
+      "required": true
+    },
+    "smtpHost": {
+      "type": "string",
+      "default": "smtp.gmail.com"
+    },
+    "smtpPort": {
+      "type": "integer",
+      "default": 587
+    },
+    "smtpUser": {
+      "type": "email"
+    },
+    "backupSchedule": {
+      "type": "enumeration",
+      "enum": [
+        "hourly",
+        "daily",
+        "weekly",
+        "monthly",
+        "disabled"
+      ],
+      "default": "daily"
+    },
+    "backupRetentionDays": {
+      "type": "integer",
+      "default": 30,
+      "min": 1
+    },
+    "storageMonitoringEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "storageMonitoringFrequency": {
+      "type": "enumeration",
+      "enum": [
+        "every5min",
+        "every15min",
+        "every30min",
+        "hourly",
+        "daily"
+      ],
+      "default": "hourly"
+    }
+  }
+}

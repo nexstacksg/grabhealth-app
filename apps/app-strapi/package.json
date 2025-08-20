@@ -18,7 +18,15 @@
     "test": "echo 'No tests configured yet'",
     "seed": "strapi console --silent < scripts/seed.js",
     "clean": "rm -rf .cache build .tmp",
-    "rebuild": "pnpm run clean && pnpm run build"
+    "rebuild": "pnpm run clean && pnpm run build",
+    "backup": "./scripts/backup-all.sh",
+    "backup:db": "./scripts/backup-database.sh",
+    "backup:uploads": "./scripts/backup-uploads.sh",
+    "restore:db": "./scripts/restore-database.sh",
+    "backup:setup": "./scripts/setup-cron-backup.sh",
+    "monitor:storage": "./scripts/monitor-storage.sh",
+    "monitor:setup": "./scripts/setup-storage-monitor.sh",
+    "test:db": "./scripts/test-db-connection.sh"
   },
   "dependencies": {
     "@strapi/plugin-cloud": "5.16.0",
@@ -31,6 +39,7 @@
     "dotenv": "^16.6.1",
     "install": "^0.13.0",
     "mailgun-js": "^0.22.0",
+    "nodemailer": "^6.9.0",
     "pg": "8.8.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
